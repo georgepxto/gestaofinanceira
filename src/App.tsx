@@ -20,6 +20,8 @@ import {
   History,
   MinusCircle,
   Clock,
+  CheckCircle,
+  Undo2,
 } from "lucide-react";
 import { addMonths, subMonths, format } from "date-fns";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
@@ -124,6 +126,29 @@ function App() {
   const [valorPagamento, setValorPagamento] = useState<string>("");
   const [obsPagamento, setObsPagamento] = useState<string>("");
   const [filtroPessoaDivida, setFiltroPessoaDivida] = useState<string>(""); // "" = todos
+  const [filtroStatusDivida, setFiltroStatusDivida] = useState<
+    "pendentes" | "pagos"
+  >("pendentes");
+
+  // Fechar Mês
+  const [showFecharMes, setShowFecharMes] = useState<string | null>(null); // pessoa
+  const [valorPagoFecharMes, setValorPagoFecharMes] = useState<string>("");
+
+  // Modal de Feedback
+  const [modalFeedback, setModalFeedback] = useState<{
+    show: boolean;
+    titulo: string;
+    mensagem: string;
+    tipo: "sucesso" | "info";
+  }>({ show: false, titulo: "", mensagem: "", tipo: "sucesso" });
+
+  // Modal de Confirmação
+  const [modalConfirm, setModalConfirm] = useState<{
+    show: boolean;
+    titulo: string;
+    mensagem: string;
+    onConfirm: () => void;
+  }>({ show: false, titulo: "", mensagem: "", onConfirm: () => {} });
 
   // Lista de pessoas (dinâmica)
   const [pessoas, setPessoas] = useState<string[]>(() => {
@@ -218,17 +243,27 @@ function App() {
       setError("Valor de pagamento inválido.");
       return;
     }
-    if (valor > valorMaximo) {
+    // Arredondar para 2 casas decimais para evitar erros de ponto flutuante
+    const valorArredondado = Math.round(valor * 100) / 100;
+    const maximoArredondado = Math.round(valorMaximo * 100) / 100;
+
+    if (valorArredondado > maximoArredondado + 0.01) {
       setError(
         `O valor não pode ser maior que ${formatCurrency(valorMaximo)}.`
       );
       return;
     }
 
+    // Usar o menor entre o valor pago e o máximo (para evitar valores negativos)
+    const valorFinal = Math.min(valorArredondado, maximoArredondado);
+
     setSaldosDevedores((prev) =>
       prev.map((divida) => {
         if (divida.id === dividaId) {
-          const novoValor = Math.max(0, divida.valor_atual - valor);
+          const novoValor = Math.max(
+            0,
+            Math.round((divida.valor_atual - valorFinal) * 100) / 100
+          );
           return {
             ...divida,
             valor_atual: novoValor,
@@ -236,7 +271,7 @@ function App() {
               ...divida.historico,
               {
                 id: Date.now().toString(),
-                valor: valor,
+                valor: valorFinal,
                 data: format(new Date(), "yyyy-MM-dd"),
                 observacao: obsPagamento || undefined,
               },
@@ -253,20 +288,147 @@ function App() {
     setError(null);
   };
 
-  // Excluir dívida
-  const handleDeleteDivida = (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta dívida?")) return;
-    setSaldosDevedores((prev) => prev.filter((d) => d.id !== id));
+  // Desfazer pagamento
+  const handleDesfazerPagamento = (
+    dividaId: string,
+    pagamentoId: string,
+    valorPagamento: number
+  ) => {
+    setModalConfirm({
+      show: true,
+      titulo: "Desfazer Pagamento",
+      mensagem: `Tem certeza que deseja desfazer este pagamento de ${formatCurrency(
+        valorPagamento
+      )}? O valor será adicionado de volta à dívida.`,
+      onConfirm: () => {
+        setSaldosDevedores((prev) =>
+          prev.map((divida) => {
+            if (divida.id === dividaId) {
+              return {
+                ...divida,
+                valor_atual:
+                  Math.round((divida.valor_atual + valorPagamento) * 100) / 100,
+                historico: divida.historico.filter((p) => p.id !== pagamentoId),
+              };
+            }
+            return divida;
+          })
+        );
+        setModalConfirm((prev) => ({ ...prev, show: false }));
+      },
+    });
   };
 
-  // Filtrar dívidas por pessoa
-  const dividasFiltradas = filtroPessoaDivida
-    ? saldosDevedores.filter((d) => d.pessoa === filtroPessoaDivida)
-    : saldosDevedores;
+  // Excluir dívida
+  const handleDeleteDivida = (id: string) => {
+    setModalConfirm({
+      show: true,
+      titulo: "Excluir Dívida",
+      mensagem:
+        "Tem certeza que deseja excluir esta dívida? Esta ação não pode ser desfeita.",
+      onConfirm: () => {
+        setSaldosDevedores((prev) => prev.filter((d) => d.id !== id));
+        setModalConfirm({ ...modalConfirm, show: false });
+      },
+    });
+  };
+
+  // Fechar mês de uma pessoa
+  const handleFecharMes = (pessoa: string) => {
+    const resumoPessoa = resumoMensal.find((r) => r.pessoa === pessoa);
+    if (!resumoPessoa) return;
+
+    const totalDevido = resumoPessoa.total;
+    const valorPago = parseCurrency(valorPagoFecharMes);
+
+    if (valorPago < 0) {
+      setError("Valor pago inválido.");
+      return;
+    }
+
+    if (valorPago > totalDevido) {
+      setError(
+        `O valor pago não pode ser maior que ${formatCurrency(totalDevido)}.`
+      );
+      return;
+    }
+
+    const valorRestante = totalDevido - valorPago;
+
+    if (valorRestante > 0) {
+      // Criar saldo devedor com o valor restante
+      const novaDivida: SaldoDevedor = {
+        id: Date.now().toString(),
+        pessoa: pessoa,
+        descricao: `Gastos pendentes - ${formatMonthYear(mesVisualizacao)}`,
+        valor_original: valorRestante,
+        valor_atual: valorRestante,
+        data_criacao: format(new Date(), "yyyy-MM-dd"),
+        historico: [],
+      };
+      setSaldosDevedores((prev) => [...prev, novaDivida]);
+    }
+
+    // Limpar e fechar modal
+    setValorPagoFecharMes("");
+    setShowFecharMes(null);
+    setError(null);
+
+    // Mostrar feedback
+    if (valorRestante > 0) {
+      setModalFeedback({
+        show: true,
+        titulo: "Mês Fechado!",
+        mensagem: `${pessoa} pagou ${formatCurrency(
+          valorPago
+        )}.\n${formatCurrency(
+          valorRestante
+        )} foi transferido para o Saldo Devedor.`,
+        tipo: "info",
+      });
+    } else {
+      setModalFeedback({
+        show: true,
+        titulo: "Mês Fechado!",
+        mensagem: `${pessoa} pagou ${formatCurrency(
+          valorPago
+        )} (total quitado).`,
+        tipo: "sucesso",
+      });
+    }
+  };
+
+  // Filtrar dívidas por pessoa e status
+  const dividasFiltradas = saldosDevedores.filter((d) => {
+    // Filtro por status (pendentes = valor_atual > 0, pagos = valor_atual === 0)
+    const matchStatus =
+      filtroStatusDivida === "pendentes"
+        ? d.valor_atual > 0
+        : d.valor_atual === 0;
+
+    // Filtro por pessoa
+    const matchPessoa = filtroPessoaDivida
+      ? d.pessoa === filtroPessoaDivida
+      : true;
+
+    return matchStatus && matchPessoa;
+  });
+
+  // Contar pendentes e pagos (sem filtro de pessoa)
+  const totalPendentes = saldosDevedores.filter(
+    (d) => d.valor_atual > 0
+  ).length;
+  const totalPagos = saldosDevedores.filter((d) => d.valor_atual === 0).length;
 
   // Calcular total de dívidas pendentes (filtrado)
   const totalDividasPendentes = dividasFiltradas.reduce(
     (acc, d) => acc + d.valor_atual,
+    0
+  );
+
+  // Calcular total de dívidas quitadas (valor original das quitadas filtradas)
+  const totalDividasQuitadas = dividasFiltradas.reduce(
+    (acc, d) => acc + d.valor_original,
     0
   );
 
@@ -414,29 +576,36 @@ function App() {
 
   // Excluir gasto
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este lançamento?")) return;
+    setModalConfirm({
+      show: true,
+      titulo: "Excluir Lançamento",
+      mensagem:
+        "Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        setModalConfirm((prev) => ({ ...prev, show: false }));
+        try {
+          setError(null);
 
-    try {
-      setError(null);
+          // Se em modo demo, remover localmente
+          if (modoDemo || !supabase) {
+            setGastos((prev) => prev.filter((g) => g.id !== id));
+            return;
+          }
 
-      // Se em modo demo, remover localmente
-      if (modoDemo || !supabase) {
-        setGastos((prev) => prev.filter((g) => g.id !== id));
-        return;
-      }
+          const { error: deleteError } = await supabase
+            .from("gastos")
+            .delete()
+            .eq("id", id);
 
-      const { error: deleteError } = await supabase
-        .from("gastos")
-        .delete()
-        .eq("id", id);
+          if (deleteError) throw deleteError;
 
-      if (deleteError) throw deleteError;
-
-      await fetchGastos();
-    } catch (err) {
-      console.error("Erro ao excluir gasto:", err);
-      setError("Erro ao excluir o gasto. Tente novamente.");
-    }
+          await fetchGastos();
+        } catch (err) {
+          console.error("Erro ao excluir gasto:", err);
+          setError("Erro ao excluir o gasto. Tente novamente.");
+        }
+      },
+    });
   };
 
   // Cores por tipo
@@ -594,16 +763,30 @@ function App() {
                     coresCards[index % coresCards.length]
                   } rounded-xl p-4 text-white shadow-sm`}
                 >
-                  <p className="text-sm text-white/80 mb-1 flex items-center gap-1">
-                    <User className="w-4 h-4" />
-                    {resumo.pessoa}
-                  </p>
-                  <p className="text-xl font-bold">
-                    {formatCurrency(resumo.total)}
-                  </p>
-                  <p className="text-xs text-white/70 mt-2">
-                    {resumo.quantidade} itens
-                  </p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm text-white/80 mb-1 flex items-center gap-1">
+                        <User className="w-4 h-4" />
+                        {resumo.pessoa}
+                      </p>
+                      <p className="text-xl font-bold">
+                        {formatCurrency(resumo.total)}
+                      </p>
+                      <p className="text-xs text-white/70 mt-2">
+                        {resumo.quantidade} itens
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowFecharMes(resumo.pessoa);
+                        setValorPagoFecharMes("");
+                      }}
+                      className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                      title="Fechar mês"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -695,19 +878,37 @@ function App() {
         {abaAtiva === "dividas" && (
           <>
             {/* Card Total Dívidas */}
-            <div className="bg-gradient-to-br from-orange-600 to-red-600 rounded-xl p-4 text-white shadow-lg">
+            <div
+              className={`bg-gradient-to-br ${
+                filtroStatusDivida === "pendentes"
+                  ? "from-orange-600 to-red-600"
+                  : "from-green-600 to-emerald-600"
+              } rounded-xl p-4 text-white shadow-lg`}
+            >
               <p className="text-sm text-white/80 mb-1 flex items-center gap-2">
-                <Clock className="w-4 h-4" />
+                {filtroStatusDivida === "pendentes" ? (
+                  <Clock className="w-4 h-4" />
+                ) : (
+                  <CheckCircle className="w-4 h-4" />
+                )}
                 {filtroPessoaDivida
-                  ? `Dívidas de ${filtroPessoaDivida}`
-                  : "Total de Dívidas Pendentes"}
+                  ? filtroStatusDivida === "pendentes"
+                    ? `Dívidas de ${filtroPessoaDivida}`
+                    : `Quitado por ${filtroPessoaDivida}`
+                  : filtroStatusDivida === "pendentes"
+                  ? "Total de Dívidas Pendentes"
+                  : "Total Quitado"}
               </p>
               <p className="text-3xl font-bold">
-                {formatCurrency(totalDividasPendentes)}
+                {formatCurrency(
+                  filtroStatusDivida === "pendentes"
+                    ? totalDividasPendentes
+                    : totalDividasQuitadas
+                )}
               </p>
               <p className="text-xs text-white/70 mt-2">
-                {dividasFiltradas.filter((d) => d.valor_atual > 0).length}{" "}
-                dívida(s) ativa(s)
+                {dividasFiltradas.length} dívida(s){" "}
+                {filtroStatusDivida === "pendentes" ? "ativa(s)" : "quitada(s)"}
                 {filtroPessoaDivida && (
                   <button
                     onClick={() => setFiltroPessoaDivida("")}
@@ -717,6 +918,63 @@ function App() {
                   </button>
                 )}
               </p>
+            </div>
+
+            {/* Filtro por Status */}
+            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+              <p className="text-sm text-gray-400 mb-2">Status:</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setFiltroStatusDivida("pendentes");
+                    setFiltroPessoaDivida("");
+                  }}
+                  className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                    filtroStatusDivida === "pendentes"
+                      ? "bg-orange-600 text-white"
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  }`}
+                >
+                  <Clock className="w-4 h-4" />
+                  Pendentes
+                  {totalPendentes > 0 && (
+                    <span
+                      className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        filtroStatusDivida === "pendentes"
+                          ? "bg-orange-700"
+                          : "bg-gray-600"
+                      }`}
+                    >
+                      {totalPendentes}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    setFiltroStatusDivida("pagos");
+                    setFiltroPessoaDivida("");
+                  }}
+                  className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                    filtroStatusDivida === "pagos"
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  }`}
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Pagos
+                  {totalPagos > 0 && (
+                    <span
+                      className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        filtroStatusDivida === "pagos"
+                          ? "bg-green-700"
+                          : "bg-gray-600"
+                      }`}
+                    >
+                      {totalPagos}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Filtro por Pessoa */}
@@ -730,23 +988,50 @@ function App() {
                     onClick={() => setFiltroPessoaDivida("")}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       filtroPessoaDivida === ""
-                        ? "bg-orange-600 text-white"
+                        ? filtroStatusDivida === "pendentes"
+                          ? "bg-orange-600 text-white"
+                          : "bg-green-600 text-white"
                         : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                     }`}
                   >
                     Todos
                   </button>
                   {pessoasComDividas.map((pessoa) => {
-                    const totalPessoa = saldosDevedores
-                      .filter((d) => d.pessoa === pessoa)
-                      .reduce((acc, d) => acc + d.valor_atual, 0);
+                    // Calcular valor baseado no status atual
+                    const dividasPessoa = saldosDevedores.filter(
+                      (d) => d.pessoa === pessoa
+                    );
+                    let valorExibir: number;
+
+                    if (filtroStatusDivida === "pendentes") {
+                      // Soma do valor atual (ainda devendo)
+                      valorExibir = dividasPessoa
+                        .filter((d) => d.valor_atual > 0)
+                        .reduce((acc, d) => acc + d.valor_atual, 0);
+                    } else {
+                      // Soma do valor original das dívidas quitadas (total que pagou)
+                      valorExibir = dividasPessoa
+                        .filter((d) => d.valor_atual === 0)
+                        .reduce((acc, d) => acc + d.valor_original, 0);
+                    }
+
+                    // Não mostrar pessoa se não tem dívidas nesse status
+                    const temDividasNoStatus =
+                      filtroStatusDivida === "pendentes"
+                        ? dividasPessoa.some((d) => d.valor_atual > 0)
+                        : dividasPessoa.some((d) => d.valor_atual === 0);
+
+                    if (!temDividasNoStatus) return null;
+
                     return (
                       <button
                         key={pessoa}
                         onClick={() => setFiltroPessoaDivida(pessoa)}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                           filtroPessoaDivida === pessoa
-                            ? "bg-orange-600 text-white"
+                            ? filtroStatusDivida === "pendentes"
+                              ? "bg-orange-600 text-white"
+                              : "bg-green-600 text-white"
                             : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                         }`}
                       >
@@ -755,11 +1040,13 @@ function App() {
                         <span
                           className={`text-xs ${
                             filtroPessoaDivida === pessoa
-                              ? "text-orange-200"
+                              ? filtroStatusDivida === "pendentes"
+                                ? "text-orange-200"
+                                : "text-green-200"
                               : "text-gray-400"
                           }`}
                         >
-                          ({formatCurrency(totalPessoa)})
+                          ({formatCurrency(valorExibir)})
                         </span>
                       </button>
                     );
@@ -880,23 +1167,38 @@ function App() {
                                 Ver histórico ({divida.historico.length}{" "}
                                 pagamento(s))
                               </summary>
-                              <ul className="mt-2 space-y-1 pl-2 border-l-2 border-gray-700">
+                              <ul className="mt-2 space-y-1.5 pl-2 border-l-2 border-gray-700">
                                 {divida.historico.map((pag) => (
                                   <li
                                     key={pag.id}
-                                    className="text-xs text-gray-400"
+                                    className="text-xs text-gray-400 flex items-center justify-between gap-2"
                                   >
-                                    <span className="text-green-400">
-                                      -{formatCurrency(pag.valor)}
-                                    </span>
-                                    {" em "}
-                                    {format(new Date(pag.data), "dd/MM/yyyy")}
-                                    {pag.observacao && (
-                                      <span className="text-gray-500">
-                                        {" "}
-                                        • {pag.observacao}
+                                    <div>
+                                      <span className="text-green-400">
+                                        -{formatCurrency(pag.valor)}
                                       </span>
-                                    )}
+                                      {" em "}
+                                      {format(new Date(pag.data), "dd/MM/yyyy")}
+                                      {pag.observacao && (
+                                        <span className="text-gray-500">
+                                          {" "}
+                                          • {pag.observacao}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <button
+                                      onClick={() =>
+                                        handleDesfazerPagamento(
+                                          divida.id,
+                                          pag.id,
+                                          pag.valor
+                                        )
+                                      }
+                                      className="p-1 text-gray-500 hover:text-orange-400 hover:bg-gray-700 rounded transition-colors"
+                                      title="Desfazer pagamento"
+                                    >
+                                      <Undo2 className="w-3.5 h-3.5" />
+                                    </button>
                                   </li>
                                 ))}
                               </ul>
@@ -1020,6 +1322,250 @@ function App() {
           </>
         )}
       </main>
+
+      {/* Modal de Feedback */}
+      {modalFeedback.show && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-2xl w-full max-w-sm border border-gray-700 overflow-hidden">
+            <div
+              className={`p-4 ${
+                modalFeedback.tipo === "sucesso"
+                  ? "bg-green-600"
+                  : "bg-blue-600"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {modalFeedback.tipo === "sucesso" ? (
+                  <CheckCircle className="w-8 h-8 text-white" />
+                ) : (
+                  <AlertCircle className="w-8 h-8 text-white" />
+                )}
+                <h2 className="text-lg font-semibold text-white">
+                  {modalFeedback.titulo}
+                </h2>
+              </div>
+            </div>
+            <div className="p-4">
+              <p className="text-gray-300 whitespace-pre-line">
+                {modalFeedback.mensagem}
+              </p>
+            </div>
+            <div className="p-4 border-t border-gray-700">
+              <button
+                onClick={() =>
+                  setModalFeedback({ ...modalFeedback, show: false })
+                }
+                className={`w-full py-3 rounded-lg font-medium transition-colors ${
+                  modalFeedback.tipo === "sucesso"
+                    ? "bg-green-600 hover:bg-green-700 text-white"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                }`}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação */}
+      {modalConfirm.show && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-2xl w-full max-w-sm border border-gray-700 overflow-hidden">
+            <div className="p-4 bg-red-600">
+              <div className="flex items-center gap-3">
+                <Trash2 className="w-8 h-8 text-white" />
+                <h2 className="text-lg font-semibold text-white">
+                  {modalConfirm.titulo}
+                </h2>
+              </div>
+            </div>
+            <div className="p-4">
+              <p className="text-gray-300">{modalConfirm.mensagem}</p>
+            </div>
+            <div className="p-4 border-t border-gray-700 flex gap-2">
+              <button
+                onClick={() =>
+                  setModalConfirm((prev) => ({ ...prev, show: false }))
+                }
+                className="flex-1 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-lg font-medium transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={modalConfirm.onConfirm}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Fechar Mês */}
+      {showFecharMes && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md border border-gray-700">
+            <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                Fechar Mês - {showFecharMes}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowFecharMes(null);
+                  setValorPagoFecharMes("");
+                  setError(null);
+                }}
+                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {/* Info do mês */}
+              {(() => {
+                const resumoPessoa = resumoMensal.find(
+                  (r) => r.pessoa === showFecharMes
+                );
+                const totalDevido = resumoPessoa?.total || 0;
+                const valorPago = parseCurrency(valorPagoFecharMes);
+                const valorRestante = Math.max(0, totalDevido - valorPago);
+
+                return (
+                  <>
+                    <div className="bg-gray-700/50 rounded-lg p-4 space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Mês:</span>
+                        <span className="text-white font-medium">
+                          {formatMonthYear(mesVisualizacao)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Total devido:</span>
+                        <span className="text-white font-medium">
+                          {formatCurrency(totalDevido)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Itens:</span>
+                        <span className="text-white font-medium">
+                          {resumoPessoa?.quantidade || 0}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Campo de valor pago */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Quanto {showFecharMes} pagou?
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                          R$
+                        </span>
+                        <input
+                          type="text"
+                          value={valorPagoFecharMes}
+                          onChange={(e) =>
+                            setValorPagoFecharMes(
+                              formatCurrencyInput(e.target.value)
+                            )
+                          }
+                          placeholder="0,00"
+                          className="w-full pl-10 pr-3 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 outline-none"
+                          inputMode="numeric"
+                        />
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={() =>
+                            setValorPagoFecharMes(
+                              totalDevido.toLocaleString("pt-BR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })
+                            )
+                          }
+                          className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 text-white rounded font-medium transition-colors"
+                        >
+                          Tudo ({formatCurrency(totalDevido)})
+                        </button>
+                        <button
+                          onClick={() => setValorPagoFecharMes("")}
+                          className="px-3 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded font-medium transition-colors"
+                        >
+                          Limpar
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Resumo */}
+                    {valorPago > 0 && (
+                      <div
+                        className={`rounded-lg p-4 ${
+                          valorRestante > 0
+                            ? "bg-orange-900/30 border border-orange-700"
+                            : "bg-green-900/30 border border-green-700"
+                        }`}
+                      >
+                        <p className="text-sm text-gray-300 mb-2">Resumo:</p>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Valor pago:</span>
+                            <span className="text-green-400 font-medium">
+                              {formatCurrency(valorPago)}
+                            </span>
+                          </div>
+                          {valorRestante > 0 ? (
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">
+                                Vai para Saldo Devedor:
+                              </span>
+                              <span className="text-orange-400 font-medium">
+                                {formatCurrency(valorRestante)}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Status:</span>
+                              <span className="text-green-400 font-medium">
+                                Quitado ✓
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Botões */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setShowFecharMes(null);
+                          setValorPagoFecharMes("");
+                          setError(null);
+                        }}
+                        className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-lg font-medium transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={() => handleFecharMes(showFecharMes)}
+                        className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                      >
+                        Fechar Mês
+                      </button>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Formulário de Gasto */}
       {showForm && (
