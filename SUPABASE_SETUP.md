@@ -11,6 +11,7 @@
 7. Clique em **Run** (ou pressione `Ctrl + Enter`)
 
 ### ✅ Esperado:
+
 - Criar tabelas: `pessoas`, `gastos`, `saldos_devedores`
 - Criar índices e triggers
 - Habilitar RLS (Row Level Security)
@@ -20,14 +21,17 @@
 ## Passo 2: Configurar Variáveis de Ambiente
 
 ### Localmente (.env.local)
+
 1. Abra na raiz do projeto: `.env.local`
 2. Adicione suas credenciais do Supabase:
+
 ```
 VITE_SUPABASE_URL=https://seu-projeto.supabase.co
 VITE_SUPABASE_ANON_KEY=sua-chave-anonima
 ```
 
 ### Como obter as credenciais:
+
 1. Na dashboard do Supabase, vá para **Settings** (ícone de engrenagem)
 2. Selecione **API** no menu lateral
 3. Copie:
@@ -35,6 +39,7 @@ VITE_SUPABASE_ANON_KEY=sua-chave-anonima
    - **anon public** → `VITE_SUPABASE_ANON_KEY`
 
 ### No Vercel (Produção)
+
 1. Acesse seu projeto no Vercel: https://vercel.com
 2. Vá para **Settings** → **Environment Variables**
 3. Adicione as mesmas variáveis:
@@ -49,6 +54,7 @@ VITE_SUPABASE_ANON_KEY=sua-chave-anonima
 Se você já tem dados no localStorage, eles serão sincronizados automaticamente na primeira carga.
 
 **Manual sync via SQL:**
+
 ```sql
 -- Exemplo: Adicionar pessoas existentes
 INSERT INTO pessoas (id, nome) VALUES
@@ -62,11 +68,13 @@ ON CONFLICT (id) DO NOTHING;
 ## Passo 4: Testar Cross-Device Sync
 
 1. **PC/Navegador 1:**
+
    - Abra: http://localhost:5174 (ou sua URL Vercel)
    - Crie um novo gasto ou saldo devedor
    - Observe sincronização em tempo real
 
 2. **Celular/Navegador 2:**
+
    - Abra a mesma URL
    - Você verá os mesmos dados criados no Passo 1
    - Crie um novo registro no celular
@@ -82,20 +90,24 @@ ON CONFLICT (id) DO NOTHING;
 ## 🚨 Possíveis Problemas
 
 ### ❌ "Erro de conexão com Supabase"
+
 - Verifique as variáveis de ambiente
 - Confirme que `.env.local` existe e tem as chaves corretas
 - Reinicie o servidor de desenvolvimento: `npm run dev`
 
 ### ❌ "Tabelas não existem"
+
 - Execute novamente o SQL schema completo
 - Confirme que não há erros na execução
 
 ### ❌ "Dados não sincronizam entre dispositivos"
+
 - Verifique se está usando a mesma conta/projeto Supabase
 - Recarregue a página (Ctrl+F5)
 - Limpe cache do navegador se necessário
 
 ### ❌ "localhost não funciona no celular"
+
 - Use a URL do Vercel ao invés de localhost
 - Ou use tunnel tools como `ngrok` para expor localhost
 
@@ -120,6 +132,7 @@ Dispositivo B (Celular)
 ```
 
 **Benefícios:**
+
 - ✅ Dados em tempo real
 - ✅ Funciona offline (localStorage como fallback)
 - ✅ Seguro com RLS

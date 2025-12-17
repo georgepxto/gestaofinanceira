@@ -26,12 +26,12 @@ export const gastosFunctions = {
       .from("gastos")
       .select("*")
       .order("data_inicio", { ascending: false });
-    
+
     if (error) {
       console.error("Erro ao buscar gastos:", error);
       return [];
     }
-    
+
     return data || [];
   },
 
@@ -42,12 +42,12 @@ export const gastosFunctions = {
       .insert([gasto])
       .select()
       .single();
-    
+
     if (error) {
       console.error("Erro ao criar gasto:", error);
       return null;
     }
-    
+
     return data;
   },
 
@@ -57,29 +57,26 @@ export const gastosFunctions = {
       .from("gastos")
       .update(updates)
       .eq("id", id);
-    
+
     if (error) {
       console.error("Erro ao atualizar gasto:", error);
       return false;
     }
-    
+
     return true;
   },
 
   async delete(id: string): Promise<boolean> {
     if (!supabase) return false;
-    const { error } = await supabase
-      .from("gastos")
-      .delete()
-      .eq("id", id);
-    
+    const { error } = await supabase.from("gastos").delete().eq("id", id);
+
     if (error) {
       console.error("Erro ao deletar gasto:", error);
       return false;
     }
-    
+
     return true;
-  }
+  },
 };
 
 // ========== FUNÇÕES DE SALDOS DEVEDORES ==========
@@ -90,12 +87,12 @@ export const saldosFunctions = {
       .from("saldos_devedores")
       .select("*")
       .order("data_criacao", { ascending: false });
-    
+
     if (error) {
       console.error("Erro ao buscar saldos:", error);
       return [];
     }
-    
+
     return data || [];
   },
 
@@ -106,12 +103,12 @@ export const saldosFunctions = {
       .insert([saldo])
       .select()
       .single();
-    
+
     if (error) {
       console.error("Erro ao criar saldo devedor:", error);
       return null;
     }
-    
+
     return data;
   },
 
@@ -121,12 +118,12 @@ export const saldosFunctions = {
       .from("saldos_devedores")
       .update(updates)
       .eq("id", id);
-    
+
     if (error) {
       console.error("Erro ao atualizar saldo devedor:", error);
       return false;
     }
-    
+
     return true;
   },
 
@@ -136,14 +133,14 @@ export const saldosFunctions = {
       .from("saldos_devedores")
       .delete()
       .eq("id", id);
-    
+
     if (error) {
       console.error("Erro ao deletar saldo devedor:", error);
       return false;
     }
-    
+
     return true;
-  }
+  },
 };
 
 // ========== FUNÇÕES DE PESSOAS ==========
@@ -154,41 +151,36 @@ export const pessoasFunctions = {
       .from("pessoas")
       .select("*")
       .order("nome", { ascending: true });
-    
+
     if (error) {
       console.error("Erro ao buscar pessoas:", error);
       return [];
     }
-    
+
     return data || [];
   },
 
   async create(pessoa: { id: string; nome: string }): Promise<boolean> {
     if (!supabase) return false;
-    const { error } = await supabase
-      .from("pessoas")
-      .insert([pessoa]);
-    
+    const { error } = await supabase.from("pessoas").insert([pessoa]);
+
     if (error) {
       console.error("Erro ao criar pessoa:", error);
       return false;
     }
-    
+
     return true;
   },
 
   async delete(id: string): Promise<boolean> {
     if (!supabase) return false;
-    const { error } = await supabase
-      .from("pessoas")
-      .delete()
-      .eq("id", id);
-    
+    const { error } = await supabase.from("pessoas").delete().eq("id", id);
+
     if (error) {
       console.error("Erro ao deletar pessoa:", error);
       return false;
     }
-    
+
     return true;
-  }
+  },
 };

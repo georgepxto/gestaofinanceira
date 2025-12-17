@@ -24,7 +24,12 @@ import {
   Undo2,
 } from "lucide-react";
 import { addMonths, subMonths, format } from "date-fns";
-import { supabase, isSupabaseConfigured, saldosFunctions, pessoasFunctions } from "./lib/supabase";
+import {
+  supabase,
+  isSupabaseConfigured,
+  saldosFunctions,
+  pessoasFunctions,
+} from "./lib/supabase";
 import type {
   Gasto,
   GastoForm,
@@ -184,13 +189,16 @@ function App() {
     try {
       const data = await pessoasFunctions.getAll();
       if (data.length > 0) {
-        setPessoas(data.map(p => p.nome));
+        setPessoas(data.map((p) => p.nome));
       } else {
         // Migrar dados do localStorage se existir
         const saved = localStorage.getItem("pessoas");
         const localData = saved ? JSON.parse(saved) : ["Pai", "Mãe"];
         for (const nome of localData) {
-          await pessoasFunctions.create({ id: `pessoa-${Date.now()}-${Math.random()}`, nome });
+          await pessoasFunctions.create({
+            id: `pessoa-${Date.now()}-${Math.random()}`,
+            nome,
+          });
         }
         setPessoas(localData);
       }
@@ -275,7 +283,7 @@ function App() {
       if (isSupabaseConfigured && supabase) {
         // Buscar ID da pessoa e deletar
         const pessoasData = await pessoasFunctions.getAll();
-        const pessoaToDelete = pessoasData.find(p => p.nome === nome);
+        const pessoaToDelete = pessoasData.find((p) => p.nome === nome);
         if (pessoaToDelete) {
           await pessoasFunctions.delete(pessoaToDelete.id);
         }
@@ -345,7 +353,7 @@ function App() {
     const valorFinal = Math.min(valorArredondado, maximoArredondado);
 
     // Encontrar a dívida para atualizar
-    const dividaAtual = saldosDevedores.find(d => d.id === dividaId);
+    const dividaAtual = saldosDevedores.find((d) => d.id === dividaId);
     if (!dividaAtual) return;
 
     const novoValor = Math.max(
@@ -402,11 +410,14 @@ function App() {
         valorPagamento
       )}? O valor será adicionado de volta à dívida.`,
       onConfirm: async () => {
-        const dividaAtual = saldosDevedores.find(d => d.id === dividaId);
+        const dividaAtual = saldosDevedores.find((d) => d.id === dividaId);
         if (!dividaAtual) return;
 
-        const novoValorAtual = Math.round((dividaAtual.valor_atual + valorPagamento) * 100) / 100;
-        const novoHistorico = dividaAtual.historico.filter((p) => p.id !== pagamentoId);
+        const novoValorAtual =
+          Math.round((dividaAtual.valor_atual + valorPagamento) * 100) / 100;
+        const novoHistorico = dividaAtual.historico.filter(
+          (p) => p.id !== pagamentoId
+        );
 
         // Atualizar no Supabase se configurado
         if (isSupabaseConfigured && supabase) {
@@ -598,6 +609,44 @@ function App() {
   useEffect(() => {
     fetchGastos();
   }, [fetchGastos]);
+
+  // Sincronização em tempo real com Supabase (Realtime)
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    // Inscrever para mudanças na tabela gastos
+    const gastosChannel = supabase
+      .channel('gastos-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gastos' }, () => {
+        fetchGastos();
+      })
+      .subscribe();
+
+    // Inscrever para mudanças na tabela saldos_devedores
+    const saldosChannel = supabase
+      .channel('saldos-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'saldos_devedores' }, () => {
+        fetchSaldos();
+      })
+      .subscribe();
+
+    // Inscrever para mudanças na tabela pessoas
+    const pessoasChannel = supabase
+      .channel('pessoas-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pessoas' }, () => {
+        fetchPessoas();
+      })
+      .subscribe();
+
+    // Cleanup ao desmontar
+    return () => {
+      if (supabase) {
+        supabase.removeChannel(gastosChannel);
+        supabase.removeChannel(saldosChannel);
+        supabase.removeChannel(pessoasChannel);
+      }
+    };
+  }, [fetchGastos, fetchSaldos, fetchPessoas]);
 
   // Recalcular parcelas ativas quando muda o mês ou os gastos
   useEffect(() => {
