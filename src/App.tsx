@@ -24,7 +24,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { addMonths, subMonths, format } from "date-fns";
-import { supabase, isSupabaseConfigured } from "./lib/supabase";
+import { supabase, isSupabaseConfigured, saldosFunctions, pessoasFunctions } from "./lib/supabase";
 import type {
   Gasto,
   GastoForm,
@@ -112,10 +112,8 @@ function App() {
   const [totalMes, setTotalMes] = useState<number>(0);
 
   // Saldo Devedor
-  const [saldosDevedores, setSaldosDevedores] = useState<SaldoDevedor[]>(() => {
-    const saved = localStorage.getItem("saldosDevedores");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [saldosDevedores, setSaldosDevedores] = useState<SaldoDevedor[]>([]);
+  const [saldosLoaded, setSaldosLoaded] = useState<boolean>(false);
   const [showFormDivida, setShowFormDivida] = useState<boolean>(false);
   const [showPagamento, setShowPagamento] = useState<string | null>(null);
   const [formDivida, setFormDivida] = useState<SaldoDevedorForm>({
@@ -151,10 +149,8 @@ function App() {
   }>({ show: false, titulo: "", mensagem: "", onConfirm: () => {} });
 
   // Lista de pessoas (dinâmica)
-  const [pessoas, setPessoas] = useState<string[]>(() => {
-    const saved = localStorage.getItem("pessoas");
-    return saved ? JSON.parse(saved) : ["Pai", "Mãe"];
-  });
+  const [pessoas, setPessoas] = useState<string[]>([]);
+  const [pessoasLoaded, setPessoasLoaded] = useState<boolean>(false);
   const [novaPessoa, setNovaPessoa] = useState<string>("");
   const [showAddPessoa, setShowAddPessoa] = useState<boolean>(false);
 
@@ -174,10 +170,83 @@ function App() {
     tipo: "credito",
   });
 
-  // Salvar pessoas no localStorage
+  // Carregar pessoas do Supabase (ou localStorage como fallback)
+  const fetchPessoas = useCallback(async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      // Fallback para localStorage em modo demo
+      const saved = localStorage.getItem("pessoas");
+      const data = saved ? JSON.parse(saved) : ["Pai", "Mãe"];
+      setPessoas(data);
+      setPessoasLoaded(true);
+      return;
+    }
+
+    try {
+      const data = await pessoasFunctions.getAll();
+      if (data.length > 0) {
+        setPessoas(data.map(p => p.nome));
+      } else {
+        // Migrar dados do localStorage se existir
+        const saved = localStorage.getItem("pessoas");
+        const localData = saved ? JSON.parse(saved) : ["Pai", "Mãe"];
+        for (const nome of localData) {
+          await pessoasFunctions.create({ id: `pessoa-${Date.now()}-${Math.random()}`, nome });
+        }
+        setPessoas(localData);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar pessoas:", err);
+      const saved = localStorage.getItem("pessoas");
+      setPessoas(saved ? JSON.parse(saved) : ["Pai", "Mãe"]);
+    }
+    setPessoasLoaded(true);
+  }, []);
+
+  // Carregar saldos devedores do Supabase (ou localStorage como fallback)
+  const fetchSaldos = useCallback(async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      // Fallback para localStorage em modo demo
+      const saved = localStorage.getItem("saldosDevedores");
+      setSaldosDevedores(saved ? JSON.parse(saved) : []);
+      setSaldosLoaded(true);
+      return;
+    }
+
+    try {
+      const data = await saldosFunctions.getAll();
+      if (data.length > 0) {
+        setSaldosDevedores(data);
+      } else {
+        // Migrar dados do localStorage se existir
+        const saved = localStorage.getItem("saldosDevedores");
+        if (saved) {
+          const localData: SaldoDevedor[] = JSON.parse(saved);
+          for (const saldo of localData) {
+            await saldosFunctions.create(saldo);
+          }
+          setSaldosDevedores(localData);
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar saldos:", err);
+      const saved = localStorage.getItem("saldosDevedores");
+      setSaldosDevedores(saved ? JSON.parse(saved) : []);
+    }
+    setSaldosLoaded(true);
+  }, []);
+
+  // Carregar dados ao iniciar
   useEffect(() => {
-    localStorage.setItem("pessoas", JSON.stringify(pessoas));
-  }, [pessoas]);
+    fetchPessoas();
+    fetchSaldos();
+  }, [fetchPessoas, fetchSaldos]);
+
+  // Salvar pessoas no Supabase (e localStorage como backup)
+  useEffect(() => {
+    if (pessoasLoaded && pessoas.length > 0) {
+      localStorage.setItem("pessoas", JSON.stringify(pessoas));
+    }
+  }, [pessoas, pessoasLoaded]);
 
   // Atualizar pessoa padrão quando lista muda
   useEffect(() => {
@@ -187,9 +256,12 @@ function App() {
   }, [pessoas, formData.pessoa]);
 
   // Adicionar nova pessoa
-  const handleAddPessoa = () => {
+  const handleAddPessoa = async () => {
     const nome = novaPessoa.trim();
     if (nome && !pessoas.includes(nome)) {
+      if (isSupabaseConfigured && supabase) {
+        await pessoasFunctions.create({ id: `pessoa-${Date.now()}`, nome });
+      }
       setPessoas((prev) => [...prev, nome]);
       setFormData((prev) => ({ ...prev, pessoa: nome }));
       setNovaPessoa("");
@@ -198,8 +270,16 @@ function App() {
   };
 
   // Remover pessoa
-  const handleRemovePessoa = (nome: string) => {
+  const handleRemovePessoa = async (nome: string) => {
     if (pessoas.length > 1) {
+      if (isSupabaseConfigured && supabase) {
+        // Buscar ID da pessoa e deletar
+        const pessoasData = await pessoasFunctions.getAll();
+        const pessoaToDelete = pessoasData.find(p => p.nome === nome);
+        if (pessoaToDelete) {
+          await pessoasFunctions.delete(pessoaToDelete.id);
+        }
+      }
       setPessoas((prev) => prev.filter((p) => p !== nome));
       if (formData.pessoa === nome) {
         setFormData((prev) => ({ ...prev, pessoa: pessoas[0] }));
@@ -207,13 +287,15 @@ function App() {
     }
   };
 
-  // Salvar saldos devedores no localStorage
+  // Salvar saldos devedores no Supabase (e localStorage como backup)
   useEffect(() => {
-    localStorage.setItem("saldosDevedores", JSON.stringify(saldosDevedores));
-  }, [saldosDevedores]);
+    if (saldosLoaded && saldosDevedores.length >= 0) {
+      localStorage.setItem("saldosDevedores", JSON.stringify(saldosDevedores));
+    }
+  }, [saldosDevedores, saldosLoaded]);
 
   // Adicionar nova dívida
-  const handleAddDivida = () => {
+  const handleAddDivida = async () => {
     const valor = parseCurrency(formDivida.valor);
     if (!formDivida.pessoa || !formDivida.descricao || valor <= 0) {
       setError("Preencha todos os campos corretamente.");
@@ -230,6 +312,11 @@ function App() {
       historico: [],
     };
 
+    // Salvar no Supabase se configurado
+    if (isSupabaseConfigured && supabase) {
+      await saldosFunctions.create(novaDivida);
+    }
+
     setSaldosDevedores((prev) => [...prev, novaDivida]);
     setFormDivida({ pessoa: pessoas[0] || "", descricao: "", valor: "" });
     setShowFormDivida(false);
@@ -237,7 +324,7 @@ function App() {
   };
 
   // Registrar pagamento de dívida
-  const handlePagamento = (dividaId: string, valorMaximo: number) => {
+  const handlePagamento = async (dividaId: string, valorMaximo: number) => {
     const valor = parseCurrency(valorPagamento);
     if (valor <= 0) {
       setError("Valor de pagamento inválido.");
@@ -257,25 +344,39 @@ function App() {
     // Usar o menor entre o valor pago e o máximo (para evitar valores negativos)
     const valorFinal = Math.min(valorArredondado, maximoArredondado);
 
+    // Encontrar a dívida para atualizar
+    const dividaAtual = saldosDevedores.find(d => d.id === dividaId);
+    if (!dividaAtual) return;
+
+    const novoValor = Math.max(
+      0,
+      Math.round((dividaAtual.valor_atual - valorFinal) * 100) / 100
+    );
+    const novoHistorico = [
+      ...dividaAtual.historico,
+      {
+        id: Date.now().toString(),
+        valor: valorFinal,
+        data: format(new Date(), "yyyy-MM-dd"),
+        observacao: obsPagamento || undefined,
+      },
+    ];
+
+    // Atualizar no Supabase se configurado
+    if (isSupabaseConfigured && supabase) {
+      await saldosFunctions.update(dividaId, {
+        valor_atual: novoValor,
+        historico: novoHistorico,
+      });
+    }
+
     setSaldosDevedores((prev) =>
       prev.map((divida) => {
         if (divida.id === dividaId) {
-          const novoValor = Math.max(
-            0,
-            Math.round((divida.valor_atual - valorFinal) * 100) / 100
-          );
           return {
             ...divida,
             valor_atual: novoValor,
-            historico: [
-              ...divida.historico,
-              {
-                id: Date.now().toString(),
-                valor: valorFinal,
-                data: format(new Date(), "yyyy-MM-dd"),
-                observacao: obsPagamento || undefined,
-              },
-            ],
+            historico: novoHistorico,
           };
         }
         return divida;
@@ -300,15 +401,28 @@ function App() {
       mensagem: `Tem certeza que deseja desfazer este pagamento de ${formatCurrency(
         valorPagamento
       )}? O valor será adicionado de volta à dívida.`,
-      onConfirm: () => {
+      onConfirm: async () => {
+        const dividaAtual = saldosDevedores.find(d => d.id === dividaId);
+        if (!dividaAtual) return;
+
+        const novoValorAtual = Math.round((dividaAtual.valor_atual + valorPagamento) * 100) / 100;
+        const novoHistorico = dividaAtual.historico.filter((p) => p.id !== pagamentoId);
+
+        // Atualizar no Supabase se configurado
+        if (isSupabaseConfigured && supabase) {
+          await saldosFunctions.update(dividaId, {
+            valor_atual: novoValorAtual,
+            historico: novoHistorico,
+          });
+        }
+
         setSaldosDevedores((prev) =>
           prev.map((divida) => {
             if (divida.id === dividaId) {
               return {
                 ...divida,
-                valor_atual:
-                  Math.round((divida.valor_atual + valorPagamento) * 100) / 100,
-                historico: divida.historico.filter((p) => p.id !== pagamentoId),
+                valor_atual: novoValorAtual,
+                historico: novoHistorico,
               };
             }
             return divida;
@@ -326,7 +440,11 @@ function App() {
       titulo: "Excluir Dívida",
       mensagem:
         "Tem certeza que deseja excluir esta dívida? Esta ação não pode ser desfeita.",
-      onConfirm: () => {
+      onConfirm: async () => {
+        // Deletar no Supabase se configurado
+        if (isSupabaseConfigured && supabase) {
+          await saldosFunctions.delete(id);
+        }
         setSaldosDevedores((prev) => prev.filter((d) => d.id !== id));
         setModalConfirm({ ...modalConfirm, show: false });
       },
@@ -334,7 +452,7 @@ function App() {
   };
 
   // Fechar mês de uma pessoa
-  const handleFecharMes = (pessoa: string) => {
+  const handleFecharMes = async (pessoa: string) => {
     const resumoPessoa = resumoMensal.find((r) => r.pessoa === pessoa);
     if (!resumoPessoa) return;
 
@@ -366,6 +484,12 @@ function App() {
         data_criacao: format(new Date(), "yyyy-MM-dd"),
         historico: [],
       };
+
+      // Salvar no Supabase se configurado
+      if (isSupabaseConfigured && supabase) {
+        await saldosFunctions.create(novaDivida);
+      }
+
       setSaldosDevedores((prev) => [...prev, novaDivida]);
     }
 

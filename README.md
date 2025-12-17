@@ -5,6 +5,7 @@ Uma aplicação web moderna para controlar gastos parcelados e saldos devedores 
 ## 🎯 Características Principais
 
 ### 📊 Aba Gastos
+
 - **Navegação por mês** - Veja os gastos de qualquer mês
 - **Resumo mensal** - Total de gastos e por pessoa
 - **Lançamentos com parcelas** - Registre gastos com até 24 parcelas
@@ -12,6 +13,7 @@ Uma aplicação web moderna para controlar gastos parcelados e saldos devedores 
 - **Modo demo** - Funciona sem Supabase (dados em localStorage)
 
 ### 💳 Aba Saldo Devedor
+
 - **Rastreamento de dívidas** - Mantenha controle de dívidas antigas
 - **Histórico de pagamentos** - Veja todos os pagamentos realizados
 - **Desfazer pagamentos** - Reverta pagamentos acidentais
@@ -20,11 +22,13 @@ Uma aplicação web moderna para controlar gastos parcelados e saldos devedores 
 - **Barra de progresso** - Visualize o andamento do pagamento
 
 ### ⏹️ Fechar Mês
+
 - **Botão por pessoa** - Feche o mês de cada pessoa individualmente
 - **Transferência automática** - Gastos não pagos viram saldo devedor
 - **Confirmação visual** - Veja quanto fica de dívida antes de confirmar
 
 ### 👥 Gerenciamento de Pessoas
+
 - **Pessoas dinâmicas** - Adicione pessoas além de "Pai" e "Mãe"
 - **Adicionar novos usuários** - Crie usuários conforme necessário
 - **Remover usuários** - Delete usuários que não precisa mais
@@ -32,30 +36,35 @@ Uma aplicação web moderna para controlar gastos parcelados e saldos devedores 
 ## 🚀 Instalação
 
 ### Pré-requisitos
-- Node.js 16+ 
+
+- Node.js 16+
 - npm ou yarn
 
 ### Passos
 
 1. **Clone o repositório**
+
 ```bash
 git clone https://github.com/georgepxto/gestaofinanceira.git
 cd gestao
 ```
 
 2. **Instale as dependências**
+
 ```bash
 npm install
 ```
 
 3. **Configure o Supabase (opcional)**
-Crie um arquivo `.env` na raiz do projeto:
+   Crie um arquivo `.env` na raiz do projeto:
+
 ```env
 VITE_SUPABASE_URL=sua_url_aqui
 VITE_SUPABASE_ANON_KEY=sua_chave_aqui
 ```
 
 4. **Inicie o servidor de desenvolvimento**
+
 ```bash
 npm run dev
 ```
@@ -103,10 +112,12 @@ A aplicação abrirá em `http://localhost:5174`
 ### Filtrando Dívidas
 
 **Por Status:**
+
 - **Pendentes** - Dívidas ativas (mostradas por padrão)
 - **Pagos** - Dívidas já quitadas (histórico)
 
 **Por Pessoa:**
+
 - Use o filtro "Filtrar por pessoa" para ver apenas de uma pessoa
 - Clique em "Todos" para remover o filtro
 
@@ -145,10 +156,12 @@ src/
 ## 💾 Armazenamento
 
 ### Sem Supabase
+
 - Dados salvos em **localStorage** do navegador
 - Dados persistem após fechar o navegador
 
 ### Com Supabase
+
 - Gastos salvos na tabela `gastos`
 - Saldos devedores e pessoas em localStorage
 
@@ -167,6 +180,7 @@ Se não configurado, a app usa modo demo com localStorage.
 ## 📊 Dados de Demonstração
 
 Quando sem Supabase, a app vem com dados de exemplo:
+
 - iPhone 15 Pro (Pai) - 12 parcelas
 - Geladeira (Mãe) - 10 parcelas
 - Curso de Inglês (Mãe) - 6 parcelas
@@ -176,13 +190,16 @@ Quando sem Supabase, a app vem com dados de exemplo:
 ## 🐛 Troubleshooting
 
 ### "Nenhum lançamento para este mês"
+
 - Verifique a data de início dos gastos
 - Use o botão "Ir para hoje" para voltar ao mês atual
 
 ### Valor não aceita decimais
+
 - Digite em centavos: `10050` = R$ 100,50
 
 ### Dados desaparecem ao fechar
+
 - Verifique se localStorage está habilitado
 
 ## 📄 Licença

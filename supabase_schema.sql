@@ -1,9 +1,16 @@
 -- ===========================================
--- SCHEMA SQL PARA SUPABASE - CONTROLE DE FINANÇAS PARCELADAS
+-- SCHEMA SQL PARA SUPABASE - CONTROLE DE FINANÇAS PARCELADAS (COMPLETO)
 -- ===========================================
 
--- Criação da tabela de gastos
-CREATE TABLE gastos (
+-- ========== TABELA PESSOAS ==========
+CREATE TABLE IF NOT EXISTS pessoas (
+    id TEXT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ========== TABELA GASTOS ==========
+CREATE TABLE IF NOT EXISTS gastos (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     descricao VARCHAR(255) NOT NULL,
     pessoa VARCHAR(100) NOT NULL,
@@ -15,47 +22,71 @@ CREATE TABLE gastos (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Índices para melhor performance nas consultas
-CREATE INDEX idx_gastos_data_inicio ON gastos(data_inicio);
-CREATE INDEX idx_gastos_pessoa ON gastos(pessoa);
-CREATE INDEX idx_gastos_tipo ON gastos(tipo);
+-- ========== TABELA SALDOS DEVEDORES ==========
+CREATE TABLE IF NOT EXISTS saldos_devedores (
+    id TEXT PRIMARY KEY,
+    pessoa VARCHAR(100) NOT NULL,
+    descricao VARCHAR(255) NOT NULL,
+    valor_original DECIMAL(10, 2) NOT NULL,
+    valor_atual DECIMAL(10, 2) NOT NULL,
+    data_criacao DATE NOT NULL,
+    historico JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
--- Função para atualizar o campo updated_at automaticamente
+-- ========== ÍNDICES ==========
+CREATE INDEX IF NOT EXISTS idx_gastos_data_inicio ON gastos(data_inicio);
+CREATE INDEX IF NOT EXISTS idx_gastos_pessoa ON gastos(pessoa);
+CREATE INDEX IF NOT EXISTS idx_gastos_tipo ON gastos(tipo);
+CREATE INDEX IF NOT EXISTS idx_saldos_pessoa ON saldos_devedores(pessoa);
+CREATE INDEX IF NOT EXISTS idx_saldos_valor_atual ON saldos_devedores(valor_atual);
+
+-- ========== FUNÇÃO PARA ATUALIZAR UPDATED_AT ==========
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE 'plpgsql';
 
--- Trigger para atualizar updated_at
+-- ========== TRIGGERS ==========
+DROP TRIGGER IF EXISTS update_gastos_updated_at ON gastos;
 CREATE TRIGGER update_gastos_updated_at 
     BEFORE UPDATE ON gastos 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
--- Habilitar Row Level Security (RLS) - Opcional
--- ALTER TABLE gastos ENABLE ROW LEVEL SECURITY;
+DROP TRIGGER IF EXISTS update_saldos_updated_at ON saldos_devedores;
+CREATE TRIGGER update_saldos_updated_at 
+    BEFORE UPDATE ON saldos_devedores 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
--- Política para permitir todas as operações (ajuste conforme necessário)
--- CREATE POLICY "Enable all access for authenticated users" ON gastos
---     FOR ALL
---     USING (true)
---     WITH CHECK (true);
+-- ========== ROW LEVEL SECURITY (RLS) ==========
+-- Habilitar RLS nas tabelas
+ALTER TABLE pessoas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE gastos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE saldos_devedores ENABLE ROW LEVEL SECURITY;
 
--- ===========================================
--- DADOS DE EXEMPLO (OPCIONAL)
--- ===========================================
+-- Remover políticas antigas se existirem
+DROP POLICY IF EXISTS "Enable all access for authenticated users" ON pessoas;
+DROP POLICY IF EXISTS "Enable all access for authenticated users" ON gastos;
+DROP POLICY IF EXISTS "Enable all access for authenticated users" ON saldos_devedores;
 
-INSERT INTO gastos (descricao, pessoa, valor_total, num_parcelas, data_inicio, tipo) VALUES
-    ('iPhone 15', 'Pai', 5999.00, 12, '2024-01-15', 'credito'),
-    ('Geladeira Brastemp', 'Mãe', 3500.00, 10, '2024-02-01', 'credito'),
-    ('Supermercado', 'Pai', 850.00, 1, '2024-03-10', 'debito'),
-    ('Curso de Inglês', 'Mãe', 2400.00, 6, '2024-01-20', 'credito'),
-    ('TV 55 polegadas', 'Pai', 2800.00, 5, '2023-10-01', 'credito'),
-    ('Academia Anual', 'Mãe', 1200.00, 12, '2024-01-01', 'credito'),
-    ('Conta de Luz', 'Pai', 350.00, 1, '2024-03-05', 'debito'),
-    ('Notebook Dell', 'Pai', 4500.00, 8, '2023-11-15', 'credito'),
-    ('Roupas Inverno', 'Mãe', 1500.00, 3, '2024-02-20', 'credito'),
-    ('Restaurante', 'Pai', 280.00, 1, '2024-03-12', 'debito');
+-- Criar políticas para permitir acesso a usuários autenticados
+CREATE POLICY "Enable all access for authenticated users" ON pessoas
+    FOR ALL
+    USING (auth.role() = 'authenticated')
+    WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Enable all access for authenticated users" ON gastos
+    FOR ALL
+    USING (auth.role() = 'authenticated')
+    WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Enable all access for authenticated users" ON saldos_devedores
+    FOR ALL
+    USING (auth.role() = 'authenticated')
+    WITH CHECK (auth.role() = 'authenticated');
