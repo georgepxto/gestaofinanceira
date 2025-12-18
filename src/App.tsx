@@ -692,6 +692,7 @@ function App() {
       }
     } else {
       // Gasto único (débito ou crédito à vista)
+      // Débito é automaticamente marcado como pago
       const novoGasto: MeuGasto = {
         id: Date.now().toString(),
         descricao: formMeuGasto.descricao,
@@ -699,7 +700,7 @@ function App() {
         tipo: formMeuGasto.tipo,
         categoria: formMeuGasto.categoria,
         data: formMeuGasto.data,
-        pago: false,
+        pago: formMeuGasto.tipo === "debito",
         dividido_com:
           formMeuGasto.categoria === "dividido"
             ? formMeuGasto.dividido_com
@@ -822,7 +823,7 @@ function App() {
     );
 
   const totalMeusGastosPagos = meusGastosDoMes
-    .filter((g) => g.pago)
+    .filter((g) => g.pago || g.tipo === "debito")
     .reduce(
       (acc, g) =>
         acc +
@@ -830,14 +831,10 @@ function App() {
       0
     );
 
-  const totalMeusGastosPendentes = meusGastosDoMes
-    .filter((g) => !g.pago)
-    .reduce(
-      (acc, g) =>
-        acc +
-        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
-      0
-    );
+  // Total de gastos fixos ativos
+  const totalGastosFixos = gastosFixos
+    .filter((g) => g.ativo !== false)
+    .reduce((acc, g) => acc + g.valor, 0);
 
   // Buscar gastos do Supabase
   const fetchGastos = useCallback(async () => {
@@ -1893,12 +1890,12 @@ function App() {
                   {formatCurrency(totalMeusGastosPagos)}
                 </p>
               </div>
-              <div className="bg-gradient-to-br from-orange-600 to-orange-700 rounded-xl p-4 text-white shadow-lg">
+              <div className="bg-gradient-to-br from-amber-600 to-amber-700 rounded-xl p-4 text-white shadow-lg">
                 <p className="text-xs text-white/70 mb-1 flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> Pendente
+                  <Repeat className="w-3 h-3" /> Fixos
                 </p>
                 <p className="text-2xl font-bold">
-                  {formatCurrency(totalMeusGastosPendentes)}
+                  {formatCurrency(totalGastosFixos)}
                 </p>
               </div>
             </div>
@@ -2036,32 +2033,39 @@ function App() {
                     <li
                       key={gasto.id}
                       className={`p-4 rounded-xl border transition-all ${
-                        gasto.pago
+                        gasto.pago || gasto.tipo === "debito"
                           ? "bg-gray-700/50 border-gray-600 opacity-70"
                           : "bg-gray-700 border-gray-600"
                       }`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
-                          <button
-                            onClick={() => handleTogglePagoMeuGasto(gasto.id)}
-                            className={`mt-1 p-2 rounded-lg transition-colors ${
-                              gasto.pago
-                                ? "bg-green-500/20 text-green-400"
-                                : "bg-gray-600 text-gray-400 hover:bg-gray-500"
-                            }`}
-                          >
-                            {gasto.pago ? (
+                          {/* Só mostra checkbox para crédito */}
+                          {gasto.tipo === "credito" ? (
+                            <button
+                              onClick={() => handleTogglePagoMeuGasto(gasto.id)}
+                              className={`mt-1 p-2 rounded-lg transition-colors ${
+                                gasto.pago
+                                  ? "bg-green-500/20 text-green-400"
+                                  : "bg-gray-600 text-gray-400 hover:bg-gray-500"
+                              }`}
+                            >
+                              {gasto.pago ? (
+                                <CheckCircle className="w-5 h-5" />
+                              ) : (
+                                <div className="w-5 h-5 border-2 border-gray-400 rounded-full" />
+                              )}
+                            </button>
+                          ) : (
+                            <div className="mt-1 p-2 rounded-lg bg-green-500/20 text-green-400">
                               <CheckCircle className="w-5 h-5" />
-                            ) : (
-                              <div className="w-5 h-5 border-2 border-gray-400 rounded-full" />
-                            )}
-                          </button>
+                            </div>
+                          )}
                           <div>
                             <p
                               className={`font-medium ${
-                                gasto.pago
-                                  ? "text-gray-400 line-through"
+                                gasto.pago || gasto.tipo === "debito"
+                                  ? "text-gray-400"
                                   : "text-white"
                               }`}
                             >
@@ -2097,7 +2101,9 @@ function App() {
                         <div className="text-right">
                           <p
                             className={`font-bold ${
-                              gasto.pago ? "text-gray-400" : "text-white"
+                              gasto.pago || gasto.tipo === "debito"
+                                ? "text-gray-400"
+                                : "text-white"
                             }`}
                           >
                             {formatCurrency(

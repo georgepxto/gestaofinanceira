@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS meus_gastos (
     minha_parte DECIMAL(10, 2),
     dia_vencimento INTEGER CHECK (dia_vencimento >= 1 AND dia_vencimento <= 31),
     ativo BOOLEAN DEFAULT true,
+    num_parcelas INTEGER DEFAULT 1,
+    parcela_atual INTEGER DEFAULT 1,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
