@@ -1046,6 +1046,7 @@ function App() {
         };
         setGastos((prev) => [novoGasto, ...prev]);
       } else {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
         const { error: insertError } = await supabase.from("gastos").insert({
           descricao: formData.descricao.trim(),
           pessoa: formData.pessoa,
@@ -1053,6 +1054,7 @@ function App() {
           num_parcelas: formData.num_parcelas,
           data_inicio: formData.data_inicio,
           tipo: formData.tipo,
+          user_id: currentUser?.id,
         });
 
         if (insertError) throw insertError;
