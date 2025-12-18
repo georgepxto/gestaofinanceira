@@ -22,6 +22,9 @@ import {
   Clock,
   CheckCircle,
   Undo2,
+  UserCircle,
+  Users,
+  Repeat,
 } from "lucide-react";
 import { addMonths, subMonths, format } from "date-fns";
 import {
@@ -29,6 +32,7 @@ import {
   isSupabaseConfigured,
   saldosFunctions,
   pessoasFunctions,
+  meusGastosFunctions,
 } from "./lib/supabase";
 import type {
   Gasto,
@@ -37,6 +41,8 @@ import type {
   ResumoMensal,
   SaldoDevedor,
   SaldoDevedorForm,
+  MeuGasto,
+  MeuGastoForm,
 } from "./types";
 import {
   formatMonthYear,
@@ -102,8 +108,10 @@ const DADOS_DEMO: Gasto[] = [
 ];
 
 function App() {
-  // Aba ativa: 'gastos' ou 'dividas'
-  const [abaAtiva, setAbaAtiva] = useState<"gastos" | "dividas">("gastos");
+  // Aba ativa: 'gastos', 'dividas' ou 'eu'
+  const [abaAtiva, setAbaAtiva] = useState<"gastos" | "dividas" | "eu">(
+    "gastos"
+  );
 
   // Estado do mês de visualização
   const [mesVisualizacao, setMesVisualizacao] = useState<Date>(new Date());
@@ -128,10 +136,29 @@ function App() {
   });
   const [valorPagamento, setValorPagamento] = useState<string>("");
   const [obsPagamento, setObsPagamento] = useState<string>("");
+  const [filtroPessoaGasto, setFiltroPessoaGasto] = useState<string>(""); // "" = todos
   const [filtroPessoaDivida, setFiltroPessoaDivida] = useState<string>(""); // "" = todos
   const [filtroStatusDivida, setFiltroStatusDivida] = useState<
     "pendentes" | "pagos"
   >("pendentes");
+
+  // Meus Gastos (Aba "Eu")
+  const [meusGastos, setMeusGastos] = useState<MeuGasto[]>([]);
+  const [meusGastosLoaded, setMeusGastosLoaded] = useState<boolean>(false);
+  const [showFormMeuGasto, setShowFormMeuGasto] = useState<boolean>(false);
+  const [formMeuGasto, setFormMeuGasto] = useState<MeuGastoForm>({
+    descricao: "",
+    valor: "",
+    tipo: "debito",
+    categoria: "pessoal",
+    data: format(new Date(), "yyyy-MM-dd"),
+    dividido_com: "",
+    minha_parte: "",
+    dia_vencimento: "",
+    num_parcelas: "1",
+  });
+  const [filtroCategoriaMeuGasto, setFiltroCategoriaMeuGasto] =
+    useState<string>(""); // "" = todos
 
   // Fechar Mês
   const [showFecharMes, setShowFecharMes] = useState<string | null>(null); // pessoa
@@ -243,11 +270,50 @@ function App() {
     setSaldosLoaded(true);
   }, []);
 
+  // Carregar meus gastos do Supabase (ou localStorage como fallback)
+  const fetchMeusGastos = useCallback(async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      const saved = localStorage.getItem("meusGastos");
+      setMeusGastos(saved ? JSON.parse(saved) : []);
+      setMeusGastosLoaded(true);
+      return;
+    }
+
+    try {
+      const data = await meusGastosFunctions.getAll();
+      if (data.length > 0) {
+        setMeusGastos(data);
+      } else {
+        const saved = localStorage.getItem("meusGastos");
+        if (saved) {
+          const localData: MeuGasto[] = JSON.parse(saved);
+          for (const gasto of localData) {
+            await meusGastosFunctions.create(gasto);
+          }
+          setMeusGastos(localData);
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar meus gastos:", err);
+      const saved = localStorage.getItem("meusGastos");
+      setMeusGastos(saved ? JSON.parse(saved) : []);
+    }
+    setMeusGastosLoaded(true);
+  }, []);
+
   // Carregar dados ao iniciar
   useEffect(() => {
     fetchPessoas();
     fetchSaldos();
-  }, [fetchPessoas, fetchSaldos]);
+    fetchMeusGastos();
+  }, [fetchPessoas, fetchSaldos, fetchMeusGastos]);
+
+  // Salvar meus gastos no localStorage como backup
+  useEffect(() => {
+    if (meusGastosLoaded) {
+      localStorage.setItem("meusGastos", JSON.stringify(meusGastos));
+    }
+  }, [meusGastos, meusGastosLoaded]);
 
   // Salvar pessoas no Supabase (e localStorage como backup)
   useEffect(() => {
@@ -570,6 +636,209 @@ function App() {
   // Pessoas que têm dívidas (para o filtro)
   const pessoasComDividas = [...new Set(saldosDevedores.map((d) => d.pessoa))];
 
+  // ========== FUNÇÕES DE MEUS GASTOS ==========
+
+  // Adicionar meu gasto
+  const handleAddMeuGasto = async () => {
+    const valor = parseCurrency(formMeuGasto.valor);
+    if (!formMeuGasto.descricao || valor <= 0) {
+      setError("Preencha todos os campos corretamente.");
+      return;
+    }
+
+    let minhaParte = valor;
+    if (formMeuGasto.categoria === "dividido" && formMeuGasto.minha_parte) {
+      minhaParte = parseCurrency(formMeuGasto.minha_parte);
+    }
+
+    const numParcelas =
+      formMeuGasto.tipo === "credito"
+        ? parseInt(formMeuGasto.num_parcelas) || 1
+        : 1;
+    const valorParcela = valor / numParcelas;
+
+    // Se for crédito parcelado, criar uma entrada para cada parcela
+    if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
+      const dataInicio = new Date(formMeuGasto.data);
+
+      for (let i = 0; i < numParcelas; i++) {
+        const dataParcela = new Date(dataInicio);
+        dataParcela.setMonth(dataParcela.getMonth() + i);
+
+        const novoGasto: MeuGasto = {
+          id: `${Date.now()}-${i}`,
+          descricao: `${formMeuGasto.descricao} (${i + 1}/${numParcelas})`,
+          valor: valorParcela,
+          tipo: formMeuGasto.tipo,
+          categoria: formMeuGasto.categoria,
+          data: format(dataParcela, "yyyy-MM-dd"),
+          pago: false,
+          dividido_com:
+            formMeuGasto.categoria === "dividido"
+              ? formMeuGasto.dividido_com
+              : undefined,
+          minha_parte:
+            formMeuGasto.categoria === "dividido"
+              ? minhaParte / numParcelas
+              : undefined,
+          num_parcelas: numParcelas,
+          parcela_atual: i + 1,
+        };
+
+        if (isSupabaseConfigured && supabase) {
+          await meusGastosFunctions.create(novoGasto);
+        }
+        setMeusGastos((prev) => [...prev, novoGasto]);
+      }
+    } else {
+      // Gasto único (débito ou crédito à vista)
+      const novoGasto: MeuGasto = {
+        id: Date.now().toString(),
+        descricao: formMeuGasto.descricao,
+        valor: valor,
+        tipo: formMeuGasto.tipo,
+        categoria: formMeuGasto.categoria,
+        data: formMeuGasto.data,
+        pago: false,
+        dividido_com:
+          formMeuGasto.categoria === "dividido"
+            ? formMeuGasto.dividido_com
+            : undefined,
+        minha_parte:
+          formMeuGasto.categoria === "dividido" ? minhaParte : undefined,
+        dia_vencimento:
+          formMeuGasto.categoria === "fixo"
+            ? parseInt(formMeuGasto.dia_vencimento)
+            : undefined,
+        ativo: formMeuGasto.categoria === "fixo" ? true : undefined,
+        num_parcelas: 1,
+        parcela_atual: 1,
+      };
+
+      if (isSupabaseConfigured && supabase) {
+        await meusGastosFunctions.create(novoGasto);
+      }
+      setMeusGastos((prev) => [...prev, novoGasto]);
+    }
+
+    setFormMeuGasto({
+      descricao: "",
+      valor: "",
+      tipo: "debito",
+      categoria: "pessoal",
+      data: format(new Date(), "yyyy-MM-dd"),
+      dividido_com: "",
+      minha_parte: "",
+      dia_vencimento: "",
+      num_parcelas: "1",
+    });
+    setShowFormMeuGasto(false);
+    setError(null);
+  };
+
+  // Marcar meu gasto como pago/não pago
+  const handleTogglePagoMeuGasto = async (id: string) => {
+    const gasto = meusGastos.find((g) => g.id === id);
+    if (!gasto) return;
+
+    const novoStatus = !gasto.pago;
+    const updates = {
+      pago: novoStatus,
+      data_pagamento: novoStatus ? format(new Date(), "yyyy-MM-dd") : undefined,
+    };
+
+    if (isSupabaseConfigured && supabase) {
+      await meusGastosFunctions.update(id, updates);
+    }
+
+    setMeusGastos((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, ...updates } : g))
+    );
+  };
+
+  // Excluir meu gasto
+  const handleDeleteMeuGasto = (id: string) => {
+    setModalConfirm({
+      show: true,
+      titulo: "Excluir Gasto",
+      mensagem: "Tem certeza que deseja excluir este gasto?",
+      onConfirm: async () => {
+        if (isSupabaseConfigured && supabase) {
+          await meusGastosFunctions.delete(id);
+        }
+        setMeusGastos((prev) => prev.filter((g) => g.id !== id));
+        setModalConfirm({ ...modalConfirm, show: false });
+      },
+    });
+  };
+
+  // Desativar gasto fixo
+  const handleToggleGastoFixo = async (id: string) => {
+    const gasto = meusGastos.find((g) => g.id === id);
+    if (!gasto) return;
+
+    const novoStatus = !gasto.ativo;
+
+    if (isSupabaseConfigured && supabase) {
+      await meusGastosFunctions.update(id, { ativo: novoStatus });
+    }
+
+    setMeusGastos((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, ativo: novoStatus } : g))
+    );
+  };
+
+  // Filtrar meus gastos do mês atual
+  const meusGastosDoMes = meusGastos.filter((g) => {
+    const mesGasto = g.data.substring(0, 7);
+    const mesAtual = format(mesVisualizacao, "yyyy-MM");
+    const matchMes = mesGasto === mesAtual;
+    const matchCategoria = filtroCategoriaMeuGasto
+      ? g.categoria === filtroCategoriaMeuGasto
+      : g.categoria !== "fixo"; // Não mostrar gastos fixos na lista normal
+    return matchMes && matchCategoria;
+  });
+
+  // Gastos fixos (sempre mostrar)
+  const gastosFixos = meusGastos.filter((g) => g.categoria === "fixo");
+
+  // Calcular totais de meus gastos
+  const totalMeusGastosCredito = meusGastosDoMes
+    .filter((g) => g.tipo === "credito")
+    .reduce(
+      (acc, g) =>
+        acc +
+        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
+      0
+    );
+
+  const totalMeusGastosDebito = meusGastosDoMes
+    .filter((g) => g.tipo === "debito")
+    .reduce(
+      (acc, g) =>
+        acc +
+        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
+      0
+    );
+
+  const totalMeusGastosPagos = meusGastosDoMes
+    .filter((g) => g.pago)
+    .reduce(
+      (acc, g) =>
+        acc +
+        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
+      0
+    );
+
+  const totalMeusGastosPendentes = meusGastosDoMes
+    .filter((g) => !g.pago)
+    .reduce(
+      (acc, g) =>
+        acc +
+        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
+      0
+    );
+
   // Buscar gastos do Supabase
   const fetchGastos = useCallback(async () => {
     // Se Supabase não está configurado, usar dados demo
@@ -616,26 +885,38 @@ function App() {
 
     // Inscrever para mudanças na tabela gastos
     const gastosChannel = supabase
-      .channel('gastos-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'gastos' }, () => {
-        fetchGastos();
-      })
+      .channel("gastos-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "gastos" },
+        () => {
+          fetchGastos();
+        }
+      )
       .subscribe();
 
     // Inscrever para mudanças na tabela saldos_devedores
     const saldosChannel = supabase
-      .channel('saldos-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'saldos_devedores' }, () => {
-        fetchSaldos();
-      })
+      .channel("saldos-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "saldos_devedores" },
+        () => {
+          fetchSaldos();
+        }
+      )
       .subscribe();
 
     // Inscrever para mudanças na tabela pessoas
     const pessoasChannel = supabase
-      .channel('pessoas-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pessoas' }, () => {
-        fetchPessoas();
-      })
+      .channel("pessoas-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "pessoas" },
+        () => {
+          fetchPessoas();
+        }
+      )
       .subscribe();
 
     // Cleanup ao desmontar
@@ -825,22 +1106,37 @@ function App() {
               Controle Financeiro
             </h1>
             <button
-              onClick={() =>
-                abaAtiva === "gastos"
-                  ? setShowForm(true)
-                  : setShowFormDivida(true)
-              }
+              onClick={() => {
+                if (abaAtiva === "gastos") setShowForm(true);
+                else if (abaAtiva === "dividas") setShowFormDivida(true);
+                else setShowFormMeuGasto(true);
+              }}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
             >
               <Plus className="w-5 h-5" />
               <span className="hidden sm:inline">
-                {abaAtiva === "gastos" ? "Novo Gasto" : "Nova Dívida"}
+                {abaAtiva === "gastos"
+                  ? "Novo Gasto"
+                  : abaAtiva === "dividas"
+                  ? "Nova Dívida"
+                  : "Novo"}
               </span>
             </button>
           </div>
 
           {/* Abas */}
           <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => setAbaAtiva("eu")}
+              className={`py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                abaAtiva === "eu"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              }`}
+            >
+              <UserCircle className="w-4 h-4" />
+              Eu
+            </button>
             <button
               onClick={() => setAbaAtiva("gastos")}
               className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
@@ -850,7 +1146,8 @@ function App() {
               }`}
             >
               <Receipt className="w-4 h-4" />
-              Gastos do Mês
+              <span className="hidden sm:inline">Gastos do Mês</span>
+              <span className="sm:hidden">Gastos</span>
             </button>
             <button
               onClick={() => setAbaAtiva("dividas")}
@@ -975,20 +1272,60 @@ function App() {
             {!loading && (
               <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
                 <div className="p-4 border-b border-gray-700">
-                  <h3 className="font-semibold text-white">
-                    Lançamentos do Mês
-                  </h3>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <h3 className="font-semibold text-white">
+                      Lançamentos do Mês
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setFiltroPessoaGasto("")}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                          filtroPessoaGasto === ""
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                        }`}
+                      >
+                        Tudo
+                      </button>
+                      {pessoas.map((pessoa) => (
+                        <button
+                          key={pessoa}
+                          onClick={() => setFiltroPessoaGasto(pessoa)}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                            filtroPessoaGasto === pessoa
+                              ? "bg-blue-600 text-white"
+                              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                          }`}
+                        >
+                          {pessoa}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
-                {parcelasAtivas.length === 0 ? (
+                {parcelasAtivas.filter(
+                  (p) =>
+                    filtroPessoaGasto === "" ||
+                    p.gasto.pessoa === filtroPessoaGasto
+                ).length === 0 ? (
                   <div className="p-8 text-center text-gray-400">
                     <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-                    <p>Nenhum lançamento para este mês</p>
+                    <p>
+                      Nenhum lançamento{" "}
+                      {filtroPessoaGasto ? `de ${filtroPessoaGasto} ` : ""}para
+                      este mês
+                    </p>
                   </div>
                 ) : (
                   <ul className="divide-y divide-gray-700">
-                    {parcelasAtivas.map(
-                      ({ gasto, parcela_atual, valor_parcela }) => (
+                    {parcelasAtivas
+                      .filter(
+                        (p) =>
+                          filtroPessoaGasto === "" ||
+                          p.gasto.pessoa === filtroPessoaGasto
+                      )
+                      .map(({ gasto, parcela_atual, valor_parcela }) => (
                         <li
                           key={gasto.id}
                           className="p-4 hover:bg-gray-700/50 transition-colors"
@@ -1038,8 +1375,7 @@ function App() {
                             </div>
                           </div>
                         </li>
-                      )
-                    )}
+                      ))}
                   </ul>
                 )}
               </div>
@@ -1494,7 +1830,624 @@ function App() {
             </div>
           </>
         )}
+
+        {/* === ABA EU (MEUS GASTOS) === */}
+        {abaAtiva === "eu" && (
+          <>
+            {/* Navegação de Meses */}
+            <div className="bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-700">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => navegarMes("anterior")}
+                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                  aria-label="Mês anterior"
+                >
+                  <ChevronLeft className="w-6 h-6 text-gray-300" />
+                </button>
+
+                <div className="text-center">
+                  <h2 className="text-xl font-bold text-white capitalize">
+                    {formatMonthYear(mesVisualizacao)}
+                  </h2>
+                  <button
+                    onClick={irParaHoje}
+                    className="text-xs text-emerald-400 hover:text-emerald-300 mt-1"
+                  >
+                    Ir para hoje
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => navegarMes("proximo")}
+                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                  aria-label="Próximo mês"
+                >
+                  <ChevronRight className="w-6 h-6 text-gray-300" />
+                </button>
+              </div>
+            </div>
+
+            {/* Cards de Resumo */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-4 text-white shadow-lg">
+                <p className="text-xs text-white/70 mb-1 flex items-center gap-1">
+                  <CreditCard className="w-3 h-3" /> Crédito
+                </p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(totalMeusGastosCredito)}
+                </p>
+              </div>
+              <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-4 text-white shadow-lg">
+                <p className="text-xs text-white/70 mb-1 flex items-center gap-1">
+                  <Wallet className="w-3 h-3" /> Débito
+                </p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(totalMeusGastosDebito)}
+                </p>
+              </div>
+              <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl p-4 text-white shadow-lg">
+                <p className="text-xs text-white/70 mb-1 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> Pago
+                </p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(totalMeusGastosPagos)}
+                </p>
+              </div>
+              <div className="bg-gradient-to-br from-orange-600 to-orange-700 rounded-xl p-4 text-white shadow-lg">
+                <p className="text-xs text-white/70 mb-1 flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> Pendente
+                </p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(totalMeusGastosPendentes)}
+                </p>
+              </div>
+            </div>
+
+            {/* Filtro de Categoria */}
+            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+              <p className="text-sm text-gray-400 mb-2">Filtrar por:</p>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => setFiltroCategoriaMeuGasto("")}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    filtroCategoriaMeuGasto === ""
+                      ? "bg-emerald-600 text-white"
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  }`}
+                >
+                  Todos
+                </button>
+                <button
+                  onClick={() => setFiltroCategoriaMeuGasto("pessoal")}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
+                    filtroCategoriaMeuGasto === "pessoal"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  }`}
+                >
+                  <User className="w-3 h-3" /> Pessoal
+                </button>
+                <button
+                  onClick={() => setFiltroCategoriaMeuGasto("dividido")}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
+                    filtroCategoriaMeuGasto === "dividido"
+                      ? "bg-pink-600 text-white"
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  }`}
+                >
+                  <Users className="w-3 h-3" /> Dividido
+                </button>
+              </div>
+            </div>
+
+            {/* Gastos Fixos */}
+            {gastosFixos.length > 0 && (
+              <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                  <Repeat className="w-4 h-4 text-amber-400" />
+                  Gastos Fixos Mensais
+                </h3>
+                <div className="space-y-2">
+                  {gastosFixos.map((gasto) => (
+                    <div
+                      key={gasto.id}
+                      className={`flex items-center justify-between p-3 rounded-lg ${
+                        gasto.ativo !== false
+                          ? "bg-gray-700"
+                          : "bg-gray-700/50 opacity-60"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`p-2 rounded-lg ${
+                            gasto.tipo === "credito"
+                              ? "bg-purple-500/20"
+                              : "bg-green-500/20"
+                          }`}
+                        >
+                          {gasto.tipo === "credito" ? (
+                            <CreditCard className="w-4 h-4 text-purple-400" />
+                          ) : (
+                            <Wallet className="w-4 h-4 text-green-400" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">
+                            {gasto.descricao}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Todo dia {gasto.dia_vencimento}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-white font-semibold">
+                          {formatCurrency(gasto.valor)}
+                        </p>
+                        <button
+                          onClick={() => handleToggleGastoFixo(gasto.id)}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            gasto.ativo !== false
+                              ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                              : "bg-gray-600 text-gray-400 hover:bg-gray-500"
+                          }`}
+                          title={gasto.ativo !== false ? "Desativar" : "Ativar"}
+                        >
+                          {gasto.ativo !== false ? (
+                            <CheckCircle className="w-4 h-4" />
+                          ) : (
+                            <MinusCircle className="w-4 h-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMeuGasto(gasto.id)}
+                          className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Lista de Meus Gastos do Mês */}
+            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-emerald-400" />
+                Meus Gastos do Mês ({meusGastosDoMes.length})
+              </h3>
+
+              {meusGastosDoMes.length === 0 ? (
+                <div className="text-center py-8">
+                  <DollarSign className="w-12 h-12 mx-auto text-gray-600 mb-3" />
+                  <p className="text-gray-400">Nenhum gasto registrado</p>
+                  <button
+                    onClick={() => setShowFormMeuGasto(true)}
+                    className="mt-4 text-emerald-400 hover:text-emerald-300 text-sm"
+                  >
+                    + Adicionar primeiro gasto
+                  </button>
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {meusGastosDoMes.map((gasto) => (
+                    <li
+                      key={gasto.id}
+                      className={`p-4 rounded-xl border transition-all ${
+                        gasto.pago
+                          ? "bg-gray-700/50 border-gray-600 opacity-70"
+                          : "bg-gray-700 border-gray-600"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => handleTogglePagoMeuGasto(gasto.id)}
+                            className={`mt-1 p-2 rounded-lg transition-colors ${
+                              gasto.pago
+                                ? "bg-green-500/20 text-green-400"
+                                : "bg-gray-600 text-gray-400 hover:bg-gray-500"
+                            }`}
+                          >
+                            {gasto.pago ? (
+                              <CheckCircle className="w-5 h-5" />
+                            ) : (
+                              <div className="w-5 h-5 border-2 border-gray-400 rounded-full" />
+                            )}
+                          </button>
+                          <div>
+                            <p
+                              className={`font-medium ${
+                                gasto.pago
+                                  ? "text-gray-400 line-through"
+                                  : "text-white"
+                              }`}
+                            >
+                              {gasto.descricao}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded ${
+                                  gasto.tipo === "credito"
+                                    ? "bg-purple-500/20 text-purple-400"
+                                    : "bg-green-500/20 text-green-400"
+                                }`}
+                              >
+                                {gasto.tipo === "credito"
+                                  ? "Crédito"
+                                  : "Débito"}
+                              </span>
+                              {gasto.categoria === "dividido" && (
+                                <span className="text-xs px-2 py-0.5 rounded bg-pink-500/20 text-pink-400 flex items-center gap-1">
+                                  <Users className="w-3 h-3" />
+                                  {gasto.dividido_com}
+                                </span>
+                              )}
+                              <span className="text-xs text-gray-500">
+                                {format(
+                                  new Date(gasto.data + "T12:00:00"),
+                                  "dd/MM"
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p
+                            className={`font-bold ${
+                              gasto.pago ? "text-gray-400" : "text-white"
+                            }`}
+                          >
+                            {formatCurrency(
+                              gasto.categoria === "dividido" &&
+                                gasto.minha_parte
+                                ? gasto.minha_parte
+                                : gasto.valor
+                            )}
+                          </p>
+                          {gasto.categoria === "dividido" &&
+                            gasto.minha_parte && (
+                              <p className="text-xs text-gray-500">
+                                Total: {formatCurrency(gasto.valor)}
+                              </p>
+                            )}
+                          <button
+                            onClick={() => handleDeleteMeuGasto(gasto.id)}
+                            className="mt-2 p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </>
+        )}
       </main>
+
+      {/* Modal Adicionar Meu Gasto */}
+      {showFormMeuGasto && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-gray-800 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto border-t sm:border border-gray-700">
+            <div className="sticky top-0 bg-gray-800 p-4 border-b border-gray-700 flex items-center justify-between z-10">
+              <h2 className="text-lg font-bold text-white">
+                Novo Gasto Pessoal
+              </h2>
+              <button
+                onClick={() => setShowFormMeuGasto(false)}
+                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {/* Categoria */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Tipo de Gasto
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormMeuGasto((prev) => ({
+                        ...prev,
+                        categoria: "pessoal",
+                      }))
+                    }
+                    className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
+                      formMeuGasto.categoria === "pessoal"
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                    }`}
+                  >
+                    <User className="w-5 h-5" />
+                    <span className="text-xs">Pessoal</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormMeuGasto((prev) => ({
+                        ...prev,
+                        categoria: "dividido",
+                      }))
+                    }
+                    className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
+                      formMeuGasto.categoria === "dividido"
+                        ? "bg-pink-600 border-pink-500 text-white"
+                        : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                    }`}
+                  >
+                    <Users className="w-5 h-5" />
+                    <span className="text-xs">Dividido</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormMeuGasto((prev) => ({
+                        ...prev,
+                        categoria: "fixo",
+                      }))
+                    }
+                    className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
+                      formMeuGasto.categoria === "fixo"
+                        ? "bg-amber-600 border-amber-500 text-white"
+                        : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                    }`}
+                  >
+                    <Repeat className="w-5 h-5" />
+                    <span className="text-xs">Fixo</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Descrição */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Descrição
+                </label>
+                <input
+                  type="text"
+                  value={formMeuGasto.descricao}
+                  onChange={(e) =>
+                    setFormMeuGasto((prev) => ({
+                      ...prev,
+                      descricao: e.target.value,
+                    }))
+                  }
+                  placeholder="Ex: Netflix, Almoço, etc."
+                  className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
+                />
+              </div>
+
+              {/* Valor */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Valor Total
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    R$
+                  </span>
+                  <input
+                    type="text"
+                    value={formMeuGasto.valor}
+                    onChange={(e) =>
+                      setFormMeuGasto((prev) => ({
+                        ...prev,
+                        valor: formatCurrencyInput(e.target.value),
+                      }))
+                    }
+                    placeholder="0,00"
+                    className="w-full pl-10 pr-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
+                    inputMode="numeric"
+                  />
+                </div>
+              </div>
+
+              {/* Campos para Dividido */}
+              {formMeuGasto.categoria === "dividido" && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                      Dividido com
+                    </label>
+                    <input
+                      type="text"
+                      value={formMeuGasto.dividido_com}
+                      onChange={(e) =>
+                        setFormMeuGasto((prev) => ({
+                          ...prev,
+                          dividido_com: e.target.value,
+                        }))
+                      }
+                      placeholder="Ex: João, Maria, etc."
+                      className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                      Minha Parte
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        R$
+                      </span>
+                      <input
+                        type="text"
+                        value={formMeuGasto.minha_parte}
+                        onChange={(e) =>
+                          setFormMeuGasto((prev) => ({
+                            ...prev,
+                            minha_parte: formatCurrencyInput(e.target.value),
+                          }))
+                        }
+                        placeholder="0,00"
+                        className="w-full pl-10 pr-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
+                        inputMode="numeric"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Campo para Fixo */}
+              {formMeuGasto.categoria === "fixo" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Dia do Vencimento (1-31)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={formMeuGasto.dia_vencimento}
+                    onChange={(e) =>
+                      setFormMeuGasto((prev) => ({
+                        ...prev,
+                        dia_vencimento: e.target.value,
+                      }))
+                    }
+                    placeholder="Ex: 10"
+                    className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
+              )}
+
+              {/* Data (não para fixo) */}
+              {formMeuGasto.categoria !== "fixo" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Data
+                  </label>
+                  <input
+                    type="date"
+                    value={formMeuGasto.data}
+                    onChange={(e) =>
+                      setFormMeuGasto((prev) => ({
+                        ...prev,
+                        data: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
+              )}
+
+              {/* Tipo (Crédito/Débito) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Forma de Pagamento
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormMeuGasto((prev) => ({
+                        ...prev,
+                        tipo: "debito",
+                        num_parcelas: "1",
+                      }))
+                    }
+                    className={`p-3 rounded-lg border transition-colors flex items-center justify-center gap-2 ${
+                      formMeuGasto.tipo === "debito"
+                        ? "bg-green-600 border-green-500 text-white"
+                        : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                    }`}
+                  >
+                    <Wallet className="w-5 h-5" />
+                    Débito
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormMeuGasto((prev) => ({ ...prev, tipo: "credito" }))
+                    }
+                    className={`p-3 rounded-lg border transition-colors flex items-center justify-center gap-2 ${
+                      formMeuGasto.tipo === "credito"
+                        ? "bg-purple-600 border-purple-500 text-white"
+                        : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+                    }`}
+                  >
+                    <CreditCard className="w-5 h-5" />
+                    Crédito
+                  </button>
+                </div>
+              </div>
+
+              {/* Parcelas (apenas para Crédito e não fixo) */}
+              {formMeuGasto.tipo === "credito" &&
+                formMeuGasto.categoria !== "fixo" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                      Número de Parcelas
+                    </label>
+                    <select
+                      value={formMeuGasto.num_parcelas}
+                      onChange={(e) =>
+                        setFormMeuGasto((prev) => ({
+                          ...prev,
+                          num_parcelas: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                    >
+                      {Array.from({ length: 24 }, (_, i) => i + 1).map(
+                        (num) => (
+                          <option key={num} value={num}>
+                            {num}x{" "}
+                            {num === 1
+                              ? "(à vista)"
+                              : `de ${
+                                  formMeuGasto.valor
+                                    ? formatCurrency(
+                                        parseCurrency(formMeuGasto.valor) / num
+                                      )
+                                    : "R$ 0,00"
+                                }`}
+                          </option>
+                        )
+                      )}
+                    </select>
+                    {parseInt(formMeuGasto.num_parcelas) > 1 &&
+                      formMeuGasto.valor && (
+                        <p className="text-sm text-gray-400 mt-1">
+                          {formMeuGasto.num_parcelas}x de{" "}
+                          {formatCurrency(
+                            parseCurrency(formMeuGasto.valor) /
+                              parseInt(formMeuGasto.num_parcelas)
+                          )}
+                        </p>
+                      )}
+                  </div>
+                )}
+
+              {error && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
+              )}
+
+              <button
+                onClick={handleAddMeuGasto}
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                {formMeuGasto.categoria === "fixo"
+                  ? "Adicionar Gasto Fixo"
+                  : "Adicionar Gasto"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Feedback */}
       {modalFeedback.show && (

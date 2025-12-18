@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Gasto, SaldoDevedor } from "../types/index";
+import type { Gasto, SaldoDevedor, MeuGasto } from "../types/index";
 
 // Configure suas credenciais do Supabase aqui
 // Você pode encontrá-las em: Project Settings > API
@@ -178,6 +178,67 @@ export const pessoasFunctions = {
 
     if (error) {
       console.error("Erro ao deletar pessoa:", error);
+      return false;
+    }
+
+    return true;
+  },
+};
+
+// ========== FUNÇÕES DE MEUS GASTOS ==========
+export const meusGastosFunctions = {
+  async getAll(): Promise<MeuGasto[]> {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from("meus_gastos")
+      .select("*")
+      .order("data", { ascending: false });
+
+    if (error) {
+      console.error("Erro ao buscar meus gastos:", error);
+      return [];
+    }
+
+    return data || [];
+  },
+
+  async create(gasto: MeuGasto): Promise<MeuGasto | null> {
+    if (!supabase) return null;
+    const { data, error } = await supabase
+      .from("meus_gastos")
+      .insert([gasto])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Erro ao criar meu gasto:", error);
+      return null;
+    }
+
+    return data;
+  },
+
+  async update(id: string, updates: Partial<MeuGasto>): Promise<boolean> {
+    if (!supabase) return false;
+    const { error } = await supabase
+      .from("meus_gastos")
+      .update(updates)
+      .eq("id", id);
+
+    if (error) {
+      console.error("Erro ao atualizar meu gasto:", error);
+      return false;
+    }
+
+    return true;
+  },
+
+  async delete(id: string): Promise<boolean> {
+    if (!supabase) return false;
+    const { error } = await supabase.from("meus_gastos").delete().eq("id", id);
+
+    if (error) {
+      console.error("Erro ao deletar meu gasto:", error);
       return false;
     }
 

@@ -35,6 +35,26 @@ CREATE TABLE IF NOT EXISTS saldos_devedores (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- ========== TABELA MEUS GASTOS (PESSOAIS) ==========
+CREATE TABLE IF NOT EXISTS meus_gastos (
+    id TEXT PRIMARY KEY,
+    descricao VARCHAR(255) NOT NULL,
+    valor DECIMAL(10, 2) NOT NULL,
+    tipo VARCHAR(10) NOT NULL CHECK (tipo IN ('credito', 'debito')),
+    categoria VARCHAR(20) NOT NULL CHECK (categoria IN ('pessoal', 'dividido', 'fixo')),
+    data DATE NOT NULL,
+    pago BOOLEAN DEFAULT false,
+    data_pagamento DATE,
+    dividido_com VARCHAR(100),
+    minha_parte DECIMAL(10, 2),
+    dia_vencimento INTEGER CHECK (dia_vencimento >= 1 AND dia_vencimento <= 31),
+    ativo BOOLEAN DEFAULT true,
+    num_parcelas INTEGER DEFAULT 1,
+    parcela_atual INTEGER DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- ========== ÍNDICES ==========
 CREATE INDEX IF NOT EXISTS idx_gastos_data_inicio ON gastos(data_inicio);
 CREATE INDEX IF NOT EXISTS idx_gastos_pessoa ON gastos(pessoa);

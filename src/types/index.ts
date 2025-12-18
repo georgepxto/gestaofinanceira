@@ -49,6 +49,39 @@ export interface PagamentoSaldo {
   observacao?: string;
 }
 
+// Meus Gastos Pessoais
+export interface MeuGasto {
+  id: string;
+  descricao: string;
+  valor: number;
+  tipo: "credito" | "debito";
+  categoria: "pessoal" | "dividido" | "fixo";
+  data: string;
+  pago: boolean;
+  data_pagamento?: string;
+  // Para gastos divididos
+  dividido_com?: string;
+  minha_parte?: number;
+  // Para gastos fixos
+  dia_vencimento?: number; // 1-31
+  ativo?: boolean; // se o gasto fixo está ativo
+  // Para crédito parcelado
+  num_parcelas?: number;
+  parcela_atual?: number;
+}
+
+export interface MeuGastoForm {
+  descricao: string;
+  valor: string;
+  tipo: "credito" | "debito";
+  categoria: "pessoal" | "dividido" | "fixo";
+  data: string;
+  dividido_com: string;
+  minha_parte: string;
+  dia_vencimento: string;
+  num_parcelas: string;
+}
+
 export interface SaldoDevedorForm {
   pessoa: string;
   descricao: string;
