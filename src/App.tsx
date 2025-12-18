@@ -38,6 +38,8 @@ import {
   pessoasFunctions,
   meusGastosFunctions,
   authFunctions,
+  observacoesFunctions,
+  pagamentosParciaisFunctions,
 } from "./lib/supabase";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type {
@@ -64,6 +66,7 @@ import "./index.css";
 
 // Tipo para pagamento parcial do mês
 interface PagamentoParcial {
+  id?: string;
   valor: number;
   data: string;
 }
@@ -189,9 +192,14 @@ function App() {
   const [obsTexto, setObsTexto] = useState<string>("");
 
   // Pagamentos parciais por pessoa/mês
-  const [pagamentosParciais, setPagamentosParciais] = useState<Record<string, PagamentoParcial[]>>({});
-  const [showPagamentoParcial, setShowPagamentoParcial] = useState<string | null>(null); // pessoa
-  const [valorPagamentoParcial, setValorPagamentoParcial] = useState<string>("");
+  const [pagamentosParciais, setPagamentosParciais] = useState<
+    Record<string, PagamentoParcial[]>
+  >({});
+  const [showPagamentoParcial, setShowPagamentoParcial] = useState<
+    string | null
+  >(null); // pessoa
+  const [valorPagamentoParcial, setValorPagamentoParcial] =
+    useState<string>("");
 
   // Modal de Feedback
   const [modalFeedback, setModalFeedback] = useState<{
@@ -644,28 +652,97 @@ function App() {
     return `${pessoa}_${format(mesVisualizacao, "yyyy-MM")}`;
   };
 
-  // Carregar observações do localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("observacoesMes");
-    if (saved) {
-      setObservacoesMes(JSON.parse(saved));
+  // Obter mês atual no formato yyyy-MM
+  const getMesAtual = () => format(mesVisualizacao, "yyyy-MM");
+
+  // Carregar observações do Supabase (ou localStorage como fallback)
+  const fetchObservacoes = useCallback(async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      const saved = localStorage.getItem("observacoesMes");
+      if (saved) {
+        setObservacoesMes(JSON.parse(saved));
+      }
+      return;
+    }
+
+    try {
+      const data = await observacoesFunctions.getAll();
+      const obsMap: Record<string, string> = {};
+      data.forEach((item) => {
+        obsMap[`${item.pessoa}_${item.mes}`] = item.observacao;
+      });
+      setObservacoesMes(obsMap);
+    } catch (err) {
+      console.error("Erro ao carregar observações:", err);
     }
   }, []);
 
-  // Salvar observações no localStorage
+  // Carregar pagamentos parciais do Supabase (ou localStorage como fallback)
+  const fetchPagamentosParciais = useCallback(async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      const saved = localStorage.getItem("pagamentosParciais");
+      if (saved) {
+        setPagamentosParciais(JSON.parse(saved));
+      }
+      return;
+    }
+
+    try {
+      const data = await pagamentosParciaisFunctions.getAll();
+      const pagMap: Record<string, PagamentoParcial[]> = {};
+      data.forEach((item) => {
+        const key = `${item.pessoa}_${item.mes}`;
+        if (!pagMap[key]) pagMap[key] = [];
+        pagMap[key].push({
+          id: item.id,
+          valor: Number(item.valor),
+          data: item.data_pagamento,
+        });
+      });
+      setPagamentosParciais(pagMap);
+    } catch (err) {
+      console.error("Erro ao carregar pagamentos parciais:", err);
+    }
+  }, []);
+
+  // Carregar observações e pagamentos quando usuário logar
   useEffect(() => {
-    if (Object.keys(observacoesMes).length > 0) {
+    if (user) {
+      fetchObservacoes();
+      fetchPagamentosParciais();
+    }
+  }, [user, fetchObservacoes, fetchPagamentosParciais]);
+
+  // Salvar observações no localStorage como backup (modo demo)
+  useEffect(() => {
+    if (!isSupabaseConfigured && Object.keys(observacoesMes).length > 0) {
       localStorage.setItem("observacoesMes", JSON.stringify(observacoesMes));
     }
   }, [observacoesMes]);
 
+  // Salvar pagamentos no localStorage como backup (modo demo)
+  useEffect(() => {
+    if (!isSupabaseConfigured && Object.keys(pagamentosParciais).length > 0) {
+      localStorage.setItem("pagamentosParciais", JSON.stringify(pagamentosParciais));
+    }
+  }, [pagamentosParciais]);
+
   // Salvar observação de uma pessoa
-  const handleSalvarObs = (pessoa: string) => {
+  const handleSalvarObs = async (pessoa: string) => {
     const key = getObsKey(pessoa);
+    const mes = getMesAtual();
+    
     if (obsTexto.trim()) {
+      // Salvar no Supabase
+      if (isSupabaseConfigured && supabase) {
+        await observacoesFunctions.upsert(pessoa, mes, obsTexto.trim());
+      }
       setObservacoesMes((prev) => ({ ...prev, [key]: obsTexto.trim() }));
     } else {
       // Remover se vazio
+      if (isSupabaseConfigured && supabase) {
+        await observacoesFunctions.delete(pessoa, mes);
+      }
       setObservacoesMes((prev) => {
         const newObs = { ...prev };
         delete newObs[key];
@@ -683,21 +760,6 @@ function App() {
     setShowObsModal(pessoa);
   };
 
-  // Carregar pagamentos parciais do localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("pagamentosParciais");
-    if (saved) {
-      setPagamentosParciais(JSON.parse(saved));
-    }
-  }, []);
-
-  // Salvar pagamentos parciais no localStorage
-  useEffect(() => {
-    if (Object.keys(pagamentosParciais).length > 0) {
-      localStorage.setItem("pagamentosParciais", JSON.stringify(pagamentosParciais));
-    }
-  }, [pagamentosParciais]);
-
   // Obter pagamentos parciais de uma pessoa no mês atual
   const getPagamentosParciais = (pessoa: string): PagamentoParcial[] => {
     const key = getObsKey(pessoa);
@@ -710,7 +772,7 @@ function App() {
   };
 
   // Adicionar pagamento parcial
-  const handleAddPagamentoParcial = (pessoa: string) => {
+  const handleAddPagamentoParcial = async (pessoa: string) => {
     const valor = parseCurrency(valorPagamentoParcial);
     if (valor <= 0) {
       setError("Valor de pagamento inválido.");
@@ -727,16 +789,32 @@ function App() {
       return;
     }
 
-    const novoPagamento: PagamentoParcial = {
-      valor,
-      data: format(new Date(), "dd/MM/yyyy"),
-    };
-
+    const dataPagamento = format(new Date(), "dd/MM/yyyy");
+    const mes = getMesAtual();
     const key = getObsKey(pessoa);
-    setPagamentosParciais((prev) => ({
-      ...prev,
-      [key]: [...(prev[key] || []), novoPagamento],
-    }));
+
+    // Salvar no Supabase
+    if (isSupabaseConfigured && supabase) {
+      const result = await pagamentosParciaisFunctions.create({
+        pessoa,
+        mes,
+        valor,
+        data_pagamento: dataPagamento,
+      });
+      
+      if (result) {
+        setPagamentosParciais((prev) => ({
+          ...prev,
+          [key]: [...(prev[key] || []), { id: result.id, valor, data: dataPagamento }],
+        }));
+      }
+    } else {
+      // Modo demo - salvar localmente
+      setPagamentosParciais((prev) => ({
+        ...prev,
+        [key]: [...(prev[key] || []), { valor, data: dataPagamento }],
+      }));
+    }
 
     setValorPagamentoParcial("");
     setShowPagamentoParcial(null);
@@ -745,7 +823,9 @@ function App() {
     setModalFeedback({
       show: true,
       titulo: "Pagamento Registrado!",
-      mensagem: `${pessoa} pagou ${formatCurrency(valor)}.\nFalta: ${formatCurrency(restante - valor)}`,
+      mensagem: `${pessoa} pagou ${formatCurrency(
+        valor
+      )}.\nFalta: ${formatCurrency(restante - valor)}`,
       tipo: "sucesso",
     });
   };
@@ -754,16 +834,23 @@ function App() {
   const handleDesfazerPagamentoParcial = (pessoa: string) => {
     const key = getObsKey(pessoa);
     const pagamentos = pagamentosParciais[key] || [];
-    
+
     if (pagamentos.length === 0) return;
 
     const ultimoPagamento = pagamentos[pagamentos.length - 1];
-    
+
     setModalConfirm({
       show: true,
       titulo: "Desfazer Pagamento",
-      mensagem: `Deseja remover o pagamento de ${formatCurrency(ultimoPagamento.valor)} feito em ${ultimoPagamento.data}?`,
-      onConfirm: () => {
+      mensagem: `Deseja remover o pagamento de ${formatCurrency(
+        ultimoPagamento.valor
+      )} feito em ${ultimoPagamento.data}?`,
+      onConfirm: async () => {
+        // Deletar do Supabase se tiver ID
+        if (isSupabaseConfigured && supabase && ultimoPagamento.id) {
+          await pagamentosParciaisFunctions.delete(ultimoPagamento.id);
+        }
+        
         setPagamentosParciais((prev) => ({
           ...prev,
           [key]: pagamentos.slice(0, -1),
@@ -1435,7 +1522,7 @@ function App() {
                 const totalPago = getTotalPagoParcial(resumo.pessoa);
                 const restante = resumo.total - totalPago;
                 const temPagamentos = pagamentos.length > 0;
-                
+
                 return (
                   <div
                     key={resumo.pessoa}
@@ -1455,14 +1542,18 @@ function App() {
                         <p className="text-xs text-white/70 mt-1">
                           {resumo.quantidade} itens
                         </p>
-                        
+
                         {/* Pagamentos Parciais */}
                         {temPagamentos && (
                           <div className="mt-2 p-2 bg-green-900/40 rounded-lg border border-green-500/30">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs text-green-300 font-medium">Pagamentos:</span>
+                              <span className="text-xs text-green-300 font-medium">
+                                Pagamentos:
+                              </span>
                               <button
-                                onClick={() => handleDesfazerPagamentoParcial(resumo.pessoa)}
+                                onClick={() =>
+                                  handleDesfazerPagamentoParcial(resumo.pessoa)
+                                }
                                 className="p-0.5 hover:bg-green-800/50 rounded transition-colors"
                                 title="Desfazer último"
                               >
@@ -1470,7 +1561,10 @@ function App() {
                               </button>
                             </div>
                             {pagamentos.map((p, i) => (
-                              <div key={i} className="flex justify-between text-xs">
+                              <div
+                                key={i}
+                                className="flex justify-between text-xs"
+                              >
                                 <span className="text-green-200">{p.data}</span>
                                 <span className="text-green-100 font-medium">
                                   {formatCurrency(p.valor)}
@@ -1478,14 +1572,16 @@ function App() {
                               </div>
                             ))}
                             <div className="border-t border-green-500/30 mt-1 pt-1 flex justify-between">
-                              <span className="text-xs text-yellow-300">Falta:</span>
+                              <span className="text-xs text-yellow-300">
+                                Falta:
+                              </span>
                               <span className="text-xs text-yellow-200 font-bold">
                                 {formatCurrency(restante)}
                               </span>
                             </div>
                           </div>
                         )}
-                        
+
                         {/* Observação */}
                         {temObs && (
                           <div className="mt-2 p-2 bg-black/20 rounded-lg">
@@ -2938,7 +3034,9 @@ function App() {
                             </span>
                           </div>
                           <div className="flex justify-between border-t border-gray-600 pt-2">
-                            <span className="text-yellow-400">Falta pagar:</span>
+                            <span className="text-yellow-400">
+                              Falta pagar:
+                            </span>
                             <span className="text-yellow-300 font-bold">
                               {formatCurrency(restante)}
                             </span>
@@ -3018,7 +3116,9 @@ function App() {
                         Cancelar
                       </button>
                       <button
-                        onClick={() => handleAddPagamentoParcial(showPagamentoParcial)}
+                        onClick={() =>
+                          handleAddPagamentoParcial(showPagamentoParcial)
+                        }
                         disabled={restante <= 0}
                         className="flex-1 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >

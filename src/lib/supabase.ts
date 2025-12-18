@@ -356,3 +356,132 @@ export const meusGastosFunctions = {
     return true;
   },
 };
+
+// ========== FUNÇÕES DE OBSERVAÇÕES DO MÊS ==========
+export const observacoesFunctions = {
+  async getAll(): Promise<{ pessoa: string; mes: string; observacao: string }[]> {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from("observacoes_mes")
+      .select("pessoa, mes, observacao");
+
+    if (error) {
+      console.error("Erro ao buscar observações:", error);
+      return [];
+    }
+
+    return data || [];
+  },
+
+  async upsert(pessoa: string, mes: string, observacao: string): Promise<boolean> {
+    if (!supabase) return false;
+    const user_id = await getCurrentUserId();
+    if (!user_id) return false;
+
+    const { error } = await supabase
+      .from("observacoes_mes")
+      .upsert(
+        { user_id, pessoa, mes, observacao, updated_at: new Date().toISOString() },
+        { onConflict: "user_id,pessoa,mes" }
+      );
+
+    if (error) {
+      console.error("Erro ao salvar observação:", error);
+      return false;
+    }
+
+    return true;
+  },
+
+  async delete(pessoa: string, mes: string): Promise<boolean> {
+    if (!supabase) return false;
+    const { error } = await supabase
+      .from("observacoes_mes")
+      .delete()
+      .eq("pessoa", pessoa)
+      .eq("mes", mes);
+
+    if (error) {
+      console.error("Erro ao deletar observação:", error);
+      return false;
+    }
+
+    return true;
+  },
+};
+
+// ========== FUNÇÕES DE PAGAMENTOS PARCIAIS ==========
+export interface PagamentoParcialDB {
+  id?: string;
+  pessoa: string;
+  mes: string;
+  valor: number;
+  data_pagamento: string;
+}
+
+export const pagamentosParciaisFunctions = {
+  async getAll(): Promise<PagamentoParcialDB[]> {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from("pagamentos_parciais")
+      .select("id, pessoa, mes, valor, data_pagamento")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Erro ao buscar pagamentos parciais:", error);
+      return [];
+    }
+
+    return data || [];
+  },
+
+  async create(pagamento: PagamentoParcialDB): Promise<PagamentoParcialDB | null> {
+    if (!supabase) return null;
+    const user_id = await getCurrentUserId();
+    if (!user_id) return null;
+
+    const { data, error } = await supabase
+      .from("pagamentos_parciais")
+      .insert([{ ...pagamento, user_id }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Erro ao criar pagamento parcial:", error);
+      return null;
+    }
+
+    return data;
+  },
+
+  async delete(id: string): Promise<boolean> {
+    if (!supabase) return false;
+    const { error } = await supabase
+      .from("pagamentos_parciais")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Erro ao deletar pagamento parcial:", error);
+      return false;
+    }
+
+    return true;
+  },
+
+  async deleteByPessoaMes(pessoa: string, mes: string): Promise<boolean> {
+    if (!supabase) return false;
+    const { error } = await supabase
+      .from("pagamentos_parciais")
+      .delete()
+      .eq("pessoa", pessoa)
+      .eq("mes", mes);
+
+    if (error) {
+      console.error("Erro ao deletar pagamentos parciais:", error);
+      return false;
+    }
+
+    return true;
+  },
+};
