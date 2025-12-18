@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 import type { Gasto, SaldoDevedor, MeuGasto } from "../types/index";
 
 // Configure suas credenciais do Supabase aqui
@@ -17,6 +18,80 @@ export const isSupabaseConfigured =
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
+
+// ========== FUNÇÕES DE AUTENTICAÇÃO ==========
+export const authFunctions = {
+  async signUp(email: string, password: string): Promise<{ user: User | null; error: string | null }> {
+    if (!supabase) return { user: null, error: "Supabase não configurado" };
+    
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error("Erro ao criar conta:", error);
+      return { user: null, error: error.message };
+    }
+
+    return { user: data.user, error: null };
+  },
+
+  async signIn(email: string, password: string): Promise<{ user: User | null; error: string | null }> {
+    if (!supabase) return { user: null, error: "Supabase não configurado" };
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error("Erro ao fazer login:", error);
+      let errorMessage = error.message;
+      if (error.message === "Invalid login credentials") {
+        errorMessage = "Email ou senha incorretos";
+      }
+      return { user: null, error: errorMessage };
+    }
+
+    return { user: data.user, error: null };
+  },
+
+  async signOut(): Promise<{ error: string | null }> {
+    if (!supabase) return { error: "Supabase não configurado" };
+    
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error("Erro ao fazer logout:", error);
+      return { error: error.message };
+    }
+
+    return { error: null };
+  },
+
+  async getUser(): Promise<User | null> {
+    if (!supabase) return null;
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    return user;
+  },
+
+  async getSession() {
+    if (!supabase) return null;
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    return session;
+  },
+
+  onAuthStateChange(callback: (user: User | null) => void) {
+    if (!supabase) return { data: { subscription: { unsubscribe: () => {} } } };
+    
+    return supabase.auth.onAuthStateChange((_event, session) => {
+      callback(session?.user ?? null);
+    });
+  },
+};
 
 // ========== FUNÇÕES DE GASTOS ==========
 export const gastosFunctions = {

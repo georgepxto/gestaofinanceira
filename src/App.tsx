@@ -25,6 +25,7 @@ import {
   UserCircle,
   Users,
   Repeat,
+  LogOut,
 } from "lucide-react";
 import { addMonths, subMonths, format } from "date-fns";
 import {
@@ -33,7 +34,9 @@ import {
   saldosFunctions,
   pessoasFunctions,
   meusGastosFunctions,
+  authFunctions,
 } from "./lib/supabase";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type {
   Gasto,
   GastoForm,
@@ -53,6 +56,7 @@ import {
   calcularResumoMensal,
   calcularTotalMes,
 } from "./utils/calculations";
+import { Login } from "./components/Login";
 import "./index.css";
 
 // Opções de parcelas
@@ -108,6 +112,10 @@ const DADOS_DEMO: Gasto[] = [
 ];
 
 function App() {
+  // Estado de autenticação
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   // Aba ativa: 'gastos', 'dividas' ou 'eu'
   const [abaAtiva, setAbaAtiva] = useState<"gastos" | "dividas" | "eu">(
     "gastos"
@@ -201,6 +209,48 @@ function App() {
     data_inicio: format(new Date(), "yyyy-MM-dd"),
     tipo: "credito",
   });
+
+  // Verificar autenticação ao iniciar
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (!isSupabaseConfigured || !supabase) {
+        setAuthLoading(false);
+        return;
+      }
+
+      const session = await authFunctions.getSession();
+      setUser(session?.user ?? null);
+      setAuthLoading(false);
+    };
+
+    checkAuth();
+
+    // Escutar mudanças de autenticação
+    const { data: { subscription } } = authFunctions.onAuthStateChange((user) => {
+      setUser(user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Funções de autenticação
+  const handleLogin = async (email: string, password: string) => {
+    const result = await authFunctions.signIn(email, password);
+    if (!result.error && result.user) {
+      setUser(result.user);
+    }
+    return { error: result.error ?? undefined };
+  };
+
+  const handleSignUp = async (email: string, password: string) => {
+    const result = await authFunctions.signUp(email, password);
+    return { error: result.error ?? undefined };
+  };
+
+  const handleLogout = async () => {
+    await authFunctions.signOut();
+    setUser(null);
+  };
 
   // Carregar pessoas do Supabase (ou localStorage como fallback)
   const fetchPessoas = useCallback(async () => {
@@ -1084,6 +1134,20 @@ function App() {
     "from-violet-500 to-violet-600",
   ];
 
+  // Loading de autenticação
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  // Se não estiver logado, mostrar tela de login
+  if (!user && isSupabaseConfigured) {
+    return <Login onLogin={handleLogin} onSignUp={handleSignUp} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-900">
       {/* Banner Modo Demo */}
@@ -1102,23 +1166,34 @@ function App() {
               <TrendingDown className="w-6 h-6 text-blue-500" />
               Controle Financeiro
             </h1>
-            <button
-              onClick={() => {
-                if (abaAtiva === "gastos") setShowForm(true);
-                else if (abaAtiva === "dividas") setShowFormDivida(true);
-                else setShowFormMeuGasto(true);
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
-            >
-              <Plus className="w-5 h-5" />
-              <span className="hidden sm:inline">
-                {abaAtiva === "gastos"
-                  ? "Novo Gasto"
-                  : abaAtiva === "dividas"
-                  ? "Nova Dívida"
-                  : "Novo"}
-              </span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (abaAtiva === "gastos") setShowForm(true);
+                  else if (abaAtiva === "dividas") setShowFormDivida(true);
+                  else setShowFormMeuGasto(true);
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="hidden sm:inline">
+                  {abaAtiva === "gastos"
+                    ? "Novo Gasto"
+                    : abaAtiva === "dividas"
+                    ? "Nova Dívida"
+                    : "Novo"}
+                </span>
+              </button>
+              {user && (
+                <button
+                  onClick={handleLogout}
+                  className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Sair"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Abas */}
