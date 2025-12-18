@@ -1,9 +1,21 @@
 import React, { useState } from "react";
-import { DollarSign, Mail, Lock, Loader2, Eye, EyeOff, User } from "lucide-react";
+import {
+  DollarSign,
+  Mail,
+  Lock,
+  Loader2,
+  Eye,
+  EyeOff,
+  User,
+} from "lucide-react";
 
 interface LoginProps {
   onLogin: (email: string, password: string) => Promise<{ error?: string }>;
-  onSignUp: (email: string, password: string, nome: string) => Promise<{ error?: string }>;
+  onSignUp: (
+    email: string,
+    password: string,
+    nome: string
+  ) => Promise<{ error?: string }>;
 }
 
 export function Login({ onLogin, onSignUp }: LoginProps) {
@@ -55,7 +67,9 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
         if (result.error) {
           setError(result.error);
         } else {
-          setSuccess("Conta criada com sucesso! Verifique seu email para confirmar.");
+          setSuccess(
+            "Conta criada com sucesso! Verifique seu email para confirmar."
+          );
           setIsLogin(true);
           setPassword("");
           setConfirmPassword("");

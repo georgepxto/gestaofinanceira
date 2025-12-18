@@ -35,7 +35,7 @@ export const authFunctions = {
         data: {
           nome: nome,
         },
-        emailRedirectTo: 'https://gestaofinanceira-orcin.vercel.app/',
+        emailRedirectTo: "https://gestaofinanceira-orcin.vercel.app/",
       },
     });
 
@@ -113,7 +113,9 @@ export const authFunctions = {
 // Função auxiliar para obter o user_id atual
 const getCurrentUserId = async (): Promise<string | null> => {
   if (!supabase) return null;
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session?.user?.id) {
     console.error("Usuário não autenticado - user_id não disponível");
     return null;
@@ -268,7 +270,9 @@ export const pessoasFunctions = {
   async create(pessoa: { id: string; nome: string }): Promise<boolean> {
     if (!supabase) return false;
     const user_id = await getCurrentUserId();
-    const { error } = await supabase.from("pessoas").insert([{ ...pessoa, user_id }]);
+    const { error } = await supabase
+      .from("pessoas")
+      .insert([{ ...pessoa, user_id }]);
 
     if (error) {
       console.error("Erro ao criar pessoa:", error);

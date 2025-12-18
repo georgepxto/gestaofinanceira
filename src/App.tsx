@@ -26,6 +26,8 @@ import {
   Users,
   Repeat,
   LogOut,
+  MessageSquare,
+  Edit3,
 } from "lucide-react";
 import { addMonths, subMonths, format } from "date-fns";
 import {
@@ -172,6 +174,11 @@ function App() {
   const [showFecharMes, setShowFecharMes] = useState<string | null>(null); // pessoa
   const [valorPagoFecharMes, setValorPagoFecharMes] = useState<string>("");
 
+  // Observações por pessoa/mês
+  const [observacoesMes, setObservacoesMes] = useState<Record<string, string>>({});
+  const [showObsModal, setShowObsModal] = useState<string | null>(null); // pessoa
+  const [obsTexto, setObsTexto] = useState<string>("");
+
   // Modal de Feedback
   const [modalFeedback, setModalFeedback] = useState<{
     show: boolean;
@@ -244,7 +251,11 @@ function App() {
     return { error: result.error ?? undefined };
   };
 
-  const handleSignUp = async (email: string, password: string, nome: string) => {
+  const handleSignUp = async (
+    email: string,
+    password: string,
+    nome: string
+  ) => {
     const result = await authFunctions.signUp(email, password, nome);
     return { error: result.error ?? undefined };
   };
@@ -612,6 +623,50 @@ function App() {
         tipo: "sucesso",
       });
     }
+  };
+
+  // Gerar chave única para observações (pessoa + mês/ano)
+  const getObsKey = (pessoa: string) => {
+    return `${pessoa}_${format(mesVisualizacao, "yyyy-MM")}`;
+  };
+
+  // Carregar observações do localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("observacoesMes");
+    if (saved) {
+      setObservacoesMes(JSON.parse(saved));
+    }
+  }, []);
+
+  // Salvar observações no localStorage
+  useEffect(() => {
+    if (Object.keys(observacoesMes).length > 0) {
+      localStorage.setItem("observacoesMes", JSON.stringify(observacoesMes));
+    }
+  }, [observacoesMes]);
+
+  // Salvar observação de uma pessoa
+  const handleSalvarObs = (pessoa: string) => {
+    const key = getObsKey(pessoa);
+    if (obsTexto.trim()) {
+      setObservacoesMes((prev) => ({ ...prev, [key]: obsTexto.trim() }));
+    } else {
+      // Remover se vazio
+      setObservacoesMes((prev) => {
+        const newObs = { ...prev };
+        delete newObs[key];
+        return newObs;
+      });
+    }
+    setShowObsModal(null);
+    setObsTexto("");
+  };
+
+  // Abrir modal de observação
+  const handleAbrirObs = (pessoa: string) => {
+    const key = getObsKey(pessoa);
+    setObsTexto(observacoesMes[key] || "");
+    setShowObsModal(pessoa);
   };
 
   // Filtrar dívidas por pessoa e status
@@ -1011,7 +1066,9 @@ function App() {
         };
         setGastos((prev) => [novoGasto, ...prev]);
       } else {
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        const {
+          data: { user: currentUser },
+        } = await supabase.auth.getUser();
         const { error: insertError } = await supabase.from("gastos").insert({
           descricao: formData.descricao.trim(),
           pessoa: formData.pessoa,
@@ -1133,7 +1190,7 @@ function App() {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
               <TrendingDown className="w-6 h-6 text-blue-500" />
-              {user?.user_metadata?.nome || 'Controle Financeiro'}
+              {user?.user_metadata?.nome || "Controle Financeiro"}
             </h1>
             <div className="flex items-center gap-2">
               <button
@@ -1267,39 +1324,60 @@ function App() {
               </div>
 
               {/* Cards por Pessoa */}
-              {resumoMensal.map((resumo, index) => (
-                <div
-                  key={resumo.pessoa}
-                  className={`bg-gradient-to-br ${
-                    coresCards[index % coresCards.length]
-                  } rounded-xl p-4 text-white shadow-sm`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm text-white/80 mb-1 flex items-center gap-1">
-                        <User className="w-4 h-4" />
-                        {resumo.pessoa}
-                      </p>
-                      <p className="text-xl font-bold">
-                        {formatCurrency(resumo.total)}
-                      </p>
-                      <p className="text-xs text-white/70 mt-2">
-                        {resumo.quantidade} itens
-                      </p>
+              {resumoMensal.map((resumo, index) => {
+                const obsKey = getObsKey(resumo.pessoa);
+                const temObs = observacoesMes[obsKey];
+                return (
+                  <div
+                    key={resumo.pessoa}
+                    className={`bg-gradient-to-br ${
+                      coresCards[index % coresCards.length]
+                    } rounded-xl p-4 text-white shadow-sm`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white/80 mb-1 flex items-center gap-1">
+                          <User className="w-4 h-4" />
+                          {resumo.pessoa}
+                        </p>
+                        <p className="text-xl font-bold">
+                          {formatCurrency(resumo.total)}
+                        </p>
+                        <p className="text-xs text-white/70 mt-2">
+                          {resumo.quantidade} itens
+                        </p>
+                        {/* Observação */}
+                        {temObs && (
+                          <div className="mt-2 p-2 bg-black/20 rounded-lg">
+                            <p className="text-xs text-white/90 break-words whitespace-pre-wrap">
+                              {temObs}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1 ml-2">
+                        <button
+                          onClick={() => handleAbrirObs(resumo.pessoa)}
+                          className={`p-1.5 ${temObs ? 'bg-yellow-500/40' : 'bg-white/20'} hover:bg-white/30 rounded-lg transition-colors`}
+                          title={temObs ? "Editar observação" : "Adicionar observação"}
+                        >
+                          {temObs ? <Edit3 className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowFecharMes(resumo.pessoa);
+                            setValorPagoFecharMes("");
+                          }}
+                          className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                          title="Fechar mês"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => {
-                        setShowFecharMes(resumo.pessoa);
-                        setValorPagoFecharMes("");
-                      }}
-                      className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
-                      title="Fechar mês"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Loading */}
@@ -2574,6 +2652,68 @@ function App() {
               >
                 Excluir
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Observação por Pessoa/Mês */}
+      {showObsModal && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md border border-gray-700">
+            <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-yellow-400" />
+                Observação - {showObsModal}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowObsModal(null);
+                  setObsTexto("");
+                }}
+                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div className="bg-gray-700/50 rounded-lg p-3">
+                <p className="text-sm text-gray-400">
+                  Mês: <span className="text-white font-medium">{formatMonthYear(mesVisualizacao)}</span>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Observação
+                </label>
+                <textarea
+                  value={obsTexto}
+                  onChange={(e) => setObsTexto(e.target.value)}
+                  placeholder="Ex: Pagou R$ 1.000 em 15/12, falta R$ 500..."
+                  rows={4}
+                  className="w-full px-3 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 outline-none resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowObsModal(null);
+                    setObsTexto("");
+                  }}
+                  className="flex-1 py-3 bg-gray-700 text-white font-medium rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => handleSalvarObs(showObsModal)}
+                  className="flex-1 py-3 bg-yellow-600 text-white font-medium rounded-lg hover:bg-yellow-700 transition-colors"
+                >
+                  Salvar
+                </button>
+              </div>
             </div>
           </div>
         </div>
