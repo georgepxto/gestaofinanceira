@@ -259,7 +259,7 @@ function App() {
     if (!isSupabaseConfigured || !supabase) {
       // Fallback para localStorage em modo demo
       const saved = localStorage.getItem("pessoas");
-      const data = saved ? JSON.parse(saved) : ["Pai", "Mãe"];
+      const data = saved ? JSON.parse(saved) : [];
       setPessoas(data);
       setPessoasLoaded(true);
       return;
@@ -267,24 +267,10 @@ function App() {
 
     try {
       const data = await pessoasFunctions.getAll();
-      if (data.length > 0) {
-        setPessoas(data.map((p) => p.nome));
-      } else {
-        // Migrar dados do localStorage se existir
-        const saved = localStorage.getItem("pessoas");
-        const localData = saved ? JSON.parse(saved) : ["Pai", "Mãe"];
-        for (const nome of localData) {
-          await pessoasFunctions.create({
-            id: `pessoa-${Date.now()}-${Math.random()}`,
-            nome,
-          });
-        }
-        setPessoas(localData);
-      }
+      setPessoas(data.map((p) => p.nome));
     } catch (err) {
       console.error("Erro ao carregar pessoas:", err);
-      const saved = localStorage.getItem("pessoas");
-      setPessoas(saved ? JSON.parse(saved) : ["Pai", "Mãe"]);
+      setPessoas([]);
     }
     setPessoasLoaded(true);
   }, []);
@@ -301,23 +287,10 @@ function App() {
 
     try {
       const data = await saldosFunctions.getAll();
-      if (data.length > 0) {
-        setSaldosDevedores(data);
-      } else {
-        // Migrar dados do localStorage se existir
-        const saved = localStorage.getItem("saldosDevedores");
-        if (saved) {
-          const localData: SaldoDevedor[] = JSON.parse(saved);
-          for (const saldo of localData) {
-            await saldosFunctions.create(saldo);
-          }
-          setSaldosDevedores(localData);
-        }
-      }
+      setSaldosDevedores(data);
     } catch (err) {
       console.error("Erro ao carregar saldos:", err);
-      const saved = localStorage.getItem("saldosDevedores");
-      setSaldosDevedores(saved ? JSON.parse(saved) : []);
+      setSaldosDevedores([]);
     }
     setSaldosLoaded(true);
   }, []);
@@ -333,22 +306,10 @@ function App() {
 
     try {
       const data = await meusGastosFunctions.getAll();
-      if (data.length > 0) {
-        setMeusGastos(data);
-      } else {
-        const saved = localStorage.getItem("meusGastos");
-        if (saved) {
-          const localData: MeuGasto[] = JSON.parse(saved);
-          for (const gasto of localData) {
-            await meusGastosFunctions.create(gasto);
-          }
-          setMeusGastos(localData);
-        }
-      }
+      setMeusGastos(data);
     } catch (err) {
       console.error("Erro ao carregar meus gastos:", err);
-      const saved = localStorage.getItem("meusGastos");
-      setMeusGastos(saved ? JSON.parse(saved) : []);
+      setMeusGastos([]);
     }
     setMeusGastosLoaded(true);
   }, []);

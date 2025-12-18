@@ -113,8 +113,12 @@ export const authFunctions = {
 // Função auxiliar para obter o user_id atual
 const getCurrentUserId = async (): Promise<string | null> => {
   if (!supabase) return null;
-  const { data: { user } } = await supabase.auth.getUser();
-  return user?.id ?? null;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user?.id) {
+    console.error("Usuário não autenticado - user_id não disponível");
+    return null;
+  }
+  return session.user.id;
 };
 
 // ========== FUNÇÕES DE GASTOS ==========
