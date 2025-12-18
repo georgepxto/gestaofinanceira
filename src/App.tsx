@@ -230,6 +230,12 @@ function App() {
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Estados de edição
+  const [editandoGasto, setEditandoGasto] = useState<Gasto | null>(null);
+  const [editandoMeuGasto, setEditandoMeuGasto] = useState<MeuGasto | null>(
+    null
+  );
+
   // Estado do formulário
   const [formData, setFormData] = useState<GastoForm>({
     descricao: "",
@@ -1002,7 +1008,91 @@ function App() {
       num_parcelas: "1",
     });
     setShowFormMeuGasto(false);
+    setEditandoMeuGasto(null);
     setError(null);
+  };
+
+  // Editar meu gasto
+  const handleEditMeuGasto = (gasto: MeuGasto) => {
+    setFormMeuGasto({
+      descricao: gasto.descricao.replace(/\s*\(\d+\/\d+\)$/, ""), // Remove " (1/3)" do final
+      valor: formatCurrency(gasto.valor).replace("R$\u00a0", ""),
+      tipo: gasto.tipo,
+      categoria: gasto.categoria,
+      data: gasto.data,
+      dividido_com: gasto.dividido_com || "",
+      minha_parte: gasto.minha_parte
+        ? formatCurrency(gasto.minha_parte).replace("R$\u00a0", "")
+        : "",
+      dia_vencimento: gasto.dia_vencimento?.toString() || "",
+      num_parcelas: "1", // Edição não permite alterar parcelas
+    });
+    setEditandoMeuGasto(gasto);
+    setShowFormMeuGasto(true);
+  };
+
+  // Salvar edição de meu gasto
+  const handleSaveMeuGasto = async () => {
+    // Se está editando, atualizar
+    if (editandoMeuGasto) {
+      const valor = parseCurrency(formMeuGasto.valor);
+      if (!formMeuGasto.descricao || valor <= 0) {
+        setError("Preencha todos os campos corretamente.");
+        return;
+      }
+
+      let minhaParte = valor;
+      if (formMeuGasto.categoria === "dividido" && formMeuGasto.minha_parte) {
+        minhaParte = parseCurrency(formMeuGasto.minha_parte);
+      }
+
+      const updates: Partial<MeuGasto> = {
+        descricao: formMeuGasto.descricao,
+        valor: valor,
+        tipo: formMeuGasto.tipo,
+        categoria: formMeuGasto.categoria,
+        data: formMeuGasto.data,
+        dividido_com:
+          formMeuGasto.categoria === "dividido"
+            ? formMeuGasto.dividido_com
+            : undefined,
+        minha_parte:
+          formMeuGasto.categoria === "dividido" ? minhaParte : undefined,
+        dia_vencimento:
+          formMeuGasto.categoria === "fixo"
+            ? parseInt(formMeuGasto.dia_vencimento)
+            : undefined,
+        pago: formMeuGasto.tipo === "debito" ? true : editandoMeuGasto.pago,
+      };
+
+      if (isSupabaseConfigured && supabase) {
+        await meusGastosFunctions.update(editandoMeuGasto.id, updates);
+      }
+
+      setMeusGastos((prev) =>
+        prev.map((g) =>
+          g.id === editandoMeuGasto.id ? { ...g, ...updates } : g
+        )
+      );
+
+      setFormMeuGasto({
+        descricao: "",
+        valor: "",
+        tipo: "debito",
+        categoria: "pessoal",
+        data: format(new Date(), "yyyy-MM-dd"),
+        dividido_com: "",
+        minha_parte: "",
+        dia_vencimento: "",
+        num_parcelas: "1",
+      });
+      setShowFormMeuGasto(false);
+      setEditandoMeuGasto(null);
+      setError(null);
+    } else {
+      // Se não está editando, criar novo
+      await handleAddMeuGasto();
+    }
   };
 
   // Marcar meu gasto como pago/não pago
@@ -1251,34 +1341,71 @@ function App() {
         return;
       }
 
-      // Se em modo demo, adicionar localmente
-      if (modoDemo || !supabase) {
-        const novoGasto: Gasto = {
-          id: Date.now().toString(),
-          descricao: formData.descricao.trim(),
-          pessoa: formData.pessoa,
-          valor_total: valorNumerico,
-          num_parcelas: formData.num_parcelas,
-          data_inicio: formData.data_inicio,
-          tipo: formData.tipo,
-        };
-        setGastos((prev) => [novoGasto, ...prev]);
-      } else {
-        const {
-          data: { user: currentUser },
-        } = await supabase.auth.getUser();
-        const { error: insertError } = await supabase.from("gastos").insert({
-          descricao: formData.descricao.trim(),
-          pessoa: formData.pessoa,
-          valor_total: valorNumerico,
-          num_parcelas: formData.num_parcelas,
-          data_inicio: formData.data_inicio,
-          tipo: formData.tipo,
-          user_id: currentUser?.id,
-        });
+      // Se está editando
+      if (editandoGasto) {
+        if (modoDemo || !supabase) {
+          setGastos((prev) =>
+            prev.map((g) =>
+              g.id === editandoGasto.id
+                ? {
+                    ...g,
+                    descricao: formData.descricao.trim(),
+                    pessoa: formData.pessoa,
+                    valor_total: valorNumerico,
+                    num_parcelas: formData.num_parcelas,
+                    data_inicio: formData.data_inicio,
+                    tipo: formData.tipo,
+                  }
+                : g
+            )
+          );
+        } else {
+          const { error: updateError } = await supabase
+            .from("gastos")
+            .update({
+              descricao: formData.descricao.trim(),
+              pessoa: formData.pessoa,
+              valor_total: valorNumerico,
+              num_parcelas: formData.num_parcelas,
+              data_inicio: formData.data_inicio,
+              tipo: formData.tipo,
+            })
+            .eq("id", editandoGasto.id);
 
-        if (insertError) throw insertError;
-        await fetchGastos();
+          if (updateError) throw updateError;
+          await fetchGastos();
+        }
+        setEditandoGasto(null);
+      } else {
+        // Se em modo demo, adicionar localmente
+        if (modoDemo || !supabase) {
+          const novoGasto: Gasto = {
+            id: Date.now().toString(),
+            descricao: formData.descricao.trim(),
+            pessoa: formData.pessoa,
+            valor_total: valorNumerico,
+            num_parcelas: formData.num_parcelas,
+            data_inicio: formData.data_inicio,
+            tipo: formData.tipo,
+          };
+          setGastos((prev) => [novoGasto, ...prev]);
+        } else {
+          const {
+            data: { user: currentUser },
+          } = await supabase.auth.getUser();
+          const { error: insertError } = await supabase.from("gastos").insert({
+            descricao: formData.descricao.trim(),
+            pessoa: formData.pessoa,
+            valor_total: valorNumerico,
+            num_parcelas: formData.num_parcelas,
+            data_inicio: formData.data_inicio,
+            tipo: formData.tipo,
+            user_id: currentUser?.id,
+          });
+
+          if (insertError) throw insertError;
+          await fetchGastos();
+        }
       }
 
       // Resetar formulário
@@ -1297,6 +1424,20 @@ function App() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // Iniciar edição de gasto
+  const handleEditGasto = (gasto: Gasto) => {
+    setFormData({
+      descricao: gasto.descricao,
+      pessoa: gasto.pessoa,
+      valor_total: formatCurrency(gasto.valor_total).replace("R$\u00a0", ""),
+      num_parcelas: gasto.num_parcelas,
+      data_inicio: gasto.data_inicio,
+      tipo: gasto.tipo,
+    });
+    setEditandoGasto(gasto);
+    setShowForm(true);
   };
 
   // Excluir gasto
@@ -1572,7 +1713,9 @@ function App() {
                                 key={i}
                                 className="flex justify-between text-xs gap-1"
                               >
-                                <span className="text-green-200 truncate">{p.data}</span>
+                                <span className="text-green-200 truncate">
+                                  {p.data}
+                                </span>
                                 <span className="text-green-100 font-medium flex-shrink-0">
                                   {formatCurrency(p.valor)}
                                 </span>
@@ -1659,12 +1802,14 @@ function App() {
                   <h3 className="font-semibold text-white mb-4">
                     Lançamentos do Mês
                   </h3>
-                  
+
                   {/* Filtros */}
                   <div className="space-y-3">
                     {/* Filtro por Pessoa */}
                     <div>
-                      <label className="text-xs text-gray-400 mb-1.5 block">Filtrar por pessoa:</label>
+                      <label className="text-xs text-gray-400 mb-1.5 block">
+                        Filtrar por pessoa:
+                      </label>
                       <div className="flex flex-wrap gap-1.5">
                         <button
                           onClick={() => setFiltroPessoaGasto("")}
@@ -1691,10 +1836,12 @@ function App() {
                         ))}
                       </div>
                     </div>
-                    
+
                     {/* Filtro por Tipo */}
                     <div>
-                      <label className="text-xs text-gray-400 mb-1.5 block">Filtrar por tipo:</label>
+                      <label className="text-xs text-gray-400 mb-1.5 block">
+                        Filtrar por tipo:
+                      </label>
                       <div className="flex flex-wrap gap-1.5">
                         <button
                           onClick={() => setFiltroTipoGasto("")}
@@ -1737,15 +1884,18 @@ function App() {
                   (p) =>
                     (filtroPessoaGasto === "" ||
                       p.gasto.pessoa === filtroPessoaGasto) &&
-                    (filtroTipoGasto === "" ||
-                      p.gasto.tipo === filtroTipoGasto)
+                    (filtroTipoGasto === "" || p.gasto.tipo === filtroTipoGasto)
                 ).length === 0 ? (
                   <div className="p-8 text-center text-gray-400">
                     <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-600" />
                     <p>
                       Nenhum lançamento{" "}
                       {filtroPessoaGasto ? `de ${filtroPessoaGasto} ` : ""}
-                      {filtroTipoGasto ? `(${filtroTipoGasto === "credito" ? "crédito" : "débito"}) ` : ""}
+                      {filtroTipoGasto
+                        ? `(${
+                            filtroTipoGasto === "credito" ? "crédito" : "débito"
+                          }) `
+                        : ""}
                       para este mês
                     </p>
                   </div>
@@ -1799,13 +1949,22 @@ function App() {
                               <p className="font-semibold text-white">
                                 {formatCurrency(valor_parcela)}
                               </p>
-                              <button
-                                onClick={() => handleDelete(gasto.id)}
-                                className="mt-2 p-1 text-gray-500 hover:text-red-400 transition-colors"
-                                aria-label="Excluir"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                              <div className="flex items-center justify-end gap-1 mt-2">
+                                <button
+                                  onClick={() => handleEditGasto(gasto)}
+                                  className="p-1 text-gray-500 hover:text-blue-400 transition-colors"
+                                  aria-label="Editar"
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(gasto.id)}
+                                  className="p-1 text-gray-500 hover:text-red-400 transition-colors"
+                                  aria-label="Excluir"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </li>
@@ -2419,6 +2578,13 @@ function App() {
                           {formatCurrency(gasto.valor)}
                         </p>
                         <button
+                          onClick={() => handleEditMeuGasto(gasto)}
+                          className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
+                          title="Editar"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleToggleGastoFixo(gasto.id)}
                           className={`p-1.5 rounded-lg transition-colors ${
                             gasto.ativo !== false
@@ -2436,6 +2602,7 @@ function App() {
                         <button
                           onClick={() => handleDeleteMeuGasto(gasto.id)}
                           className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                          title="Excluir"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -2556,12 +2723,22 @@ function App() {
                                 Total: {formatCurrency(gasto.valor)}
                               </p>
                             )}
-                          <button
-                            onClick={() => handleDeleteMeuGasto(gasto.id)}
-                            className="mt-2 p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center justify-end gap-1 mt-2">
+                            <button
+                              onClick={() => handleEditMeuGasto(gasto)}
+                              className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
+                              title="Editar"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMeuGasto(gasto.id)}
+                              className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                              title="Excluir"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </li>
@@ -2573,16 +2750,32 @@ function App() {
         )}
       </main>
 
-      {/* Modal Adicionar Meu Gasto */}
+      {/* Modal Adicionar/Editar Meu Gasto */}
       {showFormMeuGasto && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center">
           <div className="bg-gray-800 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto border-t sm:border border-gray-700">
             <div className="sticky top-0 bg-gray-800 p-4 border-b border-gray-700 flex items-center justify-between z-10">
               <h2 className="text-lg font-bold text-white">
-                Novo Gasto Pessoal
+                {editandoMeuGasto
+                  ? "Editar Gasto Pessoal"
+                  : "Novo Gasto Pessoal"}
               </h2>
               <button
-                onClick={() => setShowFormMeuGasto(false)}
+                onClick={() => {
+                  setShowFormMeuGasto(false);
+                  setEditandoMeuGasto(null);
+                  setFormMeuGasto({
+                    descricao: "",
+                    valor: "",
+                    tipo: "debito",
+                    categoria: "pessoal",
+                    data: format(new Date(), "yyyy-MM-dd"),
+                    dividido_com: "",
+                    minha_parte: "",
+                    dia_vencimento: "",
+                    num_parcelas: "1",
+                  });
+                }}
                 className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-gray-400" />
@@ -2879,13 +3072,22 @@ function App() {
               )}
 
               <button
-                onClick={handleAddMeuGasto}
+                onClick={handleSaveMeuGasto}
                 className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
               >
-                <Plus className="w-5 h-5" />
-                {formMeuGasto.categoria === "fixo"
-                  ? "Adicionar Gasto Fixo"
-                  : "Adicionar Gasto"}
+                {editandoMeuGasto ? (
+                  <>
+                    <Edit3 className="w-5 h-5" />
+                    Salvar Alterações
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-5 h-5" />
+                    {formMeuGasto.categoria === "fixo"
+                      ? "Adicionar Gasto Fixo"
+                      : "Adicionar Gasto"}
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -3361,10 +3563,21 @@ function App() {
             {/* Header do Modal */}
             <div className="sticky top-0 bg-gray-800 p-4 border-b border-gray-700 flex items-center justify-between z-10">
               <h2 className="text-lg font-semibold text-white">
-                Novo Lançamento
+                {editandoGasto ? "Editar Lançamento" : "Novo Lançamento"}
               </h2>
               <button
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  setShowForm(false);
+                  setEditandoGasto(null);
+                  setFormData({
+                    descricao: "",
+                    pessoa: pessoas[0] || "",
+                    valor_total: "",
+                    num_parcelas: 1,
+                    data_inicio: format(new Date(), "yyyy-MM-dd"),
+                    tipo: "credito",
+                  });
+                }}
                 className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-gray-400" />
@@ -3602,7 +3815,18 @@ function App() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditandoGasto(null);
+                    setFormData({
+                      descricao: "",
+                      pessoa: pessoas[0] || "",
+                      valor_total: "",
+                      num_parcelas: 1,
+                      data_inicio: format(new Date(), "yyyy-MM-dd"),
+                      tipo: "credito",
+                    });
+                  }}
                   className="flex-1 px-4 py-3 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
                 >
                   Cancelar
