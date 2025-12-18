@@ -1656,13 +1656,16 @@ function App() {
             {!loading && (
               <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
                 <div className="p-4 border-b border-gray-700">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <h3 className="font-semibold text-white">
-                      Lançamentos do Mês
-                    </h3>
-                    <div className="flex flex-col gap-2">
-                      {/* Filtro por Pessoa */}
-                      <div className="flex flex-wrap gap-2">
+                  <h3 className="font-semibold text-white mb-4">
+                    Lançamentos do Mês
+                  </h3>
+                  
+                  {/* Filtros */}
+                  <div className="space-y-3">
+                    {/* Filtro por Pessoa */}
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1.5 block">Filtrar por pessoa:</label>
+                      <div className="flex flex-wrap gap-1.5">
                         <button
                           onClick={() => setFiltroPessoaGasto("")}
                           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -1687,38 +1690,42 @@ function App() {
                           </button>
                         ))}
                       </div>
-                      {/* Filtro por Tipo */}
-                      <div className="flex flex-wrap gap-2">
+                    </div>
+                    
+                    {/* Filtro por Tipo */}
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1.5 block">Filtrar por tipo:</label>
+                      <div className="flex flex-wrap gap-1.5">
                         <button
                           onClick={() => setFiltroTipoGasto("")}
                           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                             filtroTipoGasto === ""
-                              ? "bg-purple-600 text-white"
+                              ? "bg-gray-600 text-white"
                               : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                           }`}
                         >
-                          Todos Tipos
+                          Todos
                         </button>
                         <button
                           onClick={() => setFiltroTipoGasto("credito")}
-                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                             filtroTipoGasto === "credito"
                               ? "bg-amber-600 text-white"
                               : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                           }`}
                         >
-                          <CreditCard className="w-3 h-3" />
+                          <CreditCard className="w-3.5 h-3.5" />
                           Crédito
                         </button>
                         <button
                           onClick={() => setFiltroTipoGasto("debito")}
-                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                             filtroTipoGasto === "debito"
                               ? "bg-teal-600 text-white"
                               : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                           }`}
                         >
-                          <Banknote className="w-3 h-3" />
+                          <Banknote className="w-3.5 h-3.5" />
                           Débito
                         </button>
                       </div>
