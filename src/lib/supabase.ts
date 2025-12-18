@@ -2,19 +2,15 @@ import { createClient } from "@supabase/supabase-js";
 import type { User } from "@supabase/supabase-js";
 import type { Gasto, SaldoDevedor, MeuGasto } from "../types/index";
 
-// Configure suas credenciais do Supabase aqui
-// Você pode encontrá-las em: Project Settings > API
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
-// Verifica se as credenciais foram configuradas
 export const isSupabaseConfigured =
   supabaseUrl &&
   supabaseAnonKey &&
   !supabaseUrl.includes("SUA_URL") &&
   !supabaseAnonKey.includes("SUA_CHAVE");
 
-// Cria o cliente apenas se configurado, senão usa um placeholder
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
@@ -110,7 +106,6 @@ export const authFunctions = {
   },
 };
 
-// Função auxiliar para obter o user_id atual
 const getCurrentUserId = async (): Promise<string | null> => {
   if (!supabase) return null;
   const {
@@ -123,7 +118,6 @@ const getCurrentUserId = async (): Promise<string | null> => {
   return session.user.id;
 };
 
-// ========== FUNÇÕES DE GASTOS ==========
 export const gastosFunctions = {
   async getAll(): Promise<Gasto[]> {
     if (!supabase) return [];
@@ -185,7 +179,6 @@ export const gastosFunctions = {
   },
 };
 
-// ========== FUNÇÕES DE SALDOS DEVEDORES ==========
 export const saldosFunctions = {
   async getAll(): Promise<SaldoDevedor[]> {
     if (!supabase) return [];
@@ -250,7 +243,6 @@ export const saldosFunctions = {
   },
 };
 
-// ========== FUNÇÕES DE PESSOAS ==========
 export const pessoasFunctions = {
   async getAll(): Promise<{ id: string; nome: string }[]> {
     if (!supabase) return [];
@@ -295,7 +287,6 @@ export const pessoasFunctions = {
   },
 };
 
-// ========== FUNÇÕES DE MEUS GASTOS ==========
 export const meusGastosFunctions = {
   async getAll(): Promise<MeuGasto[]> {
     if (!supabase) return [];
@@ -357,7 +348,6 @@ export const meusGastosFunctions = {
   },
 };
 
-// ========== FUNÇÕES DE OBSERVAÇÕES DO MÊS ==========
 export const observacoesFunctions = {
   async getAll(): Promise<
     { pessoa: string; mes: string; observacao: string }[]
@@ -384,18 +374,16 @@ export const observacoesFunctions = {
     const user_id = await getCurrentUserId();
     if (!user_id) return false;
 
-    const { error } = await supabase
-      .from("observacoes_mes")
-      .upsert(
-        {
-          user_id,
-          pessoa,
-          mes,
-          observacao,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,pessoa,mes" }
-      );
+    const { error } = await supabase.from("observacoes_mes").upsert(
+      {
+        user_id,
+        pessoa,
+        mes,
+        observacao,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,pessoa,mes" }
+    );
 
     if (error) {
       console.error("Erro ao salvar observação:", error);

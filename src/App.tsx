@@ -64,17 +64,14 @@ import {
 import { Login } from "./components/Login";
 import "./index.css";
 
-// Tipo para pagamento parcial do mês
 interface PagamentoParcial {
   id?: string;
   valor: number;
   data: string;
 }
 
-// Opções de parcelas
 const PARCELAS_OPTIONS = Array.from({ length: 24 }, (_, i) => i + 1);
 
-// Dados de demonstração para quando o Supabase não está configurado
 const DADOS_DEMO: Gasto[] = [
   {
     id: "1",
@@ -124,27 +121,17 @@ const DADOS_DEMO: Gasto[] = [
 ];
 
 function App() {
-  // Estado de autenticação
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-
-  // Aba ativa: 'gastos', 'dividas' ou 'eu'
   const [abaAtiva, setAbaAtiva] = useState<"gastos" | "dividas" | "eu">(
     "gastos"
   );
-
-  // Estado do mês de visualização
   const [mesVisualizacao, setMesVisualizacao] = useState<Date>(new Date());
-
-  // Estados de dados
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [parcelasAtivas, setParcelasAtivas] = useState<ParcelaAtiva[]>([]);
-  // Modo demo quando Supabase não está configurado
   const [modoDemo, setModoDemo] = useState<boolean>(false);
   const [resumoMensal, setResumoMensal] = useState<ResumoMensal[]>([]);
   const [totalMes, setTotalMes] = useState<number>(0);
-
-  // Saldo Devedor
   const [saldosDevedores, setSaldosDevedores] = useState<SaldoDevedor[]>([]);
   const [saldosLoaded, setSaldosLoaded] = useState<boolean>(false);
   const [showFormDivida, setShowFormDivida] = useState<boolean>(false);
@@ -156,14 +143,12 @@ function App() {
   });
   const [valorPagamento, setValorPagamento] = useState<string>("");
   const [obsPagamento, setObsPagamento] = useState<string>("");
-  const [filtroPessoaGasto, setFiltroPessoaGasto] = useState<string>(""); // "" = todos
-  const [filtroTipoGasto, setFiltroTipoGasto] = useState<string>(""); // "" = todos, "credito", "debito"
-  const [filtroPessoaDivida, setFiltroPessoaDivida] = useState<string>(""); // "" = todos
+  const [filtroPessoaGasto, setFiltroPessoaGasto] = useState<string>("");
+  const [filtroTipoGasto, setFiltroTipoGasto] = useState<string>("");
+  const [filtroPessoaDivida, setFiltroPessoaDivida] = useState<string>("");
   const [filtroStatusDivida, setFiltroStatusDivida] = useState<
     "pendentes" | "pagos"
   >("pendentes");
-
-  // Meus Gastos (Aba "Eu")
   const [meusGastos, setMeusGastos] = useState<MeuGasto[]>([]);
   const [meusGastosLoaded, setMeusGastosLoaded] = useState<boolean>(false);
   const [showFormMeuGasto, setShowFormMeuGasto] = useState<boolean>(false);
@@ -179,30 +164,22 @@ function App() {
     num_parcelas: "1",
   });
   const [filtroCategoriaMeuGasto, setFiltroCategoriaMeuGasto] =
-    useState<string>(""); // "" = todos
-
-  // Fechar Mês
-  const [showFecharMes, setShowFecharMes] = useState<string | null>(null); // pessoa
+    useState<string>("");
+  const [showFecharMes, setShowFecharMes] = useState<string | null>(null);
   const [valorPagoFecharMes, setValorPagoFecharMes] = useState<string>("");
-
-  // Observações por pessoa/mês
   const [observacoesMes, setObservacoesMes] = useState<Record<string, string>>(
     {}
   );
-  const [showObsModal, setShowObsModal] = useState<string | null>(null); // pessoa
+  const [showObsModal, setShowObsModal] = useState<string | null>(null);
   const [obsTexto, setObsTexto] = useState<string>("");
-
-  // Pagamentos parciais por pessoa/mês
   const [pagamentosParciais, setPagamentosParciais] = useState<
     Record<string, PagamentoParcial[]>
   >({});
   const [showPagamentoParcial, setShowPagamentoParcial] = useState<
     string | null
-  >(null); // pessoa
+  >(null);
   const [valorPagamentoParcial, setValorPagamentoParcial] =
     useState<string>("");
-
-  // Modal de Feedback
   const [modalFeedback, setModalFeedback] = useState<{
     show: boolean;
     titulo: string;
@@ -217,26 +194,18 @@ function App() {
     mensagem: string;
     onConfirm: () => void;
   }>({ show: false, titulo: "", mensagem: "", onConfirm: () => {} });
-
-  // Lista de pessoas (dinâmica)
   const [pessoas, setPessoas] = useState<string[]>([]);
   const [pessoasLoaded, setPessoasLoaded] = useState<boolean>(false);
   const [novaPessoa, setNovaPessoa] = useState<string>("");
   const [showAddPessoa, setShowAddPessoa] = useState<boolean>(false);
-
-  // Estados de UI
   const [showForm, setShowForm] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Estados de edição
   const [editandoGasto, setEditandoGasto] = useState<Gasto | null>(null);
   const [editandoMeuGasto, setEditandoMeuGasto] = useState<MeuGasto | null>(
     null
   );
-
-  // Estado do formulário
   const [formData, setFormData] = useState<GastoForm>({
     descricao: "",
     pessoa: "",
@@ -246,7 +215,6 @@ function App() {
     tipo: "credito",
   });
 
-  // Verificar autenticação ao iniciar
   useEffect(() => {
     const checkAuth = async () => {
       if (!isSupabaseConfigured || !supabase) {
@@ -260,8 +228,6 @@ function App() {
     };
 
     checkAuth();
-
-    // Escutar mudanças de autenticação
     const {
       data: { subscription },
     } = authFunctions.onAuthStateChange((user) => {
@@ -271,7 +237,6 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Funções de autenticação
   const handleLogin = async (email: string, password: string) => {
     const result = await authFunctions.signIn(email, password);
     if (!result.error && result.user) {

@@ -31,7 +31,6 @@ export interface ResumoMensal {
   quantidade: number;
 }
 
-// Saldo Devedor - Dívidas pendentes
 export interface SaldoDevedor {
   id: string;
   pessoa: string;
@@ -49,7 +48,6 @@ export interface PagamentoSaldo {
   observacao?: string;
 }
 
-// Meus Gastos Pessoais
 export interface MeuGasto {
   id: string;
   descricao: string;
@@ -59,13 +57,10 @@ export interface MeuGasto {
   data: string;
   pago: boolean;
   data_pagamento?: string;
-  // Para gastos divididos
   dividido_com?: string;
   minha_parte?: number;
-  // Para gastos fixos
-  dia_vencimento?: number; // 1-31
-  ativo?: boolean; // se o gasto fixo está ativo
-  // Para crédito parcelado
+  dia_vencimento?: number;
+  ativo?: boolean;
   num_parcelas?: number;
   parcela_atual?: number;
 }
