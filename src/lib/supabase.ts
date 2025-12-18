@@ -359,7 +359,9 @@ export const meusGastosFunctions = {
 
 // ========== FUNÇÕES DE OBSERVAÇÕES DO MÊS ==========
 export const observacoesFunctions = {
-  async getAll(): Promise<{ pessoa: string; mes: string; observacao: string }[]> {
+  async getAll(): Promise<
+    { pessoa: string; mes: string; observacao: string }[]
+  > {
     if (!supabase) return [];
     const { data, error } = await supabase
       .from("observacoes_mes")
@@ -373,7 +375,11 @@ export const observacoesFunctions = {
     return data || [];
   },
 
-  async upsert(pessoa: string, mes: string, observacao: string): Promise<boolean> {
+  async upsert(
+    pessoa: string,
+    mes: string,
+    observacao: string
+  ): Promise<boolean> {
     if (!supabase) return false;
     const user_id = await getCurrentUserId();
     if (!user_id) return false;
@@ -381,7 +387,13 @@ export const observacoesFunctions = {
     const { error } = await supabase
       .from("observacoes_mes")
       .upsert(
-        { user_id, pessoa, mes, observacao, updated_at: new Date().toISOString() },
+        {
+          user_id,
+          pessoa,
+          mes,
+          observacao,
+          updated_at: new Date().toISOString(),
+        },
         { onConflict: "user_id,pessoa,mes" }
       );
 
@@ -435,7 +447,9 @@ export const pagamentosParciaisFunctions = {
     return data || [];
   },
 
-  async create(pagamento: PagamentoParcialDB): Promise<PagamentoParcialDB | null> {
+  async create(
+    pagamento: PagamentoParcialDB
+  ): Promise<PagamentoParcialDB | null> {
     if (!supabase) return null;
     const user_id = await getCurrentUserId();
     if (!user_id) return null;

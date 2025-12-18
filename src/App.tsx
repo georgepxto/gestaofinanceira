@@ -157,6 +157,7 @@ function App() {
   const [valorPagamento, setValorPagamento] = useState<string>("");
   const [obsPagamento, setObsPagamento] = useState<string>("");
   const [filtroPessoaGasto, setFiltroPessoaGasto] = useState<string>(""); // "" = todos
+  const [filtroTipoGasto, setFiltroTipoGasto] = useState<string>(""); // "" = todos, "credito", "debito"
   const [filtroPessoaDivida, setFiltroPessoaDivida] = useState<string>(""); // "" = todos
   const [filtroStatusDivida, setFiltroStatusDivida] = useState<
     "pendentes" | "pagos"
@@ -723,7 +724,10 @@ function App() {
   // Salvar pagamentos no localStorage como backup (modo demo)
   useEffect(() => {
     if (!isSupabaseConfigured && Object.keys(pagamentosParciais).length > 0) {
-      localStorage.setItem("pagamentosParciais", JSON.stringify(pagamentosParciais));
+      localStorage.setItem(
+        "pagamentosParciais",
+        JSON.stringify(pagamentosParciais)
+      );
     }
   }, [pagamentosParciais]);
 
@@ -731,7 +735,7 @@ function App() {
   const handleSalvarObs = async (pessoa: string) => {
     const key = getObsKey(pessoa);
     const mes = getMesAtual();
-    
+
     if (obsTexto.trim()) {
       // Salvar no Supabase
       if (isSupabaseConfigured && supabase) {
@@ -801,11 +805,14 @@ function App() {
         valor,
         data_pagamento: dataPagamento,
       });
-      
+
       if (result) {
         setPagamentosParciais((prev) => ({
           ...prev,
-          [key]: [...(prev[key] || []), { id: result.id, valor, data: dataPagamento }],
+          [key]: [
+            ...(prev[key] || []),
+            { id: result.id, valor, data: dataPagamento },
+          ],
         }));
       }
     } else {
@@ -850,7 +857,7 @@ function App() {
         if (isSupabaseConfigured && supabase && ultimoPagamento.id) {
           await pagamentosParciaisFunctions.delete(ultimoPagamento.id);
         }
-        
+
         setPagamentosParciais((prev) => ({
           ...prev,
           [key]: pagamentos.slice(0, -1),
@@ -1504,9 +1511,9 @@ function App() {
             )}
 
             {/* Cards de Resumo */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Card Total Geral */}
-              <div className="col-span-2 sm:col-span-1 bg-gradient-to-br from-gray-700 to-gray-800 rounded-xl p-4 text-white shadow-sm">
+              <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-xl p-4 text-white shadow-sm">
                 <p className="text-sm text-gray-300 mb-1">Total do Mês</p>
                 <p className="text-2xl font-bold">{formatCurrency(totalMes)}</p>
                 <p className="text-xs text-gray-400 mt-2">
@@ -1528,15 +1535,15 @@ function App() {
                     key={resumo.pessoa}
                     className={`bg-gradient-to-br ${
                       coresCards[index % coresCards.length]
-                    } rounded-xl p-4 text-white shadow-sm`}
+                    } rounded-xl p-3 sm:p-4 text-white shadow-sm overflow-hidden`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0 overflow-hidden">
                         <p className="text-sm text-white/80 mb-1 flex items-center gap-1">
-                          <User className="w-4 h-4" />
-                          {resumo.pessoa}
+                          <User className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate">{resumo.pessoa}</span>
                         </p>
-                        <p className="text-xl font-bold">
+                        <p className="text-lg sm:text-xl font-bold">
                           {formatCurrency(resumo.total)}
                         </p>
                         <p className="text-xs text-white/70 mt-1">
@@ -1545,16 +1552,16 @@ function App() {
 
                         {/* Pagamentos Parciais */}
                         {temPagamentos && (
-                          <div className="mt-2 p-2 bg-green-900/40 rounded-lg border border-green-500/30">
+                          <div className="mt-2 p-2 bg-green-900/40 rounded-lg border border-green-500/30 overflow-hidden">
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-xs text-green-300 font-medium">
-                                Pagamentos:
+                                Pago:
                               </span>
                               <button
                                 onClick={() =>
                                   handleDesfazerPagamentoParcial(resumo.pessoa)
                                 }
-                                className="p-0.5 hover:bg-green-800/50 rounded transition-colors"
+                                className="p-0.5 hover:bg-green-800/50 rounded transition-colors flex-shrink-0"
                                 title="Desfazer último"
                               >
                                 <Undo2 className="w-3 h-3 text-green-300" />
@@ -1563,10 +1570,10 @@ function App() {
                             {pagamentos.map((p, i) => (
                               <div
                                 key={i}
-                                className="flex justify-between text-xs"
+                                className="flex justify-between text-xs gap-1"
                               >
-                                <span className="text-green-200">{p.data}</span>
-                                <span className="text-green-100 font-medium">
+                                <span className="text-green-200 truncate">{p.data}</span>
+                                <span className="text-green-100 font-medium flex-shrink-0">
                                   {formatCurrency(p.valor)}
                                 </span>
                               </div>
@@ -1575,7 +1582,7 @@ function App() {
                               <span className="text-xs text-yellow-300">
                                 Falta:
                               </span>
-                              <span className="text-xs text-yellow-200 font-bold">
+                              <span className="text-xs text-yellow-200 font-bold flex-shrink-0">
                                 {formatCurrency(restante)}
                               </span>
                             </div>
@@ -1584,8 +1591,8 @@ function App() {
 
                         {/* Observação */}
                         {temObs && (
-                          <div className="mt-2 p-2 bg-black/20 rounded-lg">
-                            <p className="text-xs text-white/90 break-words whitespace-pre-wrap">
+                          <div className="mt-2 p-2 bg-black/20 rounded-lg overflow-hidden">
+                            <p className="text-xs text-white/90 break-words whitespace-pre-wrap line-clamp-3">
                               {temObs}
                             </p>
                           </div>
@@ -1653,45 +1660,86 @@ function App() {
                     <h3 className="font-semibold text-white">
                       Lançamentos do Mês
                     </h3>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => setFiltroPessoaGasto("")}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                          filtroPessoaGasto === ""
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        }`}
-                      >
-                        Tudo
-                      </button>
-                      {pessoas.map((pessoa) => (
+                    <div className="flex flex-col gap-2">
+                      {/* Filtro por Pessoa */}
+                      <div className="flex flex-wrap gap-2">
                         <button
-                          key={pessoa}
-                          onClick={() => setFiltroPessoaGasto(pessoa)}
+                          onClick={() => setFiltroPessoaGasto("")}
                           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                            filtroPessoaGasto === pessoa
+                            filtroPessoaGasto === ""
                               ? "bg-blue-600 text-white"
                               : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                           }`}
                         >
-                          {pessoa}
+                          Todos
                         </button>
-                      ))}
+                        {pessoas.map((pessoa) => (
+                          <button
+                            key={pessoa}
+                            onClick={() => setFiltroPessoaGasto(pessoa)}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                              filtroPessoaGasto === pessoa
+                                ? "bg-blue-600 text-white"
+                                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                            }`}
+                          >
+                            {pessoa}
+                          </button>
+                        ))}
+                      </div>
+                      {/* Filtro por Tipo */}
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => setFiltroTipoGasto("")}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                            filtroTipoGasto === ""
+                              ? "bg-purple-600 text-white"
+                              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                          }`}
+                        >
+                          Todos Tipos
+                        </button>
+                        <button
+                          onClick={() => setFiltroTipoGasto("credito")}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
+                            filtroTipoGasto === "credito"
+                              ? "bg-amber-600 text-white"
+                              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                          }`}
+                        >
+                          <CreditCard className="w-3 h-3" />
+                          Crédito
+                        </button>
+                        <button
+                          onClick={() => setFiltroTipoGasto("debito")}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
+                            filtroTipoGasto === "debito"
+                              ? "bg-teal-600 text-white"
+                              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                          }`}
+                        >
+                          <Banknote className="w-3 h-3" />
+                          Débito
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {parcelasAtivas.filter(
                   (p) =>
-                    filtroPessoaGasto === "" ||
-                    p.gasto.pessoa === filtroPessoaGasto
+                    (filtroPessoaGasto === "" ||
+                      p.gasto.pessoa === filtroPessoaGasto) &&
+                    (filtroTipoGasto === "" ||
+                      p.gasto.tipo === filtroTipoGasto)
                 ).length === 0 ? (
                   <div className="p-8 text-center text-gray-400">
                     <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-600" />
                     <p>
                       Nenhum lançamento{" "}
-                      {filtroPessoaGasto ? `de ${filtroPessoaGasto} ` : ""}para
-                      este mês
+                      {filtroPessoaGasto ? `de ${filtroPessoaGasto} ` : ""}
+                      {filtroTipoGasto ? `(${filtroTipoGasto === "credito" ? "crédito" : "débito"}) ` : ""}
+                      para este mês
                     </p>
                   </div>
                 ) : (
@@ -1699,8 +1747,10 @@ function App() {
                     {parcelasAtivas
                       .filter(
                         (p) =>
-                          filtroPessoaGasto === "" ||
-                          p.gasto.pessoa === filtroPessoaGasto
+                          (filtroPessoaGasto === "" ||
+                            p.gasto.pessoa === filtroPessoaGasto) &&
+                          (filtroTipoGasto === "" ||
+                            p.gasto.tipo === filtroTipoGasto)
                       )
                       .map(({ gasto, parcela_atual, valor_parcela }) => (
                         <li
