@@ -244,8 +244,8 @@ function App() {
     return { error: result.error ?? undefined };
   };
 
-  const handleSignUp = async (email: string, password: string) => {
-    const result = await authFunctions.signUp(email, password);
+  const handleSignUp = async (email: string, password: string, nome: string) => {
+    const result = await authFunctions.signUp(email, password, nome);
     return { error: result.error ?? undefined };
   };
 
@@ -1168,7 +1168,7 @@ function App() {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
               <TrendingDown className="w-6 h-6 text-blue-500" />
-              Controle Financeiro
+              {user?.user_metadata?.nome || 'Controle Financeiro'}
             </h1>
             <div className="flex items-center gap-2">
               <button

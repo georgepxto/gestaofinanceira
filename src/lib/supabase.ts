@@ -23,13 +23,20 @@ export const supabase = isSupabaseConfigured
 export const authFunctions = {
   async signUp(
     email: string,
-    password: string
+    password: string,
+    nome: string
   ): Promise<{ user: User | null; error: string | null }> {
     if (!supabase) return { user: null, error: "Supabase não configurado" };
 
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          nome: nome,
+        },
+        emailRedirectTo: 'https://gestaofinanceira-orcin.vercel.app/',
+      },
     });
 
     if (error) {

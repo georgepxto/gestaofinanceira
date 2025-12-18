@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { DollarSign, Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
+import { DollarSign, Mail, Lock, Loader2, Eye, EyeOff, User } from "lucide-react";
 
 interface LoginProps {
   onLogin: (email: string, password: string) => Promise<{ error?: string }>;
-  onSignUp: (email: string, password: string) => Promise<{ error?: string }>;
+  onSignUp: (email: string, password: string, nome: string) => Promise<{ error?: string }>;
 }
 
 export function Login({ onLogin, onSignUp }: LoginProps) {
@@ -11,6 +11,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [nome, setNome] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -23,6 +24,11 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
 
     if (!email || !password) {
       setError("Preencha todos os campos");
+      return;
+    }
+
+    if (!isLogin && !nome.trim()) {
+      setError("Preencha seu nome");
       return;
     }
 
@@ -45,14 +51,15 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
           setError(result.error);
         }
       } else {
-        const result = await onSignUp(email, password);
+        const result = await onSignUp(email, password, nome.trim());
         if (result.error) {
           setError(result.error);
         } else {
-          setSuccess("Conta criada com sucesso! Você já pode fazer login.");
+          setSuccess("Conta criada com sucesso! Verifique seu email para confirmar.");
           setIsLogin(true);
           setPassword("");
           setConfirmPassword("");
+          setNome("");
         }
       }
     } catch (err) {
@@ -81,6 +88,25 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
         {/* Card de Login */}
         <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Nome (apenas signup) */}
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Nome
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Seu nome"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
