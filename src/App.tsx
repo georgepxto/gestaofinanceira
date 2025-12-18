@@ -314,12 +314,14 @@ function App() {
     setMeusGastosLoaded(true);
   }, []);
 
-  // Carregar dados ao iniciar
+  // Carregar dados ao iniciar e quando o usuário mudar
   useEffect(() => {
-    fetchPessoas();
-    fetchSaldos();
-    fetchMeusGastos();
-  }, [fetchPessoas, fetchSaldos, fetchMeusGastos]);
+    if (user) {
+      fetchPessoas();
+      fetchSaldos();
+      fetchMeusGastos();
+    }
+  }, [user, fetchPessoas, fetchSaldos, fetchMeusGastos]);
 
   // Salvar meus gastos no localStorage como backup
   useEffect(() => {
@@ -884,10 +886,12 @@ function App() {
     }
   }, []);
 
-  // Carregar gastos ao iniciar
+  // Carregar gastos ao iniciar e quando o usuário mudar
   useEffect(() => {
-    fetchGastos();
-  }, [fetchGastos]);
+    if (user) {
+      fetchGastos();
+    }
+  }, [user, fetchGastos]);
 
   // Sincronização em tempo real com Supabase (Realtime)
   useEffect(() => {
