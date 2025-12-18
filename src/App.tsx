@@ -28,6 +28,7 @@ import {
   LogOut,
   MessageSquare,
   Edit3,
+  Banknote,
 } from "lucide-react";
 import { addMonths, subMonths, format } from "date-fns";
 import {
@@ -60,6 +61,12 @@ import {
 } from "./utils/calculations";
 import { Login } from "./components/Login";
 import "./index.css";
+
+// Tipo para pagamento parcial do mês
+interface PagamentoParcial {
+  valor: number;
+  data: string;
+}
 
 // Opções de parcelas
 const PARCELAS_OPTIONS = Array.from({ length: 24 }, (_, i) => i + 1);
@@ -175,9 +182,16 @@ function App() {
   const [valorPagoFecharMes, setValorPagoFecharMes] = useState<string>("");
 
   // Observações por pessoa/mês
-  const [observacoesMes, setObservacoesMes] = useState<Record<string, string>>({});
+  const [observacoesMes, setObservacoesMes] = useState<Record<string, string>>(
+    {}
+  );
   const [showObsModal, setShowObsModal] = useState<string | null>(null); // pessoa
   const [obsTexto, setObsTexto] = useState<string>("");
+
+  // Pagamentos parciais por pessoa/mês
+  const [pagamentosParciais, setPagamentosParciais] = useState<Record<string, PagamentoParcial[]>>({});
+  const [showPagamentoParcial, setShowPagamentoParcial] = useState<string | null>(null); // pessoa
+  const [valorPagamentoParcial, setValorPagamentoParcial] = useState<string>("");
 
   // Modal de Feedback
   const [modalFeedback, setModalFeedback] = useState<{
@@ -667,6 +681,96 @@ function App() {
     const key = getObsKey(pessoa);
     setObsTexto(observacoesMes[key] || "");
     setShowObsModal(pessoa);
+  };
+
+  // Carregar pagamentos parciais do localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("pagamentosParciais");
+    if (saved) {
+      setPagamentosParciais(JSON.parse(saved));
+    }
+  }, []);
+
+  // Salvar pagamentos parciais no localStorage
+  useEffect(() => {
+    if (Object.keys(pagamentosParciais).length > 0) {
+      localStorage.setItem("pagamentosParciais", JSON.stringify(pagamentosParciais));
+    }
+  }, [pagamentosParciais]);
+
+  // Obter pagamentos parciais de uma pessoa no mês atual
+  const getPagamentosParciais = (pessoa: string): PagamentoParcial[] => {
+    const key = getObsKey(pessoa);
+    return pagamentosParciais[key] || [];
+  };
+
+  // Calcular total pago parcialmente por uma pessoa no mês
+  const getTotalPagoParcial = (pessoa: string): number => {
+    return getPagamentosParciais(pessoa).reduce((acc, p) => acc + p.valor, 0);
+  };
+
+  // Adicionar pagamento parcial
+  const handleAddPagamentoParcial = (pessoa: string) => {
+    const valor = parseCurrency(valorPagamentoParcial);
+    if (valor <= 0) {
+      setError("Valor de pagamento inválido.");
+      return;
+    }
+
+    const resumoPessoa = resumoMensal.find((r) => r.pessoa === pessoa);
+    const totalDevido = resumoPessoa?.total || 0;
+    const jaPago = getTotalPagoParcial(pessoa);
+    const restante = totalDevido - jaPago;
+
+    if (valor > restante) {
+      setError(`O valor não pode ser maior que ${formatCurrency(restante)}.`);
+      return;
+    }
+
+    const novoPagamento: PagamentoParcial = {
+      valor,
+      data: format(new Date(), "dd/MM/yyyy"),
+    };
+
+    const key = getObsKey(pessoa);
+    setPagamentosParciais((prev) => ({
+      ...prev,
+      [key]: [...(prev[key] || []), novoPagamento],
+    }));
+
+    setValorPagamentoParcial("");
+    setShowPagamentoParcial(null);
+    setError(null);
+
+    setModalFeedback({
+      show: true,
+      titulo: "Pagamento Registrado!",
+      mensagem: `${pessoa} pagou ${formatCurrency(valor)}.\nFalta: ${formatCurrency(restante - valor)}`,
+      tipo: "sucesso",
+    });
+  };
+
+  // Remover último pagamento parcial (desfazer)
+  const handleDesfazerPagamentoParcial = (pessoa: string) => {
+    const key = getObsKey(pessoa);
+    const pagamentos = pagamentosParciais[key] || [];
+    
+    if (pagamentos.length === 0) return;
+
+    const ultimoPagamento = pagamentos[pagamentos.length - 1];
+    
+    setModalConfirm({
+      show: true,
+      titulo: "Desfazer Pagamento",
+      mensagem: `Deseja remover o pagamento de ${formatCurrency(ultimoPagamento.valor)} feito em ${ultimoPagamento.data}?`,
+      onConfirm: () => {
+        setPagamentosParciais((prev) => ({
+          ...prev,
+          [key]: pagamentos.slice(0, -1),
+        }));
+        setModalConfirm({ ...modalConfirm, show: false });
+      },
+    });
   };
 
   // Filtrar dívidas por pessoa e status
@@ -1327,6 +1431,11 @@ function App() {
               {resumoMensal.map((resumo, index) => {
                 const obsKey = getObsKey(resumo.pessoa);
                 const temObs = observacoesMes[obsKey];
+                const pagamentos = getPagamentosParciais(resumo.pessoa);
+                const totalPago = getTotalPagoParcial(resumo.pessoa);
+                const restante = resumo.total - totalPago;
+                const temPagamentos = pagamentos.length > 0;
+                
                 return (
                   <div
                     key={resumo.pessoa}
@@ -1343,9 +1452,40 @@ function App() {
                         <p className="text-xl font-bold">
                           {formatCurrency(resumo.total)}
                         </p>
-                        <p className="text-xs text-white/70 mt-2">
+                        <p className="text-xs text-white/70 mt-1">
                           {resumo.quantidade} itens
                         </p>
+                        
+                        {/* Pagamentos Parciais */}
+                        {temPagamentos && (
+                          <div className="mt-2 p-2 bg-green-900/40 rounded-lg border border-green-500/30">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-green-300 font-medium">Pagamentos:</span>
+                              <button
+                                onClick={() => handleDesfazerPagamentoParcial(resumo.pessoa)}
+                                className="p-0.5 hover:bg-green-800/50 rounded transition-colors"
+                                title="Desfazer último"
+                              >
+                                <Undo2 className="w-3 h-3 text-green-300" />
+                              </button>
+                            </div>
+                            {pagamentos.map((p, i) => (
+                              <div key={i} className="flex justify-between text-xs">
+                                <span className="text-green-200">{p.data}</span>
+                                <span className="text-green-100 font-medium">
+                                  {formatCurrency(p.valor)}
+                                </span>
+                              </div>
+                            ))}
+                            <div className="border-t border-green-500/30 mt-1 pt-1 flex justify-between">
+                              <span className="text-xs text-yellow-300">Falta:</span>
+                              <span className="text-xs text-yellow-200 font-bold">
+                                {formatCurrency(restante)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        
                         {/* Observação */}
                         {temObs && (
                           <div className="mt-2 p-2 bg-black/20 rounded-lg">
@@ -1358,10 +1498,32 @@ function App() {
                       <div className="flex flex-col gap-1 ml-2">
                         <button
                           onClick={() => handleAbrirObs(resumo.pessoa)}
-                          className={`p-1.5 ${temObs ? 'bg-yellow-500/40' : 'bg-white/20'} hover:bg-white/30 rounded-lg transition-colors`}
-                          title={temObs ? "Editar observação" : "Adicionar observação"}
+                          className={`p-1.5 ${
+                            temObs ? "bg-yellow-500/40" : "bg-white/20"
+                          } hover:bg-white/30 rounded-lg transition-colors`}
+                          title={
+                            temObs
+                              ? "Editar observação"
+                              : "Adicionar observação"
+                          }
                         >
-                          {temObs ? <Edit3 className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+                          {temObs ? (
+                            <Edit3 className="w-4 h-4" />
+                          ) : (
+                            <MessageSquare className="w-4 h-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowPagamentoParcial(resumo.pessoa);
+                            setValorPagamentoParcial("");
+                          }}
+                          className={`p-1.5 ${
+                            temPagamentos ? "bg-green-500/40" : "bg-white/20"
+                          } hover:bg-white/30 rounded-lg transition-colors`}
+                          title="Pagamento parcial"
+                        >
+                          <Banknote className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => {
@@ -2680,7 +2842,10 @@ function App() {
             <div className="p-4 space-y-4">
               <div className="bg-gray-700/50 rounded-lg p-3">
                 <p className="text-sm text-gray-400">
-                  Mês: <span className="text-white font-medium">{formatMonthYear(mesVisualizacao)}</span>
+                  Mês:{" "}
+                  <span className="text-white font-medium">
+                    {formatMonthYear(mesVisualizacao)}
+                  </span>
                 </p>
               </div>
 
@@ -2714,6 +2879,155 @@ function App() {
                   Salvar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Pagamento Parcial */}
+      {showPagamentoParcial && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md border border-gray-700">
+            <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Banknote className="w-5 h-5 text-green-400" />
+                Pagamento Parcial - {showPagamentoParcial}
+              </h2>
+              <button
+                onClick={() => {
+                  setShowPagamentoParcial(null);
+                  setValorPagamentoParcial("");
+                  setError(null);
+                }}
+                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {(() => {
+                const resumoPessoa = resumoMensal.find(
+                  (r) => r.pessoa === showPagamentoParcial
+                );
+                const totalDevido = resumoPessoa?.total || 0;
+                const jaPago = getTotalPagoParcial(showPagamentoParcial);
+                const restante = totalDevido - jaPago;
+
+                return (
+                  <>
+                    <div className="bg-gray-700/50 rounded-lg p-4 space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Mês:</span>
+                        <span className="text-white font-medium">
+                          {formatMonthYear(mesVisualizacao)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Total do mês:</span>
+                        <span className="text-white font-medium">
+                          {formatCurrency(totalDevido)}
+                        </span>
+                      </div>
+                      {jaPago > 0 && (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-green-400">Já pago:</span>
+                            <span className="text-green-300 font-medium">
+                              {formatCurrency(jaPago)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between border-t border-gray-600 pt-2">
+                            <span className="text-yellow-400">Falta pagar:</span>
+                            <span className="text-yellow-300 font-bold">
+                              {formatCurrency(restante)}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Valor do pagamento
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                          R$
+                        </span>
+                        <input
+                          type="text"
+                          value={valorPagamentoParcial}
+                          onChange={(e) =>
+                            setValorPagamentoParcial(
+                              formatCurrencyInput(e.target.value)
+                            )
+                          }
+                          placeholder="0,00"
+                          className="w-full pl-10 pr-3 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 outline-none"
+                          inputMode="numeric"
+                        />
+                      </div>
+                      {restante > 0 && (
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() =>
+                              setValorPagamentoParcial(
+                                restante.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })
+                              )
+                            }
+                            className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 text-white rounded font-medium transition-colors"
+                          >
+                            Tudo ({formatCurrency(restante)})
+                          </button>
+                          <button
+                            onClick={() =>
+                              setValorPagamentoParcial(
+                                (restante / 2).toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })
+                              )
+                            }
+                            className="px-3 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded font-medium transition-colors"
+                          >
+                            Metade ({formatCurrency(restante / 2)})
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {error && (
+                      <div className="bg-red-900/50 border border-red-700 rounded-lg p-3 text-red-300 text-sm">
+                        {error}
+                      </div>
+                    )}
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setShowPagamentoParcial(null);
+                          setValorPagamentoParcial("");
+                          setError(null);
+                        }}
+                        className="flex-1 py-3 bg-gray-700 text-white font-medium rounded-lg hover:bg-gray-600 transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={() => handleAddPagamentoParcial(showPagamentoParcial)}
+                        disabled={restante <= 0}
+                        className="flex-1 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Registrar
+                      </button>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
