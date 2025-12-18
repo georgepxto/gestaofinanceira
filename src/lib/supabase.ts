@@ -21,9 +21,12 @@ export const supabase = isSupabaseConfigured
 
 // ========== FUNÇÕES DE AUTENTICAÇÃO ==========
 export const authFunctions = {
-  async signUp(email: string, password: string): Promise<{ user: User | null; error: string | null }> {
+  async signUp(
+    email: string,
+    password: string
+  ): Promise<{ user: User | null; error: string | null }> {
     if (!supabase) return { user: null, error: "Supabase não configurado" };
-    
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -37,9 +40,12 @@ export const authFunctions = {
     return { user: data.user, error: null };
   },
 
-  async signIn(email: string, password: string): Promise<{ user: User | null; error: string | null }> {
+  async signIn(
+    email: string,
+    password: string
+  ): Promise<{ user: User | null; error: string | null }> {
     if (!supabase) return { user: null, error: "Supabase não configurado" };
-    
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -59,7 +65,7 @@ export const authFunctions = {
 
   async signOut(): Promise<{ error: string | null }> {
     if (!supabase) return { error: "Supabase não configurado" };
-    
+
     const { error } = await supabase.auth.signOut();
 
     if (error) {
@@ -72,25 +78,36 @@ export const authFunctions = {
 
   async getUser(): Promise<User | null> {
     if (!supabase) return null;
-    
-    const { data: { user } } = await supabase.auth.getUser();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     return user;
   },
 
   async getSession() {
     if (!supabase) return null;
-    
-    const { data: { session } } = await supabase.auth.getSession();
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     return session;
   },
 
   onAuthStateChange(callback: (user: User | null) => void) {
     if (!supabase) return { data: { subscription: { unsubscribe: () => {} } } };
-    
+
     return supabase.auth.onAuthStateChange((_event, session) => {
       callback(session?.user ?? null);
     });
   },
+};
+
+// Função auxiliar para obter o user_id atual
+const getCurrentUserId = async (): Promise<string | null> => {
+  if (!supabase) return null;
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.id ?? null;
 };
 
 // ========== FUNÇÕES DE GASTOS ==========
@@ -112,9 +129,10 @@ export const gastosFunctions = {
 
   async create(gasto: Omit<Gasto, "id">): Promise<Gasto | null> {
     if (!supabase) return null;
+    const user_id = await getCurrentUserId();
     const { data, error } = await supabase
       .from("gastos")
-      .insert([gasto])
+      .insert([{ ...gasto, user_id }])
       .select()
       .single();
 
@@ -173,9 +191,10 @@ export const saldosFunctions = {
 
   async create(saldo: SaldoDevedor): Promise<SaldoDevedor | null> {
     if (!supabase) return null;
+    const user_id = await getCurrentUserId();
     const { data, error } = await supabase
       .from("saldos_devedores")
-      .insert([saldo])
+      .insert([{ ...saldo, user_id }])
       .select()
       .single();
 
@@ -237,7 +256,8 @@ export const pessoasFunctions = {
 
   async create(pessoa: { id: string; nome: string }): Promise<boolean> {
     if (!supabase) return false;
-    const { error } = await supabase.from("pessoas").insert([pessoa]);
+    const user_id = await getCurrentUserId();
+    const { error } = await supabase.from("pessoas").insert([{ ...pessoa, user_id }]);
 
     if (error) {
       console.error("Erro ao criar pessoa:", error);
@@ -279,9 +299,10 @@ export const meusGastosFunctions = {
 
   async create(gasto: MeuGasto): Promise<MeuGasto | null> {
     if (!supabase) return null;
+    const user_id = await getCurrentUserId();
     const { data, error } = await supabase
       .from("meus_gastos")
-      .insert([gasto])
+      .insert([{ ...gasto, user_id }])
       .select()
       .single();
 

@@ -226,7 +226,9 @@ function App() {
     checkAuth();
 
     // Escutar mudanças de autenticação
-    const { data: { subscription } } = authFunctions.onAuthStateChange((user) => {
+    const {
+      data: { subscription },
+    } = authFunctions.onAuthStateChange((user) => {
       setUser(user);
     });
 
