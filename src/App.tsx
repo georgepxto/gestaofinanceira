@@ -72,54 +72,6 @@ interface PagamentoParcial {
 
 const PARCELAS_OPTIONS = Array.from({ length: 24 }, (_, i) => i + 1);
 
-const DADOS_DEMO: Gasto[] = [
-  {
-    id: "1",
-    descricao: "iPhone 15 Pro",
-    pessoa: "Pai",
-    valor_total: 5999,
-    num_parcelas: 12,
-    data_inicio: "2024-10-15",
-    tipo: "credito",
-  },
-  {
-    id: "2",
-    descricao: "Geladeira Brastemp",
-    pessoa: "Mãe",
-    valor_total: 3500,
-    num_parcelas: 10,
-    data_inicio: "2024-11-01",
-    tipo: "credito",
-  },
-  {
-    id: "3",
-    descricao: "Supermercado",
-    pessoa: "Pai",
-    valor_total: 850,
-    num_parcelas: 1,
-    data_inicio: "2024-12-10",
-    tipo: "debito",
-  },
-  {
-    id: "4",
-    descricao: "Curso de Inglês",
-    pessoa: "Mãe",
-    valor_total: 2400,
-    num_parcelas: 6,
-    data_inicio: "2024-09-20",
-    tipo: "credito",
-  },
-  {
-    id: "5",
-    descricao: "TV 55 polegadas",
-    pessoa: "Pai",
-    valor_total: 2800,
-    num_parcelas: 5,
-    data_inicio: "2024-10-01",
-    tipo: "credito",
-  },
-];
-
 function App() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -129,7 +81,6 @@ function App() {
   const [mesVisualizacao, setMesVisualizacao] = useState<Date>(new Date());
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [parcelasAtivas, setParcelasAtivas] = useState<ParcelaAtiva[]>([]);
-  const [modoDemo, setModoDemo] = useState<boolean>(false);
   const [resumoMensal, setResumoMensal] = useState<ResumoMensal[]>([]);
   const [totalMes, setTotalMes] = useState<number>(0);
   const [saldosDevedores, setSaldosDevedores] = useState<SaldoDevedor[]>([]);
@@ -217,11 +168,6 @@ function App() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      if (!isSupabaseConfigured || !supabase) {
-        setAuthLoading(false);
-        return;
-      }
-
       const session = await authFunctions.getSession();
       setUser(session?.user ?? null);
       setAuthLoading(false);
@@ -1161,19 +1107,11 @@ function App() {
 
   // Buscar gastos do Supabase
   const fetchGastos = useCallback(async () => {
-    // Se Supabase não está configurado, usar dados demo
-    if (!isSupabaseConfigured || !supabase) {
-      setModoDemo(true);
-      setGastos(DADOS_DEMO);
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
+      const { data, error: fetchError } = await supabase!
         .from("gastos")
         .select("*")
         .order("data_inicio", { ascending: false });
@@ -1186,9 +1124,6 @@ function App() {
       setError(
         "Erro ao carregar gastos. Verifique sua conexão com o Supabase."
       );
-      // Usar dados demo em caso de erro
-      setModoDemo(true);
-      setGastos(DADOS_DEMO);
     } finally {
       setLoading(false);
     }
@@ -1308,69 +1243,37 @@ function App() {
 
       // Se está editando
       if (editandoGasto) {
-        if (modoDemo || !supabase) {
-          setGastos((prev) =>
-            prev.map((g) =>
-              g.id === editandoGasto.id
-                ? {
-                    ...g,
-                    descricao: formData.descricao.trim(),
-                    pessoa: formData.pessoa,
-                    valor_total: valorNumerico,
-                    num_parcelas: formData.num_parcelas,
-                    data_inicio: formData.data_inicio,
-                    tipo: formData.tipo,
-                  }
-                : g
-            )
-          );
-        } else {
-          const { error: updateError } = await supabase
-            .from("gastos")
-            .update({
-              descricao: formData.descricao.trim(),
-              pessoa: formData.pessoa,
-              valor_total: valorNumerico,
-              num_parcelas: formData.num_parcelas,
-              data_inicio: formData.data_inicio,
-              tipo: formData.tipo,
-            })
-            .eq("id", editandoGasto.id);
+        const { error: updateError } = await supabase!
+          .from("gastos")
+          .update({
+            descricao: formData.descricao.trim(),
+            pessoa: formData.pessoa,
+            valor_total: valorNumerico,
+            num_parcelas: formData.num_parcelas,
+            data_inicio: formData.data_inicio,
+            tipo: formData.tipo,
+          })
+          .eq("id", editandoGasto.id);
 
-          if (updateError) throw updateError;
-          await fetchGastos();
-        }
+        if (updateError) throw updateError;
+        await fetchGastos();
         setEditandoGasto(null);
       } else {
-        // Se em modo demo, adicionar localmente
-        if (modoDemo || !supabase) {
-          const novoGasto: Gasto = {
-            id: Date.now().toString(),
-            descricao: formData.descricao.trim(),
-            pessoa: formData.pessoa,
-            valor_total: valorNumerico,
-            num_parcelas: formData.num_parcelas,
-            data_inicio: formData.data_inicio,
-            tipo: formData.tipo,
-          };
-          setGastos((prev) => [novoGasto, ...prev]);
-        } else {
-          const {
-            data: { user: currentUser },
-          } = await supabase.auth.getUser();
-          const { error: insertError } = await supabase.from("gastos").insert({
-            descricao: formData.descricao.trim(),
-            pessoa: formData.pessoa,
-            valor_total: valorNumerico,
-            num_parcelas: formData.num_parcelas,
-            data_inicio: formData.data_inicio,
-            tipo: formData.tipo,
-            user_id: currentUser?.id,
-          });
+        const {
+          data: { user: currentUser },
+        } = await supabase!.auth.getUser();
+        const { error: insertError } = await supabase!.from("gastos").insert({
+          descricao: formData.descricao.trim(),
+          pessoa: formData.pessoa,
+          valor_total: valorNumerico,
+          num_parcelas: formData.num_parcelas,
+          data_inicio: formData.data_inicio,
+          tipo: formData.tipo,
+          user_id: currentUser?.id,
+        });
 
-          if (insertError) throw insertError;
-          await fetchGastos();
-        }
+        if (insertError) throw insertError;
+        await fetchGastos();
       }
 
       // Resetar formulário
@@ -1417,13 +1320,7 @@ function App() {
         try {
           setError(null);
 
-          // Se em modo demo, remover localmente
-          if (modoDemo || !supabase) {
-            setGastos((prev) => prev.filter((g) => g.id !== id));
-            return;
-          }
-
-          const { error: deleteError } = await supabase
+          const { error: deleteError } = await supabase!
             .from("gastos")
             .delete()
             .eq("id", id);
@@ -1473,21 +1370,24 @@ function App() {
     );
   }
 
-  // Se não estiver logado, mostrar tela de login
-  if (!user && isSupabaseConfigured) {
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-white mb-2">Configuração Necessária</h1>
+          <p className="text-gray-400">Configure as variáveis de ambiente do Supabase no arquivo .env.local</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
     return <Login onLogin={handleLogin} onSignUp={handleSignUp} />;
   }
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Banner Modo Demo */}
-      {modoDemo && (
-        <div className="bg-amber-600 text-white text-center py-2 px-4 text-sm">
-          ⚠️ Modo Demonstração - Configure o Supabase no arquivo .env para
-          salvar dados
-        </div>
-      )}
-
       {/* Header */}
       <header className="bg-gray-800 shadow-lg sticky top-0 z-40 border-b border-gray-700">
         <div className="max-w-4xl mx-auto px-4 py-4">
