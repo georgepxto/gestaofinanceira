@@ -936,7 +936,7 @@ function App() {
         ? formatCurrency(gasto.minha_parte).replace("R$\u00a0", "")
         : "",
       dia_vencimento: gasto.dia_vencimento?.toString() || "",
-      num_parcelas: "1", // Edição não permite alterar parcelas
+      num_parcelas: gasto.num_parcelas?.toString() || "1",
     });
     setEditandoMeuGasto(gasto);
     setShowFormMeuGasto(true);
@@ -957,34 +957,116 @@ function App() {
         minhaParte = parseCurrency(formMeuGasto.minha_parte);
       }
 
-      const updates: Partial<MeuGasto> = {
-        descricao: formMeuGasto.descricao,
-        valor: valor,
-        tipo: formMeuGasto.tipo,
-        categoria: formMeuGasto.categoria,
-        data: formMeuGasto.data,
-        dividido_com:
-          formMeuGasto.categoria === "dividido"
-            ? formMeuGasto.dividido_com
-            : undefined,
-        minha_parte:
-          formMeuGasto.categoria === "dividido" ? minhaParte : undefined,
-        dia_vencimento:
-          formMeuGasto.categoria === "fixo"
-            ? parseInt(formMeuGasto.dia_vencimento)
-            : undefined,
-        pago: formMeuGasto.tipo === "debito" ? true : editandoMeuGasto.pago,
-      };
+      const numParcelas =
+        formMeuGasto.tipo === "credito"
+          ? parseInt(formMeuGasto.num_parcelas) || 1
+          : 1;
+      const valorParcela = valor / numParcelas;
 
-      if (isSupabaseConfigured && supabase) {
-        await meusGastosFunctions.update(editandoMeuGasto.id, updates);
+      // Se é crédito parcelado (mais de 1 parcela), atualizar a primeira e criar as demais
+      if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
+        const dataInicio = new Date(formMeuGasto.data);
+
+        // Atualizar o gasto atual como primeira parcela
+        const updatesPrimeira: Partial<MeuGasto> = {
+          descricao: `${formMeuGasto.descricao} (1/${numParcelas})`,
+          valor: valorParcela,
+          tipo: formMeuGasto.tipo,
+          categoria: formMeuGasto.categoria,
+          data: formMeuGasto.data,
+          dividido_com:
+            formMeuGasto.categoria === "dividido"
+              ? formMeuGasto.dividido_com
+              : undefined,
+          minha_parte:
+            formMeuGasto.categoria === "dividido"
+              ? minhaParte / numParcelas
+              : undefined,
+          dia_vencimento:
+            formMeuGasto.categoria === "fixo"
+              ? parseInt(formMeuGasto.dia_vencimento)
+              : undefined,
+          pago: editandoMeuGasto.pago,
+          num_parcelas: numParcelas,
+          parcela_atual: 1,
+        };
+
+        if (isSupabaseConfigured && supabase) {
+          await meusGastosFunctions.update(
+            editandoMeuGasto.id,
+            updatesPrimeira
+          );
+        }
+
+        setMeusGastos((prev) =>
+          prev.map((g) =>
+            g.id === editandoMeuGasto.id ? { ...g, ...updatesPrimeira } : g
+          )
+        );
+
+        // Criar as parcelas restantes (2, 3, 4, ...)
+        for (let i = 1; i < numParcelas; i++) {
+          const dataParcela = new Date(dataInicio);
+          dataParcela.setMonth(dataParcela.getMonth() + i);
+
+          const novoGasto: MeuGasto = {
+            id: `${Date.now()}-${i}`,
+            descricao: `${formMeuGasto.descricao} (${i + 1}/${numParcelas})`,
+            valor: valorParcela,
+            tipo: formMeuGasto.tipo,
+            categoria: formMeuGasto.categoria,
+            data: format(dataParcela, "yyyy-MM-dd"),
+            pago: false,
+            dividido_com:
+              formMeuGasto.categoria === "dividido"
+                ? formMeuGasto.dividido_com
+                : undefined,
+            minha_parte:
+              formMeuGasto.categoria === "dividido"
+                ? minhaParte / numParcelas
+                : undefined,
+            num_parcelas: numParcelas,
+            parcela_atual: i + 1,
+          };
+
+          if (isSupabaseConfigured && supabase) {
+            await meusGastosFunctions.create(novoGasto);
+          }
+          setMeusGastos((prev) => [...prev, novoGasto]);
+        }
+      } else {
+        // Gasto único (débito ou crédito à vista)
+        const updates: Partial<MeuGasto> = {
+          descricao: formMeuGasto.descricao,
+          valor: valor,
+          tipo: formMeuGasto.tipo,
+          categoria: formMeuGasto.categoria,
+          data: formMeuGasto.data,
+          dividido_com:
+            formMeuGasto.categoria === "dividido"
+              ? formMeuGasto.dividido_com
+              : undefined,
+          minha_parte:
+            formMeuGasto.categoria === "dividido" ? minhaParte : undefined,
+          dia_vencimento:
+            formMeuGasto.categoria === "fixo"
+              ? parseInt(formMeuGasto.dia_vencimento)
+              : undefined,
+          pago: formMeuGasto.tipo === "debito" ? true : editandoMeuGasto.pago,
+          num_parcelas: 1,
+          parcela_atual: 1,
+        };
+
+        if (isSupabaseConfigured && supabase) {
+          await meusGastosFunctions.update(editandoMeuGasto.id, updates);
+        }
+
+        setMeusGastos((prev) =>
+          prev.map((g) =>
+            g.id === editandoMeuGasto.id ? { ...g, ...updates } : g
+          )
+        );
       }
-
-      setMeusGastos((prev) =>
-        prev.map((g) =>
-          g.id === editandoMeuGasto.id ? { ...g, ...updates } : g
-        )
-      );
 
       setFormMeuGasto({
         descricao: "",
@@ -1375,8 +1457,12 @@ function App() {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-white mb-2">Configuração Necessária</h1>
-          <p className="text-gray-400">Configure as variáveis de ambiente do Supabase no arquivo .env.local</p>
+          <h1 className="text-xl font-bold text-white mb-2">
+            Configuração Necessária
+          </h1>
+          <p className="text-gray-400">
+            Configure as variáveis de ambiente do Supabase no arquivo .env.local
+          </p>
         </div>
       </div>
     );
