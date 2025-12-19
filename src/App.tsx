@@ -988,14 +988,22 @@ function App() {
 
       // Se é crédito parcelado
       if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
+        const dataInicio = new Date(formMeuGasto.data);
+
         // Atualizar todas as parcelas existentes
         for (const parcela of parcelasRelacionadas) {
           const parcelaAtual = parcela.parcela_atual || 1;
+
+          // Calcular a nova data para esta parcela
+          const dataParcela = new Date(dataInicio);
+          dataParcela.setMonth(dataParcela.getMonth() + (parcelaAtual - 1));
+
           const updates: Partial<MeuGasto> = {
             descricao: `${formMeuGasto.descricao} (${parcelaAtual}/${numParcelas})`,
             valor: valorParcela,
             tipo: formMeuGasto.tipo,
             categoria: formMeuGasto.categoria,
+            data: format(dataParcela, "yyyy-MM-dd"),
             dividido_com:
               formMeuGasto.categoria === "dividido"
                 ? formMeuGasto.dividido_com
