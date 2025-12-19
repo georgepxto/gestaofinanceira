@@ -925,18 +925,25 @@ function App() {
 
   // Editar meu gasto
   const handleEditMeuGasto = (gasto: MeuGasto) => {
+    // Calcular valor total (valor da parcela * número de parcelas)
+    const numParcelas = gasto.num_parcelas || 1;
+    const valorTotal = gasto.valor * numParcelas;
+    const minhaParteTotal = gasto.minha_parte
+      ? gasto.minha_parte * numParcelas
+      : undefined;
+
     setFormMeuGasto({
       descricao: gasto.descricao.replace(/\s*\(\d+\/\d+\)$/, ""), // Remove " (1/3)" do final
-      valor: formatCurrency(gasto.valor).replace("R$\u00a0", ""),
+      valor: formatCurrency(valorTotal).replace("R$\u00a0", ""),
       tipo: gasto.tipo,
       categoria: gasto.categoria,
       data: gasto.data,
       dividido_com: gasto.dividido_com || "",
-      minha_parte: gasto.minha_parte
-        ? formatCurrency(gasto.minha_parte).replace("R$\u00a0", "")
+      minha_parte: minhaParteTotal
+        ? formatCurrency(minhaParteTotal).replace("R$\u00a0", "")
         : "",
       dia_vencimento: gasto.dia_vencimento?.toString() || "",
-      num_parcelas: gasto.num_parcelas?.toString() || "1",
+      num_parcelas: numParcelas.toString(),
     });
     setEditandoMeuGasto(gasto);
     setShowFormMeuGasto(true);
@@ -963,60 +970,32 @@ function App() {
           : 1;
       const valorParcela = valor / numParcelas;
 
-      // Se é crédito parcelado (mais de 1 parcela), atualizar a primeira e criar as demais
-      if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
-        const dataInicio = new Date(formMeuGasto.data);
+      // Extrair a descrição base do gasto que está sendo editado (sem o "(X/Y)")
+      const descricaoBaseOriginal = editandoMeuGasto.descricao.replace(
+        /\s*\(\d+\/\d+\)$/,
+        ""
+      );
+      const numParcelasOriginal = editandoMeuGasto.num_parcelas || 1;
 
-        // Atualizar o gasto atual como primeira parcela
-        const updatesPrimeira: Partial<MeuGasto> = {
-          descricao: `${formMeuGasto.descricao} (1/${numParcelas})`,
-          valor: valorParcela,
-          tipo: formMeuGasto.tipo,
-          categoria: formMeuGasto.categoria,
-          data: formMeuGasto.data,
-          dividido_com:
-            formMeuGasto.categoria === "dividido"
-              ? formMeuGasto.dividido_com
-              : undefined,
-          minha_parte:
-            formMeuGasto.categoria === "dividido"
-              ? minhaParte / numParcelas
-              : undefined,
-          dia_vencimento:
-            formMeuGasto.categoria === "fixo"
-              ? parseInt(formMeuGasto.dia_vencimento)
-              : undefined,
-          pago: editandoMeuGasto.pago,
-          num_parcelas: numParcelas,
-          parcela_atual: 1,
-        };
-
-        if (isSupabaseConfigured && supabase) {
-          await meusGastosFunctions.update(
-            editandoMeuGasto.id,
-            updatesPrimeira
-          );
-        }
-
-        setMeusGastos((prev) =>
-          prev.map((g) =>
-            g.id === editandoMeuGasto.id ? { ...g, ...updatesPrimeira } : g
-          )
+      // Encontrar todas as parcelas relacionadas (mesma descrição base e num_parcelas)
+      const parcelasRelacionadas = meusGastos.filter((g) => {
+        const descBase = g.descricao.replace(/\s*\(\d+\/\d+\)$/, "");
+        return (
+          descBase === descricaoBaseOriginal &&
+          g.num_parcelas === numParcelasOriginal
         );
+      });
 
-        // Criar as parcelas restantes (2, 3, 4, ...)
-        for (let i = 1; i < numParcelas; i++) {
-          const dataParcela = new Date(dataInicio);
-          dataParcela.setMonth(dataParcela.getMonth() + i);
-
-          const novoGasto: MeuGasto = {
-            id: `${Date.now()}-${i}`,
-            descricao: `${formMeuGasto.descricao} (${i + 1}/${numParcelas})`,
+      // Se é crédito parcelado
+      if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
+        // Atualizar todas as parcelas existentes
+        for (const parcela of parcelasRelacionadas) {
+          const parcelaAtual = parcela.parcela_atual || 1;
+          const updates: Partial<MeuGasto> = {
+            descricao: `${formMeuGasto.descricao} (${parcelaAtual}/${numParcelas})`,
             valor: valorParcela,
             tipo: formMeuGasto.tipo,
             categoria: formMeuGasto.categoria,
-            data: format(dataParcela, "yyyy-MM-dd"),
-            pago: false,
             dividido_com:
               formMeuGasto.categoria === "dividido"
                 ? formMeuGasto.dividido_com
@@ -1026,16 +1005,19 @@ function App() {
                 ? minhaParte / numParcelas
                 : undefined,
             num_parcelas: numParcelas,
-            parcela_atual: i + 1,
           };
 
           if (isSupabaseConfigured && supabase) {
-            await meusGastosFunctions.create(novoGasto);
+            await meusGastosFunctions.update(parcela.id, updates);
           }
-          setMeusGastos((prev) => [...prev, novoGasto]);
+
+          setMeusGastos((prev) =>
+            prev.map((g) => (g.id === parcela.id ? { ...g, ...updates } : g))
+          );
         }
       } else {
         // Gasto único (débito ou crédito à vista)
+        // Se tinha parcelas e agora é único, atualizar apenas o atual
         const updates: Partial<MeuGasto> = {
           descricao: formMeuGasto.descricao,
           valor: valor,
@@ -1110,15 +1092,42 @@ function App() {
 
   // Excluir meu gasto
   const handleDeleteMeuGasto = (id: string) => {
+    const gastoParaExcluir = meusGastos.find((g) => g.id === id);
+    if (!gastoParaExcluir) return;
+
+    // Extrair a descrição base (sem o "(X/Y)")
+    const descricaoBase = gastoParaExcluir.descricao.replace(
+      /\s*\(\d+\/\d+\)$/,
+      ""
+    );
+    const numParcelas = gastoParaExcluir.num_parcelas || 1;
+
+    // Encontrar todas as parcelas relacionadas
+    const parcelasRelacionadas = meusGastos.filter((g) => {
+      const descBase = g.descricao.replace(/\s*\(\d+\/\d+\)$/, "");
+      return descBase === descricaoBase && g.num_parcelas === numParcelas;
+    });
+
+    const mensagem =
+      parcelasRelacionadas.length > 1
+        ? `Tem certeza que deseja excluir este gasto e todas as suas ${parcelasRelacionadas.length} parcelas?`
+        : "Tem certeza que deseja excluir este gasto?";
+
     setModalConfirm({
       show: true,
       titulo: "Excluir Gasto",
-      mensagem: "Tem certeza que deseja excluir este gasto?",
+      mensagem,
       onConfirm: async () => {
-        if (isSupabaseConfigured && supabase) {
-          await meusGastosFunctions.delete(id);
+        // Excluir todas as parcelas relacionadas
+        for (const parcela of parcelasRelacionadas) {
+          if (isSupabaseConfigured && supabase) {
+            await meusGastosFunctions.delete(parcela.id);
+          }
         }
-        setMeusGastos((prev) => prev.filter((g) => g.id !== id));
+
+        // Remover todas as parcelas do estado local
+        const idsParaExcluir = new Set(parcelasRelacionadas.map((p) => p.id));
+        setMeusGastos((prev) => prev.filter((g) => !idsParaExcluir.has(g.id)));
         setModalConfirm({ ...modalConfirm, show: false });
       },
     });
