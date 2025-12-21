@@ -37,3 +37,19 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* Date Input Fixes for iOS */
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="time"] {
+  color-scheme: dark;
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 2.5rem;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  color: inherit;
+}
