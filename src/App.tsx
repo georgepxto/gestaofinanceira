@@ -519,7 +519,9 @@ function App() {
     const resumoPessoa = resumoMensal.find((r) => r.pessoa === pessoa);
     if (!resumoPessoa) return;
 
+    const jaPago = getTotalPagoParcial(pessoa);
     const totalDevido = resumoPessoa.total;
+    const totalRestante = totalDevido - jaPago;
     const valorPago = parseCurrency(valorPagoFecharMes);
 
     if (valorPago < 0) {
@@ -527,25 +529,63 @@ function App() {
       return;
     }
 
-    if (valorPago > totalDevido) {
+    if (valorPago > totalRestante + 0.01) {
+      // +0.01 margin for float errors
       setError(
-        `O valor pago não pode ser maior que ${formatCurrency(totalDevido)}.`
+        `O valor pago não pode ser maior que o restante (${formatCurrency(
+          totalRestante
+        )}).`
       );
       return;
     }
 
-    const valorRestante = totalDevido - valorPago;
+    const valorDevedor = totalRestante - valorPago;
 
     setSaving(true);
     try {
-      if (valorRestante > 0) {
+      // Registrar o pagamento se houver valor pago
+      if (valorPago > 0) {
+        const dataPagamento = format(new Date(), "dd/MM/yyyy");
+        const mes = getMesAtual();
+        const key = getObsKey(pessoa);
+
+        if (isSupabaseConfigured && supabase) {
+          const result = await pagamentosParciaisFunctions.create({
+            pessoa,
+            mes,
+            valor: valorPago,
+            data_pagamento: dataPagamento,
+          });
+
+          if (result) {
+            setPagamentosParciais((prev) => ({
+              ...prev,
+              [key]: [
+                ...(prev[key] || []),
+                { id: result.id, valor: valorPago, data: dataPagamento },
+              ],
+            }));
+          }
+        } else {
+          // Modo demo
+          setPagamentosParciais((prev) => ({
+            ...prev,
+            [key]: [
+              ...(prev[key] || []),
+              { valor: valorPago, data: dataPagamento },
+            ],
+          }));
+        }
+      }
+
+      if (valorDevedor > 0) {
         // Criar saldo devedor com o valor restante
         const novaDivida: SaldoDevedor = {
           id: Date.now().toString(),
           pessoa: pessoa,
           descricao: `Gastos pendentes - ${formatMonthYear(mesVisualizacao)}`,
-          valor_original: valorRestante,
-          valor_atual: valorRestante,
+          valor_original: valorDevedor,
+          valor_atual: valorDevedor,
           data_criacao: format(new Date(), "yyyy-MM-dd"),
           historico: [],
         };
@@ -564,14 +604,14 @@ function App() {
       setError(null);
 
       // Mostrar feedback
-      if (valorRestante > 0) {
+      if (valorDevedor > 0) {
         setModalFeedback({
           show: true,
           titulo: "Mês Fechado!",
           mensagem: `${pessoa} pagou ${formatCurrency(
             valorPago
           )}.\n${formatCurrency(
-            valorRestante
+            valorDevedor
           )} foi transferido para o Saldo Devedor.`,
           tipo: "info",
         });
@@ -579,9 +619,9 @@ function App() {
         setModalFeedback({
           show: true,
           titulo: "Mês Fechado!",
-          mensagem: `${pessoa} pagou ${formatCurrency(
+          mensagem: `${pessoa} quitou o restante de ${formatCurrency(
             valorPago
-          )} (total quitado).`,
+          )}.`,
           tipo: "sucesso",
         });
       }
@@ -1721,6 +1761,11 @@ function App() {
                         <p className="text-sm text-white/80 mb-1 flex items-center gap-1">
                           <User className="w-4 h-4 flex-shrink-0" />
                           <span className="truncate">{resumo.pessoa}</span>
+                          {restante <= 0 && resumo.total > 0 && (
+                            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-900/50 text-green-300 border border-green-700">
+                              ✓ Quitado
+                            </span>
+                          )}
                         </p>
                         <p className="text-lg sm:text-xl font-bold">
                           {formatCurrency(resumo.total)}
@@ -3674,8 +3719,10 @@ function App() {
                   (r) => r.pessoa === showFecharMes
                 );
                 const totalDevido = resumoPessoa?.total || 0;
+                const jaPago = getTotalPagoParcial(showFecharMes);
+                const restanteReal = totalDevido - jaPago;
                 const valorPago = parseCurrency(valorPagoFecharMes);
-                const valorRestante = Math.max(0, totalDevido - valorPago);
+                const valorParaDebito = Math.max(0, restanteReal - valorPago);
 
                 return (
                   <>
@@ -3687,15 +3734,23 @@ function App() {
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Total devido:</span>
+                        <span className="text-gray-400">Total do mês:</span>
                         <span className="text-white font-medium">
                           {formatCurrency(totalDevido)}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Itens:</span>
-                        <span className="text-white font-medium">
-                          {resumoPessoa?.quantidade || 0}
+                      {jaPago > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-green-400">Já pago:</span>
+                          <span className="text-green-300 font-medium">
+                            {formatCurrency(jaPago)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t border-gray-600 pt-2">
+                        <span className="text-yellow-400">Falta pagar:</span>
+                        <span className="text-yellow-300 font-bold">
+                          {formatCurrency(restanteReal)}
                         </span>
                       </div>
                     </div>
@@ -3703,7 +3758,7 @@ function App() {
                     {/* Campo de valor pago */}
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Quanto {showFecharMes} pagou?
+                        Quanto {showFecharMes} vai pagar agora?
                       </label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -3726,7 +3781,7 @@ function App() {
                         <button
                           onClick={() =>
                             setValorPagoFecharMes(
-                              totalDevido.toLocaleString("pt-BR", {
+                              restanteReal.toLocaleString("pt-BR", {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })
@@ -3734,7 +3789,7 @@ function App() {
                           }
                           className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 text-white rounded font-medium transition-colors"
                         >
-                          Tudo ({formatCurrency(totalDevido)})
+                          Restante ({formatCurrency(restanteReal)})
                         </button>
                         <button
                           onClick={() => setValorPagoFecharMes("")}
@@ -3749,7 +3804,7 @@ function App() {
                     {valorPago > 0 && (
                       <div
                         className={`rounded-lg p-4 ${
-                          valorRestante > 0
+                          valorParaDebito > 0
                             ? "bg-orange-900/30 border border-orange-700"
                             : "bg-green-900/30 border border-green-700"
                         }`}
@@ -3757,18 +3812,20 @@ function App() {
                         <p className="text-sm text-gray-300 mb-2">Resumo:</p>
                         <div className="space-y-1 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-gray-400">Valor pago:</span>
+                            <span className="text-gray-400">
+                              Pagando agora:
+                            </span>
                             <span className="text-green-400 font-medium">
                               {formatCurrency(valorPago)}
                             </span>
                           </div>
-                          {valorRestante > 0 ? (
+                          {valorParaDebito > 0 ? (
                             <div className="flex justify-between">
                               <span className="text-gray-400">
                                 Vai para Saldo Devedor:
                               </span>
                               <span className="text-orange-400 font-medium">
-                                {formatCurrency(valorRestante)}
+                                {formatCurrency(valorParaDebito)}
                               </span>
                             </div>
                           ) : (
