@@ -96,6 +96,8 @@ function App() {
   const [obsPagamento, setObsPagamento] = useState<string>("");
   const [filtroPessoaGasto, setFiltroPessoaGasto] = useState<string>("");
   const [filtroTipoGasto, setFiltroTipoGasto] = useState<string>("");
+  const [filtroDiaGasto, setFiltroDiaGasto] = useState<string>("");
+  const [filtroDiaMeuGasto, setFiltroDiaMeuGasto] = useState<string>("");
   const [filtroPessoaDivida, setFiltroPessoaDivida] = useState<string>("");
   const [filtroStatusDivida, setFiltroStatusDivida] = useState<
     "pendentes" | "pagos"
@@ -1845,6 +1847,31 @@ function App() {
                         </button>
                       </div>
                     </div>
+
+                    {/* Filtro por Data */}
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1.5 block">
+                        Filtrar por dia:
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          value={filtroDiaGasto}
+                          onChange={(e) => setFiltroDiaGasto(e.target.value)}
+                          max={format(mesVisualizacao, "yyyy-MM") + "-31"}
+                          min={format(mesVisualizacao, "yyyy-MM") + "-01"}
+                          className="px-3 py-1.5 rounded-lg text-sm bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                        {filtroDiaGasto && (
+                          <button
+                            onClick={() => setFiltroDiaGasto("")}
+                            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-600 text-white hover:bg-gray-500 transition-colors"
+                          >
+                            Limpar
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1852,7 +1879,10 @@ function App() {
                   (p) =>
                     (filtroPessoaGasto === "" ||
                       p.gasto.pessoa === filtroPessoaGasto) &&
-                    (filtroTipoGasto === "" || p.gasto.tipo === filtroTipoGasto)
+                    (filtroTipoGasto === "" ||
+                      p.gasto.tipo === filtroTipoGasto) &&
+                    (filtroDiaGasto === "" ||
+                      p.gasto.data_inicio === filtroDiaGasto)
                 ).length === 0 ? (
                   <div className="p-8 text-center text-gray-400">
                     <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-600" />
@@ -1863,6 +1893,9 @@ function App() {
                         ? `(${
                             filtroTipoGasto === "credito" ? "crédito" : "débito"
                           }) `
+                        : ""}
+                      {filtroDiaGasto
+                        ? `no dia ${filtroDiaGasto.substring(8, 10)} `
                         : ""}
                       para este mês
                     </p>
@@ -1876,7 +1909,9 @@ function App() {
                           (filtroPessoaGasto === "" ||
                             p.gasto.pessoa === filtroPessoaGasto) &&
                           (filtroTipoGasto === "" ||
-                            p.gasto.tipo === filtroTipoGasto)
+                            p.gasto.tipo === filtroTipoGasto) &&
+                          (filtroDiaGasto === "" ||
+                            p.gasto.data_inicio === filtroDiaGasto)
                       );
 
                       // Agrupar parcelas por dia
@@ -2539,6 +2574,29 @@ function App() {
                   <Users className="w-3 h-3" /> Dividido
                 </button>
               </div>
+
+              {/* Filtro por Data */}
+              <div className="mt-3">
+                <p className="text-sm text-gray-400 mb-2">Filtrar por dia:</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={filtroDiaMeuGasto}
+                    onChange={(e) => setFiltroDiaMeuGasto(e.target.value)}
+                    max={format(mesVisualizacao, "yyyy-MM") + "-31"}
+                    min={format(mesVisualizacao, "yyyy-MM") + "-01"}
+                    className="px-3 py-1.5 rounded-lg text-sm bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                  {filtroDiaMeuGasto && (
+                    <button
+                      onClick={() => setFiltroDiaMeuGasto("")}
+                      className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-600 text-white hover:bg-gray-500 transition-colors"
+                    >
+                      Limpar
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Gastos Fixos */}
@@ -2628,10 +2686,23 @@ function App() {
                 Meus Gastos do Mês ({meusGastosDoMes.length})
               </h3>
 
-              {meusGastosDoMes.length === 0 ? (
+              {meusGastosDoMes.filter(
+                (g) =>
+                  (filtroCategoriaMeuGasto === "" ||
+                    g.categoria === filtroCategoriaMeuGasto) &&
+                  (filtroDiaMeuGasto === "" || g.data === filtroDiaMeuGasto)
+              ).length === 0 ? (
                 <div className="text-center py-8">
                   <DollarSign className="w-12 h-12 mx-auto text-gray-600 mb-3" />
-                  <p className="text-gray-400">Nenhum gasto registrado</p>
+                  <p className="text-gray-400">
+                    Nenhum gasto registrado
+                    {filtroCategoriaMeuGasto
+                      ? ` (${filtroCategoriaMeuGasto})`
+                      : ""}
+                    {filtroDiaMeuGasto
+                      ? ` no dia ${filtroDiaMeuGasto.substring(8, 10)}`
+                      : ""}
+                  </p>
                   <button
                     onClick={() => setShowFormMeuGasto(true)}
                     className="mt-4 text-emerald-400 hover:text-emerald-300 text-sm"
@@ -2642,10 +2713,19 @@ function App() {
               ) : (
                 <div className="space-y-4">
                   {(() => {
+                    // Filtrar gastos
+                    const gastosFiltrados = meusGastosDoMes.filter(
+                      (g) =>
+                        (filtroCategoriaMeuGasto === "" ||
+                          g.categoria === filtroCategoriaMeuGasto) &&
+                        (filtroDiaMeuGasto === "" ||
+                          g.data === filtroDiaMeuGasto)
+                    );
+
                     // Agrupar gastos por dia
-                    const gastosPorDia: Record<string, typeof meusGastosDoMes> =
+                    const gastosPorDia: Record<string, typeof gastosFiltrados> =
                       {};
-                    meusGastosDoMes.forEach((gasto) => {
+                    gastosFiltrados.forEach((gasto) => {
                       const dia = gasto.data.substring(8, 10); // Extrai o dia (DD)
                       if (!gastosPorDia[dia]) {
                         gastosPorDia[dia] = [];
