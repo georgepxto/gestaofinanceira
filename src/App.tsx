@@ -75,9 +75,7 @@ const PARCELAS_OPTIONS = Array.from({ length: 24 }, (_, i) => i + 1);
 function App() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [abaAtiva, setAbaAtiva] = useState<"gastos" | "dividas" | "eu">(
-    "gastos"
-  );
+  const [abaAtiva, setAbaAtiva] = useState<"gastos" | "dividas" | "eu">("eu");
   const [mesVisualizacao, setMesVisualizacao] = useState<Date>(new Date());
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [parcelasAtivas, setParcelasAtivas] = useState<ParcelaAtiva[]>([]);
@@ -344,25 +342,30 @@ function App() {
       return;
     }
 
-    const novaDivida: SaldoDevedor = {
-      id: Date.now().toString(),
-      pessoa: formDivida.pessoa,
-      descricao: formDivida.descricao,
-      valor_original: valor,
-      valor_atual: valor,
-      data_criacao: format(new Date(), "yyyy-MM-dd"),
-      historico: [],
-    };
+    setSaving(true);
+    try {
+      const novaDivida: SaldoDevedor = {
+        id: Date.now().toString(),
+        pessoa: formDivida.pessoa,
+        descricao: formDivida.descricao,
+        valor_original: valor,
+        valor_atual: valor,
+        data_criacao: format(new Date(), "yyyy-MM-dd"),
+        historico: [],
+      };
 
-    // Salvar no Supabase se configurado
-    if (isSupabaseConfigured && supabase) {
-      await saldosFunctions.create(novaDivida);
+      // Salvar no Supabase se configurado
+      if (isSupabaseConfigured && supabase) {
+        await saldosFunctions.create(novaDivida);
+      }
+
+      setSaldosDevedores((prev) => [...prev, novaDivida]);
+      setFormDivida({ pessoa: pessoas[0] || "", descricao: "", valor: "" });
+      setShowFormDivida(false);
+      setError(null);
+    } finally {
+      setSaving(false);
     }
-
-    setSaldosDevedores((prev) => [...prev, novaDivida]);
-    setFormDivida({ pessoa: pessoas[0] || "", descricao: "", valor: "" });
-    setShowFormDivida(false);
-    setError(null);
   };
 
   // Registrar pagamento de dívida
@@ -386,49 +389,54 @@ function App() {
     // Usar o menor entre o valor pago e o máximo (para evitar valores negativos)
     const valorFinal = Math.min(valorArredondado, maximoArredondado);
 
-    // Encontrar a dívida para atualizar
-    const dividaAtual = saldosDevedores.find((d) => d.id === dividaId);
-    if (!dividaAtual) return;
+    setSaving(true);
+    try {
+      // Encontrar a dívida para atualizar
+      const dividaAtual = saldosDevedores.find((d) => d.id === dividaId);
+      if (!dividaAtual) return;
 
-    const novoValor = Math.max(
-      0,
-      Math.round((dividaAtual.valor_atual - valorFinal) * 100) / 100
-    );
-    const novoHistorico = [
-      ...dividaAtual.historico,
-      {
-        id: Date.now().toString(),
-        valor: valorFinal,
-        data: format(new Date(), "yyyy-MM-dd"),
-        observacao: obsPagamento || undefined,
-      },
-    ];
+      const novoValor = Math.max(
+        0,
+        Math.round((dividaAtual.valor_atual - valorFinal) * 100) / 100
+      );
+      const novoHistorico = [
+        ...dividaAtual.historico,
+        {
+          id: Date.now().toString(),
+          valor: valorFinal,
+          data: format(new Date(), "yyyy-MM-dd"),
+          observacao: obsPagamento || undefined,
+        },
+      ];
 
-    // Atualizar no Supabase se configurado
-    if (isSupabaseConfigured && supabase) {
-      await saldosFunctions.update(dividaId, {
-        valor_atual: novoValor,
-        historico: novoHistorico,
-      });
+      // Atualizar no Supabase se configurado
+      if (isSupabaseConfigured && supabase) {
+        await saldosFunctions.update(dividaId, {
+          valor_atual: novoValor,
+          historico: novoHistorico,
+        });
+      }
+
+      setSaldosDevedores((prev) =>
+        prev.map((divida) => {
+          if (divida.id === dividaId) {
+            return {
+              ...divida,
+              valor_atual: novoValor,
+              historico: novoHistorico,
+            };
+          }
+          return divida;
+        })
+      );
+
+      setValorPagamento("");
+      setObsPagamento("");
+      setShowPagamento(null);
+      setError(null);
+    } finally {
+      setSaving(false);
     }
-
-    setSaldosDevedores((prev) =>
-      prev.map((divida) => {
-        if (divida.id === dividaId) {
-          return {
-            ...divida,
-            valor_atual: novoValor,
-            historico: novoHistorico,
-          };
-        }
-        return divida;
-      })
-    );
-
-    setValorPagamento("");
-    setObsPagamento("");
-    setShowPagamento(null);
-    setError(null);
   };
 
   // Desfazer pagamento
@@ -444,36 +452,41 @@ function App() {
         valorPagamento
       )}? O valor será adicionado de volta à dívida.`,
       onConfirm: async () => {
-        const dividaAtual = saldosDevedores.find((d) => d.id === dividaId);
-        if (!dividaAtual) return;
+        setSaving(true);
+        try {
+          const dividaAtual = saldosDevedores.find((d) => d.id === dividaId);
+          if (!dividaAtual) return;
 
-        const novoValorAtual =
-          Math.round((dividaAtual.valor_atual + valorPagamento) * 100) / 100;
-        const novoHistorico = dividaAtual.historico.filter(
-          (p) => p.id !== pagamentoId
-        );
+          const novoValorAtual =
+            Math.round((dividaAtual.valor_atual + valorPagamento) * 100) / 100;
+          const novoHistorico = dividaAtual.historico.filter(
+            (p) => p.id !== pagamentoId
+          );
 
-        // Atualizar no Supabase se configurado
-        if (isSupabaseConfigured && supabase) {
-          await saldosFunctions.update(dividaId, {
-            valor_atual: novoValorAtual,
-            historico: novoHistorico,
-          });
+          // Atualizar no Supabase se configurado
+          if (isSupabaseConfigured && supabase) {
+            await saldosFunctions.update(dividaId, {
+              valor_atual: novoValorAtual,
+              historico: novoHistorico,
+            });
+          }
+
+          setSaldosDevedores((prev) =>
+            prev.map((divida) => {
+              if (divida.id === dividaId) {
+                return {
+                  ...divida,
+                  valor_atual: novoValorAtual,
+                  historico: novoHistorico,
+                };
+              }
+              return divida;
+            })
+          );
+          setModalConfirm((prev) => ({ ...prev, show: false }));
+        } finally {
+          setSaving(false);
         }
-
-        setSaldosDevedores((prev) =>
-          prev.map((divida) => {
-            if (divida.id === dividaId) {
-              return {
-                ...divida,
-                valor_atual: novoValorAtual,
-                historico: novoHistorico,
-              };
-            }
-            return divida;
-          })
-        );
-        setModalConfirm((prev) => ({ ...prev, show: false }));
       },
     });
   };
@@ -486,12 +499,17 @@ function App() {
       mensagem:
         "Tem certeza que deseja excluir esta dívida? Esta ação não pode ser desfeita.",
       onConfirm: async () => {
-        // Deletar no Supabase se configurado
-        if (isSupabaseConfigured && supabase) {
-          await saldosFunctions.delete(id);
+        setSaving(true);
+        try {
+          // Deletar no Supabase se configurado
+          if (isSupabaseConfigured && supabase) {
+            await saldosFunctions.delete(id);
+          }
+          setSaldosDevedores((prev) => prev.filter((d) => d.id !== id));
+          setModalConfirm({ ...modalConfirm, show: false });
+        } finally {
+          setSaving(false);
         }
-        setSaldosDevedores((prev) => prev.filter((d) => d.id !== id));
-        setModalConfirm({ ...modalConfirm, show: false });
       },
     });
   };
@@ -518,52 +536,57 @@ function App() {
 
     const valorRestante = totalDevido - valorPago;
 
-    if (valorRestante > 0) {
-      // Criar saldo devedor com o valor restante
-      const novaDivida: SaldoDevedor = {
-        id: Date.now().toString(),
-        pessoa: pessoa,
-        descricao: `Gastos pendentes - ${formatMonthYear(mesVisualizacao)}`,
-        valor_original: valorRestante,
-        valor_atual: valorRestante,
-        data_criacao: format(new Date(), "yyyy-MM-dd"),
-        historico: [],
-      };
+    setSaving(true);
+    try {
+      if (valorRestante > 0) {
+        // Criar saldo devedor com o valor restante
+        const novaDivida: SaldoDevedor = {
+          id: Date.now().toString(),
+          pessoa: pessoa,
+          descricao: `Gastos pendentes - ${formatMonthYear(mesVisualizacao)}`,
+          valor_original: valorRestante,
+          valor_atual: valorRestante,
+          data_criacao: format(new Date(), "yyyy-MM-dd"),
+          historico: [],
+        };
 
-      // Salvar no Supabase se configurado
-      if (isSupabaseConfigured && supabase) {
-        await saldosFunctions.create(novaDivida);
+        // Salvar no Supabase se configurado
+        if (isSupabaseConfigured && supabase) {
+          await saldosFunctions.create(novaDivida);
+        }
+
+        setSaldosDevedores((prev) => [...prev, novaDivida]);
       }
 
-      setSaldosDevedores((prev) => [...prev, novaDivida]);
-    }
+      // Limpar e fechar modal
+      setValorPagoFecharMes("");
+      setShowFecharMes(null);
+      setError(null);
 
-    // Limpar e fechar modal
-    setValorPagoFecharMes("");
-    setShowFecharMes(null);
-    setError(null);
-
-    // Mostrar feedback
-    if (valorRestante > 0) {
-      setModalFeedback({
-        show: true,
-        titulo: "Mês Fechado!",
-        mensagem: `${pessoa} pagou ${formatCurrency(
-          valorPago
-        )}.\n${formatCurrency(
-          valorRestante
-        )} foi transferido para o Saldo Devedor.`,
-        tipo: "info",
-      });
-    } else {
-      setModalFeedback({
-        show: true,
-        titulo: "Mês Fechado!",
-        mensagem: `${pessoa} pagou ${formatCurrency(
-          valorPago
-        )} (total quitado).`,
-        tipo: "sucesso",
-      });
+      // Mostrar feedback
+      if (valorRestante > 0) {
+        setModalFeedback({
+          show: true,
+          titulo: "Mês Fechado!",
+          mensagem: `${pessoa} pagou ${formatCurrency(
+            valorPago
+          )}.\n${formatCurrency(
+            valorRestante
+          )} foi transferido para o Saldo Devedor.`,
+          tipo: "info",
+        });
+      } else {
+        setModalFeedback({
+          show: true,
+          titulo: "Mês Fechado!",
+          mensagem: `${pessoa} pagou ${formatCurrency(
+            valorPago
+          )} (total quitado).`,
+          tipo: "sucesso",
+        });
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -655,25 +678,30 @@ function App() {
     const key = getObsKey(pessoa);
     const mes = getMesAtual();
 
-    if (obsTexto.trim()) {
-      // Salvar no Supabase
-      if (isSupabaseConfigured && supabase) {
-        await observacoesFunctions.upsert(pessoa, mes, obsTexto.trim());
+    setSaving(true);
+    try {
+      if (obsTexto.trim()) {
+        // Salvar no Supabase
+        if (isSupabaseConfigured && supabase) {
+          await observacoesFunctions.upsert(pessoa, mes, obsTexto.trim());
+        }
+        setObservacoesMes((prev) => ({ ...prev, [key]: obsTexto.trim() }));
+      } else {
+        // Remover se vazio
+        if (isSupabaseConfigured && supabase) {
+          await observacoesFunctions.delete(pessoa, mes);
+        }
+        setObservacoesMes((prev) => {
+          const newObs = { ...prev };
+          delete newObs[key];
+          return newObs;
+        });
       }
-      setObservacoesMes((prev) => ({ ...prev, [key]: obsTexto.trim() }));
-    } else {
-      // Remover se vazio
-      if (isSupabaseConfigured && supabase) {
-        await observacoesFunctions.delete(pessoa, mes);
-      }
-      setObservacoesMes((prev) => {
-        const newObs = { ...prev };
-        delete newObs[key];
-        return newObs;
-      });
+      setShowObsModal(null);
+      setObsTexto("");
+    } finally {
+      setSaving(false);
     }
-    setShowObsModal(null);
-    setObsTexto("");
   };
 
   // Abrir modal de observação
@@ -716,44 +744,49 @@ function App() {
     const mes = getMesAtual();
     const key = getObsKey(pessoa);
 
-    // Salvar no Supabase
-    if (isSupabaseConfigured && supabase) {
-      const result = await pagamentosParciaisFunctions.create({
-        pessoa,
-        mes,
-        valor,
-        data_pagamento: dataPagamento,
-      });
+    setSaving(true);
+    try {
+      // Salvar no Supabase
+      if (isSupabaseConfigured && supabase) {
+        const result = await pagamentosParciaisFunctions.create({
+          pessoa,
+          mes,
+          valor,
+          data_pagamento: dataPagamento,
+        });
 
-      if (result) {
+        if (result) {
+          setPagamentosParciais((prev) => ({
+            ...prev,
+            [key]: [
+              ...(prev[key] || []),
+              { id: result.id, valor, data: dataPagamento },
+            ],
+          }));
+        }
+      } else {
+        // Modo demo - salvar localmente
         setPagamentosParciais((prev) => ({
           ...prev,
-          [key]: [
-            ...(prev[key] || []),
-            { id: result.id, valor, data: dataPagamento },
-          ],
+          [key]: [...(prev[key] || []), { valor, data: dataPagamento }],
         }));
       }
-    } else {
-      // Modo demo - salvar localmente
-      setPagamentosParciais((prev) => ({
-        ...prev,
-        [key]: [...(prev[key] || []), { valor, data: dataPagamento }],
-      }));
+
+      setValorPagamentoParcial("");
+      setShowPagamentoParcial(null);
+      setError(null);
+
+      setModalFeedback({
+        show: true,
+        titulo: "Pagamento Registrado!",
+        mensagem: `${pessoa} pagou ${formatCurrency(
+          valor
+        )}.\nFalta: ${formatCurrency(restante - valor)}`,
+        tipo: "sucesso",
+      });
+    } finally {
+      setSaving(false);
     }
-
-    setValorPagamentoParcial("");
-    setShowPagamentoParcial(null);
-    setError(null);
-
-    setModalFeedback({
-      show: true,
-      titulo: "Pagamento Registrado!",
-      mensagem: `${pessoa} pagou ${formatCurrency(
-        valor
-      )}.\nFalta: ${formatCurrency(restante - valor)}`,
-      tipo: "sucesso",
-    });
   };
 
   // Remover último pagamento parcial (desfazer)
@@ -772,16 +805,21 @@ function App() {
         ultimoPagamento.valor
       )} feito em ${ultimoPagamento.data}?`,
       onConfirm: async () => {
-        // Deletar do Supabase se tiver ID
-        if (isSupabaseConfigured && supabase && ultimoPagamento.id) {
-          await pagamentosParciaisFunctions.delete(ultimoPagamento.id);
-        }
+        setSaving(true);
+        try {
+          // Deletar do Supabase se tiver ID
+          if (isSupabaseConfigured && supabase && ultimoPagamento.id) {
+            await pagamentosParciaisFunctions.delete(ultimoPagamento.id);
+          }
 
-        setPagamentosParciais((prev) => ({
-          ...prev,
-          [key]: pagamentos.slice(0, -1),
-        }));
-        setModalConfirm({ ...modalConfirm, show: false });
+          setPagamentosParciais((prev) => ({
+            ...prev,
+            [key]: pagamentos.slice(0, -1),
+          }));
+          setModalConfirm({ ...modalConfirm, show: false });
+        } finally {
+          setSaving(false);
+        }
       },
     });
   };
@@ -844,32 +882,65 @@ function App() {
         : 1;
     const valorParcela = valor / numParcelas;
 
-    // Se for crédito parcelado, criar uma entrada para cada parcela
-    if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
-      const dataInicio = new Date(formMeuGasto.data);
+    setSaving(true);
+    try {
+      // Se for crédito parcelado, criar uma entrada para cada parcela
+      if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
+        const dataInicio = new Date(formMeuGasto.data);
 
-      for (let i = 0; i < numParcelas; i++) {
-        const dataParcela = new Date(dataInicio);
-        dataParcela.setMonth(dataParcela.getMonth() + i);
+        for (let i = 0; i < numParcelas; i++) {
+          const dataParcela = new Date(dataInicio);
+          dataParcela.setMonth(dataParcela.getMonth() + i);
 
+          const novoGasto: MeuGasto = {
+            id: `${Date.now()}-${i}`,
+            descricao: `${formMeuGasto.descricao} (${i + 1}/${numParcelas})`,
+            valor: valorParcela,
+            tipo: formMeuGasto.tipo,
+            categoria: formMeuGasto.categoria,
+            data: format(dataParcela, "yyyy-MM-dd"),
+            pago: false,
+            dividido_com:
+              formMeuGasto.categoria === "dividido"
+                ? formMeuGasto.dividido_com
+                : undefined,
+            minha_parte:
+              formMeuGasto.categoria === "dividido"
+                ? minhaParte / numParcelas
+                : undefined,
+            num_parcelas: numParcelas,
+            parcela_atual: i + 1,
+          };
+
+          if (isSupabaseConfigured && supabase) {
+            await meusGastosFunctions.create(novoGasto);
+          }
+          setMeusGastos((prev) => [...prev, novoGasto]);
+        }
+      } else {
+        // Gasto único (débito ou crédito à vista)
+        // Débito é automaticamente marcado como pago
         const novoGasto: MeuGasto = {
-          id: `${Date.now()}-${i}`,
-          descricao: `${formMeuGasto.descricao} (${i + 1}/${numParcelas})`,
-          valor: valorParcela,
+          id: Date.now().toString(),
+          descricao: formMeuGasto.descricao,
+          valor: valor,
           tipo: formMeuGasto.tipo,
           categoria: formMeuGasto.categoria,
-          data: format(dataParcela, "yyyy-MM-dd"),
-          pago: false,
+          data: formMeuGasto.data,
+          pago: formMeuGasto.tipo === "debito",
           dividido_com:
             formMeuGasto.categoria === "dividido"
               ? formMeuGasto.dividido_com
               : undefined,
           minha_parte:
-            formMeuGasto.categoria === "dividido"
-              ? minhaParte / numParcelas
+            formMeuGasto.categoria === "dividido" ? minhaParte : undefined,
+          dia_vencimento:
+            formMeuGasto.categoria === "fixo"
+              ? parseInt(formMeuGasto.dia_vencimento)
               : undefined,
-          num_parcelas: numParcelas,
-          parcela_atual: i + 1,
+          ativo: formMeuGasto.categoria === "fixo" ? true : undefined,
+          num_parcelas: 1,
+          parcela_atual: 1,
         };
 
         if (isSupabaseConfigured && supabase) {
@@ -877,52 +948,24 @@ function App() {
         }
         setMeusGastos((prev) => [...prev, novoGasto]);
       }
-    } else {
-      // Gasto único (débito ou crédito à vista)
-      // Débito é automaticamente marcado como pago
-      const novoGasto: MeuGasto = {
-        id: Date.now().toString(),
-        descricao: formMeuGasto.descricao,
-        valor: valor,
-        tipo: formMeuGasto.tipo,
-        categoria: formMeuGasto.categoria,
-        data: formMeuGasto.data,
-        pago: formMeuGasto.tipo === "debito",
-        dividido_com:
-          formMeuGasto.categoria === "dividido"
-            ? formMeuGasto.dividido_com
-            : undefined,
-        minha_parte:
-          formMeuGasto.categoria === "dividido" ? minhaParte : undefined,
-        dia_vencimento:
-          formMeuGasto.categoria === "fixo"
-            ? parseInt(formMeuGasto.dia_vencimento)
-            : undefined,
-        ativo: formMeuGasto.categoria === "fixo" ? true : undefined,
-        num_parcelas: 1,
-        parcela_atual: 1,
-      };
 
-      if (isSupabaseConfigured && supabase) {
-        await meusGastosFunctions.create(novoGasto);
-      }
-      setMeusGastos((prev) => [...prev, novoGasto]);
+      setFormMeuGasto({
+        descricao: "",
+        valor: "",
+        tipo: "debito",
+        categoria: "pessoal",
+        data: format(new Date(), "yyyy-MM-dd"),
+        dividido_com: "",
+        minha_parte: "",
+        dia_vencimento: "",
+        num_parcelas: "1",
+      });
+      setShowFormMeuGasto(false);
+      setEditandoMeuGasto(null);
+      setError(null);
+    } finally {
+      setSaving(false);
     }
-
-    setFormMeuGasto({
-      descricao: "",
-      valor: "",
-      tipo: "debito",
-      categoria: "pessoal",
-      data: format(new Date(), "yyyy-MM-dd"),
-      dividido_com: "",
-      minha_parte: "",
-      dia_vencimento: "",
-      num_parcelas: "1",
-    });
-    setShowFormMeuGasto(false);
-    setEditandoMeuGasto(null);
-    setError(null);
   };
 
   // Editar meu gasto
@@ -961,119 +1004,124 @@ function App() {
         return;
       }
 
-      let minhaParte = valor;
-      if (formMeuGasto.categoria === "dividido" && formMeuGasto.minha_parte) {
-        minhaParte = parseCurrency(formMeuGasto.minha_parte);
-      }
+      setSaving(true);
+      try {
+        let minhaParte = valor;
+        if (formMeuGasto.categoria === "dividido" && formMeuGasto.minha_parte) {
+          minhaParte = parseCurrency(formMeuGasto.minha_parte);
+        }
 
-      const numParcelas =
-        formMeuGasto.tipo === "credito"
-          ? parseInt(formMeuGasto.num_parcelas) || 1
-          : 1;
-      const valorParcela = valor / numParcelas;
+        const numParcelas =
+          formMeuGasto.tipo === "credito"
+            ? parseInt(formMeuGasto.num_parcelas) || 1
+            : 1;
+        const valorParcela = valor / numParcelas;
 
-      // Extrair a descrição base do gasto que está sendo editado (sem o "(X/Y)")
-      const descricaoBaseOriginal = editandoMeuGasto.descricao.replace(
-        /\s*\(\d+\/\d+\)$/,
-        ""
-      );
-      const numParcelasOriginal = editandoMeuGasto.num_parcelas || 1;
-
-      // Encontrar todas as parcelas relacionadas (mesma descrição base e num_parcelas)
-      const parcelasRelacionadas = meusGastos.filter((g) => {
-        const descBase = g.descricao.replace(/\s*\(\d+\/\d+\)$/, "");
-        return (
-          descBase === descricaoBaseOriginal &&
-          g.num_parcelas === numParcelasOriginal
+        // Extrair a descrição base do gasto que está sendo editado (sem o "(X/Y)")
+        const descricaoBaseOriginal = editandoMeuGasto.descricao.replace(
+          /\s*\(\d+\/\d+\)$/,
+          ""
         );
-      });
+        const numParcelasOriginal = editandoMeuGasto.num_parcelas || 1;
 
-      // Se é crédito parcelado
-      if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
-        const dataInicio = new Date(formMeuGasto.data);
+        // Encontrar todas as parcelas relacionadas (mesma descrição base e num_parcelas)
+        const parcelasRelacionadas = meusGastos.filter((g) => {
+          const descBase = g.descricao.replace(/\s*\(\d+\/\d+\)$/, "");
+          return (
+            descBase === descricaoBaseOriginal &&
+            g.num_parcelas === numParcelasOriginal
+          );
+        });
 
-        // Atualizar todas as parcelas existentes
-        for (const parcela of parcelasRelacionadas) {
-          const parcelaAtual = parcela.parcela_atual || 1;
+        // Se é crédito parcelado
+        if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
+          const dataInicio = new Date(formMeuGasto.data);
 
-          // Calcular a nova data para esta parcela
-          const dataParcela = new Date(dataInicio);
-          dataParcela.setMonth(dataParcela.getMonth() + (parcelaAtual - 1));
+          // Atualizar todas as parcelas existentes
+          for (const parcela of parcelasRelacionadas) {
+            const parcelaAtual = parcela.parcela_atual || 1;
 
+            // Calcular a nova data para esta parcela
+            const dataParcela = new Date(dataInicio);
+            dataParcela.setMonth(dataParcela.getMonth() + (parcelaAtual - 1));
+
+            const updates: Partial<MeuGasto> = {
+              descricao: `${formMeuGasto.descricao} (${parcelaAtual}/${numParcelas})`,
+              valor: valorParcela,
+              tipo: formMeuGasto.tipo,
+              categoria: formMeuGasto.categoria,
+              data: format(dataParcela, "yyyy-MM-dd"),
+              dividido_com:
+                formMeuGasto.categoria === "dividido"
+                  ? formMeuGasto.dividido_com
+                  : undefined,
+              minha_parte:
+                formMeuGasto.categoria === "dividido"
+                  ? minhaParte / numParcelas
+                  : undefined,
+              num_parcelas: numParcelas,
+            };
+
+            if (isSupabaseConfigured && supabase) {
+              await meusGastosFunctions.update(parcela.id, updates);
+            }
+
+            setMeusGastos((prev) =>
+              prev.map((g) => (g.id === parcela.id ? { ...g, ...updates } : g))
+            );
+          }
+        } else {
+          // Gasto único (débito ou crédito à vista)
+          // Se tinha parcelas e agora é único, atualizar apenas o atual
           const updates: Partial<MeuGasto> = {
-            descricao: `${formMeuGasto.descricao} (${parcelaAtual}/${numParcelas})`,
-            valor: valorParcela,
+            descricao: formMeuGasto.descricao,
+            valor: valor,
             tipo: formMeuGasto.tipo,
             categoria: formMeuGasto.categoria,
-            data: format(dataParcela, "yyyy-MM-dd"),
+            data: formMeuGasto.data,
             dividido_com:
               formMeuGasto.categoria === "dividido"
                 ? formMeuGasto.dividido_com
                 : undefined,
             minha_parte:
-              formMeuGasto.categoria === "dividido"
-                ? minhaParte / numParcelas
+              formMeuGasto.categoria === "dividido" ? minhaParte : undefined,
+            dia_vencimento:
+              formMeuGasto.categoria === "fixo"
+                ? parseInt(formMeuGasto.dia_vencimento)
                 : undefined,
-            num_parcelas: numParcelas,
+            pago: formMeuGasto.tipo === "debito" ? true : editandoMeuGasto.pago,
+            num_parcelas: 1,
+            parcela_atual: 1,
           };
 
           if (isSupabaseConfigured && supabase) {
-            await meusGastosFunctions.update(parcela.id, updates);
+            await meusGastosFunctions.update(editandoMeuGasto.id, updates);
           }
 
           setMeusGastos((prev) =>
-            prev.map((g) => (g.id === parcela.id ? { ...g, ...updates } : g))
+            prev.map((g) =>
+              g.id === editandoMeuGasto.id ? { ...g, ...updates } : g
+            )
           );
         }
-      } else {
-        // Gasto único (débito ou crédito à vista)
-        // Se tinha parcelas e agora é único, atualizar apenas o atual
-        const updates: Partial<MeuGasto> = {
-          descricao: formMeuGasto.descricao,
-          valor: valor,
-          tipo: formMeuGasto.tipo,
-          categoria: formMeuGasto.categoria,
-          data: formMeuGasto.data,
-          dividido_com:
-            formMeuGasto.categoria === "dividido"
-              ? formMeuGasto.dividido_com
-              : undefined,
-          minha_parte:
-            formMeuGasto.categoria === "dividido" ? minhaParte : undefined,
-          dia_vencimento:
-            formMeuGasto.categoria === "fixo"
-              ? parseInt(formMeuGasto.dia_vencimento)
-              : undefined,
-          pago: formMeuGasto.tipo === "debito" ? true : editandoMeuGasto.pago,
-          num_parcelas: 1,
-          parcela_atual: 1,
-        };
 
-        if (isSupabaseConfigured && supabase) {
-          await meusGastosFunctions.update(editandoMeuGasto.id, updates);
-        }
-
-        setMeusGastos((prev) =>
-          prev.map((g) =>
-            g.id === editandoMeuGasto.id ? { ...g, ...updates } : g
-          )
-        );
+        setFormMeuGasto({
+          descricao: "",
+          valor: "",
+          tipo: "debito",
+          categoria: "pessoal",
+          data: format(new Date(), "yyyy-MM-dd"),
+          dividido_com: "",
+          minha_parte: "",
+          dia_vencimento: "",
+          num_parcelas: "1",
+        });
+        setShowFormMeuGasto(false);
+        setEditandoMeuGasto(null);
+        setError(null);
+      } finally {
+        setSaving(false);
       }
-
-      setFormMeuGasto({
-        descricao: "",
-        valor: "",
-        tipo: "debito",
-        categoria: "pessoal",
-        data: format(new Date(), "yyyy-MM-dd"),
-        dividido_com: "",
-        minha_parte: "",
-        dia_vencimento: "",
-        num_parcelas: "1",
-      });
-      setShowFormMeuGasto(false);
-      setEditandoMeuGasto(null);
-      setError(null);
     } else {
       // Se não está editando, criar novo
       await handleAddMeuGasto();
@@ -1091,13 +1139,18 @@ function App() {
       data_pagamento: novoStatus ? format(new Date(), "yyyy-MM-dd") : undefined,
     };
 
-    if (isSupabaseConfigured && supabase) {
-      await meusGastosFunctions.update(id, updates);
-    }
+    setSaving(true);
+    try {
+      if (isSupabaseConfigured && supabase) {
+        await meusGastosFunctions.update(id, updates);
+      }
 
-    setMeusGastos((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, ...updates } : g))
-    );
+      setMeusGastos((prev) =>
+        prev.map((g) => (g.id === id ? { ...g, ...updates } : g))
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Excluir meu gasto
@@ -1128,17 +1181,24 @@ function App() {
       titulo: "Excluir Gasto",
       mensagem,
       onConfirm: async () => {
-        // Excluir todas as parcelas relacionadas
-        for (const parcela of parcelasRelacionadas) {
-          if (isSupabaseConfigured && supabase) {
-            await meusGastosFunctions.delete(parcela.id);
+        setSaving(true);
+        try {
+          // Excluir todas as parcelas relacionadas
+          for (const parcela of parcelasRelacionadas) {
+            if (isSupabaseConfigured && supabase) {
+              await meusGastosFunctions.delete(parcela.id);
+            }
           }
-        }
 
-        // Remover todas as parcelas do estado local
-        const idsParaExcluir = new Set(parcelasRelacionadas.map((p) => p.id));
-        setMeusGastos((prev) => prev.filter((g) => !idsParaExcluir.has(g.id)));
-        setModalConfirm({ ...modalConfirm, show: false });
+          // Remover todas as parcelas do estado local
+          const idsParaExcluir = new Set(parcelasRelacionadas.map((p) => p.id));
+          setMeusGastos((prev) =>
+            prev.filter((g) => !idsParaExcluir.has(g.id))
+          );
+          setModalConfirm({ ...modalConfirm, show: false });
+        } finally {
+          setSaving(false);
+        }
       },
     });
   };
@@ -1150,13 +1210,18 @@ function App() {
 
     const novoStatus = !gasto.ativo;
 
-    if (isSupabaseConfigured && supabase) {
-      await meusGastosFunctions.update(id, { ativo: novoStatus });
-    }
+    setSaving(true);
+    try {
+      if (isSupabaseConfigured && supabase) {
+        await meusGastosFunctions.update(id, { ativo: novoStatus });
+      }
 
-    setMeusGastos((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, ativo: novoStatus } : g))
-    );
+      setMeusGastos((prev) =>
+        prev.map((g) => (g.id === id ? { ...g, ativo: novoStatus } : g))
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Filtrar meus gastos do mês atual
@@ -1417,7 +1482,7 @@ function App() {
       mensagem:
         "Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.",
       onConfirm: async () => {
-        setModalConfirm((prev) => ({ ...prev, show: false }));
+        setSaving(true);
         try {
           setError(null);
 
@@ -1429,9 +1494,12 @@ function App() {
           if (deleteError) throw deleteError;
 
           await fetchGastos();
+          setModalConfirm((prev) => ({ ...prev, show: false }));
         } catch (err) {
           console.error("Erro ao excluir gasto:", err);
           setError("Erro ao excluir o gasto. Tente novamente.");
+        } finally {
+          setSaving(false);
         }
       },
     });
@@ -2443,7 +2511,12 @@ function App() {
                                   setValorPagamento("");
                                   setObsPagamento("");
                                 }}
-                                className="flex-1 px-4 py-2.5 bg-gray-600 hover:bg-gray-500 text-white rounded-lg font-medium transition-colors"
+                                disabled={saving}
+                                className={`flex-1 px-4 py-2.5 text-white rounded-lg font-medium transition-colors ${
+                                  saving
+                                    ? "bg-gray-700 cursor-not-allowed"
+                                    : "bg-gray-600 hover:bg-gray-500"
+                                }`}
                               >
                                 Cancelar
                               </button>
@@ -2451,9 +2524,21 @@ function App() {
                                 onClick={() =>
                                   handlePagamento(divida.id, divida.valor_atual)
                                 }
-                                className="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                                disabled={saving}
+                                className={`flex-1 px-4 py-2.5 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                                  saving
+                                    ? "bg-gray-600 cursor-not-allowed"
+                                    : "bg-green-600 hover:bg-green-700"
+                                }`}
                               >
-                                Confirmar Pagamento
+                                {saving ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Salvando...
+                                  </>
+                                ) : (
+                                  "Confirmar Pagamento"
+                                )}
                               </button>
                             </div>
                           </div>
@@ -2607,74 +2692,81 @@ function App() {
                   Gastos Fixos Mensais
                 </h3>
                 <div className="space-y-2">
-                  {gastosFixos.map((gasto) => (
-                    <div
-                      key={gasto.id}
-                      className={`flex items-center justify-between p-3 rounded-lg ${
-                        gasto.ativo !== false
-                          ? "bg-gray-700"
-                          : "bg-gray-700/50 opacity-60"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`p-2 rounded-lg ${
-                            gasto.tipo === "credito"
-                              ? "bg-purple-500/20"
-                              : "bg-green-500/20"
-                          }`}
-                        >
-                          {gasto.tipo === "credito" ? (
-                            <CreditCard className="w-4 h-4 text-purple-400" />
-                          ) : (
-                            <Wallet className="w-4 h-4 text-green-400" />
-                          )}
+                  {[...gastosFixos]
+                    .sort(
+                      (a, b) =>
+                        (b.dia_vencimento || 0) - (a.dia_vencimento || 0)
+                    )
+                    .map((gasto) => (
+                      <div
+                        key={gasto.id}
+                        className={`flex items-center justify-between p-3 rounded-lg ${
+                          gasto.ativo !== false
+                            ? "bg-gray-700"
+                            : "bg-gray-700/50 opacity-60"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`p-2 rounded-lg ${
+                              gasto.tipo === "credito"
+                                ? "bg-purple-500/20"
+                                : "bg-green-500/20"
+                            }`}
+                          >
+                            {gasto.tipo === "credito" ? (
+                              <CreditCard className="w-4 h-4 text-purple-400" />
+                            ) : (
+                              <Wallet className="w-4 h-4 text-green-400" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-white font-medium">
+                              {gasto.descricao}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              Todo dia {gasto.dia_vencimento}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-white font-medium">
-                            {gasto.descricao}
+                        <div className="flex items-center gap-2">
+                          <p className="text-white font-semibold">
+                            {formatCurrency(gasto.valor)}
                           </p>
-                          <p className="text-xs text-gray-400">
-                            Todo dia {gasto.dia_vencimento}
-                          </p>
+                          <button
+                            onClick={() => handleEditMeuGasto(gasto)}
+                            className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
+                            title="Editar"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleToggleGastoFixo(gasto.id)}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              gasto.ativo !== false
+                                ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                                : "bg-gray-600 text-gray-400 hover:bg-gray-500"
+                            }`}
+                            title={
+                              gasto.ativo !== false ? "Desativar" : "Ativar"
+                            }
+                          >
+                            {gasto.ativo !== false ? (
+                              <CheckCircle className="w-4 h-4" />
+                            ) : (
+                              <MinusCircle className="w-4 h-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMeuGasto(gasto.id)}
+                            className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                            title="Excluir"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-white font-semibold">
-                          {formatCurrency(gasto.valor)}
-                        </p>
-                        <button
-                          onClick={() => handleEditMeuGasto(gasto)}
-                          className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
-                          title="Editar"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleToggleGastoFixo(gasto.id)}
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            gasto.ativo !== false
-                              ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
-                              : "bg-gray-600 text-gray-400 hover:bg-gray-500"
-                          }`}
-                          title={gasto.ativo !== false ? "Desativar" : "Ativar"}
-                        >
-                          {gasto.ativo !== false ? (
-                            <CheckCircle className="w-4 h-4" />
-                          ) : (
-                            <MinusCircle className="w-4 h-4" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteMeuGasto(gasto.id)}
-                          className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-                          title="Excluir"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             )}
@@ -3192,9 +3284,19 @@ function App() {
 
               <button
                 onClick={handleSaveMeuGasto}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                disabled={saving}
+                className={`w-full py-3 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
+                  saving
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-emerald-600 hover:bg-emerald-700"
+                }`}
               >
-                {editandoMeuGasto ? (
+                {saving ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Salvando...
+                  </>
+                ) : editandoMeuGasto ? (
                   <>
                     <Edit3 className="w-5 h-5" />
                     Salvar Alterações
@@ -3278,15 +3380,32 @@ function App() {
                 onClick={() =>
                   setModalConfirm((prev) => ({ ...prev, show: false }))
                 }
-                className="flex-1 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-lg font-medium transition-colors"
+                disabled={saving}
+                className={`flex-1 py-3 text-white rounded-lg font-medium transition-colors ${
+                  saving
+                    ? "bg-gray-700 cursor-not-allowed"
+                    : "bg-gray-600 hover:bg-gray-500"
+                }`}
               >
                 Cancelar
               </button>
               <button
                 onClick={modalConfirm.onConfirm}
-                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                disabled={saving}
+                className={`flex-1 py-3 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                  saving
+                    ? "bg-gray-600 cursor-not-allowed"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
               >
-                Excluir
+                {saving ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Excluindo...
+                  </>
+                ) : (
+                  "Excluir"
+                )}
               </button>
             </div>
           </div>
@@ -3489,7 +3608,12 @@ function App() {
                           setValorPagamentoParcial("");
                           setError(null);
                         }}
-                        className="flex-1 py-3 bg-gray-700 text-white font-medium rounded-lg hover:bg-gray-600 transition-colors"
+                        disabled={saving}
+                        className={`flex-1 py-3 text-white font-medium rounded-lg transition-colors ${
+                          saving
+                            ? "bg-gray-700 cursor-not-allowed"
+                            : "bg-gray-700 hover:bg-gray-600"
+                        }`}
                       >
                         Cancelar
                       </button>
@@ -3497,10 +3621,21 @@ function App() {
                         onClick={() =>
                           handleAddPagamentoParcial(showPagamentoParcial)
                         }
-                        disabled={restante <= 0}
-                        className="flex-1 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={restante <= 0 || saving}
+                        className={`flex-1 py-3 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                          saving || restante <= 0
+                            ? "bg-gray-600 cursor-not-allowed opacity-50"
+                            : "bg-green-600 hover:bg-green-700"
+                        }`}
                       >
-                        Registrar
+                        {saving ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Salvando...
+                          </>
+                        ) : (
+                          "Registrar"
+                        )}
                       </button>
                     </div>
                   </>
@@ -3656,15 +3791,32 @@ function App() {
                           setValorPagoFecharMes("");
                           setError(null);
                         }}
-                        className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-lg font-medium transition-colors"
+                        disabled={saving}
+                        className={`flex-1 px-4 py-3 text-white rounded-lg font-medium transition-colors ${
+                          saving
+                            ? "bg-gray-700 cursor-not-allowed"
+                            : "bg-gray-600 hover:bg-gray-500"
+                        }`}
                       >
                         Cancelar
                       </button>
                       <button
                         onClick={() => handleFecharMes(showFecharMes)}
-                        className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                        disabled={saving}
+                        className={`flex-1 px-4 py-3 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                          saving
+                            ? "bg-gray-600 cursor-not-allowed"
+                            : "bg-green-600 hover:bg-green-700"
+                        }`}
                       >
-                        Fechar Mês
+                        {saving ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Salvando...
+                          </>
+                        ) : (
+                          "Fechar Mês"
+                        )}
                       </button>
                     </div>
                   </>
@@ -4073,16 +4225,33 @@ function App() {
                 <button
                   type="button"
                   onClick={() => setShowFormDivida(false)}
-                  className="flex-1 px-4 py-3 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
+                  disabled={saving}
+                  className={`flex-1 px-4 py-3 border text-gray-300 rounded-lg transition-colors ${
+                    saving
+                      ? "border-gray-700 bg-gray-800 cursor-not-allowed"
+                      : "border-gray-600 hover:bg-gray-700"
+                  }`}
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={handleAddDivida}
-                  className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+                  disabled={saving}
+                  className={`flex-1 px-4 py-3 text-white rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                    saving
+                      ? "bg-gray-600 cursor-not-allowed"
+                      : "bg-orange-600 hover:bg-orange-700"
+                  }`}
                 >
-                  Adicionar Dívida
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    "Adicionar Dívida"
+                  )}
                 </button>
               </div>
             </div>
