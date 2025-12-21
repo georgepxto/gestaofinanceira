@@ -1051,11 +1051,11 @@ function App() {
           minhaParte = parseCurrency(formMeuGasto.minha_parte);
         }
 
-        const numParcelas =
+        const novoNumParcelas =
           formMeuGasto.tipo === "credito"
             ? parseInt(formMeuGasto.num_parcelas) || 1
             : 1;
-        const valorParcela = valor / numParcelas;
+        const novoValorParcela = valor / novoNumParcelas;
 
         // Extrair a descrição base do gasto que está sendo editado (sem o "(X/Y)")
         const descricaoBaseOriginal = editandoMeuGasto.descricao.replace(
@@ -1073,76 +1073,105 @@ function App() {
           );
         });
 
-        // Se é crédito parcelado
-        if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
-          const dataInicio = new Date(formMeuGasto.data);
+        // Determinar a data de início real (data da parcela 1)
+        // Baseado na parcela sendo editada atualmente
+        const indiceParcelaEditada = (editandoMeuGasto.parcela_atual || 1) - 1; // 0-based
+        const dataAtualSelecionada = new Date(formMeuGasto.data);
+        // dataInicio = data da edição - offset da parcela atual
+        const dataInicioReal = subMonths(
+          dataAtualSelecionada,
+          indiceParcelaEditada
+        );
 
-          // Atualizar todas as parcelas existentes
-          for (const parcela of parcelasRelacionadas) {
-            const parcelaAtual = parcela.parcela_atual || 1;
+        const maxParcelas = Math.max(
+          parcelasRelacionadas.length,
+          novoNumParcelas
+        );
 
-            // Calcular a nova data para esta parcela
-            const dataParcela = new Date(dataInicio);
-            dataParcela.setMonth(dataParcela.getMonth() + (parcelaAtual - 1));
+        for (let i = 0; i < maxParcelas; i++) {
+          const numParcela = i + 1;
+          const existente = parcelasRelacionadas.find(
+            (p) => (p.parcela_atual || 1) === numParcela
+          );
 
-            const updates: Partial<MeuGasto> = {
-              descricao: `${formMeuGasto.descricao} (${parcelaAtual}/${numParcelas})`,
-              valor: valorParcela,
+          // Se estiver dentro do novo número de parcelas: CRIAR ou ATUALIZAR
+          if (numParcela <= novoNumParcelas) {
+            const dataParcela = addMonths(dataInicioReal, i);
+            const dataFormatada = format(dataParcela, "yyyy-MM-dd");
+
+            const dadosAtualizados: any = {
+              descricao:
+                novoNumParcelas > 1
+                  ? `${formMeuGasto.descricao} (${numParcela}/${novoNumParcelas})`
+                  : formMeuGasto.descricao,
+              valor: novoValorParcela,
               tipo: formMeuGasto.tipo,
               categoria: formMeuGasto.categoria,
-              data: format(dataParcela, "yyyy-MM-dd"),
+              data: dataFormatada,
               dividido_com:
                 formMeuGasto.categoria === "dividido"
                   ? formMeuGasto.dividido_com
                   : undefined,
               minha_parte:
                 formMeuGasto.categoria === "dividido"
-                  ? minhaParte / numParcelas
+                  ? minhaParte / novoNumParcelas
                   : undefined,
-              num_parcelas: numParcelas,
+              num_parcelas: novoNumParcelas,
+              parcela_atual: numParcela,
+              dia_vencimento:
+                formMeuGasto.categoria === "fixo"
+                  ? parseInt(formMeuGasto.dia_vencimento)
+                  : undefined,
+              // Ao converter para débito, marca como pago automaticamente.
+              // Em crédito mantemos o status anterior se existir, ou false se for novo.
+              pago:
+                formMeuGasto.tipo === "debito"
+                  ? true
+                  : existente
+                  ? existente.pago
+                  : false,
             };
 
-            if (isSupabaseConfigured && supabase) {
-              await meusGastosFunctions.update(parcela.id, updates);
+            if (existente) {
+              // ATUALIZAR
+              if (isSupabaseConfigured && supabase) {
+                await meusGastosFunctions.update(
+                  existente.id,
+                  dadosAtualizados
+                );
+              }
+              setMeusGastos((prev) =>
+                prev.map((g) =>
+                  g.id === existente.id ? { ...g, ...dadosAtualizados } : g
+                )
+              );
+            } else {
+              // CRIAR (nova parcela que não existia antes)
+              // Usar timestamp + índice para garantir ID único
+              const novoId = `${Date.now()}-${i}`;
+              const novoGasto: MeuGasto = {
+                id: novoId,
+                ...dadosAtualizados,
+                // Garantir campos obrigatórios que podem não estar nos dadosAtualizados
+                pago: dadosAtualizados.pago || false,
+              };
+
+              if (isSupabaseConfigured && supabase) {
+                await meusGastosFunctions.create(novoGasto);
+              }
+              setMeusGastos((prev) => [...prev, novoGasto]);
             }
-
-            setMeusGastos((prev) =>
-              prev.map((g) => (g.id === parcela.id ? { ...g, ...updates } : g))
-            );
+          } else {
+            // Se exceder o novo número de parcelas (diminuiu): EXCLUIR
+            if (existente) {
+              if (isSupabaseConfigured && supabase) {
+                await meusGastosFunctions.delete(existente.id);
+              }
+              setMeusGastos((prev) =>
+                prev.filter((g) => g.id !== existente.id)
+              );
+            }
           }
-        } else {
-          // Gasto único (débito ou crédito à vista)
-          // Se tinha parcelas e agora é único, atualizar apenas o atual
-          const updates: Partial<MeuGasto> = {
-            descricao: formMeuGasto.descricao,
-            valor: valor,
-            tipo: formMeuGasto.tipo,
-            categoria: formMeuGasto.categoria,
-            data: formMeuGasto.data,
-            dividido_com:
-              formMeuGasto.categoria === "dividido"
-                ? formMeuGasto.dividido_com
-                : undefined,
-            minha_parte:
-              formMeuGasto.categoria === "dividido" ? minhaParte : undefined,
-            dia_vencimento:
-              formMeuGasto.categoria === "fixo"
-                ? parseInt(formMeuGasto.dia_vencimento)
-                : undefined,
-            pago: formMeuGasto.tipo === "debito" ? true : editandoMeuGasto.pago,
-            num_parcelas: 1,
-            parcela_atual: 1,
-          };
-
-          if (isSupabaseConfigured && supabase) {
-            await meusGastosFunctions.update(editandoMeuGasto.id, updates);
-          }
-
-          setMeusGastos((prev) =>
-            prev.map((g) =>
-              g.id === editandoMeuGasto.id ? { ...g, ...updates } : g
-            )
-          );
         }
 
         setFormMeuGasto({

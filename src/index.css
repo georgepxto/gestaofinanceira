@@ -47,9 +47,13 @@ input[type="time"] {
   -webkit-appearance: none;
   appearance: none;
   min-height: 2.5rem;
+  background-color: transparent;
+  color: white !important;
+  opacity: 1 !important;
 }
 
 input[type="date"]::-webkit-date-and-time-value {
   text-align: left;
-  color: inherit;
+  color: white !important;
+  opacity: 1 !important;
 }
