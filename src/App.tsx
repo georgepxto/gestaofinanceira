@@ -1868,76 +1868,116 @@ function App() {
                     </p>
                   </div>
                 ) : (
-                  <ul className="divide-y divide-gray-700">
-                    {parcelasAtivas
-                      .filter(
+                  <div className="space-y-4 p-4">
+                    {(() => {
+                      // Filtrar parcelas
+                      const parcelasFiltradas = parcelasAtivas.filter(
                         (p) =>
                           (filtroPessoaGasto === "" ||
                             p.gasto.pessoa === filtroPessoaGasto) &&
                           (filtroTipoGasto === "" ||
                             p.gasto.tipo === filtroTipoGasto)
-                      )
-                      .map(({ gasto, parcela_atual, valor_parcela }) => (
-                        <li
-                          key={gasto.id}
-                          className="p-4 hover:bg-gray-700/50 transition-colors"
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span
-                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${getCorTipo(
-                                    gasto.tipo
-                                  )}`}
-                                >
-                                  {getIconeTipo(gasto.tipo)}
-                                  {gasto.tipo === "credito"
-                                    ? "Crédito"
-                                    : "Débito"}
-                                </span>
-                                <span className="text-xs text-gray-400 flex items-center gap-1">
-                                  <User className="w-3 h-3" />
-                                  {gasto.pessoa}
-                                </span>
-                              </div>
-                              <p className="font-medium text-white truncate">
-                                {gasto.descricao}
-                              </p>
-                              <div className="flex items-center gap-4 mt-1 text-sm text-gray-400">
-                                <span className="flex items-center gap-1">
-                                  <Hash className="w-3 h-3" />
-                                  Parcela {parcela_atual}/{gasto.num_parcelas}
-                                </span>
-                                <span className="text-xs text-gray-500">
-                                  Total: {formatCurrency(gasto.valor_total)}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className="font-semibold text-white">
-                                {formatCurrency(valor_parcela)}
-                              </p>
-                              <div className="flex items-center justify-end gap-1 mt-2">
-                                <button
-                                  onClick={() => handleEditGasto(gasto)}
-                                  className="p-1 text-gray-500 hover:text-blue-400 transition-colors"
-                                  aria-label="Editar"
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDelete(gasto.id)}
-                                  className="p-1 text-gray-500 hover:text-red-400 transition-colors"
-                                  aria-label="Excluir"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
+                      );
+
+                      // Agrupar parcelas por dia
+                      const parcelasPorDia: Record<
+                        string,
+                        typeof parcelasFiltradas
+                      > = {};
+                      parcelasFiltradas.forEach((parcela) => {
+                        const dia = parcela.gasto.data_inicio.substring(8, 10); // Extrai o dia (DD)
+                        if (!parcelasPorDia[dia]) {
+                          parcelasPorDia[dia] = [];
+                        }
+                        parcelasPorDia[dia].push(parcela);
+                      });
+
+                      // Ordenar dias (mais recentes primeiro)
+                      const diasOrdenados = Object.keys(parcelasPorDia).sort(
+                        (a, b) => b.localeCompare(a)
+                      );
+
+                      return diasOrdenados.map((dia) => (
+                        <div key={dia}>
+                          {/* Cabeçalho do dia */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <Calendar className="w-4 h-4 text-blue-400" />
+                            <span className="text-sm font-semibold text-blue-400">
+                              Dia {dia}
+                            </span>
+                            <div className="flex-1 h-px bg-gray-700"></div>
                           </div>
-                        </li>
-                      ))}
-                  </ul>
+                          {/* Lista de parcelas do dia */}
+                          <ul className="divide-y divide-gray-700 rounded-lg overflow-hidden">
+                            {parcelasPorDia[dia].map(
+                              ({ gasto, parcela_atual, valor_parcela }) => (
+                                <li
+                                  key={gasto.id}
+                                  className="p-4 hover:bg-gray-700/50 transition-colors bg-gray-800/50"
+                                >
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span
+                                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${getCorTipo(
+                                            gasto.tipo
+                                          )}`}
+                                        >
+                                          {getIconeTipo(gasto.tipo)}
+                                          {gasto.tipo === "credito"
+                                            ? "Crédito"
+                                            : "Débito"}
+                                        </span>
+                                        <span className="text-xs text-gray-400 flex items-center gap-1">
+                                          <User className="w-3 h-3" />
+                                          {gasto.pessoa}
+                                        </span>
+                                      </div>
+                                      <p className="font-medium text-white truncate">
+                                        {gasto.descricao}
+                                      </p>
+                                      <div className="flex items-center gap-4 mt-1 text-sm text-gray-400">
+                                        <span className="flex items-center gap-1">
+                                          <Hash className="w-3 h-3" />
+                                          Parcela {parcela_atual}/
+                                          {gasto.num_parcelas}
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                          Total:{" "}
+                                          {formatCurrency(gasto.valor_total)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="text-right flex-shrink-0">
+                                      <p className="font-semibold text-white">
+                                        {formatCurrency(valor_parcela)}
+                                      </p>
+                                      <div className="flex items-center justify-end gap-1 mt-2">
+                                        <button
+                                          onClick={() => handleEditGasto(gasto)}
+                                          className="p-1 text-gray-500 hover:text-blue-400 transition-colors"
+                                          aria-label="Editar"
+                                        >
+                                          <Edit3 className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDelete(gasto.id)}
+                                          className="p-1 text-gray-500 hover:text-red-400 transition-colors"
+                                          aria-label="Excluir"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        </div>
+                      ));
+                    })()}
+                  </div>
                 )}
               </div>
             )}
@@ -2600,118 +2640,149 @@ function App() {
                   </button>
                 </div>
               ) : (
-                <ul className="space-y-3">
-                  {meusGastosDoMes.map((gasto) => (
-                    <li
-                      key={gasto.id}
-                      className={`p-4 rounded-xl border transition-all ${
-                        gasto.pago || gasto.tipo === "debito"
-                          ? "bg-gray-700/50 border-gray-600 opacity-70"
-                          : "bg-gray-700 border-gray-600"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3">
-                          {/* Só mostra checkbox para crédito */}
-                          {gasto.tipo === "credito" ? (
-                            <button
-                              onClick={() => handleTogglePagoMeuGasto(gasto.id)}
-                              className={`mt-1 p-2 rounded-lg transition-colors ${
-                                gasto.pago
-                                  ? "bg-green-500/20 text-green-400"
-                                  : "bg-gray-600 text-gray-400 hover:bg-gray-500"
-                              }`}
-                            >
-                              {gasto.pago ? (
-                                <CheckCircle className="w-5 h-5" />
-                              ) : (
-                                <div className="w-5 h-5 border-2 border-gray-400 rounded-full" />
-                              )}
-                            </button>
-                          ) : (
-                            <div className="mt-1 p-2 rounded-lg bg-green-500/20 text-green-400">
-                              <CheckCircle className="w-5 h-5" />
-                            </div>
-                          )}
-                          <div>
-                            <p
-                              className={`font-medium ${
+                <div className="space-y-4">
+                  {(() => {
+                    // Agrupar gastos por dia
+                    const gastosPorDia: Record<string, typeof meusGastosDoMes> =
+                      {};
+                    meusGastosDoMes.forEach((gasto) => {
+                      const dia = gasto.data.substring(8, 10); // Extrai o dia (DD)
+                      if (!gastosPorDia[dia]) {
+                        gastosPorDia[dia] = [];
+                      }
+                      gastosPorDia[dia].push(gasto);
+                    });
+
+                    // Ordenar dias (mais recentes primeiro)
+                    const diasOrdenados = Object.keys(gastosPorDia).sort(
+                      (a, b) => b.localeCompare(a)
+                    );
+
+                    return diasOrdenados.map((dia) => (
+                      <div key={dia}>
+                        {/* Cabeçalho do dia */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <Calendar className="w-4 h-4 text-emerald-400" />
+                          <span className="text-sm font-semibold text-emerald-400">
+                            Dia {dia}
+                          </span>
+                          <div className="flex-1 h-px bg-gray-700"></div>
+                        </div>
+                        {/* Lista de gastos do dia */}
+                        <ul className="space-y-3">
+                          {gastosPorDia[dia].map((gasto) => (
+                            <li
+                              key={gasto.id}
+                              className={`p-4 rounded-xl border transition-all ${
                                 gasto.pago || gasto.tipo === "debito"
-                                  ? "text-gray-400"
-                                  : "text-white"
+                                  ? "bg-gray-700/50 border-gray-600 opacity-70"
+                                  : "bg-gray-700 border-gray-600"
                               }`}
                             >
-                              {gasto.descricao}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <span
-                                className={`text-xs px-2 py-0.5 rounded ${
-                                  gasto.tipo === "credito"
-                                    ? "bg-purple-500/20 text-purple-400"
-                                    : "bg-green-500/20 text-green-400"
-                                }`}
-                              >
-                                {gasto.tipo === "credito"
-                                  ? "Crédito"
-                                  : "Débito"}
-                              </span>
-                              {gasto.categoria === "dividido" && (
-                                <span className="text-xs px-2 py-0.5 rounded bg-pink-500/20 text-pink-400 flex items-center gap-1">
-                                  <Users className="w-3 h-3" />
-                                  {gasto.dividido_com}
-                                </span>
-                              )}
-                              <span className="text-xs text-gray-500">
-                                {format(
-                                  new Date(gasto.data + "T12:00:00"),
-                                  "dd/MM"
-                                )}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p
-                            className={`font-bold ${
-                              gasto.pago || gasto.tipo === "debito"
-                                ? "text-gray-400"
-                                : "text-white"
-                            }`}
-                          >
-                            {formatCurrency(
-                              gasto.categoria === "dividido" &&
-                                gasto.minha_parte
-                                ? gasto.minha_parte
-                                : gasto.valor
-                            )}
-                          </p>
-                          {gasto.categoria === "dividido" &&
-                            gasto.minha_parte && (
-                              <p className="text-xs text-gray-500">
-                                Total: {formatCurrency(gasto.valor)}
-                              </p>
-                            )}
-                          <div className="flex items-center justify-end gap-1 mt-2">
-                            <button
-                              onClick={() => handleEditMeuGasto(gasto)}
-                              className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
-                              title="Editar"
-                            >
-                              <Edit3 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteMeuGasto(gasto.id)}
-                              className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-                              title="Excluir"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-3">
+                                  {/* Só mostra checkbox para crédito */}
+                                  {gasto.tipo === "credito" ? (
+                                    <button
+                                      onClick={() =>
+                                        handleTogglePagoMeuGasto(gasto.id)
+                                      }
+                                      className={`mt-1 p-2 rounded-lg transition-colors ${
+                                        gasto.pago
+                                          ? "bg-green-500/20 text-green-400"
+                                          : "bg-gray-600 text-gray-400 hover:bg-gray-500"
+                                      }`}
+                                    >
+                                      {gasto.pago ? (
+                                        <CheckCircle className="w-5 h-5" />
+                                      ) : (
+                                        <div className="w-5 h-5 border-2 border-gray-400 rounded-full" />
+                                      )}
+                                    </button>
+                                  ) : (
+                                    <div className="mt-1 p-2 rounded-lg bg-green-500/20 text-green-400">
+                                      <CheckCircle className="w-5 h-5" />
+                                    </div>
+                                  )}
+                                  <div>
+                                    <p
+                                      className={`font-medium ${
+                                        gasto.pago || gasto.tipo === "debito"
+                                          ? "text-gray-400"
+                                          : "text-white"
+                                      }`}
+                                    >
+                                      {gasto.descricao}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                      <span
+                                        className={`text-xs px-2 py-0.5 rounded ${
+                                          gasto.tipo === "credito"
+                                            ? "bg-purple-500/20 text-purple-400"
+                                            : "bg-green-500/20 text-green-400"
+                                        }`}
+                                      >
+                                        {gasto.tipo === "credito"
+                                          ? "Crédito"
+                                          : "Débito"}
+                                      </span>
+                                      {gasto.categoria === "dividido" && (
+                                        <span className="text-xs px-2 py-0.5 rounded bg-pink-500/20 text-pink-400 flex items-center gap-1">
+                                          <Users className="w-3 h-3" />
+                                          {gasto.dividido_com}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p
+                                    className={`font-bold ${
+                                      gasto.pago || gasto.tipo === "debito"
+                                        ? "text-gray-400"
+                                        : "text-white"
+                                    }`}
+                                  >
+                                    {formatCurrency(
+                                      gasto.categoria === "dividido" &&
+                                        gasto.minha_parte
+                                        ? gasto.minha_parte
+                                        : gasto.valor
+                                    )}
+                                  </p>
+                                  {gasto.categoria === "dividido" &&
+                                    gasto.minha_parte && (
+                                      <p className="text-xs text-gray-500">
+                                        Total: {formatCurrency(gasto.valor)}
+                                      </p>
+                                    )}
+                                  <div className="flex items-center justify-end gap-1 mt-2">
+                                    <button
+                                      onClick={() => handleEditMeuGasto(gasto)}
+                                      className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
+                                      title="Editar"
+                                    >
+                                      <Edit3 className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        handleDeleteMeuGasto(gasto.id)
+                                      }
+                                      className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                                      title="Excluir"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                    </li>
-                  ))}
-                </ul>
+                    ));
+                  })()}
+                </div>
               )}
             </div>
           </>
