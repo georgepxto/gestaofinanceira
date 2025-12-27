@@ -1,25 +1,39 @@
 # 💰 Gestão Financeira - Controle de Finanças Parceladas
 
-Uma aplicação web moderna para controlar gastos parcelados e saldos devedores com múltiplos usuários. Construída com **React**, **Vite**, **TypeScript** e **Tailwind CSS**.
+Uma aplicação web moderna para controlar gastos parcelados, saldos devedores e despesas pessoais com múltiplos usuários. Construída com **React**, **Vite**, **TypeScript** e **Tailwind CSS**.
 
 ## 🎯 Características Principais
 
-### 📊 Aba Gastos
+### 📊 Aba Gastos (Gastos Conjuntos)
 
 - **Navegação por mês** - Veja os gastos de qualquer mês
 - **Resumo mensal** - Total de gastos e por pessoa
 - **Lançamentos com parcelas** - Registre gastos com até 24 parcelas
 - **Tipos de gasto** - Crédito (parcelado) ou Débito (à vista)
+- **Pagamento parcial** - Registre pagamentos parciais antes de fechar o mês
+- **Observações de mês** - Adicione notas para cada mês
 - **Modo demo** - Funciona sem Supabase (dados em localStorage)
 
 ### 💳 Aba Saldo Devedor
 
 - **Rastreamento de dívidas** - Mantenha controle de dívidas antigas
 - **Histórico de pagamentos** - Veja todos os pagamentos realizados
+- **Registrar pagamento** - Clique no botão ➖ para registrar novos pagamentos
 - **Desfazer pagamentos** - Reverta pagamentos acidentais
-- **Filtro por status** - Veja pendentes ou já quitados
+- **Filtro por status** - Veja pendentes ou já quitadas
 - **Filtro por pessoa** - Filtre dívidas por usuário
 - **Barra de progresso** - Visualize o andamento do pagamento
+- **Observações de pagamento** - Adicione notas ao registrar pagamentos
+
+### 👤 Aba Meus Gastos (Despesas Pessoais)
+
+- **Gastos pessoais** - Registre suas próprias despesas
+- **Tipos de gasto** - Crédito ou Débito
+- **Categorias** - Pessoal ou Dividido com outros
+- **Gastos fixos** - Configure despesas recorrentes
+- **Habilitar/desabilitar fixos** - Ative ou desative gastos fixos
+- **Resumo de gastos** - Veja totais de crédito, débito, pagos e fixos
+- **Marcar como pago** - Indique quais gastos já foram quitados
 
 ### ⏹️ Fechar Mês
 
@@ -29,7 +43,7 @@ Uma aplicação web moderna para controlar gastos parcelados e saldos devedores 
 
 ### 👥 Gerenciamento de Pessoas
 
-- **Pessoas dinâmicas** - Adicione pessoas além de "Pai" e "Mãe"
+- **Pessoas dinâmicas** - Adicione pessoas
 - **Adicionar novos usuários** - Crie usuários conforme necessário
 - **Remover usuários** - Delete usuários que não precisa mais
 
@@ -56,7 +70,7 @@ npm install
 ```
 
 3. **Configure o Supabase (opcional)**
-   Crie um arquivo `.env` na raiz do projeto:
+   Crie um arquivo `.env.local` na raiz do projeto:
 
 ```env
 VITE_SUPABASE_URL=sua_url_aqui
@@ -73,9 +87,9 @@ A aplicação abrirá em `http://localhost:5174`
 
 ## 📱 Como Usar
 
-### Registrando um Gasto
+### Registrando um Gasto Conjunto
 
-1. Clique em **"+ Novo Lançamento"**
+1. Na aba **Gastos**, clique em **"+ Novo Lançamento"**
 2. Preencha os dados:
    - **Descrição** - Nome do item
    - **Pessoa** - Quem vai pagar
@@ -98,9 +112,27 @@ A aplicação abrirá em `http://localhost:5174`
 ### Pagando uma Dívida
 
 1. Na aba **Saldo Devedor**, clique no botão ➖ na dívida
-2. Digite o valor pago (em centavos, ex: `10050` = R$ 100,50)
-3. Adicione observação (opcional)
-4. Clique em **"Confirmar Pagamento"**
+2. Digite o valor que quer pagar
+3. Clique em **"Tudo"** para pagar a dívida completa (opcional)
+4. Adicione observação (opcional)
+5. Clique em **"Confirmar Pagamento"**
+
+### Registrando Gastos Pessoais
+
+1. Na aba **Meus Gastos**, clique em **"+ Novo Lançamento"**
+2. Preencha os dados:
+   - **Descrição** - Nome do gasto
+   - **Valor** - Valor do gasto
+   - **Tipo** - Crédito ou Débito
+   - **Categoria** - Pessoal ou Dividido
+   - **Data** - Quando foi o gasto
+3. Clique em **"Salvar"**
+
+### Gerenciando Gastos Fixos
+
+1. Na aba **Meus Gastos**, veja a seção "Gastos Fixos"
+2. Use o botão **toggle** para habilitar/desabilitar cada gasto fixo
+3. Os gastos fixos habilitados aparecem no topo da lista
 
 ### Desfazendo um Pagamento
 
@@ -135,16 +167,38 @@ A aplicação abrirá em `http://localhost:5174`
 
 ```
 src/
-├── App.tsx                    # Componente principal
-├── main.tsx                   # Entry point
-├── index.css                  # Estilos globais
+├── App.tsx                         # Componente principal com lógica
+├── main.tsx                        # Entry point
+├── index.css                       # Estilos globais
+├── components/
+│   ├── modals/                     # 8 componentes de modais
+│   │   ├── FormGastoModal.tsx
+│   │   ├── FormDividaModal.tsx
+│   │   ├── FormMeuGastoModal.tsx
+│   │   ├── PagamentoModal.tsx      # Novo: modal de pagamento de dívida
+│   │   ├── PagamentoParcialModal.tsx
+│   │   ├── ConfirmModal.tsx
+│   │   ├── FeedbackModal.tsx
+│   │   ├── ObservacaoModal.tsx
+│   │   └── FecharMesModal.tsx
+│   └── Tabs/                       # 3 componentes de abas
+│       ├── TabGastos.tsx           # Aba de gastos conjuntos
+│       ├── TabDividas.tsx          # Aba de saldo devedor
+│       └── TabMeuGasto.tsx         # Aba de gastos pessoais
 ├── types/
-│   └── index.ts               # Tipos TypeScript
+│   └── index.ts                    # Tipos TypeScript
 ├── lib/
-│   └── supabase.ts            # Cliente Supabase
+│   └── supabase.ts                 # Cliente Supabase
 └── utils/
-    └── calculations.ts        # Funções de cálculo
+    └── calculations.ts             # Funções de cálculo
 ```
+
+### Arquitetura
+
+- **App.tsx**: Gerencia todo o estado e lógica da aplicação (~1,800 linhas)
+- **Components/Tabs**: Componentes apresentacionais reutilizáveis
+- **Components/Modals**: Modais isolados e reutilizáveis
+- **Separação de preocupações**: Lógica em App.tsx, apresentação nos componentes
 
 ## 🎨 Design
 
@@ -152,6 +206,35 @@ src/
 - **Responsivo** - Funciona em mobile e desktop
 - **Modais intuitivos** - Confirmações e feedbacks visuais
 - **Ícones informativos** - Lucide icons para melhor UX
+- **Componentes reutilizáveis** - Modais e abas bem estruturados
+
+## 🔄 Melhorias Recentes (Refatoração)
+
+A aplicação passou por uma refatoração completa para melhor organização e manutenibilidade:
+
+### ✅ Componentes de Modais (8 total)
+
+- `FormGastoModal` - Criar/editar gastos conjuntos
+- `FormDividaModal` - Criar dívidas
+- `FormMeuGastoModal` - Criar gastos pessoais
+- `PagamentoModal` - **NOVO**: Registrar pagamentos de dívidas
+- `PagamentoParcialModal` - Registrar pagamentos parciais antes de fechar mês
+- `ConfirmModal` - Confirmações genéricas
+- `FeedbackModal` - Mensagens de sucesso/info
+- `ObservacaoModal` - Adicionar notas/observações
+- `FecharMesModal` - Fechar mês com confirmação
+
+### ✅ Componentes de Abas (3 total)
+
+- `TabGastos` - Gastos conjuntos com navegação por mês (~520 linhas)
+- `TabDividas` - Saldo devedor com histórico de pagamentos (~420 linhas)
+- `TabMeuGasto` - Gastos pessoais com categorias e fixos (~530 linhas)
+
+### 📊 Redução de Código
+
+- **App.tsx**: Reduzido de 4,352 linhas para ~1,800 linhas (59% de redução)
+- **Melhor legibilidade** - Componentes focados em uma responsabilidade
+- **Mais reutilizável** - Componentes podem ser usados em outras partes
 
 ## 💾 Armazenamento
 
@@ -187,20 +270,18 @@ Quando sem Supabase, a app vem com dados de exemplo:
 - TV 55" (Pai) - 5 parcelas
 - Supermercado (Pai) - à vista
 
-## 🐛 Troubleshooting
+## 🧪 Scripts Disponíveis
 
-### "Nenhum lançamento para este mês"
+```bash
+# Inicia servidor de desenvolvimento
+npm run dev
 
-- Verifique a data de início dos gastos
-- Use o botão "Ir para hoje" para voltar ao mês atual
+# Build para produção
+npm run build
 
-### Valor não aceita decimais
-
-- Digite em centavos: `10050` = R$ 100,50
-
-### Dados desaparecem ao fechar
-
-- Verifique se localStorage está habilitado
+# Preview do build local
+npm run preview
+```
 
 ## 📄 Licença
 
