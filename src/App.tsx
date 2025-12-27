@@ -3,7 +3,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  X,
   CreditCard,
   Wallet,
   TrendingDown,
@@ -11,11 +10,9 @@ import {
   Calendar,
   DollarSign,
   Hash,
-  FileText,
   Loader2,
   AlertCircle,
   Trash2,
-  UserPlus,
   Receipt,
   History,
   MinusCircle,
@@ -55,22 +52,26 @@ import type {
 import {
   formatMonthYear,
   formatCurrency,
-  formatCurrencyInput,
   parseCurrency,
   getParcelasAtivas,
   calcularResumoMensal,
   calcularTotalMes,
 } from "./utils/calculations";
 import { Login } from "./components/Login";
+import {
+  FormGastoModal,
+  FormDividaModal,
+  FormMeuGastoModal,
+  ConfirmModal,
+  FeedbackModal,
+  ObservacaoModal,
+  PagamentoParcialModal,
+  FecharMesModal,
+  PagamentoModal,
+} from "./components/modals";
+import type { PagamentoParcial } from "./types/extended";
+import { CORES_CARDS } from "./utils/constants";
 import "./index.css";
-
-interface PagamentoParcial {
-  id?: string;
-  valor: number;
-  data: string;
-}
-
-const PARCELAS_OPTIONS = Array.from({ length: 24 }, (_, i) => i + 1);
 
 function App() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -1441,21 +1442,6 @@ function App() {
     setMesVisualizacao(new Date());
   };
 
-  // Handlers do formulário
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-
-    if (name === "valor_total") {
-      setFormData((prev) => ({ ...prev, [name]: formatCurrencyInput(value) }));
-    } else if (name === "num_parcelas") {
-      setFormData((prev) => ({ ...prev, [name]: parseInt(value, 10) }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
   // Submeter formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1589,15 +1575,6 @@ function App() {
       <Wallet className="w-4 h-4" />
     );
   };
-
-  // Cores para os cards de resumo
-  const coresCards = [
-    "from-blue-500 to-blue-600",
-    "from-pink-500 to-pink-600",
-    "from-emerald-500 to-emerald-600",
-    "from-amber-500 to-amber-600",
-    "from-violet-500 to-violet-600",
-  ];
 
   // Loading de autenticação
   if (authLoading) {
@@ -1782,7 +1759,7 @@ function App() {
                   <div
                     key={resumo.pessoa}
                     className={`bg-gradient-to-br ${
-                      coresCards[index % coresCards.length]
+                      CORES_CARDS[index % CORES_CARDS.length]
                     } rounded-xl p-3 sm:p-4 text-white shadow-sm overflow-hidden`}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -2532,92 +2509,34 @@ function App() {
                         </div>
                       </div>
 
-                      {/* Formulário de pagamento inline */}
-                      {showPagamento === divida.id && (
-                        <div className="mt-4 p-3 bg-gray-700/50 rounded-lg border border-gray-600">
-                          <div className="flex items-center justify-between mb-3">
-                            <p className="text-sm text-gray-300">
-                              Registrar pagamento:
-                            </p>
-                            <button
-                              onClick={() => {
-                                setValorPagamento(
-                                  divida.valor_atual.toLocaleString("pt-BR", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  })
-                                );
-                              }}
-                              className="px-2.5 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded font-medium transition-colors"
-                            >
-                              Tudo
-                            </button>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-                                R$
-                              </span>
-                              <input
-                                type="text"
-                                value={valorPagamento}
-                                onChange={(e) =>
-                                  setValorPagamento(
-                                    formatCurrencyInput(e.target.value)
-                                  )
-                                }
-                                placeholder="0,00"
-                                className="w-full pl-10 pr-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 outline-none"
-                                inputMode="numeric"
-                              />
-                            </div>
-                            <input
-                              type="text"
-                              value={obsPagamento}
-                              onChange={(e) => setObsPagamento(e.target.value)}
-                              placeholder="Observação (opcional)"
-                              className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 outline-none"
-                            />
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => {
-                                  setShowPagamento(null);
-                                  setValorPagamento("");
-                                  setObsPagamento("");
-                                }}
-                                disabled={saving}
-                                className={`flex-1 px-4 py-2.5 text-white rounded-lg font-medium transition-colors ${
-                                  saving
-                                    ? "bg-gray-700 cursor-not-allowed"
-                                    : "bg-gray-600 hover:bg-gray-500"
-                                }`}
-                              >
-                                Cancelar
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handlePagamento(divida.id, divida.valor_atual)
-                                }
-                                disabled={saving}
-                                className={`flex-1 px-4 py-2.5 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-                                  saving
-                                    ? "bg-gray-600 cursor-not-allowed"
-                                    : "bg-green-600 hover:bg-green-700"
-                                }`}
-                              >
-                                {saving ? (
-                                  <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    Salvando...
-                                  </>
-                                ) : (
-                                  "Confirmar Pagamento"
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      {/* Formulário de pagamento */}
+                      <PagamentoModal
+                        show={showPagamento === divida.id}
+                        dividaId={showPagamento}
+                        valorAtual={divida.valor_atual}
+                        valorPagamento={valorPagamento}
+                        obsPagamento={obsPagamento}
+                        saving={saving}
+                        error={error}
+                        onClose={() => {
+                          setShowPagamento(null);
+                          setValorPagamento("");
+                          setObsPagamento("");
+                        }}
+                        onValorChange={setValorPagamento}
+                        onObsChange={setObsPagamento}
+                        onTudo={() => {
+                          setValorPagamento(
+                            divida.valor_atual.toLocaleString("pt-BR", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })
+                          );
+                        }}
+                        onSubmit={() =>
+                          handlePagamento(divida.id, divida.valor_atual)
+                        }
+                      />
                     </li>
                   ))}
                 </ul>
@@ -3035,1315 +2954,154 @@ function App() {
         )}
       </main>
 
-      {/* Modal Adicionar/Editar Meu Gasto */}
-      {showFormMeuGasto && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center">
-          <div className="bg-gray-800 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto border-t sm:border border-gray-700">
-            <div className="sticky top-0 bg-gray-800 p-4 border-b border-gray-700 flex items-center justify-between z-10">
-              <h2 className="text-lg font-bold text-white">
-                {editandoMeuGasto
-                  ? "Editar Gasto Pessoal"
-                  : "Novo Gasto Pessoal"}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowFormMeuGasto(false);
-                  setEditandoMeuGasto(null);
-                  setFormMeuGasto({
-                    descricao: "",
-                    valor: "",
-                    tipo: "debito",
-                    categoria: "pessoal",
-                    data: format(new Date(), "yyyy-MM-dd"),
-                    dividido_com: "",
-                    minha_parte: "",
-                    dia_vencimento: "",
-                    num_parcelas: "1",
-                  });
-                }}
-                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
+      <FormMeuGastoModal
+        show={showFormMeuGasto}
+        isEditing={!!editandoMeuGasto}
+        formData={formMeuGasto}
+        saving={saving}
+        error={error}
+        onClose={() => {
+          setShowFormMeuGasto(false);
+          setEditandoMeuGasto(null);
+          setFormMeuGasto({
+            descricao: "",
+            valor: "",
+            tipo: "debito",
+            categoria: "pessoal",
+            data: format(new Date(), "yyyy-MM-dd"),
+            dividido_com: "",
+            minha_parte: "",
+            dia_vencimento: "",
+            num_parcelas: "1",
+          });
+          setError(null);
+        }}
+        onFormChange={setFormMeuGasto}
+        onSubmit={handleSaveMeuGasto}
+      />
 
-            <div className="p-4 space-y-4">
-              {/* Categoria */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Tipo de Gasto
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormMeuGasto((prev) => ({
-                        ...prev,
-                        categoria: "pessoal",
-                      }))
-                    }
-                    className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
-                      formMeuGasto.categoria === "pessoal"
-                        ? "bg-blue-600 border-blue-500 text-white"
-                        : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                    }`}
-                  >
-                    <User className="w-5 h-5" />
-                    <span className="text-xs">Pessoal</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormMeuGasto((prev) => ({
-                        ...prev,
-                        categoria: "dividido",
-                      }))
-                    }
-                    className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
-                      formMeuGasto.categoria === "dividido"
-                        ? "bg-pink-600 border-pink-500 text-white"
-                        : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                    }`}
-                  >
-                    <Users className="w-5 h-5" />
-                    <span className="text-xs">Dividido</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormMeuGasto((prev) => ({
-                        ...prev,
-                        categoria: "fixo",
-                      }))
-                    }
-                    className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
-                      formMeuGasto.categoria === "fixo"
-                        ? "bg-amber-600 border-amber-500 text-white"
-                        : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                    }`}
-                  >
-                    <Repeat className="w-5 h-5" />
-                    <span className="text-xs">Fixo</span>
-                  </button>
-                </div>
-              </div>
+      <FeedbackModal
+        modal={modalFeedback}
+        onClose={() => setModalFeedback({ ...modalFeedback, show: false })}
+      />
 
-              {/* Descrição */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Descrição
-                </label>
-                <input
-                  type="text"
-                  value={formMeuGasto.descricao}
-                  onChange={(e) =>
-                    setFormMeuGasto((prev) => ({
-                      ...prev,
-                      descricao: e.target.value,
-                    }))
-                  }
-                  placeholder="Ex: Netflix, Almoço, etc."
-                  className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
-                />
-              </div>
+      <ConfirmModal
+        modal={modalConfirm}
+        saving={saving}
+        onClose={() => setModalConfirm((prev) => ({ ...prev, show: false }))}
+      />
 
-              {/* Valor */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Valor Total
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    R$
-                  </span>
-                  <input
-                    type="text"
-                    value={formMeuGasto.valor}
-                    onChange={(e) =>
-                      setFormMeuGasto((prev) => ({
-                        ...prev,
-                        valor: formatCurrencyInput(e.target.value),
-                      }))
-                    }
-                    placeholder="0,00"
-                    className="w-full pl-10 pr-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
-                    inputMode="numeric"
-                  />
-                </div>
-              </div>
-
-              {/* Campos para Dividido */}
-              {formMeuGasto.categoria === "dividido" && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Dividido com
-                    </label>
-                    <input
-                      type="text"
-                      value={formMeuGasto.dividido_com}
-                      onChange={(e) =>
-                        setFormMeuGasto((prev) => ({
-                          ...prev,
-                          dividido_com: e.target.value,
-                        }))
-                      }
-                      placeholder="Ex: João, Maria, etc."
-                      className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Minha Parte
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        R$
-                      </span>
-                      <input
-                        type="text"
-                        value={formMeuGasto.minha_parte}
-                        onChange={(e) =>
-                          setFormMeuGasto((prev) => ({
-                            ...prev,
-                            minha_parte: formatCurrencyInput(e.target.value),
-                          }))
-                        }
-                        placeholder="0,00"
-                        className="w-full pl-10 pr-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
-                        inputMode="numeric"
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Campo para Fixo */}
-              {formMeuGasto.categoria === "fixo" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Dia do Vencimento (1-31)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={formMeuGasto.dia_vencimento}
-                    onChange={(e) =>
-                      setFormMeuGasto((prev) => ({
-                        ...prev,
-                        dia_vencimento: e.target.value,
-                      }))
-                    }
-                    placeholder="Ex: 10"
-                    className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-              )}
-
-              {/* Data (não para fixo) */}
-              {formMeuGasto.categoria !== "fixo" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Data
-                  </label>
-                  <input
-                    type="date"
-                    value={formMeuGasto.data}
-                    onChange={(e) =>
-                      setFormMeuGasto((prev) => ({
-                        ...prev,
-                        data: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                </div>
-              )}
-
-              {/* Tipo (Crédito/Débito) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Forma de Pagamento
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormMeuGasto((prev) => ({
-                        ...prev,
-                        tipo: "debito",
-                        num_parcelas: "1",
-                      }))
-                    }
-                    className={`p-3 rounded-lg border transition-colors flex items-center justify-center gap-2 ${
-                      formMeuGasto.tipo === "debito"
-                        ? "bg-green-600 border-green-500 text-white"
-                        : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                    }`}
-                  >
-                    <Wallet className="w-5 h-5" />
-                    Débito
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormMeuGasto((prev) => ({ ...prev, tipo: "credito" }))
-                    }
-                    className={`p-3 rounded-lg border transition-colors flex items-center justify-center gap-2 ${
-                      formMeuGasto.tipo === "credito"
-                        ? "bg-purple-600 border-purple-500 text-white"
-                        : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
-                    }`}
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    Crédito
-                  </button>
-                </div>
-              </div>
-
-              {/* Parcelas (apenas para Crédito e não fixo) */}
-              {formMeuGasto.tipo === "credito" &&
-                formMeuGasto.categoria !== "fixo" && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Número de Parcelas
-                    </label>
-                    <select
-                      value={formMeuGasto.num_parcelas}
-                      onChange={(e) =>
-                        setFormMeuGasto((prev) => ({
-                          ...prev,
-                          num_parcelas: e.target.value,
-                        }))
-                      }
-                      className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 outline-none"
-                    >
-                      {Array.from({ length: 24 }, (_, i) => i + 1).map(
-                        (num) => (
-                          <option key={num} value={num}>
-                            {num}x{" "}
-                            {num === 1
-                              ? "(à vista)"
-                              : `de ${
-                                  formMeuGasto.valor
-                                    ? formatCurrency(
-                                        parseCurrency(formMeuGasto.valor) / num
-                                      )
-                                    : "R$ 0,00"
-                                }`}
-                          </option>
-                        )
-                      )}
-                    </select>
-                    {parseInt(formMeuGasto.num_parcelas) > 1 &&
-                      formMeuGasto.valor && (
-                        <p className="text-sm text-gray-400 mt-1">
-                          {formMeuGasto.num_parcelas}x de{" "}
-                          {formatCurrency(
-                            parseCurrency(formMeuGasto.valor) /
-                              parseInt(formMeuGasto.num_parcelas)
-                          )}
-                        </p>
-                      )}
-                  </div>
-                )}
-
-              {error && (
-                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-                  <p className="text-red-400 text-sm">{error}</p>
-                </div>
-              )}
-
-              <button
-                onClick={handleSaveMeuGasto}
-                disabled={saving}
-                className={`w-full py-3 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
-                  saving
-                    ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-emerald-600 hover:bg-emerald-700"
-                }`}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Salvando...
-                  </>
-                ) : editandoMeuGasto ? (
-                  <>
-                    <Edit3 className="w-5 h-5" />
-                    Salvar Alterações
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-5 h-5" />
-                    {formMeuGasto.categoria === "fixo"
-                      ? "Adicionar Gasto Fixo"
-                      : "Adicionar Gasto"}
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Feedback */}
-      {modalFeedback.show && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-2xl w-full max-w-sm border border-gray-700 overflow-hidden">
-            <div
-              className={`p-4 ${
-                modalFeedback.tipo === "sucesso"
-                  ? "bg-green-600"
-                  : "bg-blue-600"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {modalFeedback.tipo === "sucesso" ? (
-                  <CheckCircle className="w-8 h-8 text-white" />
-                ) : (
-                  <AlertCircle className="w-8 h-8 text-white" />
-                )}
-                <h2 className="text-lg font-semibold text-white">
-                  {modalFeedback.titulo}
-                </h2>
-              </div>
-            </div>
-            <div className="p-4">
-              <p className="text-gray-300 whitespace-pre-line">
-                {modalFeedback.mensagem}
-              </p>
-            </div>
-            <div className="p-4 border-t border-gray-700">
-              <button
-                onClick={() =>
-                  setModalFeedback({ ...modalFeedback, show: false })
-                }
-                className={`w-full py-3 rounded-lg font-medium transition-colors ${
-                  modalFeedback.tipo === "sucesso"
-                    ? "bg-green-600 hover:bg-green-700 text-white"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Confirmação */}
-      {modalConfirm.show && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-2xl w-full max-w-sm border border-gray-700 overflow-hidden">
-            <div className="p-4 bg-red-600">
-              <div className="flex items-center gap-3">
-                <Trash2 className="w-8 h-8 text-white" />
-                <h2 className="text-lg font-semibold text-white">
-                  {modalConfirm.titulo}
-                </h2>
-              </div>
-            </div>
-            <div className="p-4">
-              <p className="text-gray-300">{modalConfirm.mensagem}</p>
-            </div>
-            <div className="p-4 border-t border-gray-700 flex gap-2">
-              <button
-                onClick={() =>
-                  setModalConfirm((prev) => ({ ...prev, show: false }))
-                }
-                disabled={saving}
-                className={`flex-1 py-3 text-white rounded-lg font-medium transition-colors ${
-                  saving
-                    ? "bg-gray-700 cursor-not-allowed"
-                    : "bg-gray-600 hover:bg-gray-500"
-                }`}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={modalConfirm.onConfirm}
-                disabled={saving}
-                className={`flex-1 py-3 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-                  saving
-                    ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-red-600 hover:bg-red-700"
-                }`}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Excluindo...
-                  </>
-                ) : (
-                  "Excluir"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de Observação por Pessoa/Mês */}
-      {showObsModal && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md border border-gray-700">
-            <div className="p-4 border-b border-gray-700 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-yellow-400" />
-                Observação - {showObsModal}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowObsModal(null);
-                  setObsTexto("");
-                }}
-                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-4">
-              <div className="bg-gray-700/50 rounded-lg p-3">
-                <p className="text-sm text-gray-400">
-                  Mês:{" "}
-                  <span className="text-white font-medium">
-                    {formatMonthYear(mesVisualizacao)}
-                  </span>
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Observação
-                </label>
-                <textarea
-                  value={obsTexto}
-                  onChange={(e) => setObsTexto(e.target.value)}
-                  placeholder="Ex: Pagou R$ 1.000 em 15/12, falta R$ 500..."
-                  rows={4}
-                  className="w-full px-3 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 outline-none resize-none"
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowObsModal(null);
-                    setObsTexto("");
-                  }}
-                  className="flex-1 py-3 bg-gray-700 text-white font-medium rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => handleSalvarObs(showObsModal)}
-                  className="flex-1 py-3 bg-yellow-600 text-white font-medium rounded-lg hover:bg-yellow-700 transition-colors"
-                >
-                  Salvar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ObservacaoModal
+        show={!!showObsModal}
+        pessoa={showObsModal}
+        mesVisualizacao={mesVisualizacao}
+        obsTexto={obsTexto}
+        saving={saving}
+        onClose={() => {
+          setShowObsModal(null);
+          setObsTexto("");
+        }}
+        onTextChange={setObsTexto}
+        onSave={handleSalvarObs}
+      />
 
       {/* Modal de Pagamento Parcial */}
-      {showPagamentoParcial && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md border border-gray-700">
-            <div className="p-4 border-b border-gray-700 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <Banknote className="w-5 h-5 text-green-400" />
-                Pagamento Parcial - {showPagamentoParcial}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowPagamentoParcial(null);
-                  setValorPagamentoParcial("");
-                  setError(null);
-                }}
-                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-4">
-              {(() => {
-                const resumoPessoa = resumoMensal.find(
-                  (r) => r.pessoa === showPagamentoParcial
-                );
-                const totalDevido = resumoPessoa?.total || 0;
-                const jaPago = getTotalPagoParcial(showPagamentoParcial);
-                const restante = totalDevido - jaPago;
-
-                return (
-                  <>
-                    <div className="bg-gray-700/50 rounded-lg p-4 space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Mês:</span>
-                        <span className="text-white font-medium">
-                          {formatMonthYear(mesVisualizacao)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Total do mês:</span>
-                        <span className="text-white font-medium">
-                          {formatCurrency(totalDevido)}
-                        </span>
-                      </div>
-                      {jaPago > 0 && (
-                        <>
-                          <div className="flex justify-between">
-                            <span className="text-green-400">Já pago:</span>
-                            <span className="text-green-300 font-medium">
-                              {formatCurrency(jaPago)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between border-t border-gray-600 pt-2">
-                            <span className="text-yellow-400">
-                              Falta pagar:
-                            </span>
-                            <span className="text-yellow-300 font-bold">
-                              {formatCurrency(restante)}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Valor do pagamento
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                          R$
-                        </span>
-                        <input
-                          type="text"
-                          value={valorPagamentoParcial}
-                          onChange={(e) =>
-                            setValorPagamentoParcial(
-                              formatCurrencyInput(e.target.value)
-                            )
-                          }
-                          placeholder="0,00"
-                          className="w-full pl-10 pr-3 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 outline-none"
-                          inputMode="numeric"
-                        />
-                      </div>
-                      {restante > 0 && (
-                        <div className="flex gap-2 mt-2">
-                          <button
-                            onClick={() =>
-                              setValorPagamentoParcial(
-                                restante.toLocaleString("pt-BR", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })
-                              )
-                            }
-                            className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 text-white rounded font-medium transition-colors"
-                          >
-                            Tudo ({formatCurrency(restante)})
-                          </button>
-                          <button
-                            onClick={() =>
-                              setValorPagamentoParcial(
-                                (restante / 2).toLocaleString("pt-BR", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })
-                              )
-                            }
-                            className="px-3 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded font-medium transition-colors"
-                          >
-                            Metade ({formatCurrency(restante / 2)})
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {error && (
-                      <div className="bg-red-900/50 border border-red-700 rounded-lg p-3 text-red-300 text-sm">
-                        {error}
-                      </div>
-                    )}
-
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => {
-                          setShowPagamentoParcial(null);
-                          setValorPagamentoParcial("");
-                          setError(null);
-                        }}
-                        disabled={saving}
-                        className={`flex-1 py-3 text-white font-medium rounded-lg transition-colors ${
-                          saving
-                            ? "bg-gray-700 cursor-not-allowed"
-                            : "bg-gray-700 hover:bg-gray-600"
-                        }`}
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleAddPagamentoParcial(showPagamentoParcial)
-                        }
-                        disabled={restante <= 0 || saving}
-                        className={`flex-1 py-3 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${
-                          saving || restante <= 0
-                            ? "bg-gray-600 cursor-not-allowed opacity-50"
-                            : "bg-green-600 hover:bg-green-700"
-                        }`}
-                      >
-                        {saving ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Salvando...
-                          </>
-                        ) : (
-                          "Registrar"
-                        )}
-                      </button>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
+      {(() => {
+        const resumoPessoa = resumoMensal.find(
+          (r) => r.pessoa === showPagamentoParcial
+        );
+        const totalDevido = resumoPessoa?.total || 0;
+        const jaPago = getTotalPagoParcial(showPagamentoParcial || "");
+        return (
+          <PagamentoParcialModal
+            show={!!showPagamentoParcial}
+            pessoa={showPagamentoParcial}
+            mesVisualizacao={mesVisualizacao}
+            totalDevido={totalDevido}
+            jaPago={jaPago}
+            valorPagamento={valorPagamentoParcial}
+            saving={saving}
+            error={error}
+            onClose={() => {
+              setShowPagamentoParcial(null);
+              setValorPagamentoParcial("");
+              setError(null);
+            }}
+            onValorChange={setValorPagamentoParcial}
+            onSubmit={() => {
+              if (showPagamentoParcial) {
+                handleAddPagamentoParcial(showPagamentoParcial);
+              }
+            }}
+          />
+        );
+      })()}
 
       {/* Modal de Fechar Mês */}
-      {showFecharMes && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-md border border-gray-700">
-            <div className="p-4 border-b border-gray-700 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-400" />
-                Fechar Mês - {showFecharMes}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowFecharMes(null);
-                  setValorPagoFecharMes("");
-                  setError(null);
-                }}
-                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-4">
-              {/* Info do mês */}
-              {(() => {
-                const resumoPessoa = resumoMensal.find(
-                  (r) => r.pessoa === showFecharMes
-                );
-                const totalDevido = resumoPessoa?.total || 0;
-                const jaPago = getTotalPagoParcial(showFecharMes);
-                const restanteReal = totalDevido - jaPago;
-                const valorPago = parseCurrency(valorPagoFecharMes);
-                const valorParaDebito = Math.max(0, restanteReal - valorPago);
-
-                return (
-                  <>
-                    <div className="bg-gray-700/50 rounded-lg p-4 space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Mês:</span>
-                        <span className="text-white font-medium">
-                          {formatMonthYear(mesVisualizacao)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Total do mês:</span>
-                        <span className="text-white font-medium">
-                          {formatCurrency(totalDevido)}
-                        </span>
-                      </div>
-                      {jaPago > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-green-400">Já pago:</span>
-                          <span className="text-green-300 font-medium">
-                            {formatCurrency(jaPago)}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex justify-between border-t border-gray-600 pt-2">
-                        <span className="text-yellow-400">Falta pagar:</span>
-                        <span className="text-yellow-300 font-bold">
-                          {formatCurrency(restanteReal)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Campo de valor pago */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Quanto {showFecharMes} vai pagar agora?
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                          R$
-                        </span>
-                        <input
-                          type="text"
-                          value={valorPagoFecharMes}
-                          onChange={(e) =>
-                            setValorPagoFecharMes(
-                              formatCurrencyInput(e.target.value)
-                            )
-                          }
-                          placeholder="0,00"
-                          className="w-full pl-10 pr-3 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 outline-none"
-                          inputMode="numeric"
-                        />
-                      </div>
-                      <div className="flex gap-2 mt-2">
-                        <button
-                          onClick={() =>
-                            setValorPagoFecharMes(
-                              restanteReal.toLocaleString("pt-BR", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })
-                            )
-                          }
-                          className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 text-white rounded font-medium transition-colors"
-                        >
-                          Restante ({formatCurrency(restanteReal)})
-                        </button>
-                        <button
-                          onClick={() => setValorPagoFecharMes("")}
-                          className="px-3 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded font-medium transition-colors"
-                        >
-                          Limpar
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Resumo */}
-                    {valorPago > 0 && (
-                      <div
-                        className={`rounded-lg p-4 ${
-                          valorParaDebito > 0
-                            ? "bg-orange-900/30 border border-orange-700"
-                            : "bg-green-900/30 border border-green-700"
-                        }`}
-                      >
-                        <p className="text-sm text-gray-300 mb-2">Resumo:</p>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">
-                              Pagando agora:
-                            </span>
-                            <span className="text-green-400 font-medium">
-                              {formatCurrency(valorPago)}
-                            </span>
-                          </div>
-                          {valorParaDebito > 0 ? (
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">
-                                Vai para Saldo Devedor:
-                              </span>
-                              <span className="text-orange-400 font-medium">
-                                {formatCurrency(valorParaDebito)}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Status:</span>
-                              <span className="text-green-400 font-medium">
-                                Quitado ✓
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Botões */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          setShowFecharMes(null);
-                          setValorPagoFecharMes("");
-                          setError(null);
-                        }}
-                        disabled={saving}
-                        className={`flex-1 px-4 py-3 text-white rounded-lg font-medium transition-colors ${
-                          saving
-                            ? "bg-gray-700 cursor-not-allowed"
-                            : "bg-gray-600 hover:bg-gray-500"
-                        }`}
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        onClick={() => handleFecharMes(showFecharMes)}
-                        disabled={saving}
-                        className={`flex-1 px-4 py-3 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-                          saving
-                            ? "bg-gray-600 cursor-not-allowed"
-                            : "bg-green-600 hover:bg-green-700"
-                        }`}
-                      >
-                        {saving ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Salvando...
-                          </>
-                        ) : (
-                          "Fechar Mês"
-                        )}
-                      </button>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
+      <FecharMesModal
+        show={!!showFecharMes}
+        pessoa={showFecharMes}
+        mesVisualizacao={mesVisualizacao}
+        totalDevido={(() => {
+          const resumoPessoa = resumoMensal.find(
+            (r) => r.pessoa === showFecharMes
+          );
+          return resumoPessoa?.total || 0;
+        })()}
+        jaPago={getTotalPagoParcial(showFecharMes || "")}
+        valorPagoFecharMes={valorPagoFecharMes}
+        saving={saving}
+        error={error}
+        onClose={() => {
+          setShowFecharMes(null);
+          setValorPagoFecharMes("");
+          setError(null);
+        }}
+        onValorChange={setValorPagoFecharMes}
+        onSubmit={(pessoa: string) => handleFecharMes(pessoa)}
+      />
 
       {/* Modal de Formulário de Gasto */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-700">
-            {/* Header do Modal */}
-            <div className="sticky top-0 bg-gray-800 p-4 border-b border-gray-700 flex items-center justify-between z-10">
-              <h2 className="text-lg font-semibold text-white">
-                {editandoGasto ? "Editar Lançamento" : "Novo Lançamento"}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowForm(false);
-                  setEditandoGasto(null);
-                  setFormData({
-                    descricao: "",
-                    pessoa: pessoas[0] || "",
-                    valor_total: "",
-                    num_parcelas: 1,
-                    data_inicio: format(new Date(), "yyyy-MM-dd"),
-                    tipo: "credito",
-                  });
-                }}
-                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
-
-            {/* Formulário */}
-            <form onSubmit={handleSubmit} className="p-4 space-y-4">
-              {/* Tipo */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Tipo
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({ ...prev, tipo: "credito" }))
-                    }
-                    className={`p-3 rounded-lg border-2 flex items-center justify-center gap-2 transition-all ${
-                      formData.tipo === "credito"
-                        ? "border-purple-500 bg-purple-900/50 text-purple-300"
-                        : "border-gray-600 hover:border-gray-500 text-gray-400"
-                    }`}
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    Crédito
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({ ...prev, tipo: "debito" }))
-                    }
-                    className={`p-3 rounded-lg border-2 flex items-center justify-center gap-2 transition-all ${
-                      formData.tipo === "debito"
-                        ? "border-green-500 bg-green-900/50 text-green-300"
-                        : "border-gray-600 hover:border-gray-500 text-gray-400"
-                    }`}
-                  >
-                    <Wallet className="w-5 h-5" />
-                    Débito
-                  </button>
-                </div>
-              </div>
-
-              {/* Descrição */}
-              <div>
-                <label
-                  htmlFor="descricao"
-                  className="block text-sm font-medium text-gray-300 mb-1"
-                >
-                  <FileText className="w-4 h-4 inline mr-1" />
-                  Descrição
-                </label>
-                <input
-                  type="text"
-                  id="descricao"
-                  name="descricao"
-                  value={formData.descricao}
-                  onChange={handleInputChange}
-                  placeholder="Ex: iPhone 15, Supermercado..."
-                  className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-700 text-white placeholder-gray-400"
-                  required
-                />
-              </div>
-
-              {/* Pessoa */}
-              <div>
-                <label
-                  htmlFor="pessoa"
-                  className="block text-sm font-medium text-gray-300 mb-1"
-                >
-                  <User className="w-4 h-4 inline mr-1" />
-                  Pessoa
-                </label>
-                <div className="flex gap-2">
-                  <select
-                    id="pessoa"
-                    name="pessoa"
-                    value={formData.pessoa}
-                    onChange={handleInputChange}
-                    className="flex-1 px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-700 text-white"
-                  >
-                    {pessoas.map((pessoa) => (
-                      <option key={pessoa} value={pessoa}>
-                        {pessoa}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddPessoa(!showAddPessoa)}
-                    className="px-3 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                    title="Adicionar pessoa"
-                  >
-                    <UserPlus className="w-5 h-5" />
-                  </button>
-                </div>
-                {showAddPessoa && (
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      type="text"
-                      value={novaPessoa}
-                      onChange={(e) => setNovaPessoa(e.target.value)}
-                      placeholder="Nome da nova pessoa"
-                      className="flex-1 px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                      onKeyDown={(e) =>
-                        e.key === "Enter" &&
-                        (e.preventDefault(), handleAddPessoa())
-                      }
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddPessoa}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                    >
-                      Adicionar
-                    </button>
-                  </div>
-                )}
-                {pessoas.length > 1 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {pessoas.map((p) => (
-                      <span
-                        key={p}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-gray-700 rounded-full text-xs text-gray-300"
-                      >
-                        {p}
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePessoa(p)}
-                          className="hover:text-red-400 transition-colors"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Valor */}
-              <div>
-                <label
-                  htmlFor="valor_total"
-                  className="block text-sm font-medium text-gray-300 mb-1"
-                >
-                  <DollarSign className="w-4 h-4 inline mr-1" />
-                  Valor Total
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                    R$
-                  </span>
-                  <input
-                    type="text"
-                    id="valor_total"
-                    name="valor_total"
-                    value={formData.valor_total}
-                    onChange={handleInputChange}
-                    placeholder="0,00"
-                    className="w-full pl-12 pr-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-700 text-white placeholder-gray-400"
-                    inputMode="numeric"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Parcelas */}
-              <div>
-                <label
-                  htmlFor="num_parcelas"
-                  className="block text-sm font-medium text-gray-300 mb-1"
-                >
-                  <Hash className="w-4 h-4 inline mr-1" />
-                  Parcelas
-                </label>
-                <select
-                  id="num_parcelas"
-                  name="num_parcelas"
-                  value={formData.num_parcelas}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-700 text-white"
-                >
-                  {PARCELAS_OPTIONS.map((num) => (
-                    <option key={num} value={num}>
-                      {num}x{" "}
-                      {formData.valor_total &&
-                        `de ${formatCurrency(
-                          parseCurrency(formData.valor_total) / num
-                        )}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Data de Início */}
-              <div>
-                <label
-                  htmlFor="data_inicio"
-                  className="block text-sm font-medium text-gray-300 mb-1"
-                >
-                  <Calendar className="w-4 h-4 inline mr-1" />
-                  Data da Primeira Parcela
-                </label>
-                <input
-                  type="date"
-                  id="data_inicio"
-                  name="data_inicio"
-                  value={formData.data_inicio}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-700 text-white"
-                  required
-                />
-              </div>
-
-              {/* Preview */}
-              {formData.valor_total && (
-                <div className="bg-gray-700 rounded-lg p-4">
-                  <p className="text-sm text-gray-400 mb-2">Resumo:</p>
-                  <p className="font-medium text-white">
-                    {formData.num_parcelas}x de{" "}
-                    {formatCurrency(
-                      parseCurrency(formData.valor_total) /
-                        formData.num_parcelas
-                    )}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    Total: {formatCurrency(parseCurrency(formData.valor_total))}
-                  </p>
-                </div>
-              )}
-
-              {/* Botões */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditandoGasto(null);
-                    setFormData({
-                      descricao: "",
-                      pessoa: pessoas[0] || "",
-                      valor_total: "",
-                      num_parcelas: 1,
-                      data_inicio: format(new Date(), "yyyy-MM-dd"),
-                      tipo: "credito",
-                    });
-                  }}
-                  className="flex-1 px-4 py-3 border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    "Salvar"
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <FormGastoModal
+        show={showForm}
+        isEditing={!!editandoGasto}
+        formData={formData}
+        pessoas={pessoas}
+        saving={saving}
+        error={error}
+        onClose={() => {
+          setShowForm(false);
+          setEditandoGasto(null);
+          setFormData({
+            descricao: "",
+            pessoa: pessoas[0] || "",
+            valor_total: "",
+            num_parcelas: 1,
+            data_inicio: format(new Date(), "yyyy-MM-dd"),
+            tipo: "credito",
+          });
+        }}
+        onFormChange={setFormData}
+        onSubmit={handleSubmit}
+        onAddPessoa={handleAddPessoa}
+        onRemovePessoa={handleRemovePessoa}
+        showAddPessoa={showAddPessoa}
+        onShowAddPessoa={setShowAddPessoa}
+        novaPessoa={novaPessoa}
+        onNovaPessoaChange={setNovaPessoa}
+      />
 
       {/* Modal de Nova Dívida */}
-      {showFormDivida && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-700">
-            {/* Header do Modal */}
-            <div className="sticky top-0 bg-gray-800 p-4 border-b border-gray-700 flex items-center justify-between z-10">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                <Clock className="w-5 h-5 text-orange-400" />
-                Nova Dívida Pendente
-              </h2>
-              <button
-                onClick={() => setShowFormDivida(false)}
-                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
-
-            {/* Formulário */}
-            <div className="p-4 space-y-4">
-              <div className="bg-orange-900/30 border border-orange-700 rounded-lg p-3">
-                <p className="text-sm text-orange-300">
-                  💡 Use esta seção para registrar dívidas que não são gastos do
-                  mês atual. Ex: Alguém te deve dinheiro e vai pagar aos poucos.
-                </p>
-              </div>
-
-              {/* Pessoa */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  <User className="w-4 h-4 inline mr-1" />
-                  Pessoa (quem deve)
-                </label>
-                <select
-                  value={formDivida.pessoa}
-                  onChange={(e) =>
-                    setFormDivida((prev) => ({
-                      ...prev,
-                      pessoa: e.target.value,
-                    }))
-                  }
-                  className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none appearance-none bg-gray-700 text-white"
-                >
-                  <option value="">Selecione...</option>
-                  {pessoas.map((pessoa) => (
-                    <option key={pessoa} value={pessoa}>
-                      {pessoa}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Descrição */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  <FileText className="w-4 h-4 inline mr-1" />
-                  Descrição
-                </label>
-                <input
-                  type="text"
-                  value={formDivida.descricao}
-                  onChange={(e) =>
-                    setFormDivida((prev) => ({
-                      ...prev,
-                      descricao: e.target.value,
-                    }))
-                  }
-                  placeholder="Ex: Empréstimo de Janeiro, Dívida do carro..."
-                  className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none bg-gray-700 text-white placeholder-gray-400"
-                />
-              </div>
-
-              {/* Valor */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  <DollarSign className="w-4 h-4 inline mr-1" />
-                  Valor da Dívida
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                    R$
-                  </span>
-                  <input
-                    type="text"
-                    value={formDivida.valor}
-                    onChange={(e) =>
-                      setFormDivida((prev) => ({
-                        ...prev,
-                        valor: formatCurrencyInput(e.target.value),
-                      }))
-                    }
-                    placeholder="0,00"
-                    className="w-full pl-12 pr-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none bg-gray-700 text-white placeholder-gray-400"
-                    inputMode="numeric"
-                  />
-                </div>
-              </div>
-
-              {/* Botões */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowFormDivida(false)}
-                  disabled={saving}
-                  className={`flex-1 px-4 py-3 border text-gray-300 rounded-lg transition-colors ${
-                    saving
-                      ? "border-gray-700 bg-gray-800 cursor-not-allowed"
-                      : "border-gray-600 hover:bg-gray-700"
-                  }`}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAddDivida}
-                  disabled={saving}
-                  className={`flex-1 px-4 py-3 text-white rounded-lg transition-colors flex items-center justify-center gap-2 ${
-                    saving
-                      ? "bg-gray-600 cursor-not-allowed"
-                      : "bg-orange-600 hover:bg-orange-700"
-                  }`}
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    "Adicionar Dívida"
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <FormDividaModal
+        show={showFormDivida}
+        formData={formDivida}
+        pessoas={pessoas}
+        saving={saving}
+        error={error}
+        onClose={() => setShowFormDivida(false)}
+        onFormChange={setFormDivida}
+        onSubmit={handleAddDivida}
+      />
     </div>
   );
 }
