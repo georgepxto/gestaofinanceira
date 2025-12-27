@@ -1,31 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  ChevronLeft,
-  ChevronRight,
   Plus,
-  CreditCard,
-  Wallet,
   TrendingDown,
-  User,
-  Calendar,
-  DollarSign,
-  Hash,
   Loader2,
   AlertCircle,
-  Trash2,
-  Receipt,
-  History,
-  MinusCircle,
-  Clock,
-  CheckCircle,
-  Undo2,
   UserCircle,
-  Users,
-  Repeat,
+  Receipt,
+  Clock,
   LogOut,
-  MessageSquare,
-  Edit3,
-  Banknote,
 } from "lucide-react";
 import { addMonths, subMonths, format } from "date-fns";
 import {
@@ -69,8 +51,8 @@ import {
   FecharMesModal,
   PagamentoModal,
 } from "./components/modals";
+import { TabGastos, TabDividas, TabMeuGasto } from "./components/Tabs";
 import type { PagamentoParcial } from "./types/extended";
-import { CORES_CARDS } from "./utils/constants";
 import "./index.css";
 
 function App() {
@@ -86,13 +68,13 @@ function App() {
   const [saldosLoaded, setSaldosLoaded] = useState<boolean>(false);
   const [showFormDivida, setShowFormDivida] = useState<boolean>(false);
   const [showPagamento, setShowPagamento] = useState<string | null>(null);
+  const [valorPagamento, setValorPagamento] = useState<string>("");
+  const [obsPagamento, setObsPagamento] = useState<string>("");
   const [formDivida, setFormDivida] = useState<SaldoDevedorForm>({
     pessoa: "",
     descricao: "",
     valor: "",
   });
-  const [valorPagamento, setValorPagamento] = useState<string>("");
-  const [obsPagamento, setObsPagamento] = useState<string>("");
   const [filtroPessoaGasto, setFiltroPessoaGasto] = useState<string>("");
   const [filtroTipoGasto, setFiltroTipoGasto] = useState<string>("");
   const [filtroDiaGasto, setFiltroDiaGasto] = useState<string>("");
@@ -370,20 +352,34 @@ function App() {
   };
 
   // Registrar pagamento de dívida
-  const handlePagamento = async (dividaId: string, valorMaximo: number) => {
+  const handlePagamento = async (dividaId: string) => {
     const valor = parseCurrency(valorPagamento);
     if (valor <= 0) {
-      setError("Valor de pagamento inválido.");
+      setModalFeedback({
+        show: true,
+        titulo: "Erro",
+        tipo: "info",
+        mensagem: "Valor de pagamento inválido.",
+      });
       return;
     }
+
     // Arredondar para 2 casas decimais para evitar erros de ponto flutuante
     const valorArredondado = Math.round(valor * 100) / 100;
-    const maximoArredondado = Math.round(valorMaximo * 100) / 100;
+    const dividaAtual = saldosDevedores.find((d) => d.id === dividaId);
+    if (!dividaAtual) return;
+
+    const maximoArredondado = Math.round(dividaAtual.valor_atual * 100) / 100;
 
     if (valorArredondado > maximoArredondado + 0.01) {
-      setError(
-        `O valor não pode ser maior que ${formatCurrency(valorMaximo)}.`
-      );
+      setModalFeedback({
+        show: true,
+        titulo: "Erro",
+        tipo: "info",
+        mensagem: `O valor não pode ser maior que ${formatCurrency(
+          maximoArredondado
+        )}.`,
+      });
       return;
     }
 
@@ -392,10 +388,6 @@ function App() {
 
     setSaving(true);
     try {
-      // Encontrar a dívida para atualizar
-      const dividaAtual = saldosDevedores.find((d) => d.id === dividaId);
-      if (!dividaAtual) return;
-
       const novoValor = Math.max(
         0,
         Math.round((dividaAtual.valor_atual - valorFinal) * 100) / 100
@@ -434,7 +426,24 @@ function App() {
       setValorPagamento("");
       setObsPagamento("");
       setShowPagamento(null);
-      setError(null);
+      setModalFeedback({
+        show: true,
+        titulo: "Sucesso",
+        tipo: "sucesso",
+        mensagem: `Pagamento de ${formatCurrency(
+          valorFinal
+        )} registrado com sucesso!`,
+      });
+    } catch (err) {
+      setModalFeedback({
+        show: true,
+        titulo: "Erro",
+        tipo: "info",
+        mensagem:
+          err instanceof Error
+            ? err.message
+            : "Erro ao registrar pagamento. Tente novamente.",
+      });
     } finally {
       setSaving(false);
     }
@@ -1560,22 +1569,6 @@ function App() {
     });
   };
 
-  // Cores por tipo
-  const getCorTipo = (tipo: string) => {
-    return tipo === "credito"
-      ? "bg-purple-100 text-purple-800 border-purple-200"
-      : "bg-green-100 text-green-800 border-green-200";
-  };
-
-  // Ícone por tipo
-  const getIconeTipo = (tipo: string) => {
-    return tipo === "credito" ? (
-      <CreditCard className="w-4 h-4" />
-    ) : (
-      <Wallet className="w-4 h-4" />
-    );
-  };
-
   // Loading de autenticação
   if (authLoading) {
     return (
@@ -1693,1264 +1686,79 @@ function App() {
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* === ABA GASTOS === */}
         {abaAtiva === "gastos" && (
-          <>
-            {/* Navegação de Meses */}
-            <div className="bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-700">
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => navegarMes("anterior")}
-                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-                  aria-label="Mês anterior"
-                >
-                  <ChevronLeft className="w-6 h-6 text-gray-300" />
-                </button>
-
-                <div className="text-center">
-                  <h2 className="text-lg font-semibold text-white capitalize">
-                    {formatMonthYear(mesVisualizacao)}
-                  </h2>
-                  <button
-                    onClick={irParaHoje}
-                    className="text-sm text-blue-400 hover:text-blue-300 mt-1"
-                  >
-                    Ir para hoje
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => navegarMes("proximo")}
-                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-                  aria-label="Próximo mês"
-                >
-                  <ChevronRight className="w-6 h-6 text-gray-300" />
-                </button>
-              </div>
-            </div>
-
-            {/* Mensagem de Erro */}
-            {error && (
-              <div className="bg-red-900/50 border border-red-700 rounded-xl p-4 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                <p className="text-red-300 text-sm">{error}</p>
-              </div>
-            )}
-
-            {/* Cards de Resumo */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Card Total Geral */}
-              <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-xl p-4 text-white shadow-sm">
-                <p className="text-sm text-gray-300 mb-1">Total do Mês</p>
-                <p className="text-2xl font-bold">{formatCurrency(totalMes)}</p>
-                <p className="text-xs text-gray-400 mt-2">
-                  {parcelasAtivas.length} lançamentos
-                </p>
-              </div>
-
-              {/* Cards por Pessoa */}
-              {resumoMensal.map((resumo, index) => {
-                const obsKey = getObsKey(resumo.pessoa);
-                const temObs = observacoesMes[obsKey];
-                const pagamentos = getPagamentosParciais(resumo.pessoa);
-                const totalPago = getTotalPagoParcial(resumo.pessoa);
-                const restante = resumo.total - totalPago;
-                const temPagamentos = pagamentos.length > 0;
-
-                return (
-                  <div
-                    key={resumo.pessoa}
-                    className={`bg-gradient-to-br ${
-                      CORES_CARDS[index % CORES_CARDS.length]
-                    } rounded-xl p-3 sm:p-4 text-white shadow-sm overflow-hidden`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0 overflow-hidden">
-                        <p className="text-sm text-white/80 mb-1 flex items-center gap-1">
-                          <User className="w-4 h-4 flex-shrink-0" />
-                          <span className="truncate">{resumo.pessoa}</span>
-                          {restante <= 0 && resumo.total > 0 && (
-                            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-900/50 text-green-300 border border-green-700">
-                              ✓ Quitado
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-lg sm:text-xl font-bold">
-                          {formatCurrency(resumo.total)}
-                        </p>
-                        <p className="text-xs text-white/70 mt-1">
-                          {resumo.quantidade} itens
-                        </p>
-
-                        {/* Pagamentos Parciais */}
-                        {temPagamentos && (
-                          <div className="mt-2 p-2 bg-green-900/40 rounded-lg border border-green-500/30 overflow-hidden">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs text-green-300 font-medium">
-                                Pago:
-                              </span>
-                              <button
-                                onClick={() =>
-                                  handleDesfazerPagamentoParcial(resumo.pessoa)
-                                }
-                                className="p-0.5 hover:bg-green-800/50 rounded transition-colors flex-shrink-0"
-                                title="Desfazer último"
-                              >
-                                <Undo2 className="w-3 h-3 text-green-300" />
-                              </button>
-                            </div>
-                            {pagamentos.map((p, i) => (
-                              <div
-                                key={i}
-                                className="flex justify-between text-xs gap-1"
-                              >
-                                <span className="text-green-200 truncate">
-                                  {p.data}
-                                </span>
-                                <span className="text-green-100 font-medium flex-shrink-0">
-                                  {formatCurrency(p.valor)}
-                                </span>
-                              </div>
-                            ))}
-                            <div className="border-t border-green-500/30 mt-1 pt-1 flex justify-between">
-                              <span className="text-xs text-yellow-300">
-                                Falta:
-                              </span>
-                              <span className="text-xs text-yellow-200 font-bold flex-shrink-0">
-                                {formatCurrency(restante)}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Observação */}
-                        {temObs && (
-                          <div className="mt-2 p-2 bg-black/20 rounded-lg overflow-hidden">
-                            <p className="text-xs text-white/90 break-words whitespace-pre-wrap line-clamp-3">
-                              {temObs}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-1 ml-2">
-                        <button
-                          onClick={() => handleAbrirObs(resumo.pessoa)}
-                          className={`p-1.5 ${
-                            temObs ? "bg-yellow-500/40" : "bg-white/20"
-                          } hover:bg-white/30 rounded-lg transition-colors`}
-                          title={
-                            temObs
-                              ? "Editar observação"
-                              : "Adicionar observação"
-                          }
-                        >
-                          {temObs ? (
-                            <Edit3 className="w-4 h-4" />
-                          ) : (
-                            <MessageSquare className="w-4 h-4" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowPagamentoParcial(resumo.pessoa);
-                            setValorPagamentoParcial("");
-                          }}
-                          className={`p-1.5 ${
-                            temPagamentos ? "bg-green-500/40" : "bg-white/20"
-                          } hover:bg-white/30 rounded-lg transition-colors`}
-                          title="Pagamento parcial"
-                        >
-                          <Banknote className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowFecharMes(resumo.pessoa);
-                            setValorPagoFecharMes("");
-                          }}
-                          className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
-                          title="Fechar mês"
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Loading */}
-            {loading && (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-              </div>
-            )}
-
-            {/* Lista de Lançamentos */}
-            {!loading && (
-              <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
-                <div className="p-4 border-b border-gray-700">
-                  <h3 className="font-semibold text-white mb-4">
-                    Lançamentos do Mês
-                  </h3>
-
-                  {/* Filtros */}
-                  <div className="space-y-3">
-                    {/* Filtro por Pessoa */}
-                    <div>
-                      <label className="text-xs text-gray-400 mb-1.5 block">
-                        Filtrar por pessoa:
-                      </label>
-                      <div className="flex flex-wrap gap-1.5">
-                        <button
-                          onClick={() => setFiltroPessoaGasto("")}
-                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                            filtroPessoaGasto === ""
-                              ? "bg-blue-600 text-white"
-                              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                          }`}
-                        >
-                          Todos
-                        </button>
-                        {pessoas.map((pessoa) => (
-                          <button
-                            key={pessoa}
-                            onClick={() => setFiltroPessoaGasto(pessoa)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                              filtroPessoaGasto === pessoa
-                                ? "bg-blue-600 text-white"
-                                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                            }`}
-                          >
-                            {pessoa}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Filtro por Tipo */}
-                    <div>
-                      <label className="text-xs text-gray-400 mb-1.5 block">
-                        Filtrar por tipo:
-                      </label>
-                      <div className="flex flex-wrap gap-1.5">
-                        <button
-                          onClick={() => setFiltroTipoGasto("")}
-                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                            filtroTipoGasto === ""
-                              ? "bg-gray-600 text-white"
-                              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                          }`}
-                        >
-                          Todos
-                        </button>
-                        <button
-                          onClick={() => setFiltroTipoGasto("credito")}
-                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                            filtroTipoGasto === "credito"
-                              ? "bg-amber-600 text-white"
-                              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                          }`}
-                        >
-                          <CreditCard className="w-3.5 h-3.5" />
-                          Crédito
-                        </button>
-                        <button
-                          onClick={() => setFiltroTipoGasto("debito")}
-                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                            filtroTipoGasto === "debito"
-                              ? "bg-teal-600 text-white"
-                              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                          }`}
-                        >
-                          <Banknote className="w-3.5 h-3.5" />
-                          Débito
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Filtro por Data */}
-                    <div>
-                      <label className="text-xs text-gray-400 mb-1.5 block">
-                        Filtrar por dia:
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="date"
-                          value={filtroDiaGasto}
-                          onChange={(e) => setFiltroDiaGasto(e.target.value)}
-                          max={format(mesVisualizacao, "yyyy-MM") + "-31"}
-                          min={format(mesVisualizacao, "yyyy-MM") + "-01"}
-                          className="px-3 py-1.5 rounded-lg text-sm bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                        />
-                        {filtroDiaGasto && (
-                          <button
-                            onClick={() => setFiltroDiaGasto("")}
-                            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-600 text-white hover:bg-gray-500 transition-colors"
-                          >
-                            Limpar
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {parcelasAtivas.filter(
-                  (p) =>
-                    (filtroPessoaGasto === "" ||
-                      p.gasto.pessoa === filtroPessoaGasto) &&
-                    (filtroTipoGasto === "" ||
-                      p.gasto.tipo === filtroTipoGasto) &&
-                    (filtroDiaGasto === "" ||
-                      p.gasto.data_inicio === filtroDiaGasto)
-                ).length === 0 ? (
-                  <div className="p-8 text-center text-gray-400">
-                    <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-                    <p>
-                      Nenhum lançamento{" "}
-                      {filtroPessoaGasto ? `de ${filtroPessoaGasto} ` : ""}
-                      {filtroTipoGasto
-                        ? `(${
-                            filtroTipoGasto === "credito" ? "crédito" : "débito"
-                          }) `
-                        : ""}
-                      {filtroDiaGasto
-                        ? `no dia ${filtroDiaGasto.substring(8, 10)} `
-                        : ""}
-                      para este mês
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4 p-4">
-                    {(() => {
-                      // Filtrar parcelas
-                      const parcelasFiltradas = parcelasAtivas.filter(
-                        (p) =>
-                          (filtroPessoaGasto === "" ||
-                            p.gasto.pessoa === filtroPessoaGasto) &&
-                          (filtroTipoGasto === "" ||
-                            p.gasto.tipo === filtroTipoGasto) &&
-                          (filtroDiaGasto === "" ||
-                            p.gasto.data_inicio === filtroDiaGasto)
-                      );
-
-                      // Agrupar parcelas por dia
-                      const parcelasPorDia: Record<
-                        string,
-                        typeof parcelasFiltradas
-                      > = {};
-                      parcelasFiltradas.forEach((parcela) => {
-                        const dia = parcela.gasto.data_inicio.substring(8, 10); // Extrai o dia (DD)
-                        if (!parcelasPorDia[dia]) {
-                          parcelasPorDia[dia] = [];
-                        }
-                        parcelasPorDia[dia].push(parcela);
-                      });
-
-                      // Ordenar dias (mais recentes primeiro)
-                      const diasOrdenados = Object.keys(parcelasPorDia).sort(
-                        (a, b) => b.localeCompare(a)
-                      );
-
-                      return diasOrdenados.map((dia) => (
-                        <div key={dia}>
-                          {/* Cabeçalho do dia */}
-                          <div className="flex items-center gap-2 mb-2">
-                            <Calendar className="w-4 h-4 text-blue-400" />
-                            <span className="text-sm font-semibold text-blue-400">
-                              Dia {dia}
-                            </span>
-                            <div className="flex-1 h-px bg-gray-700"></div>
-                          </div>
-                          {/* Lista de parcelas do dia */}
-                          <ul className="divide-y divide-gray-700 rounded-lg overflow-hidden">
-                            {parcelasPorDia[dia].map(
-                              ({ gasto, parcela_atual, valor_parcela }) => (
-                                <li
-                                  key={gasto.id}
-                                  className="p-4 hover:bg-gray-700/50 transition-colors bg-gray-800/50"
-                                >
-                                  <div className="flex items-start justify-between gap-4">
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <span
-                                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${getCorTipo(
-                                            gasto.tipo
-                                          )}`}
-                                        >
-                                          {getIconeTipo(gasto.tipo)}
-                                          {gasto.tipo === "credito"
-                                            ? "Crédito"
-                                            : "Débito"}
-                                        </span>
-                                        <span className="text-xs text-gray-400 flex items-center gap-1">
-                                          <User className="w-3 h-3" />
-                                          {gasto.pessoa}
-                                        </span>
-                                      </div>
-                                      <p className="font-medium text-white truncate">
-                                        {gasto.descricao}
-                                      </p>
-                                      <div className="flex items-center gap-4 mt-1 text-sm text-gray-400">
-                                        <span className="flex items-center gap-1">
-                                          <Hash className="w-3 h-3" />
-                                          Parcela {parcela_atual}/
-                                          {gasto.num_parcelas}
-                                        </span>
-                                        <span className="text-xs text-gray-500">
-                                          Total:{" "}
-                                          {formatCurrency(gasto.valor_total)}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="text-right flex-shrink-0">
-                                      <p className="font-semibold text-white">
-                                        {formatCurrency(valor_parcela)}
-                                      </p>
-                                      <div className="flex items-center justify-end gap-1 mt-2">
-                                        <button
-                                          onClick={() => handleEditGasto(gasto)}
-                                          className="p-1 text-gray-500 hover:text-blue-400 transition-colors"
-                                          aria-label="Editar"
-                                        >
-                                          <Edit3 className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                          onClick={() => handleDelete(gasto.id)}
-                                          className="p-1 text-gray-500 hover:text-red-400 transition-colors"
-                                          aria-label="Excluir"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </li>
-                              )
-                            )}
-                          </ul>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                )}
-              </div>
-            )}
-          </>
+          <TabGastos
+            mesVisualizacao={mesVisualizacao}
+            navegarMes={navegarMes}
+            irParaHoje={irParaHoje}
+            error={error}
+            totalMes={totalMes}
+            parcelasAtivas={parcelasAtivas}
+            loading={loading}
+            resumoMensal={resumoMensal}
+            filtroPessoaGasto={filtroPessoaGasto}
+            setFiltroPessoaGasto={setFiltroPessoaGasto}
+            filtroTipoGasto={filtroTipoGasto}
+            setFiltroTipoGasto={setFiltroTipoGasto}
+            filtroDiaGasto={filtroDiaGasto}
+            setFiltroDiaGasto={setFiltroDiaGasto}
+            pessoas={pessoas}
+            observacoesMes={observacoesMes}
+            getObsKey={getObsKey}
+            getPagamentosParciais={getPagamentosParciais}
+            getTotalPagoParcial={getTotalPagoParcial}
+            handleAbrirObs={handleAbrirObs}
+            handleDesfazerPagamentoParcial={handleDesfazerPagamentoParcial}
+            handleEditGasto={handleEditGasto}
+            handleDelete={handleDelete}
+            setShowPagamentoParcial={setShowPagamentoParcial}
+            setValorPagamentoParcial={setValorPagamentoParcial}
+            setShowFecharMes={setShowFecharMes}
+            setValorPagoFecharMes={setValorPagoFecharMes}
+          />
         )}
 
         {/* === ABA DÍVIDAS === */}
         {abaAtiva === "dividas" && (
-          <>
-            {/* Card Total Dívidas */}
-            <div
-              className={`bg-gradient-to-br ${
-                filtroStatusDivida === "pendentes"
-                  ? "from-orange-600 to-red-600"
-                  : "from-green-600 to-emerald-600"
-              } rounded-xl p-4 text-white shadow-lg`}
-            >
-              <p className="text-sm text-white/80 mb-1 flex items-center gap-2">
-                {filtroStatusDivida === "pendentes" ? (
-                  <Clock className="w-4 h-4" />
-                ) : (
-                  <CheckCircle className="w-4 h-4" />
-                )}
-                {filtroPessoaDivida
-                  ? filtroStatusDivida === "pendentes"
-                    ? `Dívidas de ${filtroPessoaDivida}`
-                    : `Quitado por ${filtroPessoaDivida}`
-                  : filtroStatusDivida === "pendentes"
-                  ? "Total de Dívidas Pendentes"
-                  : "Total Quitado"}
-              </p>
-              <p className="text-3xl font-bold">
-                {formatCurrency(
-                  filtroStatusDivida === "pendentes"
-                    ? totalDividasPendentes
-                    : totalDividasQuitadas
-                )}
-              </p>
-              <p className="text-xs text-white/70 mt-2">
-                {dividasFiltradas.length} dívida(s){" "}
-                {filtroStatusDivida === "pendentes" ? "ativa(s)" : "quitada(s)"}
-                {filtroPessoaDivida && (
-                  <button
-                    onClick={() => setFiltroPessoaDivida("")}
-                    className="ml-2 underline hover:text-white"
-                  >
-                    Ver todos
-                  </button>
-                )}
-              </p>
-            </div>
-
-            {/* Filtro por Status */}
-            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-              <p className="text-sm text-gray-400 mb-2">Status:</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setFiltroStatusDivida("pendentes");
-                    setFiltroPessoaDivida("");
-                  }}
-                  className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-                    filtroStatusDivida === "pendentes"
-                      ? "bg-orange-600 text-white"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  }`}
-                >
-                  <Clock className="w-4 h-4" />
-                  Pendentes
-                  {totalPendentes > 0 && (
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded-full ${
-                        filtroStatusDivida === "pendentes"
-                          ? "bg-orange-700"
-                          : "bg-gray-600"
-                      }`}
-                    >
-                      {totalPendentes}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => {
-                    setFiltroStatusDivida("pagos");
-                    setFiltroPessoaDivida("");
-                  }}
-                  className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-                    filtroStatusDivida === "pagos"
-                      ? "bg-green-600 text-white"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  }`}
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Pagos
-                  {totalPagos > 0 && (
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded-full ${
-                        filtroStatusDivida === "pagos"
-                          ? "bg-green-700"
-                          : "bg-gray-600"
-                      }`}
-                    >
-                      {totalPagos}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Filtro por Pessoa */}
-            {pessoasComDividas.length > 0 && (
-              <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-                <p className="text-sm text-gray-400 mb-2">
-                  Filtrar por pessoa:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setFiltroPessoaDivida("")}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                      filtroPessoaDivida === ""
-                        ? filtroStatusDivida === "pendentes"
-                          ? "bg-orange-600 text-white"
-                          : "bg-green-600 text-white"
-                        : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                    }`}
-                  >
-                    Todos
-                  </button>
-                  {pessoasComDividas.map((pessoa) => {
-                    // Calcular valor baseado no status atual
-                    const dividasPessoa = saldosDevedores.filter(
-                      (d) => d.pessoa === pessoa
-                    );
-                    let valorExibir: number;
-
-                    if (filtroStatusDivida === "pendentes") {
-                      // Soma do valor atual (ainda devendo)
-                      valorExibir = dividasPessoa
-                        .filter((d) => d.valor_atual > 0)
-                        .reduce((acc, d) => acc + d.valor_atual, 0);
-                    } else {
-                      // Soma do valor original das dívidas quitadas (total que pagou)
-                      valorExibir = dividasPessoa
-                        .filter((d) => d.valor_atual === 0)
-                        .reduce((acc, d) => acc + d.valor_original, 0);
-                    }
-
-                    // Não mostrar pessoa se não tem dívidas nesse status
-                    const temDividasNoStatus =
-                      filtroStatusDivida === "pendentes"
-                        ? dividasPessoa.some((d) => d.valor_atual > 0)
-                        : dividasPessoa.some((d) => d.valor_atual === 0);
-
-                    if (!temDividasNoStatus) return null;
-
-                    return (
-                      <button
-                        key={pessoa}
-                        onClick={() => setFiltroPessoaDivida(pessoa)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                          filtroPessoaDivida === pessoa
-                            ? filtroStatusDivida === "pendentes"
-                              ? "bg-orange-600 text-white"
-                              : "bg-green-600 text-white"
-                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        }`}
-                      >
-                        <User className="w-3 h-3" />
-                        {pessoa}
-                        <span
-                          className={`text-xs ${
-                            filtroPessoaDivida === pessoa
-                              ? filtroStatusDivida === "pendentes"
-                                ? "text-orange-200"
-                                : "text-green-200"
-                              : "text-gray-400"
-                          }`}
-                        >
-                          ({formatCurrency(valorExibir)})
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Lista de Dívidas */}
-            <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
-              <div className="p-4 border-b border-gray-700">
-                <h3 className="font-semibold text-white flex items-center gap-2">
-                  <History className="w-5 h-5 text-orange-400" />
-                  Saldos Devedores
-                  {filtroPessoaDivida && (
-                    <span className="text-sm font-normal text-gray-400">
-                      — {filtroPessoaDivida}
-                    </span>
-                  )}
-                </h3>
-                <p className="text-xs text-gray-400 mt-1">
-                  Dívidas antigas que estão sendo pagas aos poucos
-                </p>
-              </div>
-
-              {dividasFiltradas.length === 0 ? (
-                <div className="p-8 text-center text-gray-400">
-                  <Clock className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-                  <p>
-                    {filtroPessoaDivida
-                      ? `Nenhuma dívida para ${filtroPessoaDivida}`
-                      : "Nenhuma dívida pendente"}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {filtroPessoaDivida ? (
-                      <button
-                        onClick={() => setFiltroPessoaDivida("")}
-                        className="text-orange-400 hover:underline"
-                      >
-                        Ver todas as dívidas
-                      </button>
-                    ) : (
-                      'Clique em "Nova Dívida" para adicionar'
-                    )}
-                  </p>
-                </div>
-              ) : (
-                <ul className="divide-y divide-gray-700">
-                  {dividasFiltradas.map((divida) => (
-                    <li key={divida.id} className="p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-900/50 text-orange-300 border border-orange-700">
-                              <User className="w-3 h-3" />
-                              {divida.pessoa}
-                            </span>
-                            {divida.valor_atual === 0 && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/50 text-green-300 border border-green-700">
-                                ✓ Quitado
-                              </span>
-                            )}
-                          </div>
-                          <p className="font-medium text-white">
-                            {divida.descricao}
-                          </p>
-                          <div className="flex items-center gap-4 mt-1 text-sm text-gray-400">
-                            <span>
-                              Original: {formatCurrency(divida.valor_original)}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              Criado em:{" "}
-                              {format(
-                                new Date(divida.data_criacao),
-                                "dd/MM/yyyy"
-                              )}
-                            </span>
-                          </div>
-
-                          {/* Barra de progresso */}
-                          <div className="mt-2">
-                            <div className="flex justify-between text-xs text-gray-400 mb-1">
-                              <span>
-                                Pago:{" "}
-                                {formatCurrency(
-                                  divida.valor_original - divida.valor_atual
-                                )}
-                              </span>
-                              <span>
-                                {Math.round(
-                                  ((divida.valor_original -
-                                    divida.valor_atual) /
-                                    divida.valor_original) *
-                                    100
-                                )}
-                                %
-                              </span>
-                            </div>
-                            <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-green-500 transition-all duration-300"
-                                style={{
-                                  width: `${
-                                    ((divida.valor_original -
-                                      divida.valor_atual) /
-                                      divida.valor_original) *
-                                    100
-                                  }%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Histórico de pagamentos */}
-                          {divida.historico.length > 0 && (
-                            <details className="mt-3">
-                              <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-300">
-                                Ver histórico ({divida.historico.length}{" "}
-                                pagamento(s))
-                              </summary>
-                              <ul className="mt-2 space-y-1.5 pl-2 border-l-2 border-gray-700">
-                                {divida.historico.map((pag) => (
-                                  <li
-                                    key={pag.id}
-                                    className="text-xs text-gray-400 flex items-center justify-between gap-2"
-                                  >
-                                    <div>
-                                      <span className="text-green-400">
-                                        -{formatCurrency(pag.valor)}
-                                      </span>
-                                      {" em "}
-                                      {format(new Date(pag.data), "dd/MM/yyyy")}
-                                      {pag.observacao && (
-                                        <span className="text-gray-500">
-                                          {" "}
-                                          • {pag.observacao}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <button
-                                      onClick={() =>
-                                        handleDesfazerPagamento(
-                                          divida.id,
-                                          pag.id,
-                                          pag.valor
-                                        )
-                                      }
-                                      className="p-1 text-gray-500 hover:text-orange-400 hover:bg-gray-700 rounded transition-colors"
-                                      title="Desfazer pagamento"
-                                    >
-                                      <Undo2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  </li>
-                                ))}
-                              </ul>
-                            </details>
-                          )}
-                        </div>
-
-                        <div className="text-right flex-shrink-0">
-                          <p
-                            className={`text-xl font-bold ${
-                              divida.valor_atual > 0
-                                ? "text-orange-400"
-                                : "text-green-400"
-                            }`}
-                          >
-                            {formatCurrency(divida.valor_atual)}
-                          </p>
-                          <p className="text-xs text-gray-500">restante</p>
-
-                          <div className="flex gap-1 mt-2 justify-end">
-                            {divida.valor_atual > 0 && (
-                              <button
-                                onClick={() =>
-                                  setShowPagamento(
-                                    showPagamento === divida.id
-                                      ? null
-                                      : divida.id
-                                  )
-                                }
-                                className="p-1.5 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
-                                title="Registrar pagamento"
-                              >
-                                <MinusCircle className="w-4 h-4" />
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleDeleteDivida(divida.id)}
-                              className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
-                              title="Excluir dívida"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Formulário de pagamento */}
-                      <PagamentoModal
-                        show={showPagamento === divida.id}
-                        dividaId={showPagamento}
-                        valorAtual={divida.valor_atual}
-                        valorPagamento={valorPagamento}
-                        obsPagamento={obsPagamento}
-                        saving={saving}
-                        error={error}
-                        onClose={() => {
-                          setShowPagamento(null);
-                          setValorPagamento("");
-                          setObsPagamento("");
-                        }}
-                        onValorChange={setValorPagamento}
-                        onObsChange={setObsPagamento}
-                        onTudo={() => {
-                          setValorPagamento(
-                            divida.valor_atual.toLocaleString("pt-BR", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })
-                          );
-                        }}
-                        onSubmit={() =>
-                          handlePagamento(divida.id, divida.valor_atual)
-                        }
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </>
+          <TabDividas
+            saldosDevedores={saldosDevedores}
+            filtroStatusDivida={filtroStatusDivida}
+            setFiltroStatusDivida={setFiltroStatusDivida}
+            filtroPessoaDivida={filtroPessoaDivida}
+            setFiltroPessoaDivida={setFiltroPessoaDivida}
+            dividasFiltradas={dividasFiltradas}
+            totalDividasPendentes={totalDividasPendentes}
+            totalDividasQuitadas={totalDividasQuitadas}
+            totalPendentes={totalPendentes}
+            totalPagos={totalPagos}
+            pessoasComDividas={pessoasComDividas}
+            showPagamento={showPagamento}
+            setShowPagamento={setShowPagamento}
+            handleDeleteDivida={handleDeleteDivida}
+            handleDesfazerPagamento={handleDesfazerPagamento}
+          />
         )}
 
         {/* === ABA EU (MEUS GASTOS) === */}
         {abaAtiva === "eu" && (
-          <>
-            {/* Navegação de Meses */}
-            <div className="bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-700">
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => navegarMes("anterior")}
-                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-                  aria-label="Mês anterior"
-                >
-                  <ChevronLeft className="w-6 h-6 text-gray-300" />
-                </button>
-
-                <div className="text-center">
-                  <h2 className="text-xl font-bold text-white capitalize">
-                    {formatMonthYear(mesVisualizacao)}
-                  </h2>
-                  <button
-                    onClick={irParaHoje}
-                    className="text-xs text-emerald-400 hover:text-emerald-300 mt-1"
-                  >
-                    Ir para hoje
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => navegarMes("proximo")}
-                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-                  aria-label="Próximo mês"
-                >
-                  <ChevronRight className="w-6 h-6 text-gray-300" />
-                </button>
-              </div>
-            </div>
-
-            {/* Cards de Resumo */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-4 text-white shadow-lg">
-                <p className="text-xs text-white/70 mb-1 flex items-center gap-1">
-                  <CreditCard className="w-3 h-3" /> Crédito
-                </p>
-                <p className="text-2xl font-bold">
-                  {formatCurrency(totalMeusGastosCredito)}
-                </p>
-              </div>
-              <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-xl p-4 text-white shadow-lg">
-                <p className="text-xs text-white/70 mb-1 flex items-center gap-1">
-                  <Wallet className="w-3 h-3" /> Débito
-                </p>
-                <p className="text-2xl font-bold">
-                  {formatCurrency(totalMeusGastosDebito)}
-                </p>
-              </div>
-              <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl p-4 text-white shadow-lg">
-                <p className="text-xs text-white/70 mb-1 flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" /> Pago
-                </p>
-                <p className="text-2xl font-bold">
-                  {formatCurrency(totalMeusGastosPagos)}
-                </p>
-              </div>
-              <div className="bg-gradient-to-br from-amber-600 to-amber-700 rounded-xl p-4 text-white shadow-lg">
-                <p className="text-xs text-white/70 mb-1 flex items-center gap-1">
-                  <Repeat className="w-3 h-3" /> Fixos
-                </p>
-                <p className="text-2xl font-bold">
-                  {formatCurrency(totalGastosFixos)}
-                </p>
-              </div>
-            </div>
-
-            {/* Filtro de Categoria */}
-            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-              <p className="text-sm text-gray-400 mb-2">Filtrar por:</p>
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => setFiltroCategoriaMeuGasto("")}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    filtroCategoriaMeuGasto === ""
-                      ? "bg-emerald-600 text-white"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  }`}
-                >
-                  Todos
-                </button>
-                <button
-                  onClick={() => setFiltroCategoriaMeuGasto("pessoal")}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
-                    filtroCategoriaMeuGasto === "pessoal"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  }`}
-                >
-                  <User className="w-3 h-3" /> Pessoal
-                </button>
-                <button
-                  onClick={() => setFiltroCategoriaMeuGasto("dividido")}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
-                    filtroCategoriaMeuGasto === "dividido"
-                      ? "bg-pink-600 text-white"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  }`}
-                >
-                  <Users className="w-3 h-3" /> Dividido
-                </button>
-              </div>
-
-              {/* Filtro por Data */}
-              <div className="mt-3">
-                <p className="text-sm text-gray-400 mb-2">Filtrar por dia:</p>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="date"
-                    value={filtroDiaMeuGasto}
-                    onChange={(e) => setFiltroDiaMeuGasto(e.target.value)}
-                    max={format(mesVisualizacao, "yyyy-MM") + "-31"}
-                    min={format(mesVisualizacao, "yyyy-MM") + "-01"}
-                    className="px-3 py-1.5 rounded-lg text-sm bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                  {filtroDiaMeuGasto && (
-                    <button
-                      onClick={() => setFiltroDiaMeuGasto("")}
-                      className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-600 text-white hover:bg-gray-500 transition-colors"
-                    >
-                      Limpar
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Gastos Fixos */}
-            {gastosFixos.length > 0 && (
-              <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-                <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-                  <Repeat className="w-4 h-4 text-amber-400" />
-                  Gastos Fixos Mensais
-                </h3>
-                <div className="space-y-2">
-                  {[...gastosFixos]
-                    .sort(
-                      (a, b) =>
-                        (b.dia_vencimento || 0) - (a.dia_vencimento || 0)
-                    )
-                    .map((gasto) => (
-                      <div
-                        key={gasto.id}
-                        className={`flex items-center justify-between p-3 rounded-lg ${
-                          gasto.ativo !== false
-                            ? "bg-gray-700"
-                            : "bg-gray-700/50 opacity-60"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`p-2 rounded-lg ${
-                              gasto.tipo === "credito"
-                                ? "bg-purple-500/20"
-                                : "bg-green-500/20"
-                            }`}
-                          >
-                            {gasto.tipo === "credito" ? (
-                              <CreditCard className="w-4 h-4 text-purple-400" />
-                            ) : (
-                              <Wallet className="w-4 h-4 text-green-400" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-white font-medium">
-                              {gasto.descricao}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              Todo dia {gasto.dia_vencimento}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-white font-semibold">
-                            {formatCurrency(gasto.valor)}
-                          </p>
-                          <button
-                            onClick={() => handleEditMeuGasto(gasto)}
-                            className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
-                            title="Editar"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleToggleGastoFixo(gasto.id)}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              gasto.ativo !== false
-                                ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
-                                : "bg-gray-600 text-gray-400 hover:bg-gray-500"
-                            }`}
-                            title={
-                              gasto.ativo !== false ? "Desativar" : "Ativar"
-                            }
-                          >
-                            {gasto.ativo !== false ? (
-                              <CheckCircle className="w-4 h-4" />
-                            ) : (
-                              <MinusCircle className="w-4 h-4" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteMeuGasto(gasto.id)}
-                            className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-                            title="Excluir"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
-            {/* Lista de Meus Gastos do Mês */}
-            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-                <Receipt className="w-4 h-4 text-emerald-400" />
-                Meus Gastos do Mês ({meusGastosDoMes.length})
-              </h3>
-
-              {meusGastosDoMes.filter(
-                (g) =>
-                  (filtroCategoriaMeuGasto === "" ||
-                    g.categoria === filtroCategoriaMeuGasto) &&
-                  (filtroDiaMeuGasto === "" || g.data === filtroDiaMeuGasto)
-              ).length === 0 ? (
-                <div className="text-center py-8">
-                  <DollarSign className="w-12 h-12 mx-auto text-gray-600 mb-3" />
-                  <p className="text-gray-400">
-                    Nenhum gasto registrado
-                    {filtroCategoriaMeuGasto
-                      ? ` (${filtroCategoriaMeuGasto})`
-                      : ""}
-                    {filtroDiaMeuGasto
-                      ? ` no dia ${filtroDiaMeuGasto.substring(8, 10)}`
-                      : ""}
-                  </p>
-                  <button
-                    onClick={() => setShowFormMeuGasto(true)}
-                    className="mt-4 text-emerald-400 hover:text-emerald-300 text-sm"
-                  >
-                    + Adicionar primeiro gasto
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {(() => {
-                    // Filtrar gastos
-                    const gastosFiltrados = meusGastosDoMes.filter(
-                      (g) =>
-                        (filtroCategoriaMeuGasto === "" ||
-                          g.categoria === filtroCategoriaMeuGasto) &&
-                        (filtroDiaMeuGasto === "" ||
-                          g.data === filtroDiaMeuGasto)
-                    );
-
-                    // Agrupar gastos por dia
-                    const gastosPorDia: Record<string, typeof gastosFiltrados> =
-                      {};
-                    gastosFiltrados.forEach((gasto) => {
-                      const dia = gasto.data.substring(8, 10); // Extrai o dia (DD)
-                      if (!gastosPorDia[dia]) {
-                        gastosPorDia[dia] = [];
-                      }
-                      gastosPorDia[dia].push(gasto);
-                    });
-
-                    // Ordenar dias (mais recentes primeiro)
-                    const diasOrdenados = Object.keys(gastosPorDia).sort(
-                      (a, b) => b.localeCompare(a)
-                    );
-
-                    return diasOrdenados.map((dia) => (
-                      <div key={dia}>
-                        {/* Cabeçalho do dia */}
-                        <div className="flex items-center gap-2 mb-2">
-                          <Calendar className="w-4 h-4 text-emerald-400" />
-                          <span className="text-sm font-semibold text-emerald-400">
-                            Dia {dia}
-                          </span>
-                          <div className="flex-1 h-px bg-gray-700"></div>
-                        </div>
-                        {/* Lista de gastos do dia */}
-                        <ul className="space-y-3">
-                          {gastosPorDia[dia].map((gasto) => (
-                            <li
-                              key={gasto.id}
-                              className={`p-4 rounded-xl border transition-all ${
-                                gasto.pago || gasto.tipo === "debito"
-                                  ? "bg-gray-700/50 border-gray-600 opacity-70"
-                                  : "bg-gray-700 border-gray-600"
-                              }`}
-                            >
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-start gap-3">
-                                  {/* Só mostra checkbox para crédito */}
-                                  {gasto.tipo === "credito" ? (
-                                    <button
-                                      onClick={() =>
-                                        handleTogglePagoMeuGasto(gasto.id)
-                                      }
-                                      className={`mt-1 p-2 rounded-lg transition-colors ${
-                                        gasto.pago
-                                          ? "bg-green-500/20 text-green-400"
-                                          : "bg-gray-600 text-gray-400 hover:bg-gray-500"
-                                      }`}
-                                    >
-                                      {gasto.pago ? (
-                                        <CheckCircle className="w-5 h-5" />
-                                      ) : (
-                                        <div className="w-5 h-5 border-2 border-gray-400 rounded-full" />
-                                      )}
-                                    </button>
-                                  ) : (
-                                    <div className="mt-1 p-2 rounded-lg bg-green-500/20 text-green-400">
-                                      <CheckCircle className="w-5 h-5" />
-                                    </div>
-                                  )}
-                                  <div>
-                                    <p
-                                      className={`font-medium ${
-                                        gasto.pago || gasto.tipo === "debito"
-                                          ? "text-gray-400"
-                                          : "text-white"
-                                      }`}
-                                    >
-                                      {gasto.descricao}
-                                    </p>
-                                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                      <span
-                                        className={`text-xs px-2 py-0.5 rounded ${
-                                          gasto.tipo === "credito"
-                                            ? "bg-purple-500/20 text-purple-400"
-                                            : "bg-green-500/20 text-green-400"
-                                        }`}
-                                      >
-                                        {gasto.tipo === "credito"
-                                          ? "Crédito"
-                                          : "Débito"}
-                                      </span>
-                                      {gasto.categoria === "dividido" && (
-                                        <span className="text-xs px-2 py-0.5 rounded bg-pink-500/20 text-pink-400 flex items-center gap-1">
-                                          <Users className="w-3 h-3" />
-                                          {gasto.dividido_com}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <p
-                                    className={`font-bold ${
-                                      gasto.pago || gasto.tipo === "debito"
-                                        ? "text-gray-400"
-                                        : "text-white"
-                                    }`}
-                                  >
-                                    {formatCurrency(
-                                      gasto.categoria === "dividido" &&
-                                        gasto.minha_parte
-                                        ? gasto.minha_parte
-                                        : gasto.valor
-                                    )}
-                                  </p>
-                                  {gasto.categoria === "dividido" &&
-                                    gasto.minha_parte && (
-                                      <p className="text-xs text-gray-500">
-                                        Total: {formatCurrency(gasto.valor)}
-                                      </p>
-                                    )}
-                                  <div className="flex items-center justify-end gap-1 mt-2">
-                                    <button
-                                      onClick={() => handleEditMeuGasto(gasto)}
-                                      className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
-                                      title="Editar"
-                                    >
-                                      <Edit3 className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() =>
-                                        handleDeleteMeuGasto(gasto.id)
-                                      }
-                                      className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-                                      title="Excluir"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ));
-                  })()}
-                </div>
-              )}
-            </div>
-          </>
+          <TabMeuGasto
+            mesVisualizacao={mesVisualizacao}
+            navegarMes={navegarMes}
+            irParaHoje={irParaHoje}
+            totalMeusGastosCredito={totalMeusGastosCredito}
+            totalMeusGastosDebito={totalMeusGastosDebito}
+            totalMeusGastosPagos={totalMeusGastosPagos}
+            totalGastosFixos={totalGastosFixos}
+            filtroCategoriaMeuGasto={filtroCategoriaMeuGasto}
+            setFiltroCategoriaMeuGasto={setFiltroCategoriaMeuGasto}
+            filtroDiaMeuGasto={filtroDiaMeuGasto}
+            setFiltroDiaMeuGasto={setFiltroDiaMeuGasto}
+            gastosFixos={gastosFixos}
+            meusGastosDoMes={meusGastosDoMes}
+            handleEditMeuGasto={handleEditMeuGasto}
+            handleToggleGastoFixo={handleToggleGastoFixo}
+            handleDeleteMeuGasto={handleDeleteMeuGasto}
+            handleTogglePagoMeuGasto={handleTogglePagoMeuGasto}
+          />
         )}
       </main>
 
@@ -3101,6 +1909,28 @@ function App() {
         onClose={() => setShowFormDivida(false)}
         onFormChange={setFormDivida}
         onSubmit={handleAddDivida}
+      />
+
+      {/* Modal de Pagamento de Dívida */}
+      <PagamentoModal
+        show={!!showPagamento}
+        dividaId={showPagamento}
+        valorAtual={
+          saldosDevedores.find((d) => d.id === showPagamento)?.valor_atual || 0
+        }
+        valorPagamento={valorPagamento}
+        obsPagamento={obsPagamento}
+        saving={saving}
+        error={error}
+        onClose={() => {
+          setShowPagamento(null);
+          setValorPagamento("");
+          setObsPagamento("");
+        }}
+        onValorChange={setValorPagamento}
+        onObsChange={setObsPagamento}
+        onTudo={(valor) => setValorPagamento(formatCurrency(valor))}
+        onSubmit={handlePagamento}
       />
     </div>
   );
