@@ -289,8 +289,4 @@ Este projeto é de uso pessoal.
 
 ## 👨‍💻 Autor
 
-George Pinto - [GitHub](https://github.com/georgepxto)
-
----
-
-**Desenvolvido com ❤️ para melhorar a gestão financeira em família**
+George - [GitHub](https://github.com/georgepxto)

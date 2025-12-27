@@ -385,7 +385,7 @@ export function TabGastos({
               (filtroDiaGasto === "" || p.gasto.data_inicio === filtroDiaGasto)
           ).length === 0 ? (
             <div className="p-8 text-center text-gray-400">
-              <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-600" />
+              <Calendar className="w-12 h-12 mx-auto mb-3 text-blue-400" />
               <p>
                 Nenhum lançamento{" "}
                 {filtroPessoaGasto ? `de ${filtroPessoaGasto} ` : ""}
@@ -432,7 +432,7 @@ export function TabGastos({
                   <div key={dia}>
                     {/* Cabeçalho do dia */}
                     <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="w-4 h-4 text-blue-400" />
+                      <Calendar className="w-5 h-5 text-blue-400 flex-shrink-0" />
                       <span className="text-sm font-semibold text-blue-400">
                         Dia {dia}
                       </span>

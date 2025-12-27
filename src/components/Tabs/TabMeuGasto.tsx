@@ -323,7 +323,7 @@ export function TabMeuGasto({
                 <div key={dia}>
                   {/* Cabeçalho do dia */}
                   <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-4 h-4 text-emerald-400" />
+                    <Calendar className="w-5 h-5 text-emerald-400 flex-shrink-0" />
                     <span className="text-sm font-semibold text-emerald-400">
                       Dia {dia}
                     </span>
