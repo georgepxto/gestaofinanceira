@@ -356,14 +356,17 @@ export function TabGastos({
                   Filtrar por dia:
                 </label>
                 <div className="flex items-center gap-2">
-                  <input
-                    type="date"
-                    value={filtroDiaGasto}
-                    onChange={(e) => setFiltroDiaGasto(e.target.value)}
-                    max={format(mesVisualizacao, "yyyy-MM") + "-31"}
-                    min={format(mesVisualizacao, "yyyy-MM") + "-01"}
-                    className="px-3 py-1.5 rounded-lg text-sm bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
+                  <div className="relative flex-1">
+                    <input
+                      type="date"
+                      value={filtroDiaGasto}
+                      onChange={(e) => setFiltroDiaGasto(e.target.value)}
+                      max={format(mesVisualizacao, "yyyy-MM") + "-31"}
+                      min={format(mesVisualizacao, "yyyy-MM") + "-01"}
+                      className="w-full px-3 py-1.5 pl-10 rounded-lg text-sm bg-gray-700 border border-gray-600 text-white focus:ring-2 focus:ring-blue-500 outline-none [color-scheme:dark]"
+                    />
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400 pointer-events-none" />
+                  </div>
                   {filtroDiaGasto && (
                     <button
                       onClick={() => setFiltroDiaGasto("")}
@@ -432,7 +435,7 @@ export function TabGastos({
                   <div key={dia}>
                     {/* Cabeçalho do dia */}
                     <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                      <Calendar className="w-4 h-4 text-blue-400" />
                       <span className="text-sm font-semibold text-blue-400">
                         Dia {dia}
                       </span>
