@@ -74,7 +74,7 @@ function App() {
     fetchPessoas,
     handleAddPessoa,
     handleRemovePessoa,
-  } = usePessoas();
+  } = usePessoas({ user });
 
   const {
     observacoesMes,

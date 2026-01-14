@@ -5,7 +5,11 @@ import {
   pessoasFunctions,
 } from "../lib/supabase";
 
-export function usePessoas() {
+interface UsePessoasProps {
+  user: { id: string } | null;
+}
+
+export function usePessoas({ user }: UsePessoasProps) {
   const [pessoas, setPessoas] = useState<string[]>([]);
   const [pessoasLoaded, setPessoasLoaded] = useState<boolean>(false);
   const [novaPessoa, setNovaPessoa] = useState<string>("");
@@ -31,6 +35,13 @@ export function usePessoas() {
     }
     setPessoasLoaded(true);
   }, []);
+
+  // Carregar pessoas quando usuário logar
+  useEffect(() => {
+    if (user) {
+      fetchPessoas();
+    }
+  }, [user, fetchPessoas]);
 
   // Salvar pessoas no localStorage como backup
   useEffect(() => {
