@@ -1,5 +1,5 @@
 import React from "react";
-import { X, Loader2, CreditCard, Wallet, UserPlus } from "lucide-react";
+import { X, Loader2, CreditCard, Wallet } from "lucide-react";
 import type { GastoForm } from "../../types";
 import {
   formatCurrency,
@@ -18,12 +18,6 @@ interface FormGastoModalProps {
   onClose: () => void;
   onFormChange: (data: GastoForm) => void;
   onSubmit: (e: React.FormEvent) => void;
-  onAddPessoa: () => void;
-  onRemovePessoa: (nome: string) => void;
-  showAddPessoa: boolean;
-  onShowAddPessoa: (show: boolean) => void;
-  novaPessoa: string;
-  onNovaPessoaChange: (nome: string) => void;
 }
 
 export const FormGastoModal: React.FC<FormGastoModalProps> = ({
@@ -36,12 +30,6 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
   onClose,
   onFormChange,
   onSubmit,
-  onAddPessoa,
-  onRemovePessoa,
-  showAddPessoa,
-  onShowAddPessoa,
-  novaPessoa,
-  onNovaPessoaChange,
 }) => {
   if (!show) return null;
 
@@ -138,71 +126,24 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
             >
               Pessoa
             </label>
-            <div className="flex gap-2">
-              <select
-                id="pessoa"
-                name="pessoa"
-                value={formData.pessoa}
-                onChange={handleInputChange}
-                className="flex-1 px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-700 text-white"
-                required
-              >
-                <option value="">Selecione</option>
-                {pessoas.map((pessoa) => (
-                  <option key={pessoa} value={pessoa}>
-                    {pessoa}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={() => onShowAddPessoa(!showAddPessoa)}
-                className="px-3 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                title="Adicionar pessoa"
-              >
-                <UserPlus className="w-5 h-5" />
-              </button>
-            </div>
-            {showAddPessoa && (
-              <div className="mt-2 flex gap-2">
-                <input
-                  type="text"
-                  value={novaPessoa}
-                  onChange={(e) => onNovaPessoaChange(e.target.value)}
-                  placeholder="Nome da nova pessoa"
-                  className="flex-1 px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), onAddPessoa())
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={onAddPessoa}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                >
-                  ✓
-                </button>
-              </div>
-            )}
-            {pessoas.length > 1 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {pessoas.map((p) => (
-                  <span
-                    key={p}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-gray-700 rounded-full text-xs text-gray-300"
-                  >
-                    {p}
-                    <button
-                      type="button"
-                      onClick={() => onRemovePessoa(p)}
-                      className="hover:text-red-400 transition-colors"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
+            <select
+              id="pessoa"
+              name="pessoa"
+              value={formData.pessoa}
+              onChange={handleInputChange}
+              className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-700 text-white"
+              required
+            >
+              <option value="">Selecione</option>
+              {pessoas.map((pessoa) => (
+                <option key={pessoa} value={pessoa}>
+                  {pessoa}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Gerencie pessoas em Pessoas no menu
+            </p>
           </div>
 
           {/* Valor */}

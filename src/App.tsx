@@ -4,7 +4,7 @@ import { isSupabaseConfigured } from "./lib/supabase";
 import { formatCurrency } from "./utils/calculations";
 import { Login } from "./components/Login";
 import { Layout } from "./components/layout";
-import { EuPage, GastosPage, DividasPage, ConfiguracoesPage } from "./pages";
+import { EuPage, GastosPage, DividasPage, ConfiguracoesPage, PessoasPage } from "./pages";
 import {
   FormGastoModal,
   FormDividaModal,
@@ -41,12 +41,6 @@ function AppContent() {
     handleSubmit,
     resetFormGasto,
     pessoas,
-    showAddPessoa,
-    setShowAddPessoa,
-    novaPessoa,
-    setNovaPessoa,
-    handleAddPessoa,
-    handleRemovePessoa,
     
     // Divida form
     showFormDivida,
@@ -148,6 +142,7 @@ function AppContent() {
           <Route path="/" element={<EuPage />} />
           <Route path="/gastos" element={<GastosPage />} />
           <Route path="/dividas" element={<DividasPage />} />
+          <Route path="/pessoas" element={<PessoasPage />} />
           <Route path="/configuracoes" element={<ConfiguracoesPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
@@ -257,16 +252,6 @@ function AppContent() {
         onClose={() => resetFormGasto()}
         onFormChange={setFormData}
         onSubmit={handleSubmit}
-        onAddPessoa={() =>
-          handleAddPessoa((nome) =>
-            setFormData({ ...formData, pessoa: nome })
-          )
-        }
-        onRemovePessoa={handleRemovePessoa}
-        showAddPessoa={showAddPessoa}
-        onShowAddPessoa={setShowAddPessoa}
-        novaPessoa={novaPessoa}
-        onNovaPessoaChange={setNovaPessoa}
       />
 
       {/* Modal de Nova Dívida */}

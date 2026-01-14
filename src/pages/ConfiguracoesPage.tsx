@@ -130,18 +130,18 @@ export const ConfiguracoesPage = () => {
           <label className="block text-sm font-medium text-gray-400 mb-2">
             Nome de exibição
           </label>
-          <div className="flex gap-3">
+          <div className="space-y-3">
             <input
               type="text"
               value={novoNome}
               onChange={(e) => setNovoNome(e.target.value)}
               placeholder="Seu nome"
-              className="flex-1 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
             <button
               onClick={handleAlterarNome}
               disabled={savingNome || novoNome === user?.user_metadata?.nome}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {savingNome ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

@@ -4,6 +4,7 @@ import {
   Menu,
   X,
   User,
+  Users,
   CreditCard,
   TrendingDown,
   LogOut,
@@ -27,6 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
     { path: "/", label: "Eu", icon: User },
     { path: "/gastos", label: "Gastos do Mês", icon: CreditCard },
     { path: "/dividas", label: "Saldo Devedor", icon: TrendingDown },
+    { path: "/pessoas", label: "Pessoas", icon: Users },
   ];
 
   const bottomNavItems = [
