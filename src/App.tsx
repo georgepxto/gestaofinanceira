@@ -1,18 +1,10 @@
-import { useState } from "react";
-import {
-  Plus,
-  TrendingDown,
-  Loader2,
-  AlertCircle,
-  UserCircle,
-  Receipt,
-  Clock,
-  LogOut,
-} from "lucide-react";
-import { addMonths, subMonths } from "date-fns";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Loader2, AlertCircle } from "lucide-react";
 import { isSupabaseConfigured } from "./lib/supabase";
 import { formatCurrency } from "./utils/calculations";
 import { Login } from "./components/Login";
+import { Layout } from "./components/layout";
+import { EuPage, GastosPage, DividasPage, ConfiguracoesPage } from "./pages";
 import {
   FormGastoModal,
   FormDividaModal,
@@ -24,204 +16,93 @@ import {
   FecharMesModal,
   PagamentoModal,
 } from "./components/modals";
-import { TabGastos, TabDividas, TabMeuGasto } from "./components/Tabs";
-import {
-  useAuth,
-  useModals,
-  usePessoas,
-  useObservacoes,
-  usePagamentosParciais,
-  useGastos,
-  useSaldosDevedores,
-  useMeusGastos,
-} from "./hooks";
+import { AppProvider, useAppContext } from "./context";
 import "./index.css";
 
-function App() {
-  // === NAVEGAÇÃO ===
-  const [abaAtiva, setAbaAtiva] = useState<"gastos" | "dividas" | "eu">("eu");
-  const [mesVisualizacao, setMesVisualizacao] = useState<Date>(new Date());
-
-  // Navegação entre meses
-  const navegarMes = (direcao: "anterior" | "proximo") => {
-    setMesVisualizacao((prev) =>
-      direcao === "anterior" ? subMonths(prev, 1) : addMonths(prev, 1)
-    );
-  };
-
-  // Ir para o mês atual
-  const irParaHoje = () => {
-    setMesVisualizacao(new Date());
-  };
-
-  // === HOOKS ===
-  const { user, authLoading, handleLogin, handleSignUp, handleLogout } =
-    useAuth();
-
+function AppContent() {
   const {
+    user,
+    authLoading,
+    handleLogin,
+    handleSignUp,
+    handleLogout,
+    
+    // Modals
     modalFeedback,
     setModalFeedback,
     modalConfirm,
     setModalConfirm,
-  } = useModals();
-
-  const {
+    
+    // Gastos form
+    showForm,
+    editandoGasto,
+    formData,
+    setFormData,
+    handleSubmit,
+    resetFormGasto,
     pessoas,
-    novaPessoa,
-    setNovaPessoa,
     showAddPessoa,
     setShowAddPessoa,
-    fetchPessoas,
+    novaPessoa,
+    setNovaPessoa,
     handleAddPessoa,
     handleRemovePessoa,
-  } = usePessoas({ user });
-
-  const {
-    observacoesMes,
+    
+    // Divida form
+    showFormDivida,
+    setShowFormDivida,
+    formDivida,
+    setFormDivida,
+    handleAddDivida,
+    
+    // Meu gasto form
+    showFormMeuGasto,
+    editandoMeuGasto,
+    formMeuGasto,
+    setFormMeuGasto,
+    handleSaveMeuGasto,
+    resetFormMeuGasto,
+    
+    // Observação modal
     showObsModal,
     setShowObsModal,
     obsTexto,
     setObsTexto,
-    saving: savingObs,
-    getObsKey,
-    getMesAtual,
     handleSalvarObs,
-    handleAbrirObs,
-  } = useObservacoes({ mesVisualizacao, user });
-
-  const {
-
-    parcelasAtivas,
-    resumoMensal,
-    totalMes,
-    showForm,
-    setShowForm,
-    editandoGasto,
-
-    loading,
-    saving: savingGastos,
-    error: errorGastos,
-    setError: setErrorGastos,
-    filtroPessoaGasto,
-    setFiltroPessoaGasto,
-    filtroTipoGasto,
-    setFiltroTipoGasto,
-    filtroDiaGasto,
-    setFiltroDiaGasto,
-    formData,
-    setFormData,
-    handleSubmit,
-    handleEditGasto,
-    handleDelete,
-    resetForm: resetFormGasto,
-  } = useGastos({
-    user,
     mesVisualizacao,
-    setModalConfirm,
-  });
-
-  const {
+    
+    // Pagamento parcial modal
     showPagamentoParcial,
     setShowPagamentoParcial,
     valorPagamentoParcial,
     setValorPagamentoParcial,
-    saving: savingPagParcial,
-    getPagamentosParciais,
+    resumoMensal,
     getTotalPagoParcial,
     handleAddPagamentoParcial,
-    handleDesfazerPagamentoParcial,
-  } = usePagamentosParciais({
-    user,
-    getObsKey,
-    getMesAtual,
-    setModalConfirm,
-    setModalFeedback,
-    resumoMensal,
-    setError: setErrorGastos,
-  });
-
-  const {
-    saldosDevedores,
-    showFormDivida,
-    setShowFormDivida,
+    setErrorGastos,
+    
+    // Fechar mês modal
+    showFecharMes,
+    setShowFecharMes,
+    valorPagoFecharMes,
+    setValorPagoFecharMes,
+    handleFecharMes,
+    setErrorDividas,
+    
+    // Pagamento dívida modal
     showPagamento,
     setShowPagamento,
     valorPagamento,
     setValorPagamento,
     obsPagamento,
     setObsPagamento,
-    showFecharMes,
-    setShowFecharMes,
-    valorPagoFecharMes,
-    setValorPagoFecharMes,
-    saving: savingDividas,
-    error: errorDividas,
-    setError: setErrorDividas,
-    filtroPessoaDivida,
-    setFiltroPessoaDivida,
-    filtroStatusDivida,
-    setFiltroStatusDivida,
-    formDivida,
-    setFormDivida,
-    dividasFiltradas,
-    totalPendentes,
-    totalPagos,
-    totalDividasPendentes,
-    totalDividasQuitadas,
-    pessoasComDividas,
-    handleAddDivida,
     handlePagamento,
-    handleDesfazerPagamento,
-    handleDeleteDivida,
-    handleFecharMes,
-
-  } = useSaldosDevedores({
-    user,
-    mesVisualizacao,
-    resumoMensal,
-    getTotalPagoParcial,
-    getObsKey,
-    getMesAtual,
-    setPagamentosParciais: () => {}, // Will be overridden
-    setModalConfirm,
-    setModalFeedback,
-    fetchPessoas,
-  });
-
-  const {
-    showFormMeuGasto,
-    setShowFormMeuGasto,
-    editandoMeuGasto,
-
-    saving: savingMeusGastos,
-    error: errorMeusGastos,
-    filtroCategoriaMeuGasto,
-    setFiltroCategoriaMeuGasto,
-    filtroDiaMeuGasto,
-    setFiltroDiaMeuGasto,
-    formMeuGasto,
-    setFormMeuGasto,
-    meusGastosDoMes,
-    gastosFixos,
-    totalMeusGastosCredito,
-    totalMeusGastosDebito,
-    totalMeusGastosPagos,
-    totalGastosFixos,
-    handleEditMeuGasto,
-    handleSaveMeuGasto,
-    handleTogglePagoMeuGasto,
-    handleDeleteMeuGasto,
-    handleToggleGastoFixo,
-    resetForm: resetFormMeuGasto,
-  } = useMeusGastos({
-    user,
-    mesVisualizacao,
-    setModalConfirm,
-  });
-
-  // Estado de saving e error combinados
-  const saving = savingObs || savingGastos || savingPagParcial || savingDividas || savingMeusGastos;
-  const error = errorGastos || errorDividas || errorMeusGastos;
+    saldosDevedores,
+    
+    // Combined
+    saving,
+    error,
+  } = useAppContext();
 
   // Loading de autenticação
   if (authLoading) {
@@ -253,178 +134,33 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Header */}
-      <header className="bg-gray-800 shadow-lg sticky top-0 z-40 border-b border-gray-700">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-white flex items-center gap-2">
-              <TrendingDown className="w-6 h-6 text-blue-500" />
-              {user?.user_metadata?.nome || "Controle Financeiro"}
-            </h1>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  if (abaAtiva === "gastos") setShowForm(true);
-                  else if (abaAtiva === "dividas") setShowFormDivida(true);
-                  else setShowFormMeuGasto(true);
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
-              >
-                <Plus className="w-5 h-5" />
-                <span className="hidden sm:inline">
-                  {abaAtiva === "gastos"
-                    ? "Novo Gasto"
-                    : abaAtiva === "dividas"
-                    ? "Nova Dívida"
-                    : "Novo"}
-                </span>
-              </button>
-              {user && (
-                <button
-                  onClick={handleLogout}
-                  className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
-                  title="Sair"
-                >
-                  <LogOut className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-          </div>
+    <>
+      <Routes>
+        <Route
+          element={
+            <Layout
+              onLogout={handleLogout}
+              userName={user?.user_metadata?.nome}
+              userEmail={user?.email}
+            />
+          }
+        >
+          <Route path="/" element={<EuPage />} />
+          <Route path="/gastos" element={<GastosPage />} />
+          <Route path="/dividas" element={<DividasPage />} />
+          <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
 
-          {/* Abas */}
-          <div className="flex gap-2 mt-4">
-            <button
-              onClick={() => setAbaAtiva("eu")}
-              className={`py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-                abaAtiva === "eu"
-                  ? "bg-emerald-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              }`}
-            >
-              <UserCircle className="w-4 h-4" />
-              Eu
-            </button>
-            <button
-              onClick={() => setAbaAtiva("gastos")}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-                abaAtiva === "gastos"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              }`}
-            >
-              <Receipt className="w-4 h-4" />
-              <span className="hidden sm:inline">Gastos do Mês</span>
-              <span className="sm:hidden">Gastos</span>
-            </button>
-            <button
-              onClick={() => setAbaAtiva("dividas")}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-                abaAtiva === "dividas"
-                  ? "bg-orange-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              }`}
-            >
-              <Clock className="w-4 h-4" />
-              Saldo Devedor
-              {saldosDevedores.filter((d) => d.valor_atual > 0).length > 0 && (
-                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                  {saldosDevedores.filter((d) => d.valor_atual > 0).length}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* === ABA GASTOS === */}
-        {abaAtiva === "gastos" && (
-          <TabGastos
-            mesVisualizacao={mesVisualizacao}
-            navegarMes={navegarMes}
-            irParaHoje={irParaHoje}
-            error={error}
-            totalMes={totalMes}
-            parcelasAtivas={parcelasAtivas}
-            loading={loading}
-            resumoMensal={resumoMensal}
-            filtroPessoaGasto={filtroPessoaGasto}
-            setFiltroPessoaGasto={setFiltroPessoaGasto}
-            filtroTipoGasto={filtroTipoGasto}
-            setFiltroTipoGasto={setFiltroTipoGasto}
-            filtroDiaGasto={filtroDiaGasto}
-            setFiltroDiaGasto={setFiltroDiaGasto}
-            pessoas={pessoas}
-            observacoesMes={observacoesMes}
-            getObsKey={getObsKey}
-            getPagamentosParciais={getPagamentosParciais}
-            getTotalPagoParcial={getTotalPagoParcial}
-            handleAbrirObs={handleAbrirObs}
-            handleDesfazerPagamentoParcial={handleDesfazerPagamentoParcial}
-            handleEditGasto={handleEditGasto}
-            handleDelete={handleDelete}
-            setShowPagamentoParcial={setShowPagamentoParcial}
-            setValorPagamentoParcial={setValorPagamentoParcial}
-            setShowFecharMes={setShowFecharMes}
-            setValorPagoFecharMes={setValorPagoFecharMes}
-          />
-        )}
-
-        {/* === ABA DÍVIDAS === */}
-        {abaAtiva === "dividas" && (
-          <TabDividas
-            saldosDevedores={saldosDevedores}
-            filtroStatusDivida={filtroStatusDivida}
-            setFiltroStatusDivida={setFiltroStatusDivida}
-            filtroPessoaDivida={filtroPessoaDivida}
-            setFiltroPessoaDivida={setFiltroPessoaDivida}
-            dividasFiltradas={dividasFiltradas}
-            totalDividasPendentes={totalDividasPendentes}
-            totalDividasQuitadas={totalDividasQuitadas}
-            totalPendentes={totalPendentes}
-            totalPagos={totalPagos}
-            pessoasComDividas={pessoasComDividas}
-            showPagamento={showPagamento}
-            setShowPagamento={setShowPagamento}
-            handleDeleteDivida={handleDeleteDivida}
-            handleDesfazerPagamento={handleDesfazerPagamento}
-          />
-        )}
-
-        {/* === ABA EU (MEUS GASTOS) === */}
-        {abaAtiva === "eu" && (
-          <TabMeuGasto
-            mesVisualizacao={mesVisualizacao}
-            navegarMes={navegarMes}
-            irParaHoje={irParaHoje}
-            totalMeusGastosCredito={totalMeusGastosCredito}
-            totalMeusGastosDebito={totalMeusGastosDebito}
-            totalMeusGastosPagos={totalMeusGastosPagos}
-            totalGastosFixos={totalGastosFixos}
-            filtroCategoriaMeuGasto={filtroCategoriaMeuGasto}
-            setFiltroCategoriaMeuGasto={setFiltroCategoriaMeuGasto}
-            filtroDiaMeuGasto={filtroDiaMeuGasto}
-            setFiltroDiaMeuGasto={setFiltroDiaMeuGasto}
-            gastosFixos={gastosFixos}
-            meusGastosDoMes={meusGastosDoMes}
-            handleEditMeuGasto={handleEditMeuGasto}
-            handleToggleGastoFixo={handleToggleGastoFixo}
-            handleDeleteMeuGasto={handleDeleteMeuGasto}
-            handleTogglePagoMeuGasto={handleTogglePagoMeuGasto}
-          />
-        )}
-      </main>
-
+      {/* Modals - rendered at app level */}
       <FormMeuGastoModal
         show={showFormMeuGasto}
         isEditing={!!editandoMeuGasto}
         formData={formMeuGasto}
         saving={saving}
         error={error}
-        onClose={() => {
-          resetFormMeuGasto();
-        }}
+        onClose={() => resetFormMeuGasto()}
         onFormChange={setFormMeuGasto}
         onSubmit={handleSaveMeuGasto}
       />
@@ -437,7 +173,7 @@ function App() {
       <ConfirmModal
         modal={modalConfirm}
         saving={saving}
-        onClose={() => setModalConfirm((prev) => ({ ...prev, show: false }))}
+        onClose={() => setModalConfirm({ ...modalConfirm, show: false })}
       />
 
       <ObservacaoModal
@@ -518,12 +254,14 @@ function App() {
         pessoas={pessoas}
         saving={saving}
         error={error}
-        onClose={() => {
-          resetFormGasto();
-        }}
+        onClose={() => resetFormGasto()}
         onFormChange={setFormData}
         onSubmit={handleSubmit}
-        onAddPessoa={() => handleAddPessoa((nome) => setFormData((prev) => ({ ...prev, pessoa: nome })))}
+        onAddPessoa={() =>
+          handleAddPessoa((nome) =>
+            setFormData({ ...formData, pessoa: nome })
+          )
+        }
         onRemovePessoa={handleRemovePessoa}
         showAddPessoa={showAddPessoa}
         onShowAddPessoa={setShowAddPessoa}
@@ -564,7 +302,15 @@ function App() {
         onTudo={(valor) => setValorPagamento(formatCurrency(valor))}
         onSubmit={handlePagamento}
       />
-    </div>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
   );
 }
 
