@@ -145,7 +145,9 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                 value={formData.pessoa}
                 onChange={handleInputChange}
                 className="flex-1 px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-700 text-white"
+                required
               >
+                <option value="">Selecione</option>
                 {pessoas.map((pessoa) => (
                   <option key={pessoa} value={pessoa}>
                     {pessoa}

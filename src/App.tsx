@@ -116,7 +116,6 @@ function App() {
     resetForm: resetFormGasto,
   } = useGastos({
     user,
-    pessoas,
     mesVisualizacao,
     setModalConfirm,
   });
@@ -178,7 +177,6 @@ function App() {
 
   } = useSaldosDevedores({
     user,
-    pessoas,
     mesVisualizacao,
     resumoMensal,
     getTotalPagoParcial,

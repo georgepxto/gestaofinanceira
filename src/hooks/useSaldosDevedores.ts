@@ -12,7 +12,6 @@ import { formatCurrency, parseCurrency, formatMonthYear } from "../utils/calcula
 
 interface UseSaldosDevedoresProps {
   user: { id: string } | null;
-  pessoas: string[];
   mesVisualizacao: Date;
   resumoMensal: ResumoMensal[];
   getTotalPagoParcial: (pessoa: string) => number;
@@ -39,7 +38,6 @@ interface UseSaldosDevedoresProps {
 
 export function useSaldosDevedores({
   user,
-  pessoas,
   mesVisualizacao,
   resumoMensal,
   getTotalPagoParcial,
@@ -73,12 +71,7 @@ export function useSaldosDevedores({
     valor: "",
   });
 
-  // Atualizar pessoa padrão quando lista muda
-  useEffect(() => {
-    if (pessoas.length > 0 && !formDivida.pessoa) {
-      setFormDivida((prev) => ({ ...prev, pessoa: pessoas[0] }));
-    }
-  }, [pessoas, formDivida.pessoa]);
+
 
   // Carregar saldos devedores do Supabase (ou localStorage como fallback)
   const fetchSaldos = useCallback(async () => {
@@ -202,7 +195,7 @@ export function useSaldosDevedores({
       }
 
       setSaldosDevedores((prev) => [...prev, novaDivida]);
-      setFormDivida({ pessoa: pessoas[0] || "", descricao: "", valor: "" });
+      setFormDivida({ pessoa: "", descricao: "", valor: "" });
       setShowFormDivida(false);
       setError(null);
     } finally {

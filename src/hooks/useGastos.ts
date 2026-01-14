@@ -12,7 +12,6 @@ import {
 
 interface UseGastosProps {
   user: { id: string } | null;
-  pessoas: string[];
   mesVisualizacao: Date;
   setModalConfirm: (modal: {
     show: boolean;
@@ -24,7 +23,6 @@ interface UseGastosProps {
 
 export function useGastos({
   user,
-  pessoas,
   mesVisualizacao,
   setModalConfirm,
 }: UseGastosProps) {
@@ -52,12 +50,7 @@ export function useGastos({
     tipo: "credito",
   });
 
-  // Atualizar pessoa padrão quando lista muda
-  useEffect(() => {
-    if (pessoas.length > 0 && !formData.pessoa) {
-      setFormData((prev) => ({ ...prev, pessoa: pessoas[0] }));
-    }
-  }, [pessoas, formData.pessoa]);
+
 
   // Buscar gastos do Supabase
   const fetchGastos = useCallback(async () => {
@@ -184,7 +177,7 @@ export function useGastos({
       // Resetar formulário
       setFormData({
         descricao: "",
-        pessoa: pessoas[0] || "",
+        pessoa: "",
         valor_total: "",
         num_parcelas: 1,
         data_inicio: format(new Date(), "yyyy-MM-dd"),
@@ -255,7 +248,7 @@ export function useGastos({
   const resetForm = () => {
     setFormData({
       descricao: "",
-      pessoa: pessoas[0] || "",
+      pessoa: "",
       valor_total: "",
       num_parcelas: 1,
       data_inicio: format(new Date(), "yyyy-MM-dd"),
