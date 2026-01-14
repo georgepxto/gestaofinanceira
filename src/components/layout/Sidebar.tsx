@@ -87,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full bg-gray-800 border-r border-gray-700 z-50
+          fixed top-0 left-0 h-full bg-gray-900 border-r border-gray-700 z-50
           transition-all duration-300 ease-in-out
           
           /* Mobile: drawer */
@@ -100,9 +100,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         `}
       >
         {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-700">
+        <div className="h-16 flex items-center justify-between px-4 bg-gray-800">
           {!isCollapsed && (
-            <h2 className="text-xl font-bold text-blue-500">
+            <h2 className="text-xl font-bold text-white">
               Gestão
             </h2>
           )}
@@ -136,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         </nav>
 
         {/* Bottom Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700 space-y-3">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gray-800 space-y-3">
           {bottomNavItems.map((item) => (
             <NavItem key={item.path} {...item} />
           ))}
