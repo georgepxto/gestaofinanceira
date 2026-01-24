@@ -9,12 +9,13 @@ import {
   CreditCard,
   Repeat,
 } from "lucide-react";
-import type { MeuGastoForm } from "../../types";
+import type { MeuGastoForm, CartaoCredito, ContaBancaria } from "../../types";
 import {
   formatCurrency,
   formatCurrencyInput,
   parseCurrency,
 } from "../../utils/calculations";
+import { CATEGORIAS } from "../../utils/categories";
 
 interface FormMeuGastoModalProps {
   show: boolean;
@@ -22,6 +23,8 @@ interface FormMeuGastoModalProps {
   formData: MeuGastoForm;
   saving: boolean;
   error: string | null;
+  cartoes?: CartaoCredito[];
+  contas?: ContaBancaria[];
   onClose: () => void;
   onFormChange: (data: MeuGastoForm) => void;
   onSubmit: () => void;
@@ -33,6 +36,8 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
   formData,
   saving,
   error,
+  cartoes = [],
+  contas = [],
   onClose,
   onFormChange,
   onSubmit,
@@ -225,6 +230,27 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
             </div>
           )}
 
+          {/* Categoria de Gasto */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              Categoria do Gasto
+            </label>
+            <select
+              value={formData.categoria_gasto || ""}
+              onChange={(e) =>
+                onFormChange({ ...formData, categoria_gasto: e.target.value })
+              }
+              className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+            >
+              <option value="">Selecione uma categoria</option>
+              {CATEGORIAS.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Data (não para fixo) */}
           {formData.categoria !== "fixo" && (
             <div>
@@ -281,47 +307,96 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
             </div>
           </div>
 
-          {/* Parcelas (apenas para Crédito e não fixo) */}
-          {formData.tipo === "credito" && formData.categoria !== "fixo" && (
+          {/* Cartão de Crédito - aparece para TODOS os gastos no crédito */}
+          {formData.tipo === "credito" && cartoes.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">
-                Número de Parcelas
+                Cartão de Crédito
               </label>
               <select
-                value={formData.num_parcelas}
+                value={formData.cartao_id}
                 onChange={(e) =>
-                  onFormChange({
-                    ...formData,
-                    num_parcelas: e.target.value,
-                  })
+                  onFormChange({ ...formData, cartao_id: e.target.value })
                 }
-                className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500 outline-none"
               >
-                {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
-                  <option key={num} value={num}>
-                    {num}x{" "}
-                    {num === 1
-                      ? "(à vista)"
-                      : `de ${
-                          formData.valor
-                            ? formatCurrency(
-                                parseCurrency(formData.valor) / num
-                              )
-                            : "R$ 0,00"
-                        }`}
+                <option value="">Selecione um cartão</option>
+                {cartoes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
                   </option>
                 ))}
               </select>
-              {parseInt(formData.num_parcelas) > 1 && formData.valor && (
-                <p className="text-sm text-gray-400 mt-1">
-                  {formData.num_parcelas}x de{" "}
-                  {formatCurrency(
-                    parseCurrency(formData.valor) /
-                      parseInt(formData.num_parcelas)
-                  )}
-                </p>
-              )}
             </div>
+          )}
+
+          {/* Conta Bancária - aparece para débito */}
+          {formData.tipo === "debito" && contas.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Conta Bancária (opcional)
+              </label>
+              <select
+                value={formData.conta_id}
+                onChange={(e) =>
+                  onFormChange({ ...formData, conta_id: e.target.value })
+                }
+                className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-teal-500 outline-none"
+              >
+                <option value="">Selecione uma conta (opcional)</option>
+                {contas.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome} {c.banco ? `(${c.banco})` : ""}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400 mt-1">Se selecionada, o valor será descontado do saldo.</p>
+            </div>
+          )}
+
+          {/* Parcelas (apenas para Crédito e não fixo) */}
+          {formData.tipo === "credito" && formData.categoria !== "fixo" && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Número de Parcelas
+                </label>
+                <select
+                  value={formData.num_parcelas}
+                  onChange={(e) =>
+                    onFormChange({
+                      ...formData,
+                      num_parcelas: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-2.5 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                >
+                  {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
+                    <option key={num} value={num}>
+                      {num}x{" "}
+                      {num === 1
+                        ? "(à vista)"
+                        : `de ${
+                            formData.valor
+                              ? formatCurrency(
+                                  parseCurrency(formData.valor) / num
+                                )
+                              : "R$ 0,00"
+                          }`}
+                    </option>
+                  ))}
+                </select>
+                {parseInt(formData.num_parcelas) > 1 && formData.valor && (
+                  <p className="text-sm text-gray-400 mt-1">
+                    {formData.num_parcelas}x de{" "}
+                    {formatCurrency(
+                      parseCurrency(formData.valor) /
+                        parseInt(formData.num_parcelas)
+                    )}
+                  </p>
+                )}
+              </div>
+            </>
           )}
 
           {error && (

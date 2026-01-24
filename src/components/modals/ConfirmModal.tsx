@@ -40,7 +40,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             Cancelar
           </button>
           <button
-            onClick={modal.onConfirm}
+            onClick={async () => {
+              await modal.onConfirm();
+              onClose();
+            }}
             disabled={saving}
             className={`flex-1 py-3 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
               saving

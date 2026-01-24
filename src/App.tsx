@@ -1,10 +1,12 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
-import { isSupabaseConfigured } from "./lib/supabase";
+import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { formatCurrency } from "./utils/calculations";
 import { Login } from "./components/Login";
 import { Layout } from "./components/layout";
-import { EuPage, GastosPage, DividasPage, ConfiguracoesPage, PessoasPage } from "./pages";
+import { DashboardPage, EuPage, GastosPage, DividasPage, ConfiguracoesPage, PessoasPage, ContasBancariasPage, CartoesCreditoPage } from "./pages";
+import type { CartaoCredito, ContaBancaria } from "./types";
 import {
   FormGastoModal,
   FormDividaModal,
@@ -98,6 +100,58 @@ function AppContent() {
     error,
   } = useAppContext();
 
+  // Fetch cartões para o modal
+  const [cartoes, setCartoes] = useState<CartaoCredito[]>([]);
+  const [contas, setContas] = useState<ContaBancaria[]>([]);
+  
+  const fetchCartoes = useCallback(async () => {
+    if (!supabase || !user) return;
+    try {
+      const { data } = await supabase.from("cartoes_credito").select("*").order("nome");
+      setCartoes(data || []);
+    } catch (err) {
+      console.error("Erro ao buscar cartões:", err);
+    }
+  }, [user]);
+
+  const fetchContas = useCallback(async () => {
+    if (!supabase || !user) return;
+    try {
+      const { data } = await supabase.from("contas_bancarias").select("*").order("nome");
+      setContas(data || []);
+    } catch (err) {
+      console.error("Erro ao buscar contas:", err);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchCartoes();
+      fetchContas();
+    }
+  }, [user, fetchCartoes, fetchContas]);
+
+  // Refetch cartões quando muda de rota
+  const location = useLocation();
+  useEffect(() => {
+    if (user) {
+      fetchCartoes();
+      fetchContas();
+    }
+  }, [location.pathname, user, fetchCartoes, fetchContas]);
+
+  // Refetch cartões quando a janela ganha foco
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        fetchCartoes();
+        fetchContas();
+      }
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [user, fetchCartoes]);
+
   // Loading de autenticação
   if (authLoading) {
     return (
@@ -139,10 +193,13 @@ function AppContent() {
             />
           }
         >
-          <Route path="/" element={<EuPage />} />
+          <Route path="/" element={<DashboardPage />} />
+          <Route path="/eu" element={<EuPage />} />
           <Route path="/gastos" element={<GastosPage />} />
           <Route path="/dividas" element={<DividasPage />} />
           <Route path="/pessoas" element={<PessoasPage />} />
+          <Route path="/contas" element={<ContasBancariasPage />} />
+          <Route path="/cartoes" element={<CartoesCreditoPage />} />
           <Route path="/configuracoes" element={<ConfiguracoesPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
@@ -155,6 +212,8 @@ function AppContent() {
         formData={formMeuGasto}
         saving={saving}
         error={error}
+        cartoes={cartoes}
+        contas={contas}
         onClose={() => resetFormMeuGasto()}
         onFormChange={setFormMeuGasto}
         onSubmit={handleSaveMeuGasto}
@@ -247,6 +306,8 @@ function AppContent() {
         isEditing={!!editandoGasto}
         formData={formData}
         pessoas={pessoas}
+        cartoes={cartoes}
+        contas={contas}
         saving={saving}
         error={error}
         onClose={() => resetFormGasto()}

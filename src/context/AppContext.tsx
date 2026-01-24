@@ -224,6 +224,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     handleEditGasto,
     handleDelete,
     resetForm: resetFormGasto,
+    fetchGastos,
   } = useGastos({
     user,
     mesVisualizacao,
@@ -240,6 +241,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     getTotalPagoParcial,
     handleAddPagamentoParcial,
     handleDesfazerPagamentoParcial,
+    setPagamentosParciais,
+    fetchPagamentosParciais,
   } = usePagamentosParciais({
     user,
     getObsKey,
@@ -295,6 +298,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setModalConfirm,
     setModalFeedback,
     fetchPessoas,
+    onRefreshAfterClose: async () => {
+      await fetchGastos();
+      await fetchPagamentosParciais();
+    },
   });
 
   const {

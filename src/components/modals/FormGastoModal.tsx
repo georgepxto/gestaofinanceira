@@ -1,18 +1,21 @@
 import React from "react";
 import { X, Loader2, CreditCard, Wallet } from "lucide-react";
-import type { GastoForm } from "../../types";
+import type { GastoForm, CartaoCredito, ContaBancaria } from "../../types";
 import {
   formatCurrency,
   formatCurrencyInput,
   parseCurrency,
 } from "../../utils/calculations";
 import { PARCELAS_OPTIONS } from "../../utils/constants";
+import { CATEGORIAS } from "../../utils/categories";
 
 interface FormGastoModalProps {
   show: boolean;
   isEditing: boolean;
   formData: GastoForm;
   pessoas: string[];
+  cartoes?: CartaoCredito[];
+  contas?: ContaBancaria[];
   saving: boolean;
   error: string | null;
   onClose: () => void;
@@ -25,6 +28,8 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
   isEditing,
   formData,
   pessoas,
+  cartoes = [],
+  contas = [],
   saving,
   error,
   onClose,
@@ -98,6 +103,51 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
             </div>
           </div>
 
+          {/* Seletor de Cartão (só para crédito) */}
+          {formData.tipo === "credito" && cartoes.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Cartão de Crédito
+              </label>
+              <select
+                name="cartao_id"
+                value={formData.cartao_id}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none bg-gray-700 text-white"
+              >
+                <option value="">Selecione um cartão</option>
+                {cartoes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome} (Limite: {formatCurrency(c.limite || 0)})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Seletor de Conta Bancária (só para débito) */}
+          {formData.tipo === "debito" && contas.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Conta Bancária (opcional)
+              </label>
+              <select
+                name="conta_id"
+                value={formData.conta_id}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-gray-700 text-white"
+              >
+                <option value="">Selecione uma conta (opcional)</option>
+                {contas.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome} {c.banco ? `(${c.banco})` : ""}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">Se selecionada, o valor será descontado do saldo.</p>
+            </div>
+          )}
+
           {/* Descrição */}
           <div>
             <label
@@ -144,6 +194,30 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
             <p className="text-xs text-gray-500 mt-1">
               Gerencie pessoas em Pessoas no menu
             </p>
+          </div>
+
+          {/* Categoria */}
+          <div>
+            <label
+              htmlFor="categoria"
+              className="block text-sm font-medium text-gray-300 mb-1"
+            >
+              Categoria
+            </label>
+            <select
+              id="categoria"
+              name="categoria"
+              value={formData.categoria}
+              onChange={handleInputChange}
+              className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-700 text-white"
+              required
+            >
+              {CATEGORIAS.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Valor */}

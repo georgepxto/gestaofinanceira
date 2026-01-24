@@ -6,3 +6,4 @@ export { usePagamentosParciais } from "./usePagamentosParciais";
 export { useGastos } from "./useGastos";
 export { useSaldosDevedores } from "./useSaldosDevedores";
 export { useMeusGastos } from "./useMeusGastos";
+export { useCartoes } from "./useCartoes";

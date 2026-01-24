@@ -11,6 +11,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
+  Building2,
+  Wallet,
+  LayoutDashboard,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -25,10 +28,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   const location = useLocation();
 
   const navItems = [
-    { path: "/", label: "Eu", icon: User },
+    { path: "/", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/eu", label: "Meus Gastos", icon: User },
     { path: "/gastos", label: "Gastos do Mês", icon: CreditCard },
     { path: "/dividas", label: "Saldo Devedor", icon: TrendingDown },
     { path: "/pessoas", label: "Pessoas", icon: Users },
+    { path: "/contas", label: "Contas Bancárias", icon: Building2 },
+    { path: "/cartoes", label: "Cartões de Crédito", icon: Wallet },
   ];
 
   const bottomNavItems = [

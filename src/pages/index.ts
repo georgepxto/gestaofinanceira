@@ -1,5 +1,8 @@
+export { DashboardPage } from "./DashboardPage";
 export { EuPage } from "./EuPage";
 export { GastosPage } from "./GastosPage";
 export { DividasPage } from "./DividasPage";
 export { ConfiguracoesPage } from "./ConfiguracoesPage";
 export { PessoasPage } from "./PessoasPage";
+export { ContasBancariasPage } from "./ContasBancariasPage";
+export { CartoesCreditoPage } from "./CartoesCreditoPage";

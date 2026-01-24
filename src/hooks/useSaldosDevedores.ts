@@ -34,6 +34,7 @@ interface UseSaldosDevedoresProps {
   }) => void;
   fetchPessoas: () => Promise<void>;
   fetchSaldosExternal?: () => Promise<void>;
+  onRefreshAfterClose?: () => Promise<void> | void;
 }
 
 export function useSaldosDevedores({
@@ -47,6 +48,7 @@ export function useSaldosDevedores({
   setModalConfirm,
   setModalFeedback,
   fetchPessoas,
+  onRefreshAfterClose,
 }: UseSaldosDevedoresProps) {
   const [saldosDevedores, setSaldosDevedores] = useState<SaldoDevedor[]>([]);
   const [saldosLoaded, setSaldosLoaded] = useState<boolean>(false);
@@ -485,6 +487,12 @@ export function useSaldosDevedores({
           )}.`,
           tipo: "sucesso",
         });
+      }
+      
+      // Chamar callback de refresh após fechar mês
+      if (onRefreshAfterClose) {
+        console.log("Chamando onRefreshAfterClose...");
+        await onRefreshAfterClose();
       }
     } finally {
       setSaving(false);
