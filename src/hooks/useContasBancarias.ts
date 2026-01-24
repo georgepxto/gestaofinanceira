@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { format } from "date-fns";
 import { supabase } from "../lib/supabase";
 import type { ContaBancaria, ContaBancariaForm, Receita, ReceitaForm } from "../types";
 import { parseCurrency } from "../utils/calculations";
@@ -23,6 +22,7 @@ export function useContasBancarias({ user }: UseContasBancariasProps) {
     nome: "",
     banco: "",
     saldo_inicial: "0,00",
+    saldo_atual: "0,00",
   });
 
   const [showFormReceita, setShowFormReceita] = useState(false);
@@ -33,7 +33,7 @@ export function useContasBancarias({ user }: UseContasBancariasProps) {
     valor: "",
     categoria: CATEGORIA_RECEITA_PADRAO,
     tipo: "avulso",
-    data: format(new Date(), "yyyy-MM-dd"),
+    dia_recebimento: "1",
     num_meses: "1",
   });
 
@@ -165,7 +165,7 @@ export function useContasBancarias({ user }: UseContasBancariasProps) {
             valor: valorNumerico,
             categoria: formReceita.categoria,
             tipo: formReceita.tipo,
-            data: formReceita.data,
+            dia_recebimento: parseInt(formReceita.dia_recebimento),
             num_meses: formReceita.tipo === "recorrente" ? parseInt(formReceita.num_meses) : 1,
           })
           .eq("id", editandoReceita.id);
@@ -180,7 +180,7 @@ export function useContasBancarias({ user }: UseContasBancariasProps) {
             valor: valorNumerico,
             categoria: formReceita.categoria,
             tipo: formReceita.tipo,
-            data: formReceita.data,
+            dia_recebimento: parseInt(formReceita.dia_recebimento),
             num_meses: formReceita.tipo === "recorrente" ? parseInt(formReceita.num_meses) : 1,
             user_id: user.id,
           });
@@ -217,7 +217,7 @@ export function useContasBancarias({ user }: UseContasBancariasProps) {
 
   // Reset forms
   const resetFormConta = () => {
-    setFormConta({ nome: "", banco: "", saldo_inicial: "0,00" });
+    setFormConta({ nome: "", banco: "", saldo_inicial: "0,00", saldo_atual: "0,00" });
     setShowFormConta(false);
     setEditandoConta(null);
   };
@@ -229,7 +229,7 @@ export function useContasBancarias({ user }: UseContasBancariasProps) {
       valor: "",
       categoria: CATEGORIA_RECEITA_PADRAO,
       tipo: "avulso",
-      data: format(new Date(), "yyyy-MM-dd"),
+      dia_recebimento: "1",
       num_meses: "1",
     });
     setShowFormReceita(false);

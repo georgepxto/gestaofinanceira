@@ -241,7 +241,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     getTotalPagoParcial,
     handleAddPagamentoParcial,
     handleDesfazerPagamentoParcial,
-    setPagamentosParciais,
     fetchPagamentosParciais,
   } = usePagamentosParciais({
     user,
