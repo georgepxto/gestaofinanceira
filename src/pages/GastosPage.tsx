@@ -32,6 +32,9 @@ export const GastosPage = () => {
     setShowFecharMes,
     setValorPagoFecharMes,
     setShowForm,
+    isMesFechado,
+    getMesFechado,
+    handleDesfazerFechamento,
   } = useAppContext();
 
   return (
@@ -77,6 +80,9 @@ export const GastosPage = () => {
         setValorPagamentoParcial={setValorPagamentoParcial}
         setShowFecharMes={setShowFecharMes}
         setValorPagoFecharMes={setValorPagoFecharMes}
+        isMesFechado={isMesFechado}
+        getMesFechado={getMesFechado}
+        handleDesfazerFechamento={handleDesfazerFechamento}
       />
     </div>
   );

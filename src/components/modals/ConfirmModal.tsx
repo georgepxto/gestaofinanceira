@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import type { ModalConfirm } from "../../types/extended";
 
@@ -13,7 +13,21 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   saving,
   onClose,
 }) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   if (!modal.show) return null;
+
+  const isLoading = saving || isDeleting;
+
+  const handleConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      await modal.onConfirm();
+      onClose();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
@@ -30,9 +44,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <div className="p-4 border-t border-gray-700 flex gap-2">
           <button
             onClick={onClose}
-            disabled={saving}
+            disabled={isLoading}
             className={`flex-1 py-3 text-white rounded-lg font-medium transition-colors ${
-              saving
+              isLoading
                 ? "bg-gray-700 cursor-not-allowed"
                 : "bg-gray-600 hover:bg-gray-500"
             }`}
@@ -40,18 +54,15 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             Cancelar
           </button>
           <button
-            onClick={async () => {
-              await modal.onConfirm();
-              onClose();
-            }}
-            disabled={saving}
+            onClick={handleConfirm}
+            disabled={isLoading}
             className={`flex-1 py-3 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-              saving
+              isLoading
                 ? "bg-gray-600 cursor-not-allowed"
                 : "bg-red-600 hover:bg-red-700"
             }`}
           >
-            {saving ? (
+            {isLoading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
                 Excluindo...

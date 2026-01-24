@@ -48,6 +48,9 @@ interface TabGastosProps {
   setValorPagamentoParcial: (valor: string) => void;
   setShowFecharMes: (pessoa: string | null) => void;
   setValorPagoFecharMes: (valor: string) => void;
+  isMesFechado: (pessoa: string) => boolean;
+  getMesFechado: (pessoa: string) => { saldoDevedorId?: string; valorPago: number; valorDevedor: number } | null;
+  handleDesfazerFechamento: (pessoa: string) => Promise<void>;
 }
 
 export function TabGastos({
@@ -78,6 +81,9 @@ export function TabGastos({
   setValorPagamentoParcial,
   setShowFecharMes,
   setValorPagoFecharMes,
+  isMesFechado,
+  getMesFechado,
+  handleDesfazerFechamento,
 }: TabGastosProps) {
   return (
     <>
@@ -141,6 +147,9 @@ export function TabGastos({
           const totalPago = getTotalPagoParcial(resumo.pessoa);
           const restante = resumo.total - totalPago;
           const temPagamentos = pagamentos.length > 0;
+          const estaQuitado = temPagamentos && restante <= 0;
+          const estaFechado = isMesFechado(resumo.pessoa);
+          const mesFechadoData = getMesFechado(resumo.pessoa);
 
           return (
             <div
@@ -154,7 +163,12 @@ export function TabGastos({
                   <p className="text-sm text-white/80 mb-1 flex items-center gap-1">
                     <User className="w-4 h-4 flex-shrink-0" />
                     <span className="truncate">{resumo.pessoa}</span>
-                    {restante <= 0 && resumo.total > 0 && (
+                    {estaFechado && mesFechadoData && mesFechadoData.valorDevedor > 0 && (
+                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-900/50 text-blue-300 border border-blue-700">
+                        ◉ Fechado
+                      </span>
+                    )}
+                    {(estaQuitado || (estaFechado && mesFechadoData && mesFechadoData.valorDevedor === 0)) && (
                       <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-900/50 text-green-300 border border-green-700">
                         ✓ Quitado
                       </span>
@@ -198,10 +212,21 @@ export function TabGastos({
                         </div>
                       ))}
                       <div className="border-t border-green-500/30 mt-1 pt-1 flex justify-between">
-                        <span className="text-xs text-yellow-300">Falta:</span>
-                        <span className="text-xs text-yellow-200 font-bold flex-shrink-0">
-                          {formatCurrency(restante)}
-                        </span>
+                        {estaQuitado ? (
+                          <>
+                            <span className="text-xs text-green-300">✓ Quitado</span>
+                            <span className="text-xs text-green-200 font-bold flex-shrink-0">
+                              {formatCurrency(totalPago)}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-xs text-yellow-300">Falta:</span>
+                            <span className="text-xs text-yellow-200 font-bold flex-shrink-0">
+                              {formatCurrency(restante)}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   )}
@@ -233,26 +258,50 @@ export function TabGastos({
                   </button>
                   <button
                     onClick={() => {
-                      setShowPagamentoParcial(resumo.pessoa);
-                      setValorPagamentoParcial("");
+                      if (!estaQuitado) {
+                        setShowPagamentoParcial(resumo.pessoa);
+                        setValorPagamentoParcial("");
+                      }
                     }}
+                    disabled={estaQuitado || estaFechado}
                     className={`p-1.5 ${
-                      temPagamentos ? "bg-green-500/40" : "bg-white/20"
-                    } hover:bg-white/30 rounded-lg transition-colors`}
-                    title="Pagamento parcial"
+                      estaQuitado || estaFechado
+                        ? "bg-white/10 cursor-not-allowed opacity-50"
+                        : temPagamentos
+                        ? "bg-green-500/40 hover:bg-white/30"
+                        : "bg-white/20 hover:bg-white/30"
+                    } rounded-lg transition-colors`}
+                    title={estaFechado ? "Mês fechado" : estaQuitado ? "Já quitado" : "Pagamento parcial"}
                   >
                     <Banknote className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={() => {
-                      setShowFecharMes(resumo.pessoa);
-                      setValorPagoFecharMes("");
-                    }}
-                    className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
-                    title="Fechar mês"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                  </button>
+                  {estaFechado ? (
+                    <button
+                      onClick={() => handleDesfazerFechamento(resumo.pessoa)}
+                      className="p-1.5 bg-red-500/40 hover:bg-red-500/60 rounded-lg transition-colors"
+                      title="Desfazer fechamento do mês"
+                    >
+                      <Undo2 className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        if (!estaQuitado) {
+                          setShowFecharMes(resumo.pessoa);
+                          setValorPagoFecharMes("");
+                        }
+                      }}
+                      disabled={estaQuitado}
+                      className={`p-1.5 ${
+                        estaQuitado
+                          ? "bg-white/10 cursor-not-allowed opacity-50"
+                          : "bg-white/20 hover:bg-white/30"
+                      } rounded-lg transition-colors`}
+                      title={estaQuitado ? "Já quitado" : "Fechar mês"}
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

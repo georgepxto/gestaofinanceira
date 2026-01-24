@@ -125,6 +125,9 @@ interface AppContextType {
   handleDesfazerPagamento: (dividaId: string, pagamentoId: string, valor: number) => void;
   handleDeleteDivida: (id: string) => void;
   handleFecharMes: (pessoa: string) => Promise<void>;
+  isMesFechado: (pessoa: string) => boolean;
+  getMesFechado: (pessoa: string) => { saldoDevedorId?: string; valorPago: number; valorDevedor: number } | null;
+  handleDesfazerFechamento: (pessoa: string) => Promise<void>;
 
   // Meus Gastos
   showFormMeuGasto: boolean;
@@ -286,6 +289,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     handleDesfazerPagamento,
     handleDeleteDivida,
     handleFecharMes,
+    isMesFechado,
+    getMesFechado,
+    handleDesfazerFechamento,
   } = useSaldosDevedores({
     user,
     mesVisualizacao,
@@ -447,6 +453,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     handleDesfazerPagamento,
     handleDeleteDivida,
     handleFecharMes,
+    isMesFechado,
+    getMesFechado,
+    handleDesfazerFechamento,
 
     // Meus Gastos
     showFormMeuGasto,

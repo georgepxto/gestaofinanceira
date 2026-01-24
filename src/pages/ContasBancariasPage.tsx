@@ -79,7 +79,12 @@ export const ContasBancariasPage = () => {
       if (editandoConta) {
         await supabase.from("contas_bancarias").update(dados).eq("id", editandoConta.id);
       } else {
-        await supabase.from("contas_bancarias").insert({ ...dados, user_id: user.id });
+        // Ao criar nova conta, saldo_atual começa igual ao saldo_inicial
+        await supabase.from("contas_bancarias").insert({ 
+          ...dados, 
+          saldo_atual: saldoInicial,
+          user_id: user.id 
+        });
       }
       await fetchContas();
       resetFormConta();

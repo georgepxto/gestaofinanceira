@@ -84,25 +84,20 @@ export const DashboardPage = () => {
     
     setLoading(true);
     try {
-      // Buscar contas bancárias
-      const { data: contas } = await supabase
-        .from("contas_bancarias")
-        .select("*");
-      
-      // Buscar saldos devedores
-      const { data: saldosDevedores } = await supabase
-        .from("saldos_devedores")
-        .select("*");
-      
-      // Buscar meus gastos fixos
-      const { data: meusGastos } = await supabase
-        .from("meus_gastos")
-        .select("*");
-      
-      // Buscar receitas
-      const { data: receitas } = await supabase
-        .from("receitas")
-        .select("*");
+      // Buscar todos os dados em paralelo para acelerar o carregamento
+      const [
+        { data: contas },
+        { data: saldosDevedores },
+        { data: meusGastos },
+        { data: receitas },
+        { data: gastosCompartilhados }
+      ] = await Promise.all([
+        supabase.from("contas_bancarias").select("*"),
+        supabase.from("saldos_devedores").select("*"),
+        supabase.from("meus_gastos").select("*"),
+        supabase.from("receitas").select("*"),
+        supabase.from("gastos").select("*"),
+      ]);
 
       // Calcular saldo total
       const saldoTotal = (contas as ContaBancaria[] || []).reduce(
@@ -163,11 +158,7 @@ export const DashboardPage = () => {
         .sort((a, b) => b.valor - a.valor)
         .slice(0, 8);
 
-      // Buscar gastos compartilhados (empréstimos por pessoa)
-      const { data: gastosCompartilhados } = await supabase
-        .from("gastos")
-        .select("*");
-      
+      // Usar gastos compartilhados já buscados no Promise.all
       // Filtrar gastos ativos no mês selecionado
       const gastosCompartilhadosDoMes = (gastosCompartilhados as Gasto[] || [])
         .filter(g => isGastoAtivoNoMes(g, mesVisualizacao));
@@ -307,14 +298,14 @@ export const DashboardPage = () => {
           <p className="text-emerald-300 text-xs mt-1">Todas as contas</p>
         </div>
 
-        {/* Valor a Receber */}
+        {/* Valor a Receber do Mês */}
         <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-4 border border-blue-500/30">
           <div className="flex items-center gap-2 mb-2">
             <Users className="w-5 h-5 text-blue-200" />
             <span className="text-blue-200 text-sm font-medium">A Receber</span>
           </div>
-          <p className="text-2xl font-bold text-white">{formatCurrency(data.totalDevido)}</p>
-          <p className="text-blue-300 text-xs mt-1">Pessoas te devem</p>
+          <p className="text-2xl font-bold text-white">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
+          <p className="text-blue-300 text-xs mt-1">Gastos compartilhados do mês</p>
         </div>
 
         {/* Receitas Fixas */}
@@ -423,7 +414,7 @@ export const DashboardPage = () => {
           Projeção de Saldo (12 meses)
         </h2>
         <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={256}>
             <LineChart data={data.projecaoAnual}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="mes" stroke="#9CA3AF" fontSize={12} />
@@ -512,7 +503,7 @@ export const DashboardPage = () => {
             Gastos por Categoria (30 dias)
           </h2>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={256}>
               <BarChart data={data.gastosPorCategoria} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis 
@@ -557,7 +548,7 @@ export const DashboardPage = () => {
             Empréstimos por Pessoa
           </h2>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={256}>
               <BarChart data={data.emprestadosPorPessoa} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis 
@@ -602,7 +593,7 @@ export const DashboardPage = () => {
             Empréstimos por Categoria
           </h2>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height={256}>
               <BarChart data={data.emprestadosPorCategoria} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis 

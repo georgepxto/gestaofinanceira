@@ -61,6 +61,10 @@ export function useSaldosDevedores({
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Meses fechados: rastreia fechamentos por pessoa/mês com referência ao saldo devedor criado
+  // Formato da chave: "pessoa|mes" (ex: "João|janeiro 2026")
+  const [mesesFechados, setMesesFechados] = useState<Record<string, { saldoDevedorId?: string; valorPago: number; valorDevedor: number }>>({});
+
   // Filtros
   const [filtroPessoaDivida, setFiltroPessoaDivida] = useState<string>("");
   const [filtroStatusDivida, setFiltroStatusDivida] = useState<
@@ -461,6 +465,27 @@ export function useSaldosDevedores({
         }
 
         setSaldosDevedores((prev) => [...prev, novaDivida]);
+        
+        // Salvar fechamento com referência ao saldo devedor
+        const mesFechadoKey = `${pessoa}|${getMesAtual()}`;
+        setMesesFechados((prev) => ({
+          ...prev,
+          [mesFechadoKey]: {
+            saldoDevedorId: novaDivida.id,
+            valorPago,
+            valorDevedor,
+          },
+        }));
+      } else {
+        // Fechou pagando tudo - salvar fechamento sem saldo devedor
+        const mesFechadoKey = `${pessoa}|${getMesAtual()}`;
+        setMesesFechados((prev) => ({
+          ...prev,
+          [mesFechadoKey]: {
+            valorPago,
+            valorDevedor: 0,
+          },
+        }));
       }
 
       setValorPagoFecharMes("");
@@ -494,6 +519,92 @@ export function useSaldosDevedores({
         console.log("Chamando onRefreshAfterClose...");
         await onRefreshAfterClose();
       }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Verificar se um mês está fechado para uma pessoa
+  const isMesFechado = (pessoa: string): boolean => {
+    const key = `${pessoa}|${getMesAtual()}`;
+    return !!mesesFechados[key];
+  };
+
+  // Obter dados do fechamento de um mês
+  const getMesFechado = (pessoa: string) => {
+    const key = `${pessoa}|${getMesAtual()}`;
+    return mesesFechados[key] || null;
+  };
+
+  // Desfazer o fechamento do mês de uma pessoa
+  const handleDesfazerFechamento = async (pessoa: string) => {
+    const key = `${pessoa}|${getMesAtual()}`;
+    const fechamento = mesesFechados[key];
+    
+    if (!fechamento) return;
+
+    setSaving(true);
+    try {
+      // Se tinha saldo devedor associado, remover
+      if (fechamento.saldoDevedorId) {
+        if (isSupabaseConfigured && supabase) {
+          await supabase
+            .from("saldos_devedores")
+            .delete()
+            .eq("id", fechamento.saldoDevedorId);
+        }
+        
+        // Remover do estado local
+        setSaldosDevedores((prev) => 
+          prev.filter((s) => s.id !== fechamento.saldoDevedorId)
+        );
+      }
+
+      // Remover o fechamento do mês
+      setMesesFechados((prev) => {
+        const newState = { ...prev };
+        delete newState[key];
+        return newState;
+      });
+
+      // Limpar pagamentos parciais da pessoa para este mês
+      const pagamentosKey = getObsKey(pessoa);
+      const mes = getMesAtual();
+      
+      // Deletar do Supabase
+      if (isSupabaseConfigured && supabase) {
+        await supabase
+          .from("pagamentos_parciais")
+          .delete()
+          .eq("pessoa", pessoa)
+          .eq("mes", mes);
+      }
+      
+      // Limpar do estado local
+      setPagamentosParciais((prev: Record<string, { id?: string; valor: number; data: string }[]>) => {
+        const newState = { ...prev };
+        delete newState[pagamentosKey];
+        return newState;
+      });
+
+      setModalFeedback({
+        show: true,
+        titulo: "Fechamento Desfeito!",
+        mensagem: `O fechamento do mês de ${pessoa} foi desfeito. Os pagamentos parciais foram removidos.${
+          fechamento.saldoDevedorId 
+            ? ` O saldo devedor de ${formatCurrency(fechamento.valorDevedor)} foi removido.` 
+            : ""
+        }`,
+        tipo: "info",
+      });
+
+      // Chamar callback de refresh
+      if (onRefreshAfterClose) {
+        await onRefreshAfterClose();
+      }
+    } catch (err) {
+      console.error("Erro ao desfazer fechamento:", err);
+      setError("Erro ao desfazer fechamento do mês.");
     } finally {
       setSaving(false);
     }
@@ -536,5 +647,8 @@ export function useSaldosDevedores({
     handleDesfazerPagamento,
     handleDeleteDivida,
     handleFecharMes,
+    isMesFechado,
+    getMesFechado,
+    handleDesfazerFechamento,
   };
 }
