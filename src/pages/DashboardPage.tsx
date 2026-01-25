@@ -11,7 +11,9 @@ import {
   PiggyBank,
   Receipt,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
 import { useAppContext } from "../context";
 import { supabase } from "../lib/supabase";
@@ -48,6 +50,14 @@ interface DashboardData {
   // Gastos fixos vs variáveis
   gastosFixosMes: number;
   gastosVariaveisMes: number;
+  // Novas métricas
+  taxaQuitacao: number; // % pessoas que fecharam o mês
+  totalPessoas: number;
+  pessoasQuitadas: number;
+  mediaGastosPorPessoa: number;
+  economiasMes: number; // receitas - gastos
+  top5Gastos: { descricao: string; valor: number; pessoa: string }[];
+  parcelasProximasFim: { descricao: string; pessoa: string; parcelasRestantes: number }[];
 }
 
 const CORES_GRAFICO = [
@@ -77,6 +87,14 @@ export const DashboardPage = () => {
     totalEmprestimosMesAnterior: 0,
     gastosFixosMes: 0,
     gastosVariaveisMes: 0,
+    // Novas métricas
+    taxaQuitacao: 0,
+    totalPessoas: 0,
+    pessoasQuitadas: 0,
+    mediaGastosPorPessoa: 0,
+    economiasMes: 0,
+    top5Gastos: [],
+    parcelasProximasFim: [],
   });
 
   const fetchDashboardData = useCallback(async () => {
@@ -218,6 +236,78 @@ export const DashboardPage = () => {
         .filter(g => g.categoria === 'pessoal')
         .reduce((acc, g) => acc + g.valor, 0);
 
+      // NOVAS MÉTRICAS
+
+      // 1. Buscar pagamentos parciais para calcular taxa de quitação
+      const { data: pagamentosParciais } = await supabase
+        .from("pagamentos_parciais")
+        .select("*")
+        .eq("mes", format(mesVisualizacao, "MMMM yyyy", { locale: ptBR }));
+      
+      // Pessoas únicas que têm gastos no mês
+      const pessoasComGastos = new Set(gastosCompartilhadosDoMes.map(g => g.pessoa));
+      const totalPessoas = pessoasComGastos.size;
+      
+      // Verificar quais pessoas quitaram (pagaram tudo ou não têm gastos restantes)
+      const pagamentosPorPessoa = new Map<string, number>();
+      (pagamentosParciais || []).forEach((p: { pessoa: string; valor: number }) => {
+        pagamentosPorPessoa.set(p.pessoa, (pagamentosPorPessoa.get(p.pessoa) || 0) + p.valor);
+      });
+      
+      let pessoasQuitadas = 0;
+      pessoasComGastos.forEach(pessoa => {
+        const totalGastosPessoa = gastosCompartilhadosDoMes
+          .filter(g => g.pessoa === pessoa)
+          .reduce((acc, g) => acc + g.valor_total / g.num_parcelas, 0);
+        const totalPago = pagamentosPorPessoa.get(pessoa) || 0;
+        if (totalPago >= totalGastosPessoa) {
+          pessoasQuitadas++;
+        }
+      });
+      
+      const taxaQuitacao = totalPessoas > 0 ? (pessoasQuitadas / totalPessoas) * 100 : 0;
+
+      // 2. Média de gastos por pessoa
+      const mediaGastosPorPessoa = totalPessoas > 0 
+        ? totalEmprestimosMesAtual / totalPessoas 
+        : 0;
+
+      // 3. Economias do mês (receitas fixas - gastos totais)
+      // Usando receitas fixas mensais, pois são as previsíveis
+      const economiasMes = receitasFixasMensais - totalGastosMesAtual - totalEmprestimosMesAtual;
+
+      // 4. Top 5 gastos do mês (gastos compartilhados)
+      const top5Gastos = gastosCompartilhadosDoMes
+        .map(g => ({
+          descricao: g.descricao,
+          valor: g.valor_total / g.num_parcelas,
+          pessoa: g.pessoa,
+        }))
+        .sort((a, b) => b.valor - a.valor)
+        .slice(0, 5);
+
+      // 5. Parcelas próximas do fim (restam 1-3 parcelas)
+      // Calcular parcela atual baseado na data_inicio e mês atual
+      
+      const parcelasProximasFim = (gastosCompartilhados as Gasto[] || [])
+        .map(g => {
+          const dataInicio = new Date(g.data_inicio);
+          const mesesDesdeInicio = Math.floor(
+            (new Date().getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24 * 30)
+          );
+          const parcelaAtual = Math.min(mesesDesdeInicio + 1, g.num_parcelas);
+          const parcelasRestantes = g.num_parcelas - parcelaAtual;
+          return {
+            descricao: g.descricao,
+            pessoa: g.pessoa,
+            parcelasRestantes,
+            parcelaAtual,
+          };
+        })
+        .filter(g => g.parcelasRestantes > 0 && g.parcelasRestantes <= 3)
+        .sort((a, b) => a.parcelasRestantes - b.parcelasRestantes)
+        .slice(0, 5);
+
       setData({
         saldoTotal,
         totalDevido,
@@ -234,6 +324,14 @@ export const DashboardPage = () => {
         totalEmprestimosMesAnterior,
         gastosFixosMes,
         gastosVariaveisMes,
+        // Novas métricas
+        taxaQuitacao,
+        totalPessoas,
+        pessoasQuitadas,
+        mediaGastosPorPessoa,
+        economiasMes,
+        top5Gastos,
+        parcelasProximasFim,
       });
     } catch (err) {
       console.error("Erro ao carregar dashboard:", err);
@@ -405,6 +503,113 @@ export const DashboardPage = () => {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Novas Métricas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Taxa de Quitação */}
+        <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-xl p-4 border border-indigo-500/30">
+          <div className="flex items-center gap-2 mb-2">
+            <CheckCircle className="w-5 h-5 text-indigo-200" />
+            <span className="text-indigo-200 text-sm font-medium">Taxa de Quitação</span>
+          </div>
+          <p className="text-3xl font-bold text-white">{data.taxaQuitacao.toFixed(0)}%</p>
+          <p className="text-indigo-300 text-xs mt-1">
+            {data.pessoasQuitadas} de {data.totalPessoas} pessoas quitaram
+          </p>
+          {/* Barra de progresso */}
+          <div className="mt-3 h-2 bg-indigo-900/50 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-indigo-300 rounded-full transition-all duration-500"
+              style={{ width: `${data.taxaQuitacao}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Média por Pessoa */}
+        <div className="bg-gradient-to-br from-cyan-600 to-cyan-800 rounded-xl p-4 border border-cyan-500/30">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="w-5 h-5 text-cyan-200" />
+            <span className="text-cyan-200 text-sm font-medium">Média por Pessoa</span>
+          </div>
+          <p className="text-3xl font-bold text-white">{formatCurrency(data.mediaGastosPorPessoa)}</p>
+          <p className="text-cyan-300 text-xs mt-1">
+            {data.totalPessoas} pessoas com gastos este mês
+          </p>
+        </div>
+
+        {/* Economias do Mês */}
+        <div className={`bg-gradient-to-br ${data.economiasMes >= 0 ? 'from-emerald-600 to-emerald-800 border-emerald-500/30' : 'from-red-600 to-red-800 border-red-500/30'} rounded-xl p-4 border`}>
+          <div className="flex items-center gap-2 mb-2">
+            {data.economiasMes >= 0 ? (
+              <TrendingUp className="w-5 h-5 text-emerald-200" />
+            ) : (
+              <TrendingDown className="w-5 h-5 text-red-200" />
+            )}
+            <span className={`${data.economiasMes >= 0 ? 'text-emerald-200' : 'text-red-200'} text-sm font-medium`}>
+              {data.economiasMes >= 0 ? 'Economizando' : 'Gastando mais'}
+            </span>
+          </div>
+          <p className="text-3xl font-bold text-white">{formatCurrency(Math.abs(data.economiasMes))}</p>
+          <p className={`${data.economiasMes >= 0 ? 'text-emerald-300' : 'text-red-300'} text-xs mt-1`}>
+            {data.economiasMes >= 0 ? 'Sobra mensal' : 'Déficit mensal'}
+          </p>
+        </div>
+      </div>
+
+      {/* Top 5 Gastos e Parcelas Próximas do Fim */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Top 5 Gastos do Mês */}
+        {data.top5Gastos.length > 0 && (
+          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-amber-400" />
+              Top 5 Gastos do Mês
+            </h3>
+            <div className="space-y-3">
+              {data.top5Gastos.map((gasto, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <p className="text-white text-sm font-medium truncate max-w-[140px]">{gasto.descricao}</p>
+                      <p className="text-gray-400 text-xs">{gasto.pessoa}</p>
+                    </div>
+                  </div>
+                  <p className="text-white font-semibold">{formatCurrency(gasto.valor)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Parcelas Próximas do Fim */}
+        {data.parcelasProximasFim.length > 0 && (
+          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-amber-400" />
+              Parcelas Acabando
+            </h3>
+            <div className="space-y-3">
+              {data.parcelasProximasFim.map((parcela, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                  <div>
+                    <p className="text-white text-sm font-medium truncate max-w-[180px]">{parcela.descricao}</p>
+                    <p className="text-gray-400 text-xs">{parcela.pessoa}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-amber-400 font-bold text-lg">{parcela.parcelasRestantes}</p>
+                    <p className="text-amber-400/70 text-xs">
+                      {parcela.parcelasRestantes === 1 ? 'parcela' : 'parcelas'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Gráfico de Projeção Anual */}
