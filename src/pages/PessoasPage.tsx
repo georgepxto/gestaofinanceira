@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Users, Plus, Trash2, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Users, Plus, Trash2, Loader2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { useAppContext } from "../context";
-import { formatCurrency } from "../utils/calculations";
+import { formatCurrency, formatMonthYear } from "../utils/calculations";
 
 const COLORS = ["#3b82f6", "#f97316"]; // blue, orange
 
@@ -16,6 +16,9 @@ export const PessoasPage = () => {
     setModalConfirm,
     resumoMensal,
     saldosDevedores,
+    mesVisualizacao,
+    navegarMes,
+    irParaHoje,
   } = useAppContext();
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -86,6 +89,37 @@ export const PessoasPage = () => {
           <Plus className="w-5 h-5" />
           <span className="hidden sm:inline">Nova Pessoa</span>
         </button>
+      </div>
+
+      {/* Seletor de Mês */}
+      <div className="bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-700">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navegarMes("anterior")}
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            aria-label="Mês anterior"
+          >
+            <ChevronLeft className="w-6 h-6 text-gray-300" />
+          </button>
+          <div className="text-center">
+            <h2 className="text-lg font-semibold text-white capitalize">
+              {formatMonthYear(mesVisualizacao)}
+            </h2>
+            <button
+              onClick={irParaHoje}
+              className="text-sm text-blue-400 hover:text-blue-300 mt-1"
+            >
+              Ir para hoje
+            </button>
+          </div>
+          <button
+            onClick={() => navegarMes("proximo")}
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            aria-label="Próximo mês"
+          >
+            <ChevronRight className="w-6 h-6 text-gray-300" />
+          </button>
+        </div>
       </div>
 
       {/* Add Person Form */}

@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
-import { Building2, Plus, Loader2, DollarSign, TrendingUp, Trash2, Edit2, X } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Building2, Plus, Loader2, DollarSign, TrendingUp, Trash2, Edit2, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAppContext } from "../context";
 import { supabase } from "../lib/supabase";
-import { formatCurrency, formatCurrencyInput, parseCurrency } from "../utils/calculations";
+import { formatCurrency, formatCurrencyInput, parseCurrency, formatMonthYear } from "../utils/calculations";
 import { CATEGORIAS_RECEITA, TIPOS_RECEITA, CATEGORIA_RECEITA_PADRAO } from "../utils/receitas";
 import type { ContaBancaria, Receita, ContaBancariaForm, ReceitaForm } from "../types";
 
 export const ContasBancariasPage = () => {
-  const { user, setModalConfirm } = useAppContext();
+  const { user, setModalConfirm, mesVisualizacao, navegarMes, irParaHoje } = useAppContext();
   
   const [contas, setContas] = useState<ContaBancaria[]>([]);
   const [receitas, setReceitas] = useState<Receita[]>([]);
@@ -202,7 +202,19 @@ export const ContasBancariasPage = () => {
     setEditandoReceita(null);
   };
 
-  const totalReceitas = receitas.reduce((sum, r) => sum + r.valor, 0);
+  // Filtrar receitas pelo mês selecionado
+  const receitasFiltradas = useMemo(() => {
+    return receitas.filter(r => {
+      if (!r.created_at) return false;
+      const dataReceita = new Date(r.created_at);
+      return (
+        dataReceita.getMonth() === mesVisualizacao.getMonth() &&
+        dataReceita.getFullYear() === mesVisualizacao.getFullYear()
+      );
+    });
+  }, [receitas, mesVisualizacao]);
+
+  const totalReceitasMes = receitasFiltradas.reduce((sum, r) => sum + r.valor, 0);
   const saldoTotal = contas.reduce((sum, c) => sum + calcularSaldoConta(c), 0);
 
   if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
@@ -215,6 +227,37 @@ export const ContasBancariasPage = () => {
         <h1 className="text-2xl font-bold text-white">Contas Bancárias</h1>
       </div>
 
+      {/* Seletor de Mês */}
+      <div className="bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-700">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navegarMes("anterior")}
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            aria-label="Mês anterior"
+          >
+            <ChevronLeft className="w-6 h-6 text-gray-300" />
+          </button>
+          <div className="text-center">
+            <h2 className="text-lg font-semibold text-white capitalize">
+              {formatMonthYear(mesVisualizacao)}
+            </h2>
+            <button
+              onClick={irParaHoje}
+              className="text-sm text-blue-400 hover:text-blue-300 mt-1"
+            >
+              Ir para hoje
+            </button>
+          </div>
+          <button
+            onClick={() => navegarMes("proximo")}
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            aria-label="Próximo mês"
+          >
+            <ChevronRight className="w-6 h-6 text-gray-300" />
+          </button>
+        </div>
+      </div>
+
       {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
@@ -222,8 +265,8 @@ export const ContasBancariasPage = () => {
           <p className="text-2xl font-bold text-white">{contas.length}</p>
         </div>
         <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-          <div className="flex items-center gap-2 text-green-400 mb-2"><TrendingUp className="w-4 h-4" /><span className="text-sm">Total Receitas</span></div>
-          <p className="text-2xl font-bold text-green-400">{formatCurrency(totalReceitas)}</p>
+          <div className="flex items-center gap-2 text-green-400 mb-2"><TrendingUp className="w-4 h-4" /><span className="text-sm">Receitas do Mês</span></div>
+          <p className="text-2xl font-bold text-green-400">{formatCurrency(totalReceitasMes)}</p>
         </div>
         <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
           <div className="flex items-center gap-2 text-blue-400 mb-2"><DollarSign className="w-4 h-4" /><span className="text-sm">Saldo Total</span></div>
@@ -294,42 +337,33 @@ export const ContasBancariasPage = () => {
         })()}
       </section>
 
-      {/* Seção Histórico de Transações (Receitas recebidas) */}
+      {/* Seção Histórico de Transações (Receitas recebidas no mês) */}
       <section className="bg-gray-800 rounded-xl border border-gray-700 p-4">
-        <h2 className="text-lg font-semibold text-white mb-4">Histórico de Receitas</h2>
-        {(() => {
-          const diaAtual = new Date().getDate();
-          // Receitas que já foram recebidas: avulsas OU fixas/recorrentes com dia <= hoje
-          const receitasRecebidas = receitas.filter(r => {
-            if (r.tipo === "avulso") return true;
-            if (r.tipo === "fixo" || r.tipo === "recorrente") return r.dia_recebimento <= diaAtual;
-            return false;
-          });
-          return receitasRecebidas.length === 0 ? (
-            <div className="text-center py-6"><p className="text-gray-400 text-sm">Nenhuma receita recebida este mês</p></div>
-          ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {receitasRecebidas.map(r => {
-                const contaNome = contas.find(c => c.id === r.conta_id)?.nome || "Sem conta";
-                return (
-                  <div key={r.id} className="flex items-center justify-between p-3 bg-green-900/20 border border-green-800/30 rounded-lg">
-                    <div>
-                      <p className="text-white font-medium">{r.descricao}</p>
-                      <p className="text-gray-400 text-sm">
-                        {r.tipo === "avulso" ? "Recebido" : `Dia ${r.dia_recebimento}`} • {contaNome} • {r.categoria}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs bg-green-600/30 text-green-300 px-2 py-1 rounded">+ {formatCurrency(r.valor)}</span>
-                      <button onClick={() => handleEditReceita(r)} className="p-1 hover:bg-gray-600 rounded"><Edit2 className="w-4 h-4 text-gray-400" /></button>
-                      <button onClick={() => handleDeleteReceita(r.id, r.descricao)} className="p-1 hover:bg-gray-600 rounded"><Trash2 className="w-4 h-4 text-gray-400 hover:text-red-400" /></button>
-                    </div>
+        <h2 className="text-lg font-semibold text-white mb-4">Receitas do Mês</h2>
+        {receitasFiltradas.length === 0 ? (
+          <div className="text-center py-6"><p className="text-gray-400 text-sm">Nenhuma receita registrada neste mês</p></div>
+        ) : (
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {receitasFiltradas.map(r => {
+              const contaNome = contas.find(c => c.id === r.conta_id)?.nome || "Sem conta";
+              return (
+                <div key={r.id} className="flex items-center justify-between p-3 bg-green-900/20 border border-green-800/30 rounded-lg">
+                  <div>
+                    <p className="text-white font-medium">{r.descricao}</p>
+                    <p className="text-gray-400 text-sm">
+                      {r.tipo === "avulso" ? "Avulso" : r.tipo === "fixo" ? "Fixo" : "Recorrente"} • {contaNome} • {r.categoria}
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-          );
-        })()}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-green-600/30 text-green-300 px-2 py-1 rounded">+ {formatCurrency(r.valor)}</span>
+                    <button onClick={() => handleEditReceita(r)} className="p-1 hover:bg-gray-600 rounded"><Edit2 className="w-4 h-4 text-gray-400" /></button>
+                    <button onClick={() => handleDeleteReceita(r.id, r.descricao)} className="p-1 hover:bg-gray-600 rounded"><Trash2 className="w-4 h-4 text-gray-400 hover:text-red-400" /></button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Modal Nova/Editar Conta */}
