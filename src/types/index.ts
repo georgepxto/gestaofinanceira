@@ -7,6 +7,7 @@ export interface Gasto {
   data_inicio: string;
   tipo: "credito" | "debito";
   categoria: string;
+  recorrente?: boolean;
   cartao_id?: string;
   conta_id?: string;
   created_at?: string;
@@ -21,6 +22,7 @@ export interface GastoForm {
   data_inicio: string;
   tipo: "credito" | "debito";
   categoria: string;
+  recorrente: boolean;
   cartao_id: string;
   conta_id: string;
 }

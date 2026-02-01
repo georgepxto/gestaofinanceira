@@ -70,6 +70,7 @@ export function numberToFormattedString(value: number): string {
 /**
  * Verifica se um gasto está ativo em determinado mês
  * Um gasto está ativo se o mês de visualização está entre data_inicio e data_inicio + num_parcelas - 1
+ * Gastos recorrentes são sempre ativos a partir da data de início
  */
 export function isGastoAtivoNoMes(
   gasto: Gasto,
@@ -78,6 +79,11 @@ export function isGastoAtivoNoMes(
   const dataInicio = parseISO(gasto.data_inicio);
   const dataInicioMes = startOfMonth(dataInicio);
   const mesVisualizacaoInicio = startOfMonth(mesVisualizacao);
+
+  // Se for recorrente, está ativo a partir da data de início (sem limite de fim)
+  if (gasto.recorrente) {
+    return !isBefore(mesVisualizacaoInicio, dataInicioMes);
+  }
 
   // Data da última parcela
   const dataUltimaParcela = addMonths(dataInicioMes, gasto.num_parcelas - 1);

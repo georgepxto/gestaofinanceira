@@ -2,6 +2,7 @@
 
 export const CATEGORIAS = [
   "Alimentação",
+  "Aluguel",
   "Assinaturas",
   "Combustível",
   "Compras Online",

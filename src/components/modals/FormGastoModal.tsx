@@ -246,6 +246,27 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
             </div>
           </div>
 
+          {/* Toggle Gasto Fixo Mensal */}
+          <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg border border-gray-600">
+            <div>
+              <span className="text-sm font-medium text-gray-300">Gasto Fixo Mensal</span>
+              <p className="text-xs text-gray-500">Este gasto se repete todo mês</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onFormChange({ ...formData, recorrente: !formData.recorrente })}
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                formData.recorrente ? "bg-teal-500" : "bg-gray-500"
+              }`}
+            >
+              <span
+                className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all duration-200 ${
+                  formData.recorrente ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+
           {/* Parcelas */}
           <div>
             <label
@@ -257,9 +278,12 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
             <select
               id="num_parcelas"
               name="num_parcelas"
-              value={formData.num_parcelas}
+              value={formData.recorrente ? 1 : formData.num_parcelas}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-700 text-white"
+              disabled={formData.recorrente}
+              className={`w-full px-4 py-3 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-700 text-white ${
+                formData.recorrente ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               {PARCELAS_OPTIONS.map((num) => (
                 <option key={num} value={num}>
@@ -271,6 +295,11 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                 </option>
               ))}
             </select>
+            {formData.recorrente && (
+              <p className="text-xs text-teal-400 mt-1">
+                ✓ Gasto fixo: aparece todo mês automaticamente
+              </p>
+            )}
           </div>
 
           {/* Data de Início */}

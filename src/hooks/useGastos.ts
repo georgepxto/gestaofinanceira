@@ -50,6 +50,7 @@ export function useGastos({
     data_inicio: format(new Date(), "yyyy-MM-dd"),
     tipo: "credito",
     categoria: CATEGORIA_PADRAO,
+    recorrente: false,
     cartao_id: "",
     conta_id: "",
   });
@@ -151,10 +152,11 @@ export function useGastos({
             descricao: formData.descricao.trim(),
             pessoa: formData.pessoa,
             valor_total: valorNumerico,
-            num_parcelas: formData.num_parcelas,
+            num_parcelas: formData.recorrente ? 1 : formData.num_parcelas,
             data_inicio: formData.data_inicio,
             tipo: formData.tipo,
             categoria: formData.categoria,
+            recorrente: formData.recorrente,
             cartao_id: formData.tipo === "credito" && formData.cartao_id ? formData.cartao_id : null,
             conta_id: formData.tipo === "debito" && formData.conta_id ? formData.conta_id : null,
           })
@@ -205,10 +207,11 @@ export function useGastos({
           descricao: formData.descricao.trim(),
           pessoa: formData.pessoa,
           valor_total: valorNumerico,
-          num_parcelas: formData.num_parcelas,
+          num_parcelas: formData.recorrente ? 1 : formData.num_parcelas,
           data_inicio: formData.data_inicio,
           tipo: formData.tipo,
           categoria: formData.categoria,
+          recorrente: formData.recorrente,
           cartao_id: formData.tipo === "credito" && formData.cartao_id ? formData.cartao_id : null,
           conta_id: formData.tipo === "debito" && formData.conta_id ? formData.conta_id : null,
           user_id: currentUser?.id,
@@ -234,6 +237,7 @@ export function useGastos({
         data_inicio: format(new Date(), "yyyy-MM-dd"),
         tipo: "credito",
         categoria: CATEGORIA_PADRAO,
+        recorrente: false,
         cartao_id: "",
         conta_id: "",
       });
@@ -256,6 +260,7 @@ export function useGastos({
       data_inicio: gasto.data_inicio,
       tipo: gasto.tipo,
       categoria: gasto.categoria || CATEGORIA_PADRAO,
+      recorrente: gasto.recorrente || false,
       cartao_id: gasto.cartao_id || "",
       conta_id: gasto.conta_id || "",
     });
@@ -321,6 +326,7 @@ export function useGastos({
       data_inicio: format(new Date(), "yyyy-MM-dd"),
       tipo: "credito",
       categoria: CATEGORIA_PADRAO,
+      recorrente: false,
       cartao_id: "",
       conta_id: "",
     });

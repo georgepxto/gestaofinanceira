@@ -13,6 +13,7 @@ import {
   Undo2,
   MessageSquare,
   CheckCircle,
+  Repeat,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { ParcelaAtiva, ResumoMensal } from "../../types";
@@ -517,6 +518,12 @@ export function TabGastos({
                                       ? "Crédito"
                                       : "Débito"}
                                   </span>
+                                  {gasto.recorrente && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800 border border-teal-200">
+                                      <Repeat className="w-3 h-3" />
+                                      Fixo
+                                    </span>
+                                  )}
                                   <span className="text-xs text-gray-400 flex items-center gap-1">
                                     <User className="w-3 h-3" />
                                     {gasto.pessoa}
@@ -528,10 +535,14 @@ export function TabGastos({
                                 <div className="flex items-center gap-4 mt-1 text-sm text-gray-400">
                                   <span className="flex items-center gap-1">
                                     <Hash className="w-3 h-3" />
-                                    Parcela {parcela_atual}/{gasto.num_parcelas}
+                                    {gasto.recorrente ? (
+                                      <span className="text-teal-400">Mensal</span>
+                                    ) : (
+                                      <>Parcela {parcela_atual}/{gasto.num_parcelas}</>
+                                    )}
                                   </span>
                                   <span className="text-xs text-gray-500">
-                                    Total: {formatCurrency(gasto.valor_total)}
+                                    {gasto.recorrente ? "Valor:" : "Total:"} {formatCurrency(gasto.valor_total)}
                                   </span>
                                 </div>
                               </div>
