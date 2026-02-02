@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { CreditCard, Plus, Loader2, Trash2, Edit2, X, Calendar, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { CreditCard, Loader2, Trash2, Edit2, X, Calendar, ChevronLeft, ChevronRight, Check, Plus } from "lucide-react";
 import { format, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAppContext } from "../context";
 import { supabase } from "../lib/supabase";
 import { formatCurrency, formatCurrencyInput, parseCurrency } from "../utils/calculations";
-import { CATEGORIAS } from "../utils/categories";
-import type { CartaoCredito, CartaoCreditoForm, TransacaoCartao, TransacaoCartaoForm, ContaBancaria, MeuGasto, Gasto } from "../types";
+
+import type { CartaoCredito, CartaoCreditoForm, TransacaoCartao, ContaBancaria, MeuGasto, Gasto } from "../types";
 
 const CORES_CARTAO = [
   "#3B82F6", "#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#6366F1"
@@ -32,13 +32,6 @@ export const CartoesCreditoPage = () => {
   const [formCartao, setFormCartao] = useState<CartaoCreditoForm>({
     nome: "", conta_id: "", dia_vencimento: "10", melhor_dia_compra: "10",
     limite: "", divida_inicial: "", cor: CORES_CARTAO[0],
-  });
-
-  // Modal transação
-  const [showFormTransacao, setShowFormTransacao] = useState(false);
-  const [formTransacao, setFormTransacao] = useState<TransacaoCartaoForm>({
-    cartao_id: "", descricao: "", valor: "", categoria: "Outras Despesas",
-    data: format(new Date(), "yyyy-MM-dd"), num_parcelas: "1", recorrente: false, pago: false,
   });
 
   // Modal pagar fatura
@@ -330,37 +323,6 @@ export const CartoesCreditoPage = () => {
     setEditandoCartao(null);
   };
 
-  // CRUD Transação
-  const handleSubmitTransacao = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!supabase || !user || !cartaoSelecionado) return;
-    setSaving(true);
-    try {
-      const valor = parseCurrency(formTransacao.valor);
-      const numParcelas = parseInt(formTransacao.num_parcelas) || 1;
-      const valorParcela = valor / numParcelas;
-
-      for (let i = 0; i < numParcelas; i++) {
-        const dataParcela = addMonths(new Date(formTransacao.data), i);
-        await supabase.from("transacoes_cartao").insert({
-          cartao_id: cartaoSelecionado.id,
-          descricao: numParcelas > 1 ? `${formTransacao.descricao} (${i+1}/${numParcelas})` : formTransacao.descricao,
-          valor: valorParcela,
-          categoria: formTransacao.categoria,
-          data: format(dataParcela, "yyyy-MM-dd"),
-          num_parcelas: numParcelas,
-          parcela_atual: i + 1,
-          pago: formTransacao.pago,
-          recorrente: formTransacao.recorrente,
-          user_id: user.id,
-        });
-      }
-      await fetchTransacoes();
-      setShowFormTransacao(false);
-      setFormTransacao({ cartao_id: "", descricao: "", valor: "", categoria: "Outras Despesas", data: format(new Date(), "yyyy-MM-dd"), num_parcelas: "1", recorrente: false, pago: false });
-    } finally { setSaving(false); }
-  };
-
   const handleDeleteTransacao = (id: string) => {
     setModalConfirm({
       show: true, titulo: "Excluir Transação", mensagem: "Excluir esta transação?",
@@ -472,14 +434,12 @@ export const CartoesCreditoPage = () => {
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex items-center gap-3">
+        <CreditCard className="w-7 h-7 text-gray-400" />
         <div>
           <h1 className="text-2xl font-bold text-white">Cartões de Crédito</h1>
-          <p className="text-gray-400 text-sm">Gerencie seus cartões, limites e faturas.</p>
+          <p className="text-gray-400 text-sm">Gerencie seus cartões, limites e faturas</p>
         </div>
-        <button onClick={() => { setShowFormTransacao(true); }} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Nova Transação
-        </button>
       </div>
 
       {/* Lista de Cartões */}
@@ -766,32 +726,6 @@ export const CartoesCreditoPage = () => {
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={resetFormCartao} className="flex-1 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg">Cancelar</button>
                 <button type="submit" disabled={saving} className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}{editandoCartao ? "Salvar" : "Criar"}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Nova Transação */}
-      {showFormTransacao && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-xl w-full max-w-md p-5 border border-gray-700">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Nova Transação</h3>
-              <button onClick={() => setShowFormTransacao(false)} className="p-1 hover:bg-gray-700 rounded"><X className="w-5 h-5 text-gray-400" /></button>
-            </div>
-            <form onSubmit={handleSubmitTransacao} className="space-y-4">
-              <div><label className="block text-sm text-gray-300 mb-1">Cartão de Crédito</label><select value={formTransacao.cartao_id || cartaoSelecionado?.id || ""} onChange={e => setFormTransacao({...formTransacao, cartao_id: e.target.value})} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required>{cartoes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>
-              <div><label className="block text-sm text-gray-300 mb-1">Categoria</label><select value={formTransacao.categoria} onChange={e => setFormTransacao({...formTransacao, categoria: e.target.value})} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white">{CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
-              <div><label className="block text-sm text-gray-300 mb-1">Valor</label><input type="text" value={formTransacao.valor} onChange={e => setFormTransacao({...formTransacao, valor: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required /></div>
-              <div><label className="block text-sm text-gray-300 mb-1">Descrição</label><input type="text" value={formTransacao.descricao} onChange={e => setFormTransacao({...formTransacao, descricao: e.target.value})} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required /></div>
-              <div><label className="block text-sm text-gray-300 mb-1">Data</label><input type="date" value={formTransacao.data} onChange={e => setFormTransacao({...formTransacao, data: e.target.value})} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" /></div>
-              <div className="flex items-center gap-2"><input type="checkbox" id="pago" checked={formTransacao.pago} onChange={e => setFormTransacao({...formTransacao, pago: e.target.checked})} className="w-4 h-4" /><label htmlFor="pago" className="text-sm text-gray-300">Pago/Recebido</label></div>
-              <div><label className="block text-sm text-gray-300 mb-1">Parcelas</label><input type="number" min="1" max="48" value={formTransacao.num_parcelas} onChange={e => setFormTransacao({...formTransacao, num_parcelas: e.target.value})} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" /></div>
-              <div className="flex items-center gap-2"><input type="checkbox" id="recorrente" checked={formTransacao.recorrente} onChange={e => setFormTransacao({...formTransacao, recorrente: e.target.checked})} className="w-4 h-4" /><label htmlFor="recorrente" className="text-sm text-gray-300">Recorrentes</label></div>
-              <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setShowFormTransacao(false)} className="flex-1 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg">Cancelar</button>
-                <button type="submit" disabled={saving} className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}Criar</button>
               </div>
             </form>
           </div>

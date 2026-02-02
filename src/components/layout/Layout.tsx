@@ -19,7 +19,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
         min-h-screen
         transition-all duration-300
       ">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <Outlet />
         </div>
       </main>

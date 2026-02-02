@@ -224,7 +224,10 @@ export const ContasBancariasPage = () => {
       {/* Header */}
       <div className="flex items-center gap-3">
         <Building2 className="w-7 h-7 text-gray-400" />
-        <h1 className="text-2xl font-bold text-white">Contas Bancárias</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-white">Contas Bancárias</h1>
+          <p className="text-gray-400 text-sm">Gerencie suas contas e receitas</p>
+        </div>
       </div>
 
       {/* Seletor de Mês */}
@@ -287,15 +290,20 @@ export const ContasBancariasPage = () => {
         ) : (
           <div className="space-y-2">
             {contas.map(c => (
-              <div key={c.id} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
-                <div><p className="text-white font-medium">{c.nome}</p>{c.banco && <p className="text-gray-400 text-sm">{c.banco}</p>}</div>
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
+              <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-700/30 rounded-lg gap-2">
+                <div className="min-w-0">
+                  <p className="text-white font-medium truncate">{c.nome}</p>
+                  {c.banco && <p className="text-gray-400 text-sm">{c.banco}</p>}
+                </div>
+                <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+                  <div className="text-left sm:text-right">
                     <p className="text-blue-400 font-semibold">{formatCurrency(calcularSaldoConta(c))}</p>
                     <p className="text-gray-500 text-xs">Inicial: {formatCurrency(c.saldo_inicial)}</p>
                   </div>
-                  <button onClick={() => handleEditConta(c)} className="p-1 hover:bg-gray-600 rounded"><Edit2 className="w-4 h-4 text-gray-400" /></button>
-                  <button onClick={() => handleDeleteConta(c.id, c.nome)} className="p-1 hover:bg-gray-600 rounded"><Trash2 className="w-4 h-4 text-gray-400 hover:text-red-400" /></button>
+                  <div className="flex gap-1">
+                    <button onClick={() => handleEditConta(c)} className="p-1.5 hover:bg-gray-600 rounded"><Edit2 className="w-4 h-4 text-gray-400" /></button>
+                    <button onClick={() => handleDeleteConta(c.id, c.nome)} className="p-1.5 hover:bg-gray-600 rounded"><Trash2 className="w-4 h-4 text-gray-400 hover:text-red-400" /></button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -318,17 +326,19 @@ export const ContasBancariasPage = () => {
           ) : (
             <div className="space-y-2">
               {receitasProgramadas.map(r => (
-                <div key={r.id} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
-                  <div>
-                    <p className="text-white font-medium">{r.descricao}</p>
-                    <p className="text-gray-400 text-sm">
-                      {r.categoria} • Dia {r.dia_recebimento} • {r.tipo === "fixo" ? "Fixo (mensal)" : `${r.num_meses}x`}
+                <div key={r.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-700/30 rounded-lg gap-2">
+                  <div className="min-w-0">
+                    <p className="text-white font-medium truncate">{r.descricao}</p>
+                    <p className="text-gray-400 text-xs sm:text-sm">
+                      {r.categoria} • Dia {r.dia_recebimento} • {r.tipo === "fixo" ? "Fixo" : `${r.num_meses}x`}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
                     <p className="text-green-400 font-semibold">{formatCurrency(r.valor)}</p>
-                    <button onClick={() => handleEditReceita(r)} className="p-1 hover:bg-gray-600 rounded"><Edit2 className="w-4 h-4 text-gray-400" /></button>
-                    <button onClick={() => handleDeleteReceita(r.id, r.descricao)} className="p-1 hover:bg-gray-600 rounded"><Trash2 className="w-4 h-4 text-gray-400 hover:text-red-400" /></button>
+                    <div className="flex gap-1">
+                      <button onClick={() => handleEditReceita(r)} className="p-1.5 hover:bg-gray-600 rounded"><Edit2 className="w-4 h-4 text-gray-400" /></button>
+                      <button onClick={() => handleDeleteReceita(r.id, r.descricao)} className="p-1.5 hover:bg-gray-600 rounded"><Trash2 className="w-4 h-4 text-gray-400 hover:text-red-400" /></button>
+                    </div>
                   </div>
                 </div>
               ))}

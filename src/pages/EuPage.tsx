@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, User } from "lucide-react";
 import { useAppContext } from "../context";
 import { TabMeuGasto } from "../components/Tabs";
 
@@ -28,7 +28,13 @@ export const EuPage = () => {
     <div className="p-4 md:p-6 space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Meus Gastos</h1>
+        <div className="flex items-center gap-3">
+          <User className="w-7 h-7 text-gray-400" />
+          <div>
+            <h1 className="text-2xl font-bold text-white">Meus Gastos</h1>
+            <p className="text-gray-400 text-sm">Despesas pessoais e gastos fixos</p>
+          </div>
+        </div>
         <button
           onClick={() => setShowFormMeuGasto(true)}
           className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-lg"

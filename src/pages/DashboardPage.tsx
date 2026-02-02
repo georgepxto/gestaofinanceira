@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -69,7 +70,9 @@ const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "O
 
 export const DashboardPage = () => {
   const { user } = useAppContext();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [mesVisualizacao, setMesVisualizacao] = useState(new Date());
   const [data, setData] = useState<DashboardData>({
     saldoTotal: 0,
@@ -155,16 +158,15 @@ export const DashboardPage = () => {
         });
         saldoProjetado += fluxoMensal;
       }
-
       // Gastos por categoria (mês selecionado)
-      const inicioMes = startOfMonth(mesVisualizacao);
-      const fimMes = endOfMonth(mesVisualizacao);
+      const mesAtualFiltro = format(mesVisualizacao, "yyyy-MM");
       const gastosDoMes = (meusGastos as MeuGasto[] || [])
         .filter(g => {
-          const dataGasto = new Date(g.data);
-          return dataGasto >= inicioMes && dataGasto <= fimMes;
+          const mesGasto = g.data.substring(0, 7);
+          return mesGasto === mesAtualFiltro;
         });
-      
+
+
       const categoriaMap = new Map<string, number>();
       gastosDoMes.forEach(g => {
         const cat = g.categoria_gasto || g.categoria || "Outros";
@@ -228,10 +230,12 @@ export const DashboardPage = () => {
       const totalEmprestimosMesAnterior = gastosCompartilhadosDoMesAnterior.reduce((acc, g) => acc + g.valor_total / g.num_parcelas, 0);
 
       // Calcular gastos fixos vs variáveis do mês (de "Meus Gastos")
-      const gastosFixosMes = gastosDoMes
-        .filter(g => g.categoria === 'fixo')
-        .reduce((acc, g) => acc + g.valor, 0);
+      // Gastos fixos ativos são recorrentes, então sempre contam
+      const gastosFixosAtivos = (meusGastos as MeuGasto[] || [])
+        .filter(g => g.categoria === 'fixo' && g.ativo !== false);
+      const gastosFixosMes = gastosFixosAtivos.reduce((acc, g) => acc + g.valor, 0);
       
+      // Gastos variáveis (pessoais) do mês atual
       const gastosVariaveisMes = gastosDoMes
         .filter(g => g.categoria === 'pessoal')
         .reduce((acc, g) => acc + g.valor, 0);
@@ -340,9 +344,14 @@ export const DashboardPage = () => {
     }
   }, [user, mesVisualizacao]);
 
+  // Refresh ao montar o componente (quando navega de volta)
+  useEffect(() => {
+    setRefreshKey(prev => prev + 1);
+  }, [location.pathname]);
+
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData, mesVisualizacao]);
+  }, [fetchDashboardData, mesVisualizacao, refreshKey]);
 
   if (loading) {
     return (
@@ -460,45 +469,45 @@ export const DashboardPage = () => {
           <TrendingDown className="w-5 h-5 text-orange-400" />
           Tendência de Gastos (vs mês anterior)
         </h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Meus Gastos */}
-          <div className="bg-gray-900/50 rounded-lg p-4">
-            <p className="text-gray-400 text-sm mb-1">Meus Gastos</p>
-            <p className="text-xl font-bold text-white">{formatCurrency(data.totalGastosMesAtual)}</p>
+          <div className="bg-gray-900/50 rounded-lg p-3 sm:p-4">
+            <p className="text-gray-400 text-xs sm:text-sm mb-1">Meus Gastos</p>
+            <p className="text-lg sm:text-xl font-bold text-white">{formatCurrency(data.totalGastosMesAtual)}</p>
             {data.totalGastosMesAnterior > 0 && (
-              <div className="flex items-center gap-1 mt-2">
+              <div className="flex items-center gap-1 mt-1 sm:mt-2 flex-wrap">
                 {data.totalGastosMesAtual > data.totalGastosMesAnterior ? (
-                  <TrendingUp className="w-4 h-4 text-red-400" />
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
                 ) : data.totalGastosMesAtual < data.totalGastosMesAnterior ? (
-                  <TrendingDown className="w-4 h-4 text-emerald-400" />
+                  <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" />
                 ) : null}
-                <span className={`text-sm ${data.totalGastosMesAtual > data.totalGastosMesAnterior ? 'text-red-400' : 'text-emerald-400'}`}>
+                <span className={`text-xs sm:text-sm ${data.totalGastosMesAtual > data.totalGastosMesAnterior ? 'text-red-400' : 'text-emerald-400'}`}>
                   {data.totalGastosMesAnterior > 0 
                     ? `${Math.abs(((data.totalGastosMesAtual - data.totalGastosMesAnterior) / data.totalGastosMesAnterior) * 100).toFixed(0)}%`
                     : '—'}
                 </span>
-                <span className="text-gray-500 text-xs">({formatCurrency(data.totalGastosMesAnterior)} anterior)</span>
+                <span className="text-gray-500 text-xs">({formatCurrency(data.totalGastosMesAnterior)} ant.)</span>
               </div>
             )}
           </div>
 
           {/* Empréstimos/Gastos Compartilhados */}
-          <div className="bg-gray-900/50 rounded-lg p-4">
-            <p className="text-gray-400 text-sm mb-1">Gastos Compartilhados</p>
-            <p className="text-xl font-bold text-white">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
+          <div className="bg-gray-900/50 rounded-lg p-3 sm:p-4">
+            <p className="text-gray-400 text-xs sm:text-sm mb-1">Gastos Compartilhados</p>
+            <p className="text-lg sm:text-xl font-bold text-white">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
             {data.totalEmprestimosMesAnterior > 0 && (
-              <div className="flex items-center gap-1 mt-2">
+              <div className="flex items-center gap-1 mt-1 sm:mt-2 flex-wrap">
                 {data.totalEmprestimosMesAtual > data.totalEmprestimosMesAnterior ? (
-                  <TrendingUp className="w-4 h-4 text-red-400" />
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-red-400" />
                 ) : data.totalEmprestimosMesAtual < data.totalEmprestimosMesAnterior ? (
-                  <TrendingDown className="w-4 h-4 text-emerald-400" />
+                  <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" />
                 ) : null}
-                <span className={`text-sm ${data.totalEmprestimosMesAtual > data.totalEmprestimosMesAnterior ? 'text-red-400' : 'text-emerald-400'}`}>
+                <span className={`text-xs sm:text-sm ${data.totalEmprestimosMesAtual > data.totalEmprestimosMesAnterior ? 'text-red-400' : 'text-emerald-400'}`}>
                   {data.totalEmprestimosMesAnterior > 0 
                     ? `${Math.abs(((data.totalEmprestimosMesAtual - data.totalEmprestimosMesAnterior) / data.totalEmprestimosMesAnterior) * 100).toFixed(0)}%`
                     : '—'}
                 </span>
-                <span className="text-gray-500 text-xs">({formatCurrency(data.totalEmprestimosMesAnterior)} anterior)</span>
+                <span className="text-gray-500 text-xs">({formatCurrency(data.totalEmprestimosMesAnterior)} ant.)</span>
               </div>
             )}
           </div>

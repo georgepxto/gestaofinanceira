@@ -80,7 +80,10 @@ export const PessoasPage = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Users className="w-7 h-7 text-gray-400" />
-          <h1 className="text-2xl font-bold text-white">Pessoas</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Pessoas</h1>
+            <p className="text-gray-400 text-sm">Gerencie quem compartilha gastos com você</p>
+          </div>
         </div>
         <button
           onClick={() => setShowAddForm(true)}

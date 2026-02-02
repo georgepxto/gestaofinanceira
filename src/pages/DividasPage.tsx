@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, TrendingDown } from "lucide-react";
 import { useAppContext } from "../context";
 import { TabDividas } from "../components/Tabs";
 
@@ -26,7 +26,13 @@ export const DividasPage = () => {
     <div className="p-4 md:p-6 space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Saldo Devedor</h1>
+        <div className="flex items-center gap-3">
+          <TrendingDown className="w-7 h-7 text-gray-400" />
+          <div>
+            <h1 className="text-2xl font-bold text-white">Saldo Devedor</h1>
+            <p className="text-gray-400 text-sm">Controle de dívidas e valores a receber</p>
+          </div>
+        </div>
         <button
           onClick={() => setShowFormDivida(true)}
           className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-lg"
