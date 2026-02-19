@@ -73,7 +73,6 @@ export const useAlertas = () => {
         0
       );
       const totalGeral = totalGastosMes + totalEmprestimosMes;
-      const economiasMes = receitasFixasMensais - totalGeral;
 
       const novasAlertas: Alerta[] = [];
 
@@ -167,12 +166,13 @@ export const useAlertas = () => {
         }
       });
 
-      // e) Economia negativa
-      if (economiasMes < 0) {
+      // e) Economia negativa (Apenas Meus Gastos)
+      const economiasMeusGastos = receitasFixasMensais - totalGastosMes;
+      if (economiasMeusGastos < 0) {
         novasAlertas.push({
           tipo: "danger",
           titulo: "Gastos superam a receita",
-          mensagem: `Você está ${formatCurrency(Math.abs(economiasMes))} no vermelho este mês.`,
+          mensagem: `Você está ${formatCurrency(Math.abs(economiasMeusGastos))} no vermelho este mês (considerando apenas seus gastos pessoais).`,
         });
       }
 
