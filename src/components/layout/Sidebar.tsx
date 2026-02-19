@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   Target,
 } from "lucide-react";
+import { NotificationBell } from "./NotificationBell";
 
 interface SidebarProps {
   onLogout: () => void;
@@ -72,16 +73,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   return (
     <>
       {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-gray-800 border-b border-gray-700 z-40 flex items-center px-4">
-        <button
-          onClick={() => setIsOpen(true)}
-          className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <Menu className="w-6 h-6 text-white" />
-        </button>
-        <h1 className="ml-4 text-lg font-semibold text-white">
-          Reppago
-        </h1>
+      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-gray-800 border-b border-gray-700 z-40 flex items-center justify-between px-4">
+        <div className="flex items-center">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            <Menu className="w-6 h-6 text-white" />
+          </button>
+          <h1 className="ml-4 text-lg font-semibold text-white">
+            Reppago
+          </h1>
+        </div>
+        <NotificationBell />
       </header>
 
       {/* Mobile Overlay */}

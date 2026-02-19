@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
+import { NotificationBell } from "./NotificationBell";
 
 interface LayoutProps {
   onLogout: () => void;
@@ -19,6 +20,13 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
         min-h-screen
         transition-all duration-300
       ">
+        {/* Desktop Header for Notifications */}
+        <header className="hidden md:flex justify-end items-center p-4 pb-0 bg-gray-900 z-30 relative">
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+          </div>
+        </header>
+
         <div className="max-w-6xl mx-auto">
           <Outlet />
         </div>

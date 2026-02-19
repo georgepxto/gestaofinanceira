@@ -357,6 +357,7 @@ export const DashboardPage = () => {
         return { ...meta, gastoAtual };
       });
 
+
       setData({
         saldoTotal,
         totalDevido,
