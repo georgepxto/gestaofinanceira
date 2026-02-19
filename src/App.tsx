@@ -19,6 +19,7 @@ import {
   PagamentoModal,
 } from "./components/modals";
 import { AppProvider, useAppContext } from "./context";
+import { useNotifications } from "./hooks/useNotifications";
 import "./index.css";
 
 function AppContent() {
@@ -99,6 +100,9 @@ function AppContent() {
     saving,
     error,
   } = useAppContext();
+
+  // Registrar push notifications
+  useNotifications(user?.id);
 
   // Fetch cartões para o modal
   const [cartoes, setCartoes] = useState<CartaoCredito[]>([]);
