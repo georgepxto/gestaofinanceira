@@ -7,6 +7,7 @@ export const CATEGORIAS = [
   "Combustível",
   "Compras Online",
   "Contas",
+  "Delivery",
   "Educação",
   "Empréstimo",
   "Farmácia",

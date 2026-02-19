@@ -14,6 +14,7 @@ import {
   Building2,
   Wallet,
   LayoutDashboard,
+  Target,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -35,6 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
     { path: "/pessoas", label: "Pessoas", icon: Users },
     { path: "/contas", label: "Contas Bancárias", icon: Building2 },
     { path: "/cartoes", label: "Cartões de Crédito", icon: Wallet },
+    { path: "/metas", label: "Metas de Gasto", icon: Target },
   ];
 
   const bottomNavItems = [

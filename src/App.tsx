@@ -5,7 +5,7 @@ import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { formatCurrency } from "./utils/calculations";
 import { Login } from "./components/Login";
 import { Layout } from "./components/layout";
-import { DashboardPage, EuPage, GastosPage, DividasPage, ConfiguracoesPage, PessoasPage, ContasBancariasPage, CartoesCreditoPage } from "./pages";
+import { DashboardPage, EuPage, GastosPage, DividasPage, ConfiguracoesPage, PessoasPage, ContasBancariasPage, CartoesCreditoPage, MetasPage } from "./pages";
 import type { CartaoCredito, ContaBancaria } from "./types";
 import {
   FormGastoModal,
@@ -205,6 +205,7 @@ function AppContent() {
           <Route path="/contas" element={<ContasBancariasPage />} />
           <Route path="/cartoes" element={<CartoesCreditoPage />} />
           <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+          <Route path="/metas" element={<MetasPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

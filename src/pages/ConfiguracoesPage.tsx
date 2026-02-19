@@ -69,10 +69,6 @@ export const ConfiguracoesPage = () => {
 
     setDeletingAccount(true);
     try {
-      // Nota: A exclusão de conta no Supabase geralmente requer uma função Edge/RPC
-      // Por segurança, vamos apenas fazer logout e informar que a conta será excluída
-      // Em produção, você precisaria de uma função no backend para isso
-      
       setModalFeedback({
         show: true,
         titulo: "Solicitação Enviada",

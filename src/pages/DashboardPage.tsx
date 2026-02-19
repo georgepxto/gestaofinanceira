@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useLocation } from "react-router-dom";
+import type { MetaGasto } from "../types";
 import { 
   LayoutDashboard, 
   Wallet, 
@@ -14,7 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Target
 } from "lucide-react";
 import { useAppContext } from "../context";
 import { supabase } from "../lib/supabase";
@@ -30,6 +32,8 @@ import {
   BarChart,
   Bar,
   Cell,
+  Area,
+  AreaChart,
 } from "recharts";
 import type { ContaBancaria, SaldoDevedor, MeuGasto, Receita, Gasto } from "../types";
 
@@ -59,6 +63,10 @@ interface DashboardData {
   economiasMes: number; // receitas - gastos
   top5Gastos: { descricao: string; valor: number; pessoa: string }[];
   parcelasProximasFim: { descricao: string; pessoa: string; parcelasRestantes: number }[];
+  // Tendência 6 meses
+  tendenciaMensal: { mes: string; meusGastos: number; compartilhados: number; total: number }[];
+  // Metas de gasto
+  metasGasto: (MetaGasto & { gastoAtual: number })[];
 }
 
 const CORES_GRAFICO = [
@@ -98,6 +106,8 @@ export const DashboardPage = () => {
     economiasMes: 0,
     top5Gastos: [],
     parcelasProximasFim: [],
+    tendenciaMensal: [],
+    metasGasto: [],
   });
 
   const fetchDashboardData = useCallback(async () => {
@@ -312,6 +322,41 @@ export const DashboardPage = () => {
         .sort((a, b) => a.parcelasRestantes - b.parcelasRestantes)
         .slice(0, 5);
 
+      // 6. Tendência mensal (6 meses)
+      const tendenciaMensal = [];
+      for (let i = 5; i >= 0; i--) {
+        const mesRef = subMonths(mesVisualizacao, i);
+        const mesKey = format(mesRef, "yyyy-MM");
+        const mesLabel = format(mesRef, "MMM", { locale: ptBR });
+        
+        const meusGastosMes = (meusGastos as MeuGasto[] || [])
+          .filter(g => g.data.substring(0, 7) === mesKey)
+          .reduce((acc, g) => acc + g.valor, 0);
+        
+        const compartilhadosMes = (gastosCompartilhados as Gasto[] || [])
+          .filter(g => isGastoAtivoNoMes(g, mesRef))
+          .reduce((acc, g) => acc + g.valor_total / g.num_parcelas, 0);
+        
+        tendenciaMensal.push({
+          mes: mesLabel.charAt(0).toUpperCase() + mesLabel.slice(1),
+          meusGastos: Number(meusGastosMes.toFixed(2)),
+          compartilhados: Number(compartilhadosMes.toFixed(2)),
+          total: Number((meusGastosMes + compartilhadosMes).toFixed(2)),
+        });
+      }
+
+      // 7. Metas de gasto por categoria
+      const { data: metasRaw } = await supabase
+        .from("metas_gasto")
+        .select("*");
+      
+      const metasGasto = (metasRaw || []).map((meta: MetaGasto) => {
+        const gastoAtual = gastosDoMes
+          .filter(g => (g.categoria_gasto || g.categoria || "").toLowerCase() === meta.categoria.toLowerCase())
+          .reduce((acc, g) => acc + g.valor, 0);
+        return { ...meta, gastoAtual };
+      });
+
       setData({
         saldoTotal,
         totalDevido,
@@ -336,6 +381,8 @@ export const DashboardPage = () => {
         economiasMes,
         top5Gastos,
         parcelasProximasFim,
+        tendenciaMensal,
+        metasGasto,
       });
     } catch (err) {
       console.error("Erro ao carregar dashboard:", err);
@@ -513,6 +560,120 @@ export const DashboardPage = () => {
           </div>
         </div>
       </div>
+      {/* Gráficos de Tendência - 6 meses */}
+      {data.tendenciaMensal.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Meus Gastos */}
+          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 min-w-0 overflow-hidden">
+            <h2 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-blue-400" />
+              Meus Gastos (6 meses)
+            </h2>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data.tendenciaMensal}>
+                  <defs>
+                    <linearGradient id="colorMeus" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="mes" stroke="#9CA3AF" fontSize={11} />
+                  <YAxis stroke="#9CA3AF" fontSize={10} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
+                    labelStyle={{ color: '#F3F4F6' }}
+                    formatter={(value: unknown) => [formatCurrency(Number(value) || 0), 'Meus Gastos']}
+                  />
+                  <Area type="monotone" dataKey="meusGastos" stroke="#3B82F6" fillOpacity={1} fill="url(#colorMeus)" strokeWidth={2} dot={{ r: 3, fill: '#3B82F6' }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Gastos Compartilhados */}
+          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 min-w-0 overflow-hidden">
+            <h2 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <Users className="w-5 h-5 text-emerald-400" />
+              Compartilhados (6 meses)
+            </h2>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data.tendenciaMensal}>
+                  <defs>
+                    <linearGradient id="colorComp" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="mes" stroke="#9CA3AF" fontSize={11} />
+                  <YAxis stroke="#9CA3AF" fontSize={10} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151', borderRadius: '8px' }}
+                    labelStyle={{ color: '#F3F4F6' }}
+                    formatter={(value: unknown) => [formatCurrency(Number(value) || 0), 'Compartilhados']}
+                  />
+                  <Area type="monotone" dataKey="compartilhados" stroke="#10B981" fillOpacity={1} fill="url(#colorComp)" strokeWidth={2} dot={{ r: 3, fill: '#10B981' }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Metas de Gasto por Categoria */}
+      {data.metasGasto.length > 0 && (
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <Target className="w-5 h-5 text-purple-400" />
+            Metas de Gasto
+          </h2>
+          <div className="space-y-4">
+            {data.metasGasto.map((meta) => {
+              const porcentagem = meta.limite > 0 ? (meta.gastoAtual / meta.limite) * 100 : 0;
+              const estourou = porcentagem > 100;
+              const quaseEstourando = porcentagem >= 80 && porcentagem <= 100;
+              
+              return (
+                <div key={meta.id} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-300 capitalize">{meta.categoria}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-bold ${estourou ? 'text-red-400' : quaseEstourando ? 'text-amber-400' : 'text-emerald-400'}`}>
+                        {formatCurrency(meta.gastoAtual)}
+                      </span>
+                      <span className="text-gray-500 text-xs">/ {formatCurrency(meta.limite)}</span>
+                    </div>
+                  </div>
+                  <div className="relative h-3 bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${
+                        estourou ? 'bg-gradient-to-r from-red-500 to-red-400' : 
+                        quaseEstourando ? 'bg-gradient-to-r from-amber-500 to-amber-400' : 
+                        'bg-gradient-to-r from-emerald-500 to-emerald-400'
+                      }`}
+                      style={{ width: `${Math.min(porcentagem, 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between">
+                    <span className={`text-xs ${estourou ? 'text-red-400 font-bold' : quaseEstourando ? 'text-amber-400' : 'text-gray-500'}`}>
+                      {estourou ? `⚠️ Estourou ${(porcentagem - 100).toFixed(0)}%` : 
+                       quaseEstourando ? `⚡ ${porcentagem.toFixed(0)}% usado` :
+                       `${porcentagem.toFixed(0)}% usado`}
+                    </span>
+                    <span className={`text-xs ${estourou ? 'text-red-400' : 'text-gray-500'}`}>
+                      {estourou ? `+${formatCurrency(meta.gastoAtual - meta.limite)} excedido` : 
+                       `${formatCurrency(meta.limite - meta.gastoAtual)} restante`}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Novas Métricas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

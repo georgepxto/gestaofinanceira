@@ -185,3 +185,10 @@ export interface TransacaoCartaoForm {
   recorrente: boolean;
   pago: boolean;
 }
+
+export interface MetaGasto {
+  id: string;
+  categoria: string;
+  limite: number;
+  user_id?: string;
+}
