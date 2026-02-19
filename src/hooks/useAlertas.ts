@@ -37,7 +37,7 @@ export const useAlertas = () => {
       ] = await Promise.all([
         supabase.from("meus_gastos").select("*"),
         supabase.from("gastos").select("*"),
-        supabase.from("receitas").select("*").eq("ativo", true),
+        supabase.from("receitas").select("*"),
         supabase.from("metas_gasto").select("*"),
       ]);
 
@@ -60,11 +60,10 @@ export const useAlertas = () => {
         isGastoAtivoNoMes(g, mesAtual)
       );
 
-      // Receitas fixas
-      const receitasFixasMensais = todasReceitas.reduce(
-        (acc, r) => acc + r.valor,
-        0
-      );
+      // Receitas fixas (Match Dashboard Logic)
+      const receitasFixasMensais = todasReceitas
+        .filter((r) => r.tipo === "fixo" || r.tipo === "recorrente")
+        .reduce((acc, r) => acc + r.valor, 0);
 
       // Totais
       const totalGastosMes = gastosDoMes.reduce((acc, g) => acc + g.valor, 0);
@@ -72,7 +71,21 @@ export const useAlertas = () => {
         (acc, g) => acc + g.valor_total / g.num_parcelas,
         0
       );
-      const totalGeral = totalGastosMes + totalEmprestimosMes;
+      // 2. Gastos Fixos (ignora data, sempre conta se ativo)
+      const gastosFixos = todosGastos
+        .filter((g) => g.categoria === "fixo" && g.ativo !== false)
+        .reduce((acc, g) => acc + g.valor, 0);
+
+      // 3. Gastos Variáveis (apenas mês atual)
+      const gastosVariaveis = todosGastos
+        .filter(
+          (g) =>
+            g.categoria === "pessoal" &&
+            g.data.substring(0, 7) === mesAtualFiltro
+        )
+        .reduce((acc, g) => acc + g.valor, 0);
+
+      const totalMeusGastos = gastosFixos + gastosVariaveis;
 
       const novasAlertas: Alerta[] = [];
 
@@ -104,6 +117,8 @@ export const useAlertas = () => {
 
       // b) Gastos vs receita + dias restantes
       if (receitasFixasMensais > 0) {
+        // Para este alerta, usamos Total Geral (Compartilhado + Pessoal)
+        const totalGeral = totalGastosMes + totalEmprestimosMes;
         const pctGasto = (totalGeral / receitasFixasMensais) * 100;
         const diasNoMes = getDaysInMonth(agora);
         const diaAtual = getDate(agora);
@@ -167,12 +182,12 @@ export const useAlertas = () => {
       });
 
       // e) Economia negativa (Apenas Meus Gastos)
-      const economiasMeusGastos = receitasFixasMensais - totalGastosMes;
+      const economiasMeusGastos = receitasFixasMensais - totalMeusGastos;
       if (economiasMeusGastos < 0) {
         novasAlertas.push({
           tipo: "danger",
           titulo: "Gastos superam a receita",
-          mensagem: `Você está ${formatCurrency(Math.abs(economiasMeusGastos))} no vermelho este mês (considerando apenas seus gastos pessoais).`,
+          mensagem: `Você está ${formatCurrency(Math.abs(economiasMeusGastos))} no vermelho este mês.`,
         });
       }
 
