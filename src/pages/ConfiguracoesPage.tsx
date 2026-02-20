@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Settings, User, Trash2, Loader2, AlertTriangle, Check } from "lucide-react";
+import { Settings, User, Trash2, Loader2, AlertTriangle, Check, Sun, Moon } from "lucide-react";
 import { useAppContext } from "../context";
 import { supabase } from "../lib/supabase";
+import { useTheme } from "../hooks/useTheme";
 
 export const ConfiguracoesPage = () => {
   const { user, handleLogout, setModalFeedback } = useAppContext();
+  const { theme, toggleTheme } = useTheme();
   
   const [novoNome, setNovoNome] = useState(user?.user_metadata?.nome || "");
   const [savingNome, setSavingNome] = useState(false);
@@ -96,34 +98,72 @@ export const ConfiguracoesPage = () => {
     <div className="p-4 md:p-6 space-y-6">
       {/* Page Header */}
       <div className="flex items-center gap-3">
-        <Settings className="w-7 h-7 text-gray-400" />
-        <h1 className="text-2xl font-bold text-white">Configurações</h1>
+        <Settings className="w-7 h-7 text-gray-600 dark:text-gray-400" />
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Configurações</h1>
       </div>
 
+      {/* Seção Aparência */}
+      <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          {theme === "dark" ? (
+            <Moon className="w-5 h-5 text-blue-500" />
+          ) : (
+            <Sun className="w-5 h-5 text-amber-500" />
+          )}
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Aparência</h2>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Tema</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {theme === "dark" ? "Modo escuro ativado" : "Modo claro ativado"}
+            </p>
+          </div>
+          <button
+            onClick={toggleTheme}
+            className="relative inline-flex items-center h-8 w-16 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+            style={{ backgroundColor: theme === "dark" ? "#3B82F6" : "#D1D5DB" }}
+          >
+            <span
+              className={`inline-flex items-center justify-center w-6 h-6 rounded-full bg-white shadow-md transform transition-transform duration-300 ${
+                theme === "dark" ? "translate-x-9" : "translate-x-1"
+              }`}
+            >
+              {theme === "dark" ? (
+                <Moon className="w-3.5 h-3.5 text-blue-600" />
+              ) : (
+                <Sun className="w-3.5 h-3.5 text-amber-500" />
+              )}
+            </span>
+          </button>
+        </div>
+      </section>
+
       {/* Seção Perfil */}
-      <section className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+      <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <User className="w-5 h-5 text-blue-500" />
-          <h2 className="text-lg font-semibold text-white">Perfil</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Perfil</h2>
         </div>
 
         {/* Email (somente leitura) */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-400 mb-2">
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
             Email
           </label>
           <input
             type="email"
             value={user?.email || ""}
             disabled
-            className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-400 cursor-not-allowed"
+            className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-400 cursor-not-allowed"
           />
-          <p className="text-xs text-gray-500 mt-1">O email não pode ser alterado.</p>
+          <p className="text-xs text-gray-400 mt-1">O email não pode ser alterado.</p>
         </div>
 
         {/* Nome */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-400 mb-2">
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
             Nome de exibição
           </label>
           <div className="space-y-3">
@@ -132,12 +172,12 @@ export const ConfiguracoesPage = () => {
               value={novoNome}
               onChange={(e) => setNovoNome(e.target.value)}
               placeholder="Seu nome"
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
             <button
               onClick={handleAlterarNome}
               disabled={savingNome || novoNome === user?.user_metadata?.nome}
-              className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {savingNome ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -151,15 +191,15 @@ export const ConfiguracoesPage = () => {
       </section>
 
       {/* Seção Zona de Perigo */}
-      <section className="bg-gray-800 rounded-xl p-6 border border-red-900/50">
+      <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-red-200 dark:border-red-900 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <AlertTriangle className="w-5 h-5 text-red-500" />
-          <h2 className="text-lg font-semibold text-red-400">Zona de Perigo</h2>
+          <h2 className="text-lg font-semibold text-red-600 dark:text-red-400">Zona de Perigo</h2>
         </div>
 
-        <div className="bg-red-900/20 border border-red-800/50 rounded-lg p-4 mb-4">
-          <p className="text-sm text-gray-300 mb-2">
-            <strong className="text-red-400">Atenção:</strong> Excluir sua conta é uma ação permanente e irreversível. 
+        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg p-4 mb-4">
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+            <strong className="text-red-600 dark:text-red-400">Atenção:</strong> Excluir sua conta é uma ação permanente e irreversível. 
             Todos os seus dados serão apagados.
           </p>
         </div>
@@ -167,15 +207,15 @@ export const ConfiguracoesPage = () => {
         {!showDeleteConfirm ? (
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="px-4 py-3 bg-red-600/20 hover:bg-red-600/30 border border-red-600 text-red-400 rounded-lg transition-colors flex items-center gap-2"
+            className="px-4 py-3 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg transition-colors flex items-center gap-2"
           >
             <Trash2 className="w-5 h-5" />
             Excluir minha conta
           </button>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm text-gray-300">
-              Digite <strong className="text-red-400">EXCLUIR</strong> para confirmar:
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Digite <strong className="text-red-600 dark:text-red-400">EXCLUIR</strong> para confirmar:
             </p>
             <div className="flex gap-3">
               <input
@@ -183,12 +223,12 @@ export const ConfiguracoesPage = () => {
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
                 placeholder="EXCLUIR"
-                className="flex-1 px-4 py-3 bg-gray-700 border border-red-600 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-red-300 dark:border-red-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
               />
               <button
                 onClick={handleExcluirConta}
                 disabled={deletingAccount || deleteConfirmText !== "EXCLUIR"}
-                className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+                className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
               >
                 {deletingAccount ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -202,7 +242,7 @@ export const ConfiguracoesPage = () => {
                   setShowDeleteConfirm(false);
                   setDeleteConfirmText("");
                 }}
-                className="px-4 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors"
+                className="px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg transition-colors"
               >
                 Cancelar
               </button>

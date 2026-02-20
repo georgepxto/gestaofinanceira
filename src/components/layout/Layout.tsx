@@ -10,7 +10,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail }) => {
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gray-100 dark:bg-[#0B0F19]">
       <Sidebar onLogout={onLogout} userName={userName} userEmail={userEmail} />
       
       {/* Main Content */}
@@ -21,7 +21,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
         transition-all duration-300
       ">
         {/* Desktop Header for Notifications */}
-        <header className="hidden md:flex justify-end items-center p-4 pb-0 bg-gray-900 z-30 relative">
+        <header className="hidden md:flex justify-end items-center p-4 pb-0 bg-gray-100 dark:bg-[#0B0F19] z-30 relative">
           <div className="flex items-center gap-4">
             <NotificationBell />
           </div>

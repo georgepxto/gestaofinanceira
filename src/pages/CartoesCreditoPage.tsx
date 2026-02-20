@@ -435,10 +435,10 @@ export const CartoesCreditoPage = () => {
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <CreditCard className="w-7 h-7 text-gray-400" />
+        <CreditCard className="w-7 h-7 text-blue-600" />
         <div>
-          <h1 className="text-2xl font-bold text-white">Cartões de Crédito</h1>
-          <p className="text-gray-400 text-sm">Gerencie seus cartões, limites e faturas</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Cartões de Crédito</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Gerencie seus cartões, limites e faturas</p>
         </div>
       </div>
 
@@ -447,56 +447,56 @@ export const CartoesCreditoPage = () => {
         {/* Botão Tudo */}
         <div
           onClick={() => setCartaoSelecionado(null)}
-          className={`flex-shrink-0 w-40 p-3 rounded-xl border cursor-pointer transition-all ${cartaoSelecionado === null ? "border-blue-500 bg-gray-700" : "border-gray-700 bg-gray-800 hover:bg-gray-700"}`}
+          className={`flex-shrink-0 w-40 p-3 rounded-xl border cursor-pointer transition-all ${cartaoSelecionado === null ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30" : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"}`}
         >
           <div className="flex items-center gap-2 mb-2">
-            <CreditCard className="w-5 h-5 text-blue-400" />
-            <span className="text-white text-sm font-medium">Tudo</span>
+            <CreditCard className="w-5 h-5 text-blue-600" />
+            <span className="text-gray-900 dark:text-gray-100 text-sm font-medium">Tudo</span>
           </div>
-          <p className="text-lg font-bold text-white">{formatCurrency(cartoes.reduce((sum, c) => sum + getFaturaCartao(c.id), 0))}</p>
-          <p className="text-xs text-gray-400">Total {format(mesVisualizacao, "MMM", { locale: ptBR })}</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatCurrency(cartoes.reduce((sum, c) => sum + getFaturaCartao(c.id), 0))}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Total {format(mesVisualizacao, "MMM", { locale: ptBR })}</p>
         </div>
         {cartoes.map(c => (
           <div
             key={c.id}
             onClick={() => setCartaoSelecionado(c)}
-            className={`flex-shrink-0 w-40 p-3 rounded-xl border cursor-pointer transition-all ${cartaoSelecionado?.id === c.id ? "border-blue-500 bg-gray-700" : "border-gray-700 bg-gray-800 hover:bg-gray-700"}`}
+            className={`flex-shrink-0 w-40 p-3 rounded-xl border cursor-pointer transition-all ${cartaoSelecionado?.id === c.id ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30" : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"}`}
             style={{ borderTopColor: c.cor || "#3B82F6", borderTopWidth: 3 }}
           >
             <div className="flex items-center gap-2 mb-2">
               <CreditCard className="w-5 h-5" style={{ color: c.cor || "#3B82F6" }} />
-              <span className="text-white text-sm font-medium truncate">{c.nome}</span>
+              <span className="text-gray-900 dark:text-gray-100 text-sm font-medium truncate">{c.nome}</span>
             </div>
-            <p className="text-lg font-bold text-white">{formatCurrency(getFaturaCartao(c.id))}</p>
-            <p className="text-xs text-gray-400">Fatura {format(mesVisualizacao, "MMM", { locale: ptBR })}</p>
+            <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatCurrency(getFaturaCartao(c.id))}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Fatura {format(mesVisualizacao, "MMM", { locale: ptBR })}</p>
           </div>
         ))}
         <div
           onClick={() => { resetFormCartao(); setShowFormCartao(true); }}
-          className="flex-shrink-0 w-40 p-3 rounded-xl border border-dashed border-gray-600 bg-gray-800/50 cursor-pointer hover:bg-gray-700 flex flex-col items-center justify-center gap-2"
+          className="flex-shrink-0 w-40 p-3 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 flex flex-col items-center justify-center gap-2"
         >
-          <Plus className="w-6 h-6 text-gray-400" />
-          <span className="text-sm text-gray-400">Novo cartão</span>
+          <Plus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+          <span className="text-sm text-gray-500 dark:text-gray-400">Novo cartão</span>
         </div>
       </div>
 
       {/* Total Consolidado - só aparece quando "Tudo" está selecionado */}
       {cartaoSelecionado === null && (
-        <div className="bg-gray-800 rounded-xl border border-gray-700 p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4">
           <div className="flex items-center gap-2 mb-3">
-            <CreditCard className="w-5 h-5 text-gray-400" />
-            <span className="text-white font-medium">Total Consolidado</span>
+            <CreditCard className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <span className="text-gray-900 dark:text-gray-100 font-medium">Total Consolidado</span>
           </div>
-          <p className="text-xs text-gray-400 mb-2">Limite Usado</p>
-          <div className="h-3 bg-gray-700 rounded-full overflow-hidden mb-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Limite Usado</p>
+          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-3">
             <div className="h-full rounded-full" style={{ width: `${Math.min(percentUsado, 100)}%`, background: `linear-gradient(90deg, #F59E0B 0%, ${percentUsado > 80 ? "#EF4444" : "#10B981"} 100%)` }} />
           </div>
           <div className="flex justify-between text-sm">
-            <div><p className="text-gray-400">Limite Total</p><p className="text-white font-semibold">{formatCurrency(consolidado.limiteTotal)}</p></div>
-            <div className="text-center"><p className="text-gray-400">Usado</p><p className="text-amber-400 font-semibold">{formatCurrency(consolidado.usado)}</p></div>
-            <div className="text-right"><p className="text-gray-400">Limite Disponível</p><p className="text-green-400 font-semibold">{formatCurrency(consolidado.disponivel)}</p></div>
+            <div><p className="text-gray-500 dark:text-gray-400">Limite Total</p><p className="text-gray-900 dark:text-gray-100 font-semibold">{formatCurrency(consolidado.limiteTotal)}</p></div>
+            <div className="text-center"><p className="text-gray-500 dark:text-gray-400">Usado</p><p className="text-amber-600 font-semibold">{formatCurrency(consolidado.usado)}</p></div>
+            <div className="text-right"><p className="text-gray-500 dark:text-gray-400">Limite Disponível</p><p className="text-emerald-600 font-semibold">{formatCurrency(consolidado.disponivel)}</p></div>
           </div>
-          <p className="text-right text-xs text-gray-400 mt-2">{percentUsado.toFixed(1)}%</p>
+          <p className="text-right text-xs text-gray-400 dark:text-gray-500 mt-2">{percentUsado.toFixed(1)}%</p>
         </div>
       )}
 
@@ -504,11 +504,11 @@ export const CartoesCreditoPage = () => {
       {cartaoSelecionado === null && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">Limites por Cartão</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Limites por Cartão</h2>
             <div className="flex items-center gap-2">
-              <button onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))} className="p-1 hover:bg-gray-700 rounded"><ChevronLeft className="w-4 h-4 text-gray-400" /></button>
-              <span className="text-white capitalize">{getMesAno()}</span>
-              <button onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))} className="p-1 hover:bg-gray-700 rounded"><ChevronRight className="w-4 h-4 text-gray-400" /></button>
+              <button onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><ChevronLeft className="w-4 h-4 text-gray-500 dark:text-gray-400" /></button>
+              <span className="text-gray-900 dark:text-gray-100 capitalize">{getMesAno()}</span>
+              <button onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><ChevronRight className="w-4 h-4 text-gray-500 dark:text-gray-400" /></button>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -518,31 +518,31 @@ export const CartoesCreditoPage = () => {
               const pct = limite > 0 ? (usado / limite) * 100 : 0;
               const fatura = getFaturaCartao(c.id);
               return (
-                <div key={c.id} className="bg-gray-800 rounded-xl border border-gray-700 p-4" style={{ borderTopColor: c.cor || "#3B82F6", borderTopWidth: 3 }}>
+                <div key={c.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4" style={{ borderTopColor: c.cor || "#3B82F6", borderTopWidth: 3 }}>
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <CreditCard className="w-5 h-5" style={{ color: c.cor || "#3B82F6" }} />
-                      <span className="text-white font-medium">{c.nome}</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">{c.nome}</span>
                     </div>
-                    <button onClick={() => setCartaoSelecionado(c)} className="text-xs text-blue-400 hover:underline">Ver detalhes</button>
+                    <button onClick={() => setCartaoSelecionado(c)} className="text-xs text-blue-600 hover:underline">Ver detalhes</button>
                   </div>
                   <div className="mb-3">
-                    <p className="text-xs text-gray-400 mb-1">Fatura {format(mesVisualizacao, "MMM", { locale: ptBR })}</p>
-                    <p className="text-2xl font-bold text-white">{formatCurrency(fatura)}</p>
-                    <p className="text-xs text-gray-400">Venc. dia {c.dia_vencimento}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Fatura {format(mesVisualizacao, "MMM", { locale: ptBR })}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(fatura)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Venc. dia {c.dia_vencimento}</p>
                   </div>
                   <div className="mb-3">
-                    <p className="text-xs text-gray-400 mb-1">Limite Usado</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Limite Usado</p>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
+                      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: pct > 80 ? "#EF4444" : c.cor || "#3B82F6" }} />
                       </div>
-                      <span className="text-xs text-gray-400">{pct.toFixed(0)}%</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{pct.toFixed(0)}%</span>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div><p className="text-gray-400 text-xs">Disponível</p><p className="text-green-400 font-medium">{formatCurrency(limite - usado)}</p></div>
-                    <div><p className="text-gray-400 text-xs">Limite</p><p className="text-white font-medium">{formatCurrency(limite)}</p></div>
+                    <div><p className="text-gray-500 dark:text-gray-400 text-xs">Disponível</p><p className="text-emerald-600 font-medium">{formatCurrency(limite - usado)}</p></div>
+                    <div><p className="text-gray-500 dark:text-gray-400 text-xs">Limite</p><p className="text-gray-900 dark:text-gray-100 font-medium">{formatCurrency(limite)}</p></div>
                   </div>
                 </div>
               );
@@ -560,21 +560,21 @@ export const CartoesCreditoPage = () => {
           const limite = cartaoSelecionado.limite || 0;
           const pct = limite > 0 ? (usado / limite) * 100 : 0;
           return (
-            <div className="bg-gray-800 rounded-xl border border-gray-700 p-4" style={{ borderTopColor: cartaoSelecionado.cor || "#3B82F6", borderTopWidth: 3 }}>
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4" style={{ borderTopColor: cartaoSelecionado.cor || "#3B82F6", borderTopWidth: 3 }}>
               <div className="flex items-center gap-2 mb-3">
                 <CreditCard className="w-5 h-5" style={{ color: cartaoSelecionado.cor || "#3B82F6" }} />
-                <span className="text-white font-medium">{cartaoSelecionado.nome}</span>
+                <span className="text-gray-900 dark:text-gray-100 font-medium">{cartaoSelecionado.nome}</span>
               </div>
-              <p className="text-xs text-gray-400 mb-2">Limite Usado</p>
-              <div className="h-3 bg-gray-700 rounded-full overflow-hidden mb-3">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Limite Usado</p>
+              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-3">
                 <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, background: `linear-gradient(90deg, ${cartaoSelecionado.cor || "#3B82F6"} 0%, ${pct > 80 ? "#EF4444" : "#10B981"} 100%)` }} />
               </div>
               <div className="flex justify-between text-sm">
-                <div><p className="text-gray-400">Limite Total</p><p className="text-white font-semibold">{formatCurrency(limite)}</p></div>
-                <div className="text-center"><p className="text-gray-400">Usado</p><p className="text-amber-400 font-semibold">{formatCurrency(usado)}</p></div>
-                <div className="text-right"><p className="text-gray-400">Disponível</p><p className="text-green-400 font-semibold">{formatCurrency(limite - usado)}</p></div>
+                <div><p className="text-gray-500 dark:text-gray-400">Limite Total</p><p className="text-gray-900 dark:text-gray-100 font-semibold">{formatCurrency(limite)}</p></div>
+                <div className="text-center"><p className="text-gray-500 dark:text-gray-400">Usado</p><p className="text-amber-600 font-semibold">{formatCurrency(usado)}</p></div>
+                <div className="text-right"><p className="text-gray-500 dark:text-gray-400">Disponível</p><p className="text-emerald-600 font-semibold">{formatCurrency(limite - usado)}</p></div>
               </div>
-              <p className="text-right text-xs text-gray-400 mt-2">{pct.toFixed(1)}%</p>
+              <p className="text-right text-xs text-gray-400 dark:text-gray-500 mt-2">{pct.toFixed(1)}%</p>
             </div>
           );
         })()}
@@ -582,69 +582,69 @@ export const CartoesCreditoPage = () => {
           {/* Coluna esquerda */}
           <div className="lg:col-span-2 space-y-4">
             {/* Navegação de mês */}
-            <div className="bg-gray-800 rounded-xl border border-gray-700 p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-gray-400" />
-                  <span className="text-white font-medium capitalize">{getMesAno()}</span>
+                  <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                  <span className="text-gray-900 dark:text-gray-100 font-medium capitalize">{getMesAno()}</span>
                   <div className="flex gap-1">
-                    <button onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))} className="p-1 hover:bg-gray-700 rounded"><ChevronLeft className="w-4 h-4 text-gray-400" /></button>
-                    <button onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))} className="p-1 hover:bg-gray-700 rounded"><ChevronRight className="w-4 h-4 text-gray-400" /></button>
+                    <button onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><ChevronLeft className="w-4 h-4 text-gray-500 dark:text-gray-400" /></button>
+                    <button onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><ChevronRight className="w-4 h-4 text-gray-500 dark:text-gray-400" /></button>
                   </div>
                 </div>
-                <p className="text-xs text-gray-400">Melhor dia para compra: {cartaoSelecionado.melhor_dia_compra || "-"}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Melhor dia para compra: {cartaoSelecionado.melhor_dia_compra || "-"}</p>
               </div>
               <div className="text-center py-4">
-                <p className="text-xs text-gray-400 mb-1">Fatura ({format(mesVisualizacao, "MMMM", { locale: ptBR })})</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Fatura ({format(mesVisualizacao, "MMMM", { locale: ptBR })})</p>
                 <div className="flex items-center justify-center gap-2">
-                  <p className="text-3xl font-bold text-white">{formatCurrency(getFaturaCartao(cartaoSelecionado.id))}</p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(getFaturaCartao(cartaoSelecionado.id))}</p>
                   {faturaQuitada(cartaoSelecionado.id) && (
-                    <span className="text-xs bg-green-600/30 text-green-300 px-2 py-1 rounded font-semibold">✓ QUITADO</span>
+                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded font-semibold">✓ QUITADO</span>
                   )}
                 </div>
-                <p className="text-xs text-gray-400 mt-1">DIA DE VENCIMENTO {cartaoSelecionado.dia_vencimento}/{format(mesVisualizacao, "MM")}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">DIA DE VENCIMENTO {cartaoSelecionado.dia_vencimento}/{format(mesVisualizacao, "MM")}</p>
                 {faturaQuitada(cartaoSelecionado.id) && (
-                  <button onClick={handleDesfazerPagamento} className="mt-2 text-xs text-gray-400 hover:text-red-400 underline">Desfazer pagamento</button>
+                  <button onClick={handleDesfazerPagamento} className="mt-2 text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 underline">Desfazer pagamento</button>
                 )}
               </div>
             </div>
 
             {/* Transações */}
-            <div className="bg-gray-800 rounded-xl border border-gray-700 p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-white font-medium">Transações do Cartão</span>
-                <span className="text-xs text-gray-400">{getTodasTransacoesDoMes(cartaoSelecionado.id).length} itens</span>
+                <span className="text-gray-900 dark:text-gray-100 font-medium">Transações do Cartão</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{getTodasTransacoesDoMes(cartaoSelecionado.id).length} itens</span>
               </div>
               {cartaoSelecionado.divida_inicial && cartaoSelecionado.divida_inicial > 0 && (
-                <div className="flex items-center justify-between p-2 border-b border-gray-700 text-sm">
-                  <div className="flex items-center gap-2"><span className="text-gray-400">⏱</span><span className="text-gray-300">Saldo Anterior / Dívida Inicial</span></div>
-                  <span className="text-white font-medium">{formatCurrency(cartaoSelecionado.divida_inicial)}</span>
+                <div className="flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-800 text-sm">
+                  <div className="flex items-center gap-2"><span className="text-gray-400 dark:text-gray-500">⏱</span><span className="text-gray-600 dark:text-gray-400">Saldo Anterior / Dívida Inicial</span></div>
+                  <span className="text-gray-900 dark:text-gray-100 font-medium">{formatCurrency(cartaoSelecionado.divida_inicial)}</span>
                 </div>
               )}
               {getTodasTransacoesDoMes(cartaoSelecionado.id).length === 0 ? (
-                <p className="text-gray-400 text-center py-4">Nenhuma transação neste mês</p>
+                <p className="text-gray-500 dark:text-gray-400 text-center py-4">Nenhuma transação neste mês</p>
               ) : (
                 <div className="space-y-1 max-h-64 overflow-y-auto">
                   {getTodasTransacoesDoMes(cartaoSelecionado.id).map((t: any) => (
-                    <div key={t.id} className={`flex items-center justify-between p-2 hover:bg-gray-700/50 rounded ${t.pago ? "opacity-60" : ""}`}>
+                    <div key={t.id} className={`flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded ${t.pago ? "opacity-60" : ""}`}>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className={`text-sm ${t.pago ? "text-gray-400 line-through" : "text-white"}`}>{t.descricao}</p>
-                          {t.pago && <span className="text-xs bg-green-600/30 text-green-300 px-1.5 py-0.5 rounded">Pago</span>}
-                          {t.pagoParcial && <span className="text-xs bg-yellow-600/30 text-yellow-300 px-1.5 py-0.5 rounded">Pago: {formatCurrency(t.valorPago || 0)}</span>}
-                          {t.origem === "gasto" && !t.pago && <span className="text-xs bg-purple-600/30 text-purple-300 px-1.5 py-0.5 rounded">Gasto</span>}
-                          {t.origem === "gasto" && isGastoFixo(t.id) && <span className="text-xs bg-amber-600/30 text-amber-300 px-1.5 py-0.5 rounded">Fixo</span>}
-                          {t.origem === "compartilhado" && !t.pago && !t.pagoParcial && <span className="text-xs bg-blue-600/30 text-blue-300 px-1.5 py-0.5 rounded">Emprestado</span>}
+                          <p className={`text-sm ${t.pago ? "text-gray-400 dark:text-gray-500 line-through" : "text-gray-900 dark:text-gray-100"}`}>{t.descricao}</p>
+                          {t.pago && <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">Pago</span>}
+                          {t.pagoParcial && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Pago: {formatCurrency(t.valorPago || 0)}</span>}
+                          {t.origem === "gasto" && !t.pago && <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Gasto</span>}
+                          {t.origem === "gasto" && isGastoFixo(t.id) && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Fixo</span>}
+                          {t.origem === "compartilhado" && !t.pago && !t.pagoParcial && <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Emprestado</span>}
                         </div>
-                        <p className="text-xs text-gray-400">{t.categoria} • {format(new Date(t.data + "T00:00:00"), "dd/MM")}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{t.categoria} • {format(new Date(t.data + "T00:00:00"), "dd/MM")}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         {t.pagoParcial ? (
-                          <span className="font-medium text-yellow-400">Falta: {formatCurrency(t.valorRestante || 0)}</span>
+                          <span className="font-medium text-amber-600">Falta: {formatCurrency(t.valorRestante || 0)}</span>
                         ) : (
-                          <span className={`font-medium ${t.pago ? "text-gray-400 line-through" : "text-white"}`}>{formatCurrency(t.valor)}</span>
+                          <span className={`font-medium ${t.pago ? "text-gray-400 dark:text-gray-500 line-through" : "text-gray-900 dark:text-gray-100"}`}>{formatCurrency(t.valor)}</span>
                         )}
-                        {t.origem === "transacao" && <button onClick={() => handleDeleteTransacao(t.id)} className="p-1 hover:bg-gray-600 rounded"><Trash2 className="w-3 h-3 text-gray-400" /></button>}
+                        {t.origem === "transacao" && <button onClick={() => handleDeleteTransacao(t.id)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><Trash2 className="w-3 h-3 text-gray-400 dark:text-gray-500" /></button>}
                       </div>
                     </div>
                   ))}
@@ -654,12 +654,12 @@ export const CartoesCreditoPage = () => {
           </div>
 
           {/* Coluna direita - Uso do limite */}
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 h-fit">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4 h-fit">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-white font-medium">Uso do Limite</span>
+              <span className="text-gray-900 dark:text-gray-100 font-medium">Uso do Limite</span>
               <div className="flex gap-1">
-                <button onClick={() => handleEditCartao(cartaoSelecionado)} className="p-1 hover:bg-gray-700 rounded"><Edit2 className="w-4 h-4 text-gray-400" /></button>
-                <button onClick={() => handleDeleteCartao(cartaoSelecionado.id, cartaoSelecionado.nome)} className="p-1 hover:bg-gray-700 rounded"><Trash2 className="w-4 h-4 text-gray-400 hover:text-red-400" /></button>
+                <button onClick={() => handleEditCartao(cartaoSelecionado)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><Edit2 className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
+                <button onClick={() => handleDeleteCartao(cartaoSelecionado.id, cartaoSelecionado.nome)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><Trash2 className="w-4 h-4 text-gray-400 dark:text-gray-500 hover:text-red-500" /></button>
               </div>
             </div>
             {(() => {
@@ -668,29 +668,29 @@ export const CartoesCreditoPage = () => {
               const pct = limite > 0 ? (usado / limite) * 100 : 0;
               return (
                 <>
-                  <p className="text-xs text-gray-400 mb-1">Limite Usado</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Limite Usado</p>
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(pct, 100)}%` }} />
                     </div>
-                    <span className="text-xs text-gray-400">{pct.toFixed(1)}%</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{pct.toFixed(1)}%</span>
                   </div>
                   <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div className="bg-gray-700/50 p-3 rounded-lg">
-                      <p className="text-xs text-gray-400">Limite Disponível</p>
-                      <p className="text-lg font-bold text-red-400">{formatCurrency(limite - usado)}</p>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Limite Disponível</p>
+                      <p className="text-lg font-bold text-red-500">{formatCurrency(limite - usado)}</p>
                     </div>
-                    <div className="bg-gray-700/50 p-3 rounded-lg">
-                      <p className="text-xs text-gray-400">Limite Total</p>
-                      <p className="text-lg font-bold text-white">{formatCurrency(limite)}</p>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Limite Total</p>
+                      <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatCurrency(limite)}</p>
                     </div>
                   </div>
                   <div className="space-y-2 text-sm mb-4">
-                    <div className="flex justify-between"><span className="text-gray-400">⏱ Dia de Vencimento</span><span className="text-white">{cartaoSelecionado.dia_vencimento}</span></div>
-                    <div className="flex justify-between"><span className="text-gray-400">📅 Melhor dia para compra</span><span className="text-white">{cartaoSelecionado.melhor_dia_compra || "-"}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">⏱ Dia de Vencimento</span><span className="text-gray-900 dark:text-gray-100">{cartaoSelecionado.dia_vencimento}</span></div>
+                    <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">📅 Melhor dia para compra</span><span className="text-gray-900 dark:text-gray-100">{cartaoSelecionado.melhor_dia_compra || "-"}</span></div>
                   </div>
                   {faturaQuitada(cartaoSelecionado.id) ? (
-                    <button disabled className="w-full py-3 bg-gray-600 text-gray-400 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">
+                    <button disabled className="w-full py-3 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">
                       <Check className="w-4 h-4" /> Fatura Quitada
                     </button>
                   ) : (
@@ -708,23 +708,23 @@ export const CartoesCreditoPage = () => {
 
       {/* Modal Novo/Editar Cartão */}
       {showFormCartao && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-xl w-full max-w-md p-5 border border-gray-700">
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl w-full max-w-md p-5 border border-gray-200 dark:border-gray-800 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">{editandoCartao ? "Editar Cartão" : "Novo cartão de crédito"}</h3>
-              <button onClick={resetFormCartao} className="p-1 hover:bg-gray-700 rounded"><X className="w-5 h-5 text-gray-400" /></button>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{editandoCartao ? "Editar Cartão" : "Novo cartão de crédito"}</h3>
+              <button onClick={resetFormCartao} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
             </div>
             <form onSubmit={handleSubmitCartao} className="space-y-4">
-              <div><label className="block text-sm text-gray-300 mb-1">Nome</label><input type="text" value={formCartao.nome} onChange={e => setFormCartao({...formCartao, nome: e.target.value})} placeholder="Ex: Nubank, Inter..." className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required /></div>
-              <div><label className="block text-sm text-gray-300 mb-1">Limite</label><input type="text" value={formCartao.limite} onChange={e => setFormCartao({...formCartao, limite: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required /></div>
+              <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Nome</label><input type="text" value={formCartao.nome} onChange={e => setFormCartao({...formCartao, nome: e.target.value})} placeholder="Ex: Nubank, Inter..." className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100" required /></div>
+              <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Limite</label><input type="text" value={formCartao.limite} onChange={e => setFormCartao({...formCartao, limite: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100" required /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-sm text-gray-300 mb-1">Dia de Vencimento</label><input type="number" min="1" max="31" value={formCartao.dia_vencimento} onChange={e => setFormCartao({...formCartao, dia_vencimento: e.target.value})} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" required /></div>
-                <div><label className="block text-sm text-gray-300 mb-1">Melhor dia compra</label><input type="number" min="1" max="31" value={formCartao.melhor_dia_compra} onChange={e => setFormCartao({...formCartao, melhor_dia_compra: e.target.value})} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" /></div>
+                <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Dia de Vencimento</label><input type="number" min="1" max="31" value={formCartao.dia_vencimento} onChange={e => setFormCartao({...formCartao, dia_vencimento: e.target.value})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100" required /></div>
+                <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Melhor dia compra</label><input type="number" min="1" max="31" value={formCartao.melhor_dia_compra} onChange={e => setFormCartao({...formCartao, melhor_dia_compra: e.target.value})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100" /></div>
               </div>
-              <div><label className="block text-sm text-gray-300 mb-1">Dívida Inicial (se houver)</label><input type="text" value={formCartao.divida_inicial} onChange={e => setFormCartao({...formCartao, divida_inicial: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" /></div>
-              <div><label className="block text-sm text-gray-300 mb-1">Cor</label><div className="flex gap-2">{CORES_CARTAO.map(cor => (<button key={cor} type="button" onClick={() => setFormCartao({...formCartao, cor})} className={`w-8 h-8 rounded-lg ${formCartao.cor === cor ? "ring-2 ring-white" : ""}`} style={{ backgroundColor: cor }} />))}</div></div>
+              <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Dívida Inicial (se houver)</label><input type="text" value={formCartao.divida_inicial} onChange={e => setFormCartao({...formCartao, divida_inicial: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100" /></div>
+              <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Cor</label><div className="flex gap-2">{CORES_CARTAO.map(cor => (<button key={cor} type="button" onClick={() => setFormCartao({...formCartao, cor})} className={`w-8 h-8 rounded-lg ${formCartao.cor === cor ? "ring-2 ring-blue-500" : ""}`} style={{ backgroundColor: cor }} />))}</div></div>
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={resetFormCartao} className="flex-1 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg">Cancelar</button>
+                <button type="button" onClick={resetFormCartao} className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg">Cancelar</button>
                 <button type="submit" disabled={saving} className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}{editandoCartao ? "Salvar" : "Criar"}</button>
               </div>
             </form>
@@ -734,17 +734,17 @@ export const CartoesCreditoPage = () => {
 
       {/* Modal Pagar Fatura */}
       {showPagarFatura && cartaoSelecionado && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-xl w-full max-w-md p-5 border border-gray-700">
-            <h3 className="text-lg font-semibold text-white mb-2">Pagar Fatura</h3>
-            <p className="text-sm text-gray-400 mb-4">Selecione a conta de onde sairá o dinheiro para pagar esta fatura de <strong className="text-blue-400">{formatCurrency(getFaturaCartao(cartaoSelecionado.id))}</strong>.</p>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl w-full max-w-md p-5 border border-gray-200 dark:border-gray-800 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Pagar Fatura</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Selecione a conta de onde sairá o dinheiro para pagar esta fatura de <strong className="text-blue-600">{formatCurrency(getFaturaCartao(cartaoSelecionado.id))}</strong>.</p>
             <div className="space-y-4">
-              <div><label className="block text-sm text-gray-300 mb-1">Conta de Origem</label><select value={contaPagamento} onChange={e => setContaPagamento(e.target.value)} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white"><option value="">Selecione...</option>{contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>
-              <div><label className="block text-sm text-gray-300 mb-1">Valor</label><input type="text" value={valorPagamento} onChange={e => setValorPagamento(formatCurrencyInput(e.target.value))} className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white" /><p className="text-xs text-gray-400 mt-1">Insira o valor pago (deixe como está para pagamento total)</p></div>
+              <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Conta de Origem</label><select value={contaPagamento} onChange={e => setContaPagamento(e.target.value)} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100"><option value="">Selecione...</option>{contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>
+              <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Valor</label><input type="text" value={valorPagamento} onChange={e => setValorPagamento(formatCurrencyInput(e.target.value))} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100" /><p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Insira o valor pago (deixe como está para pagamento total)</p></div>
             </div>
             <div className="flex flex-col gap-2 mt-4">
               <button onClick={handlePagarFatura} disabled={saving} className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}Confirmar Pagamento</button>
-              <button onClick={() => setShowPagarFatura(false)} className="w-full py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg">Cancelar</button>
+              <button onClick={() => setShowPagarFatura(false)} className="w-full py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg">Cancelar</button>
             </div>
           </div>
         </div>

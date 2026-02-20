@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recha
 import { useAppContext } from "../context";
 import { formatCurrency, formatMonthYear } from "../utils/calculations";
 
-const COLORS = ["#3b82f6", "#f97316"]; // blue, orange
+const COLORS = ["#3b82f6", "#6366f1"]; // blue, indigo
 
 export const PessoasPage = () => {
   const {
@@ -79,15 +79,15 @@ export const PessoasPage = () => {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Users className="w-7 h-7 text-gray-400" />
+          <Users className="w-7 h-7 text-blue-600" />
           <div>
-            <h1 className="text-2xl font-bold text-white">Pessoas</h1>
-            <p className="text-gray-400 text-sm">Gerencie quem compartilha gastos com você</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Pessoas</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Gerencie quem compartilha gastos com você</p>
           </div>
         </div>
         <button
           onClick={() => setShowAddForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-lg"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
         >
           <Plus className="w-5 h-5" />
           <span className="hidden sm:inline">Nova Pessoa</span>
@@ -95,47 +95,47 @@ export const PessoasPage = () => {
       </div>
 
       {/* Seletor de Mês */}
-      <div className="bg-gray-800 rounded-xl shadow-lg p-4 border border-gray-700">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navegarMes("anterior")}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             aria-label="Mês anterior"
           >
-            <ChevronLeft className="w-6 h-6 text-gray-300" />
+            <ChevronLeft className="w-6 h-6 text-gray-500 dark:text-gray-400" />
           </button>
           <div className="text-center">
-            <h2 className="text-lg font-semibold text-white capitalize">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 capitalize">
               {formatMonthYear(mesVisualizacao)}
             </h2>
             <button
               onClick={irParaHoje}
-              className="text-sm text-blue-400 hover:text-blue-300 mt-1"
+              className="text-sm text-blue-600 hover:text-blue-700 mt-1"
             >
               Ir para hoje
             </button>
           </div>
           <button
             onClick={() => navegarMes("proximo")}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             aria-label="Próximo mês"
           >
-            <ChevronRight className="w-6 h-6 text-gray-300" />
+            <ChevronRight className="w-6 h-6 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
       </div>
 
       {/* Add Person Form */}
       {showAddForm && (
-        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-          <h3 className="text-lg font-semibold text-white mb-4">Adicionar Pessoa</h3>
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Adicionar Pessoa</h3>
           <div className="space-y-3">
             <input
               type="text"
               value={novaPessoa}
               onChange={(e) => setNovaPessoa(e.target.value)}
               placeholder="Nome da pessoa"
-              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               autoFocus
             />
@@ -143,14 +143,14 @@ export const PessoasPage = () => {
               <button
                 onClick={handleAdd}
                 disabled={adding || !novaPessoa.trim()}
-                className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 {adding ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
                 Adicionar
               </button>
               <button
                 onClick={() => { setShowAddForm(false); setNovaPessoa(""); }}
-                className="px-4 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors"
+                className="px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg transition-colors"
               >
                 Cancelar
               </button>
@@ -162,9 +162,9 @@ export const PessoasPage = () => {
       {/* People List with Charts */}
       <div className="space-y-3">
         {pessoas.length === 0 ? (
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-8 text-center">
-            <Users className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400">Nenhuma pessoa cadastrada</p>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-8 text-center shadow-sm">
+            <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 dark:text-gray-400">Nenhuma pessoa cadastrada</p>
           </div>
         ) : (
           pessoas.map((pessoa) => {
@@ -178,22 +178,22 @@ export const PessoasPage = () => {
             return (
               <div
                 key={pessoa}
-                className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden"
+                className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm"
               >
                 {/* Header clicável */}
                 <div
                   onClick={() => toggleExpand(pessoa)}
-                  className="w-full p-4 flex items-center justify-between hover:bg-gray-700/30 transition-colors cursor-pointer"
+                  className="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center">
-                      <span className="text-gray-300 font-bold text-xl">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                      <span className="text-blue-600 font-bold text-xl">
                         {pessoa.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="text-left">
-                      <h3 className="text-white font-semibold text-lg">{pessoa}</h3>
-                      <p className="text-gray-500 text-sm">
+                      <h3 className="text-gray-900 dark:text-gray-100 font-semibold text-lg">{pessoa}</h3>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">
                         {formatCurrency(stats.gastosMesAtual + stats.totalDividas)} total
                       </p>
                     </div>
@@ -202,29 +202,29 @@ export const PessoasPage = () => {
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDelete(pessoa); }}
                       disabled={pessoas.length <= 1}
-                      className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                      className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
                     {isExpanded ? (
-                      <ChevronUp className="w-5 h-5 text-gray-400" />
+                      <ChevronUp className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                     ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                      <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                     )}
                   </div>
                 </div>
 
                 {/* Conteúdo expandido com gráfico */}
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-gray-700">
+                  <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-800">
                     <div className="grid grid-cols-2 gap-3 mt-4 mb-4">
-                      <div className="bg-gray-700/50 rounded-lg p-3">
-                        <p className="text-blue-400 text-xs mb-1">Gastos do Mês</p>
-                        <p className="text-white font-semibold">{formatCurrency(stats.gastosMesAtual)}</p>
+                      <div className="bg-blue-50 rounded-lg p-3">
+                        <p className="text-blue-600 text-xs mb-1">Gastos do Mês</p>
+                        <p className="text-gray-900 dark:text-gray-100 font-semibold">{formatCurrency(stats.gastosMesAtual)}</p>
                       </div>
-                      <div className="bg-gray-700/50 rounded-lg p-3">
-                        <p className="text-orange-400 text-xs mb-1">Dívidas Pendentes</p>
-                        <p className="text-white font-semibold">{formatCurrency(stats.totalDividas)}</p>
+                      <div className="bg-orange-50 rounded-lg p-3">
+                        <p className="text-orange-600 text-xs mb-1">Dívidas Pendentes</p>
+                        <p className="text-gray-900 dark:text-gray-100 font-semibold">{formatCurrency(stats.totalDividas)}</p>
                       </div>
                     </div>
 
@@ -247,18 +247,18 @@ export const PessoasPage = () => {
                             </Pie>
                             <Tooltip
                               formatter={(value) => formatCurrency(Number(value))}
-                              contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #374151", borderRadius: "8px" }}
-                              itemStyle={{ color: "#fff" }}
-                              labelStyle={{ color: "#9ca3af" }}
+                              contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "8px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+                              itemStyle={{ color: "#374151" }}
+                              labelStyle={{ color: "#6b7280" }}
                             />
                             <Legend
-                              formatter={(value) => <span className="text-gray-300 text-sm">{value}</span>}
+                              formatter={(value) => <span className="text-gray-600 dark:text-gray-400 text-sm">{value}</span>}
                             />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
                     ) : (
-                      <p className="text-gray-500 text-center py-4">Sem dados para exibir</p>
+                      <p className="text-gray-400 dark:text-gray-500 text-center py-4">Sem dados para exibir</p>
                     )}
                   </div>
                 )}
@@ -270,17 +270,17 @@ export const PessoasPage = () => {
 
       {/* Gráfico Total */}
       {pessoas.length > 0 && (totalGastosMes > 0 || totalDividasGeral > 0) && (
-        <div className="bg-gray-800 rounded-xl border border-gray-700 p-4">
-          <h3 className="text-lg font-semibold text-white mb-4 text-center">Resumo Total</h3>
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 text-center">Resumo Total</h3>
           
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-blue-600/20 rounded-lg p-3 text-center">
-              <p className="text-blue-400 text-xs mb-1">Total Gastos do Mês</p>
-              <p className="text-white font-bold text-lg">{formatCurrency(totalGastosMes)}</p>
+            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 text-center">
+              <p className="text-blue-600 dark:text-blue-400 text-xs mb-1">Total Gastos do Mês</p>
+              <p className="text-gray-900 dark:text-gray-100 font-bold text-lg">{formatCurrency(totalGastosMes)}</p>
             </div>
-            <div className="bg-orange-600/20 rounded-lg p-3 text-center">
-              <p className="text-orange-400 text-xs mb-1">Total Dívidas</p>
-              <p className="text-white font-bold text-lg">{formatCurrency(totalDividasGeral)}</p>
+            <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-3 text-center">
+              <p className="text-orange-600 dark:text-orange-400 text-xs mb-1">Total Dívidas</p>
+              <p className="text-gray-900 dark:text-gray-100 font-bold text-lg">{formatCurrency(totalDividasGeral)}</p>
             </div>
           </div>
 
@@ -303,21 +303,21 @@ export const PessoasPage = () => {
                   </Pie>
                   <Tooltip
                     formatter={(value) => formatCurrency(Number(value))}
-                    contentStyle={{ backgroundColor: "#1f2937", border: "1px solid #374151", borderRadius: "8px" }}
-                    itemStyle={{ color: "#fff" }}
-                    labelStyle={{ color: "#9ca3af" }}
+                    contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "8px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+                    itemStyle={{ color: "#374151" }}
+                    labelStyle={{ color: "#6b7280" }}
                   />
                   <Legend
-                    formatter={(value) => <span className="text-gray-300 text-sm">{value}</span>}
+                    formatter={(value) => <span className="text-gray-600 dark:text-gray-400 text-sm">{value}</span>}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           )}
 
-          <div className="text-center mt-4 p-3 bg-gray-700/50 rounded-lg">
-            <p className="text-gray-400 text-sm">Total Geral</p>
-            <p className="text-white font-bold text-2xl">
+          <div className="text-center mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Total Geral</p>
+            <p className="text-gray-900 dark:text-gray-100 font-bold text-2xl">
               {formatCurrency(totalGastosMes + totalDividasGeral)}
             </p>
           </div>

@@ -29,10 +29,10 @@ export const EuPage = () => {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <User className="w-7 h-7 text-gray-400" />
+          <User className="w-7 h-7 text-emerald-600" />
           <div>
-            <h1 className="text-2xl font-bold text-white">Meus Gastos</h1>
-            <p className="text-gray-400 text-sm">Despesas pessoais e gastos fixos</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Meus Gastos</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Despesas pessoais e gastos fixos</p>
           </div>
         </div>
         <button

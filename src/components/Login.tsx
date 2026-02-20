@@ -121,17 +121,17 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-100 dark:bg-[#0B0F19] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-xl mb-4">
             <DollarSign className="w-7 h-7 text-white stroke-[2.5]" />
           </div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             Reppago
           </h1>
-          <p className="text-gray-400 mt-2">
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
             {viewMode === "login" && "Controle de finanças"}
             {viewMode === "signup" && "Crie sua conta"}
             {viewMode === "forgot" && "Recuperar senha"}
@@ -139,7 +139,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
         </div>
 
         {/* Card de Login */}
-        <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 shadow-xl">
           <form onSubmit={handleSubmit} className="space-y-4">
             
             {/* Voltar (apenas forgot) */}
@@ -147,7 +147,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
               <button
                 type="button"
                 onClick={() => switchView("login")}
-                className="flex items-center gap-1 text-gray-400 hover:text-white text-sm mb-2 transition-colors"
+                className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-sm mb-2 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Voltar ao login
@@ -157,16 +157,16 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
             {/* Nome (apenas signup) */}
             {viewMode === "signup" && (
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                   Nome
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <input
                     type="text"
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Seu nome"
                   />
                 </div>
@@ -175,16 +175,16 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="seu@email.com"
                 />
               </div>
@@ -193,22 +193,22 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
             {/* Senha */}
             {viewMode !== "forgot" && (
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                   Senha
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-12 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-12 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -223,16 +223,16 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
             {/* Confirmar Senha (apenas signup) */}
             {viewMode === "signup" && (
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                   Confirmar Senha
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <input
                     type={showPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="••••••••"
                   />
                 </div>
@@ -245,7 +245,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                 <button
                   type="button"
                   onClick={() => switchView("forgot")}
-                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                  className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
                 >
                   Esqueceu a senha?
                 </button>
@@ -254,14 +254,14 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
 
             {/* Erro */}
             {error && (
-              <div className="bg-red-900/50 border border-red-700 rounded-xl p-3 text-red-300 text-sm">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm">
                 {error}
               </div>
             )}
 
             {/* Sucesso */}
             {success && (
-              <div className="bg-green-900/50 border border-green-700 rounded-xl p-3 text-green-300 text-sm">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-emerald-600 text-sm">
                 {success}
               </div>
             )}
@@ -290,11 +290,11 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
           {/* Alternar entre Login e Signup */}
           {viewMode !== "forgot" && (
             <div className="mt-6 text-center">
-              <p className="text-gray-400">
+              <p className="text-gray-500 dark:text-gray-400">
                 {viewMode === "login" ? "Não tem uma conta?" : "Já tem uma conta?"}
                 <button
                   onClick={() => switchView(viewMode === "login" ? "signup" : "login")}
-                  className="ml-2 text-blue-400 hover:text-blue-300 font-medium"
+                  className="ml-2 text-blue-600 hover:text-blue-700 font-medium"
                 >
                   {viewMode === "login" ? "Criar conta" : "Fazer login"}
                 </button>
@@ -304,7 +304,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-gray-500 text-sm mt-6">
+        <p className="text-center text-gray-500 dark:text-gray-400 text-sm mt-6">
           Gerencie suas finanças de forma simples
         </p>
       </div>

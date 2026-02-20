@@ -14,8 +14,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   if (!modal.show) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-800 rounded-2xl w-full max-w-sm border border-gray-700 overflow-hidden">
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
         <div
           className={`p-4 ${
             modal.tipo === "sucesso" ? "bg-green-600" : "bg-blue-600"
@@ -23,17 +23,17 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
         >
           <div className="flex items-center gap-3">
             {modal.tipo === "sucesso" ? (
-              <CheckCircle className="w-8 h-8 text-white" />
+              <CheckCircle className="w-8 h-8 text-gray-900 dark:text-gray-100" />
             ) : (
-              <AlertCircle className="w-8 h-8 text-white" />
+              <AlertCircle className="w-8 h-8 text-gray-900 dark:text-gray-100" />
             )}
-            <h2 className="text-lg font-semibold text-white">{modal.titulo}</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{modal.titulo}</h2>
           </div>
         </div>
         <div className="p-4">
-          <p className="text-gray-300 whitespace-pre-line">{modal.mensagem}</p>
+          <p className="text-gray-600 dark:text-gray-400 whitespace-pre-line">{modal.mensagem}</p>
         </div>
-        <div className="p-4 border-t border-gray-700">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
           <button
             onClick={onClose}
             className={`w-full py-3 rounded-lg font-medium transition-colors ${

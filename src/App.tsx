@@ -19,6 +19,7 @@ import {
   PagamentoModal,
 } from "./components/modals";
 import { AppProvider, useAppContext } from "./context";
+import { ThemeProvider } from "./hooks/useTheme";
 import { useNotifications } from "./hooks/useNotifications";
 import "./index.css";
 
@@ -359,9 +360,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <ThemeProvider>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </ThemeProvider>
   );
 }
 

@@ -65,21 +65,21 @@ export const MetasPage = () => {
     <div className="p-4 md:p-6 space-y-6">
       {/* Page Header */}
       <div className="flex items-center gap-3">
-        <Target className="w-7 h-7 text-purple-400" />
+        <Target className="w-7 h-7 text-purple-600" />
         <div>
-          <h1 className="text-2xl font-bold text-white">Metas de Gasto</h1>
-          <p className="text-gray-400 text-sm">Defina tetos mensais por categoria</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Metas de Gasto</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Defina tetos mensais por categoria</p>
         </div>
       </div>
 
       {/* Adicionar nova meta */}
-      <section className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-        <h2 className="text-lg font-semibold text-white mb-4">Nova Meta</h2>
+      <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Nova Meta</h2>
         <div className="flex flex-col sm:flex-row gap-3">
           <select
             value={novaMeta.categoria}
             onChange={(e) => setNovaMeta({ ...novaMeta, categoria: e.target.value })}
-            className="flex-1 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none appearance-none"
+            className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none appearance-none"
           >
             <option value="" disabled>Selecione uma categoria</option>
             {CATEGORIAS
@@ -90,60 +90,60 @@ export const MetasPage = () => {
             }
           </select>
           <div className="relative w-full sm:w-44">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">R$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm">R$</span>
             <input
               type="number"
               value={novaMeta.limite}
               onChange={(e) => setNovaMeta({ ...novaMeta, limite: e.target.value })}
               placeholder="0,00"
-              className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
             />
           </div>
           <button
             onClick={handleAddMeta}
             disabled={savingMeta || !novaMeta.categoria.trim() || !novaMeta.limite}
-            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
+            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
           >
             {savingMeta ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
             Salvar
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
           Selecione a categoria e defina o limite mensal. As barras de progresso aparecerão no Dashboard.
         </p>
       </section>
 
       {/* Lista de metas */}
-      <section className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-        <h2 className="text-lg font-semibold text-white mb-4">Suas Metas</h2>
+      <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Suas Metas</h2>
         {metas.length > 0 ? (
           <div className="space-y-3">
             {metas.map((meta) => (
-              <div key={meta.id} className="flex items-center justify-between bg-gray-900/50 rounded-lg p-4 border border-gray-700/50 hover:border-gray-600 transition-colors">
+              <div key={meta.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-100 dark:border-gray-800 hover:border-gray-300 dark:border-gray-700 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-600/20 rounded-lg flex items-center justify-center">
-                    <Target className="w-5 h-5 text-purple-400" />
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Target className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-white capitalize">{meta.categoria}</span>
-                    <p className="text-gray-400 text-xs">Limite: {formatCurrency(meta.limite)} / mês</p>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 capitalize">{meta.categoria}</span>
+                    <p className="text-gray-400 dark:text-gray-500 text-xs">Limite: {formatCurrency(meta.limite)} / mês</p>
                   </div>
                 </div>
                 <button
                   onClick={() => handleDeleteMeta(meta.id)}
-                  className="p-2 hover:bg-red-600/20 rounded-lg transition-colors group"
+                  className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
                   title="Remover meta"
                 >
-                  <X className="w-5 h-5 text-gray-500 group-hover:text-red-400 transition-colors" />
+                  <X className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-red-500 transition-colors" />
                 </button>
               </div>
             ))}
           </div>
         ) : (
           <div className="text-center py-12">
-            <Target className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-500">Nenhuma meta definida ainda.</p>
-            <p className="text-gray-600 text-sm mt-1">Adicione uma meta acima para começar a monitorar seus gastos.</p>
+            <Target className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 dark:text-gray-400">Nenhuma meta definida ainda.</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Adicione uma meta acima para começar a monitorar seus gastos.</p>
           </div>
         )}
       </section>
