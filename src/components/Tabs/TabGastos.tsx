@@ -163,12 +163,12 @@ export function TabGastos({
                     <User className="w-4 h-4 flex-shrink-0" />
                     <span className="truncate">{resumo.pessoa}</span>
                     {estaFechado && mesFechadoData && mesFechadoData.valorDevedor > 0 && (
-                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-600 border border-blue-200">
+                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900">
                         ◉ Fechado
                       </span>
                     )}
                     {(estaQuitado || (estaFechado && mesFechadoData && mesFechadoData.valorDevedor === 0)) && (
-                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900">
                         ✓ Quitado
                       </span>
                     )}

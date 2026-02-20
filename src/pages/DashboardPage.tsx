@@ -856,12 +856,12 @@ export const DashboardPage = () => {
 
             {/* Cards com valores */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 border-blue-500">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 !border-l-blue-500">
                 <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">Gastos Fixos</p>
                 <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.gastosFixosMes)}</p>
                 <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Contas recorrentes</p>
               </div>
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 border-indigo-400">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 !border-l-indigo-400">
                 <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">Gastos Variáveis</p>
                 <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.gastosVariaveisMes)}</p>
                 <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Gastos pessoais</p>

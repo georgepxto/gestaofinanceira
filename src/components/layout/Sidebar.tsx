@@ -60,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         onClick={() => setIsOpen(false)}
         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
           isActive
-            ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-semibold border-l-4 border-emerald-600"
+            ? "bg-emerald-50 dark:bg-blue-950/30 text-emerald-700 dark:text-blue-400 font-semibold border-l-4 border-emerald-600 dark:border-blue-500"
             : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
         }`}
       >
@@ -156,12 +156,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
           {/* User Info */}
           {!isCollapsed && (
             <div className="flex items-center gap-3 px-2 py-2">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/30 flex items-center justify-center">
-                <User className="w-5 h-5 text-emerald-600" />
+              <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-blue-950/30 flex items-center justify-center">
+                <User className="w-5 h-5 text-emerald-600 dark:text-blue-400" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-gray-900 dark:text-gray-100 font-medium truncate">{userName || "Usuário"}</p>
-                <p className="text-xs text-emerald-600 truncate">{userEmail || ""}</p>
+                <p className="text-xs text-emerald-600 dark:text-blue-400 truncate">{userEmail || ""}</p>
               </div>
             </div>
           )}

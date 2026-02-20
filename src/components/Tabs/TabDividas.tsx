@@ -57,7 +57,7 @@ export function TabDividas({
       {/* Card Total Dívidas */}
       <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800">
         <p className={`text-sm mb-1 flex items-center gap-2 ${
-          filtroStatusDivida === "pendentes" ? "text-orange-600" : "text-emerald-600"
+          filtroStatusDivida === "pendentes" ? "text-orange-600 dark:text-orange-400" : "text-emerald-600 dark:text-emerald-400"
         }`}>
           {filtroStatusDivida === "pendentes" ? (
             <Clock className="w-4 h-4" />
@@ -73,7 +73,7 @@ export function TabDividas({
             : "Total Quitado"}
         </p>
         <p className={`text-3xl font-bold ${
-          filtroStatusDivida === "pendentes" ? "text-orange-600" : "text-emerald-600"
+          filtroStatusDivida === "pendentes" ? "text-orange-600 dark:text-orange-400" : "text-emerald-600 dark:text-emerald-400"
         }`}>
           {formatCurrency(
             filtroStatusDivida === "pendentes"

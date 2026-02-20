@@ -186,8 +186,8 @@ export const PessoasPage = () => {
                   className="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                      <span className="text-blue-600 font-bold text-xl">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center">
+                      <span className="text-blue-600 dark:text-blue-400 font-bold text-xl">
                         {pessoa.charAt(0).toUpperCase()}
                       </span>
                     </div>
@@ -218,12 +218,12 @@ export const PessoasPage = () => {
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-800">
                     <div className="grid grid-cols-2 gap-3 mt-4 mb-4">
-                      <div className="bg-blue-50 rounded-lg p-3">
-                        <p className="text-blue-600 text-xs mb-1">Gastos do Mês</p>
+                      <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
+                        <p className="text-blue-600 dark:text-blue-400 text-xs mb-1">Gastos do Mês</p>
                         <p className="text-gray-900 dark:text-gray-100 font-semibold">{formatCurrency(stats.gastosMesAtual)}</p>
                       </div>
-                      <div className="bg-orange-50 rounded-lg p-3">
-                        <p className="text-orange-600 text-xs mb-1">Dívidas Pendentes</p>
+                      <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-3">
+                        <p className="text-orange-600 dark:text-orange-400 text-xs mb-1">Dívidas Pendentes</p>
                         <p className="text-gray-900 dark:text-gray-100 font-semibold">{formatCurrency(stats.totalDividas)}</p>
                       </div>
                     </div>
