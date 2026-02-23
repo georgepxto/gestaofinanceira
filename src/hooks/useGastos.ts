@@ -114,13 +114,25 @@ export function useGastos({
     };
   }, [fetchGastos]);
 
-  // Recalcular parcelas ativas quando muda o mês ou os gastos
+  // Recalcular parcelas ativas quando muda o mês, os gastos ou os filtros
   useEffect(() => {
-    const parcelas = getParcelasAtivas(gastos, mesVisualizacao);
+    let parcelas = getParcelasAtivas(gastos, mesVisualizacao);
+    
+    // Apply filters
+    if (filtroPessoaGasto) {
+      parcelas = parcelas.filter(p => p.gasto.pessoa === filtroPessoaGasto);
+    }
+    if (filtroTipoGasto) {
+      parcelas = parcelas.filter(p => p.gasto.tipo === filtroTipoGasto);
+    }
+    if (filtroDiaGasto) {
+      parcelas = parcelas.filter(p => p.gasto.data_inicio === filtroDiaGasto);
+    }
+
     setParcelasAtivas(parcelas);
     setResumoMensal(calcularResumoMensal(parcelas));
     setTotalMes(calcularTotalMes(parcelas));
-  }, [gastos, mesVisualizacao]);
+  }, [gastos, mesVisualizacao, filtroPessoaGasto, filtroTipoGasto, filtroDiaGasto]);
 
   // Submeter formulário
   const handleSubmit = async (e: React.FormEvent) => {

@@ -426,13 +426,7 @@ export function TabGastos({
             </div>
           </div>
 
-          {parcelasAtivas.filter(
-            (p) =>
-              (filtroPessoaGasto === "" ||
-                p.gasto.pessoa === filtroPessoaGasto) &&
-              (filtroTipoGasto === "" || p.gasto.tipo === filtroTipoGasto) &&
-              (filtroDiaGasto === "" || p.gasto.data_inicio === filtroDiaGasto)
-          ).length === 0 ? (
+          {parcelasAtivas.length === 0 ? (
             <div className="p-8 text-center text-gray-500 dark:text-gray-400">
               <Calendar className="w-12 h-12 mx-auto mb-3 text-blue-600" />
               <p>
@@ -451,15 +445,8 @@ export function TabGastos({
             <div className="space-y-4 p-4">
               {(() => {
                 // Filtrar parcelas
-                const parcelasFiltradas = parcelasAtivas.filter(
-                  (p) =>
-                    (filtroPessoaGasto === "" ||
-                      p.gasto.pessoa === filtroPessoaGasto) &&
-                    (filtroTipoGasto === "" ||
-                      p.gasto.tipo === filtroTipoGasto) &&
-                    (filtroDiaGasto === "" ||
-                      p.gasto.data_inicio === filtroDiaGasto)
-                );
+                // Usar parcelasFiltradas diretamente já que parcelasAtivas já vem filtrado do hook
+                const parcelasFiltradas = parcelasAtivas;
 
                 // Agrupar parcelas por dia
                 const parcelasPorDia: Record<string, typeof parcelasFiltradas> =
