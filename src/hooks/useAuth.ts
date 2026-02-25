@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
-import { authFunctions } from "../lib/supabase";
+import { authFunctions, supabase } from "../lib/supabase";
 
 export function useAuth() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -16,8 +16,28 @@ export function useAuth() {
     checkAuth();
     const {
       data: { subscription },
-    } = authFunctions.onAuthStateChange((user) => {
-      setUser(user);
+    } = authFunctions.onAuthStateChange(async (authUser) => {
+      // Bloquear novos cadastros via Google OAuth
+      if (authUser && supabase) {
+        const createdAt = new Date(authUser.created_at).getTime();
+        const now = Date.now();
+        const isNewUser = (now - createdAt) < 30000; // criado nos últimos 30s
+        const isGoogleUser = authUser.app_metadata?.provider === "google";
+
+        if (isNewUser && isGoogleUser) {
+          // Deletar conta recém-criada e deslogar
+          try {
+            await supabase.rpc("delete_user_account");
+          } catch (e) {
+            console.error("Erro ao deletar conta Google não autorizada:", e);
+          }
+          await authFunctions.signOut();
+          localStorage.setItem("auth_error", "Conta não encontrada. Crie uma conta primeiro com email e senha.");
+          setUser(null);
+          return;
+        }
+      }
+      setUser(authUser);
     });
 
     return () => subscription.unsubscribe();

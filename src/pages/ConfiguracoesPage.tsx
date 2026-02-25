@@ -71,13 +71,27 @@ export const ConfiguracoesPage = () => {
 
     setDeletingAccount(true);
     try {
+      // Chamar função do banco que deleta todos os dados + conta auth
+      const { error } = await supabase.rpc("delete_user_account");
+
+      if (error) {
+        console.error("Erro ao excluir conta:", error);
+        setModalFeedback({
+          show: true,
+          titulo: "Erro",
+          mensagem: "Não foi possível excluir a conta. Tente novamente.",
+          tipo: "info",
+        });
+        return;
+      }
+
       setModalFeedback({
         show: true,
-        titulo: "Solicitação Enviada",
-        mensagem: "Sua conta será excluída em até 24 horas. Você será desconectado agora.",
+        titulo: "Conta Excluída",
+        mensagem: "Sua conta e todos os dados foram excluídos permanentemente.",
         tipo: "info",
       });
-      
+
       setTimeout(() => {
         handleLogout();
       }, 2000);
