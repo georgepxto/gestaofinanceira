@@ -1,6 +1,10 @@
-import { Plus, User } from "lucide-react";
+import { useState } from "react";
+import { Plus, User, FileText, Loader2 } from "lucide-react";
 import { useAppContext } from "../context";
 import { TabMeuGasto } from "../components/Tabs";
+import { generateMeusGastosPDF } from "../utils/pdfGenerator";
+import { supabase } from "../lib/supabase";
+import type { MetaGasto } from "../types";
 
 export const EuPage = () => {
   const {
@@ -24,6 +28,39 @@ export const EuPage = () => {
     setShowFormMeuGasto,
   } = useAppContext();
 
+  const [exportingPDF, setExportingPDF] = useState(false);
+
+  const handleExportPDF = async () => {
+    setExportingPDF(true);
+    try {
+      // Buscar metas do Supabase
+      let metas: MetaGasto[] = [];
+      if (supabase) {
+        const { data } = await supabase.from("metas_gasto").select("*").order("categoria");
+        metas = data || [];
+      }
+
+      generateMeusGastosPDF(
+        meusGastosDoMes,
+        gastosFixos,
+        metas,
+        {
+          credito: totalMeusGastosCredito,
+          debito: totalMeusGastosDebito,
+          pagos: totalMeusGastosPagos,
+          fixos: totalGastosFixos,
+        },
+        mesVisualizacao,
+        {
+          categoria: filtroCategoriaMeuGasto,
+          dia: filtroDiaMeuGasto,
+        }
+      );
+    } finally {
+      setExportingPDF(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Page Header */}
@@ -35,13 +72,28 @@ export const EuPage = () => {
             <p className="text-gray-500 dark:text-gray-400 text-sm">Despesas pessoais e gastos fixos</p>
           </div>
         </div>
-        <button
-          onClick={() => setShowFormMeuGasto(true)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-lg"
-        >
-          <Plus className="w-5 h-5" />
-          <span className="hidden sm:inline">Novo</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportPDF}
+            disabled={exportingPDF || (meusGastosDoMes.length === 0 && gastosFixos.length === 0)}
+            className="border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Exportar PDF"
+          >
+            {exportingPDF ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <FileText className="w-5 h-5" />
+            )}
+            <span className="hidden sm:inline">PDF</span>
+          </button>
+          <button
+            onClick={() => setShowFormMeuGasto(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-lg"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="hidden sm:inline">Novo</span>
+          </button>
+        </div>
       </div>
 
       {/* Content */}

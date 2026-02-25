@@ -182,19 +182,19 @@ export function TabGastos({
 
                   {/* Pagamentos Parciais */}
                   {temPagamentos && (
-                    <div className="mt-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200 overflow-hidden">
+                    <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800 overflow-hidden">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-emerald-600 font-medium">
+                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
                           Pago:
                         </span>
                         <button
                           onClick={() =>
                             handleDesfazerPagamentoParcial(resumo.pessoa)
                           }
-                          className="p-0.5 hover:bg-emerald-100 rounded transition-colors flex-shrink-0"
+                          className="p-0.5 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded transition-colors flex-shrink-0"
                           title="Desfazer último"
                         >
-                          <Undo2 className="w-3 h-3 text-emerald-600" />
+                          <Undo2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                         </button>
                       </div>
                       {pagamentos.map((p, i) => (
@@ -202,26 +202,26 @@ export function TabGastos({
                           key={i}
                           className="flex justify-between text-xs gap-1"
                         >
-                          <span className="text-emerald-600 truncate">
+                          <span className="text-emerald-600 dark:text-emerald-400 truncate">
                             {p.data}
                           </span>
-                          <span className="text-emerald-700 font-medium flex-shrink-0">
+                          <span className="text-emerald-700 dark:text-emerald-300 font-medium flex-shrink-0">
                             {formatCurrency(p.valor)}
                           </span>
                         </div>
                       ))}
-                      <div className="border-t border-emerald-200 mt-1 pt-1 flex justify-between">
+                      <div className="border-t border-emerald-200 dark:border-emerald-800 mt-1 pt-1 flex justify-between">
                         {estaQuitado ? (
                           <>
-                            <span className="text-xs text-emerald-600">✓ Quitado</span>
-                            <span className="text-xs text-emerald-700 font-bold flex-shrink-0">
+                            <span className="text-xs text-emerald-600 dark:text-emerald-400">✓ Quitado</span>
+                            <span className="text-xs text-emerald-700 dark:text-emerald-300 font-bold flex-shrink-0">
                               {formatCurrency(totalPago)}
                             </span>
                           </>
                         ) : (
                           <>
-                            <span className="text-xs text-amber-600">Falta:</span>
-                            <span className="text-xs text-amber-700 font-bold flex-shrink-0">
+                            <span className="text-xs text-amber-600 dark:text-amber-400">Falta:</span>
+                            <span className="text-xs text-amber-700 dark:text-amber-300 font-bold flex-shrink-0">
                               {formatCurrency(restante)}
                             </span>
                           </>

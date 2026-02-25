@@ -1,6 +1,7 @@
-import { Plus, CreditCard } from "lucide-react";
+import { Plus, CreditCard, FileText } from "lucide-react";
 import { useAppContext } from "../context";
 import { TabGastos } from "../components/Tabs";
+import { generateGastosPDF } from "../utils/pdfGenerator";
 
 export const GastosPage = () => {
   const {
@@ -37,6 +38,20 @@ export const GastosPage = () => {
     handleDesfazerFechamento,
   } = useAppContext();
 
+  const handleExportPDF = () => {
+    generateGastosPDF(
+      parcelasAtivas,
+      resumoMensal,
+      totalMes,
+      mesVisualizacao,
+      {
+        pessoa: filtroPessoaGasto,
+        tipo: filtroTipoGasto,
+        dia: filtroDiaGasto,
+      }
+    );
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Page Header */}
@@ -48,13 +63,24 @@ export const GastosPage = () => {
             <p className="text-gray-500 dark:text-gray-400 text-sm">Despesas compartilhadas por pessoa</p>
           </div>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-lg"
-        >
-          <Plus className="w-5 h-5" />
-          <span className="hidden sm:inline">Novo Gasto</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportPDF}
+            disabled={parcelasAtivas.length === 0}
+            className="border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Exportar PDF"
+          >
+            <FileText className="w-5 h-5" />
+            <span className="hidden sm:inline">PDF</span>
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-lg"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="hidden sm:inline">Novo Gasto</span>
+          </button>
+        </div>
       </div>
 
       {/* Content */}
