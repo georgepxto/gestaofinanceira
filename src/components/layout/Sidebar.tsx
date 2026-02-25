@@ -82,7 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
             <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
           </button>
           <h1 className="ml-4 text-lg font-bold text-gray-900 dark:text-gray-100">
-            Reppago
+            Hedge
           </h1>
         </div>
         <NotificationBell />
@@ -115,7 +115,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
           {!isCollapsed && (
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              Reppago
+              Hedge
             </h2>
           )}
           
