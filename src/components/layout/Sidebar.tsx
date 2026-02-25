@@ -81,7 +81,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
           >
             <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
           </button>
-          <h1 className="ml-4 text-lg font-bold text-gray-900 dark:text-gray-100">
+          <img src="/favicon-light.png" alt="Hedge" className="w-4 h-4 ml-3 dark:hidden" />
+          <img src="/favicon-dark.png" alt="Hedge" className="w-4 h-4 ml-3 hidden dark:block" />
+          <h1 className="ml-2 text-lg font-bold text-gray-900 dark:text-gray-100">
             Hedge
           </h1>
         </div>
@@ -113,11 +115,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
       >
         {/* Sidebar Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
-          {!isCollapsed && (
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              Hedge
-            </h2>
-          )}
+          <div className="flex items-center gap-2">
+            <img src="/favicon-light.png" alt="Hedge" className="w-5 h-5 dark:hidden flex-shrink-0" />
+            <img src="/favicon-dark.png" alt="Hedge" className="w-5 h-5 hidden dark:block flex-shrink-0" />
+            {!isCollapsed && (
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                Hedge
+              </h2>
+            )}
+          </div>
           
           {/* Close button (mobile) */}
           <button

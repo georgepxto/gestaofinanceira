@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  DollarSign,
   Mail,
   Lock,
   Loader2,
@@ -160,8 +159,9 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-xl mb-4">
-            <DollarSign className="w-7 h-7 text-white stroke-[2.5]" />
+          <div className="inline-flex items-center justify-center w-8 h-8 mb-4">
+            <img src="/favicon-light.png" alt="Hedge" className="w-8 h-8 dark:hidden" />
+            <img src="/favicon-dark.png" alt="Hedge" className="w-8 h-8 hidden dark:block" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             Hedge
