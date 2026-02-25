@@ -40,6 +40,8 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
     }
     setError(null);
     setLoading(true);
+    // Salvar modo (login ou signup) para verificar no retorno do OAuth
+    localStorage.setItem("oauth_mode", viewMode);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
