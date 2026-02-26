@@ -7,6 +7,7 @@ import {
   EyeOff,
   User,
   ArrowLeft,
+  ShieldAlert,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -31,6 +32,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   const handleGoogleLogin = async () => {
     if (!supabase) {
@@ -126,6 +128,10 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
         const result = await onLogin(email, password);
         if (result.error) {
           setError(result.error);
+          // Detectar se é bloqueio por tentativas
+          if (result.error.includes("bloqueada") || result.error.includes("Bloqueada")) {
+            setIsBlocked(true);
+          }
         }
       } else {
         const result = await onSignUp(email, password, nome.trim());
@@ -152,6 +158,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
     setViewMode(newView);
     setError(null);
     setSuccess(null);
+    setIsBlocked(false);
   };
 
   return (
@@ -289,8 +296,13 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
 
             {/* Erro */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm">
-                {error}
+              <div className={`rounded-xl p-3 text-sm flex items-start gap-2 ${
+                isBlocked
+                  ? "bg-red-100 border border-red-300 text-red-700"
+                  : "bg-red-50 border border-red-200 text-red-600"
+              }`}>
+                {isBlocked && <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5" />}
+                <span>{error}</span>
               </div>
             )}
 

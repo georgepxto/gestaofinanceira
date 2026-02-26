@@ -15,8 +15,10 @@ import {
   Wallet,
   LayoutDashboard,
   Target,
+  Shield,
 } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
+import { useAppContext } from "../../context";
 
 interface SidebarProps {
   onLogout: () => void;
@@ -28,20 +30,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+  const { isAdmin, features } = useAppContext();
 
-  const navItems = [
-    { path: "/", label: "Dashboard", icon: LayoutDashboard },
-    { path: "/eu", label: "Meus Gastos", icon: User },
-    { path: "/gastos", label: "Gastos do Mês", icon: CreditCard },
-    { path: "/dividas", label: "Saldo Devedor", icon: TrendingDown },
-    { path: "/pessoas", label: "Pessoas", icon: Users },
-    { path: "/contas", label: "Contas Bancárias", icon: Building2 },
-    { path: "/cartoes", label: "Cartões de Crédito", icon: Wallet },
-    { path: "/metas", label: "Metas de Gasto", icon: Target },
+  // Construir itens do menu baseados nas features do usuário
+  const allNavItems = [
+    { path: "/", label: "Dashboard", icon: LayoutDashboard, feature: "dashboard" as const },
+    { path: "/eu", label: "Meus Gastos", icon: User, feature: "meus_gastos" as const },
+    { path: "/gastos", label: "Gastos do Mês", icon: CreditCard, feature: "gastos_compartilhados" as const },
+    { path: "/dividas", label: "Saldo Devedor", icon: TrendingDown, feature: "saldo_devedor" as const },
+    { path: "/pessoas", label: "Pessoas", icon: Users, feature: "pessoas" as const },
+    { path: "/contas", label: "Contas Bancárias", icon: Building2, feature: "contas_bancarias" as const },
+    { path: "/cartoes", label: "Cartões de Crédito", icon: Wallet, feature: "cartoes_credito" as const },
+    { path: "/metas", label: "Metas de Gasto", icon: Target, feature: "metas" as const },
   ];
 
+  // Filtrar itens baseados nas features habilitadas (admin vê tudo)
+  const navItems = isAdmin
+    ? allNavItems
+    : allNavItems.filter((item) => features[item.feature]);
+
   const bottomNavItems = [
-    { path: "/configuracoes", label: "Configurações", icon: Settings },
+    ...(features.configuracoes || isAdmin
+      ? [{ path: "/configuracoes", label: "Configurações", icon: Settings }]
+      : []),
+    ...(isAdmin
+      ? [{ path: "/admin", label: "Painel Admin", icon: Shield }]
+      : []),
   ];
 
   const NavItem = ({

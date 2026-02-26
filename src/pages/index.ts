@@ -7,3 +7,4 @@ export { PessoasPage } from "./PessoasPage";
 export { ContasBancariasPage } from "./ContasBancariasPage";
 export { CartoesCreditoPage } from "./CartoesCreditoPage";
 export { MetasPage } from "./MetasPage";
+export { AdminPage } from "./AdminPage";

@@ -1,11 +1,11 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, ShieldAlert, LogOut } from "lucide-react";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { formatCurrency } from "./utils/calculations";
 import { Login } from "./components/Login";
 import { Layout } from "./components/layout";
-import { DashboardPage, EuPage, GastosPage, DividasPage, ConfiguracoesPage, PessoasPage, ContasBancariasPage, CartoesCreditoPage, MetasPage } from "./pages";
+import { DashboardPage, EuPage, GastosPage, DividasPage, ConfiguracoesPage, PessoasPage, ContasBancariasPage, CartoesCreditoPage, MetasPage, AdminPage } from "./pages";
 import type { CartaoCredito, ContaBancaria } from "./types";
 import {
   FormGastoModal,
@@ -100,6 +100,12 @@ function AppContent() {
     // Combined
     saving,
     error,
+
+    // Admin & Features
+    isAdmin,
+    isActive,
+    features,
+    featuresLoading,
   } = useAppContext();
 
   // Registrar push notifications
@@ -186,6 +192,41 @@ function AppContent() {
     return <Login onLogin={handleLogin} onSignUp={handleSignUp} />;
   }
 
+  // Loading de features/role
+  if (featuresLoading) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-[#0B0F19] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  // Conta desativada pelo admin
+  if (!isActive) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-[#0B0F19] flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShieldAlert className="w-8 h-8 text-red-500" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            Conta Desativada
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
+            Sua conta foi desativada pelo administrador. Entre em contato com o suporte para mais informações.
+          </p>
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium"
+          >
+            <LogOut className="w-4 h-4" />
+            Sair
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Routes>
@@ -198,15 +239,18 @@ function AppContent() {
             />
           }
         >
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/eu" element={<EuPage />} />
-          <Route path="/gastos" element={<GastosPage />} />
-          <Route path="/dividas" element={<DividasPage />} />
-          <Route path="/pessoas" element={<PessoasPage />} />
-          <Route path="/contas" element={<ContasBancariasPage />} />
-          <Route path="/cartoes" element={<CartoesCreditoPage />} />
-          <Route path="/configuracoes" element={<ConfiguracoesPage />} />
-          <Route path="/metas" element={<MetasPage />} />
+          <Route path="/" element={
+            features.dashboard ? <DashboardPage /> : <Navigate to={features.meus_gastos ? "/eu" : "/configuracoes"} replace />
+          } />
+          {features.meus_gastos && <Route path="/eu" element={<EuPage />} />}
+          {features.gastos_compartilhados && <Route path="/gastos" element={<GastosPage />} />}
+          {features.saldo_devedor && <Route path="/dividas" element={<DividasPage />} />}
+          {features.pessoas && <Route path="/pessoas" element={<PessoasPage />} />}
+          {features.contas_bancarias && <Route path="/contas" element={<ContasBancariasPage />} />}
+          {features.cartoes_credito && <Route path="/cartoes" element={<CartoesCreditoPage />} />}
+          {features.configuracoes && <Route path="/configuracoes" element={<ConfiguracoesPage />} />}
+          {features.metas && <Route path="/metas" element={<MetasPage />} />}
+          {isAdmin && <Route path="/admin" element={<AdminPage />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

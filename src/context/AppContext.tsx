@@ -10,9 +10,11 @@ import {
   useSaldosDevedores,
   useMeusGastos,
 } from "../hooks";
+import { useFeatureFlags } from "../hooks/useFeatureFlags";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import type { MeuGasto, MeuGastoForm, Gasto, GastoForm, SaldoDevedor, SaldoDevedorForm, ParcelaAtiva, ResumoMensal } from "../types";
 import type { PagamentoParcial } from "../types/extended";
+import type { UserFeatures } from "../types/admin";
 
 // Define the context type
 interface AppContextType {
@@ -23,6 +25,12 @@ interface AppContextType {
   handleSignUp: (email: string, password: string, nome: string) => Promise<{ error: string | undefined }>;
   handleLogout: () => Promise<void>;
 
+  // Admin & Feature Flags
+  isAdmin: boolean;
+  isActive: boolean;
+  features: UserFeatures;
+  featuresLoading: boolean;
+
   // Navigation
   mesVisualizacao: Date;
   navegarMes: (direcao: "anterior" | "proximo") => void;
@@ -32,7 +40,7 @@ interface AppContextType {
   modalFeedback: { show: boolean; titulo: string; mensagem: string; tipo: "sucesso" | "info" };
   setModalFeedback: (modal: { show: boolean; titulo: string; mensagem: string; tipo: "sucesso" | "info" }) => void;
   modalConfirm: { show: boolean; titulo: string; mensagem: string; onConfirm: () => void };
-  setModalConfirm: (modal: { show: boolean; titulo: string; mensagem: string; onConfirm: () => void }) => void;
+  setModalConfirm: (modal: { show: boolean; titulo: string; mensagem: string; onConfirm: () => void; confirmLabel?: string; confirmColor?: "red" | "green" | "blue" | "indigo" | "purple" }) => void;
 
   // Pessoas
   pessoas: string[];
@@ -177,6 +185,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Hooks
   const { user, authLoading, handleLogin, handleSignUp, handleLogout } = useAuth();
+
+  const { isAdmin, isActive, features, loading: featuresLoading } = useFeatureFlags({ userId: user?.id });
 
   const { modalFeedback, setModalFeedback, modalConfirm, setModalConfirm } = useModals();
 
@@ -350,6 +360,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     handleLogin,
     handleSignUp,
     handleLogout,
+
+    // Admin & Feature Flags
+    isAdmin,
+    isActive,
+    features,
+    featuresLoading,
 
     // Navigation
     mesVisualizacao,

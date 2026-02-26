@@ -46,19 +46,66 @@ export const authFunctions = {
   async signIn(
     email: string,
     password: string
-  ): Promise<{ user: User | null; error: string | null }> {
+  ): Promise<{ user: User | null; error: string | null; blocked?: boolean; remainingAttempts?: number }> {
     if (!supabase) return { user: null, error: "Supabase não configurado" };
 
+    // 1. Verificar se email está bloqueado
+    try {
+      const { data: blockCheck, error: blockError } = await supabase.rpc("check_login_blocked", {
+        p_email: email,
+      });
+      if (blockError) {
+        console.warn("[Auth] check_login_blocked falhou:", blockError.message);
+      } else if (blockCheck?.blocked) {
+        return {
+          user: null,
+          error: blockCheck.message || "Conta temporariamente bloqueada por excesso de tentativas.",
+          blocked: true,
+          remainingAttempts: 0,
+        };
+      }
+    } catch (e) {
+      console.warn("[Auth] check_login_blocked não disponível:", e);
+    }
+
+    // 2. Tentar login
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
+    // 3. Registrar tentativa (login bem-sucedido ou falho)
+    const success = !error;
+    let remainingAttempts = 5;
+    try {
+      const { data: attemptResult, error: attemptError } = await supabase.rpc("record_login_attempt", {
+        p_email: email,
+        p_success: success,
+      });
+      if (attemptError) {
+        console.error("[Auth] record_login_attempt falhou:", attemptError.message);
+      } else if (attemptResult) {
+        remainingAttempts = attemptResult.remaining_attempts ?? 5;
+        if (attemptResult.blocked) {
+          return {
+            user: null,
+            error: attemptResult.message || "Conta bloqueada por excesso de tentativas.",
+            blocked: true,
+            remainingAttempts: 0,
+          };
+        }
+      }
+    } catch (e) {
+      console.warn("[Auth] record_login_attempt não disponível:", e);
+    }
+
     if (error) {
       console.error("Erro ao fazer login:", error);
       let errorMessage = error.message;
       if (error.message === "Invalid login credentials") {
-        errorMessage = "Email ou senha incorretos";
+        errorMessage = remainingAttempts < 5
+          ? `Email ou senha incorretos. ${remainingAttempts} tentativa${remainingAttempts !== 1 ? "s" : ""} restante${remainingAttempts !== 1 ? "s" : ""}.`
+          : "Email ou senha incorretos";
       }
       return { user: null, error: errorMessage };
     }

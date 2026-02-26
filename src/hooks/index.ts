@@ -7,3 +7,5 @@ export { useGastos } from "./useGastos";
 export { useSaldosDevedores } from "./useSaldosDevedores";
 export { useMeusGastos } from "./useMeusGastos";
 export { useCartoes } from "./useCartoes";
+export { useFeatureFlags } from "./useFeatureFlags";
+export { useAdmin } from "./useAdmin";
