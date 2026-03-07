@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   ShieldAlert,
 } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 interface LoginProps {
@@ -23,7 +24,11 @@ interface LoginProps {
 type ViewMode = "login" | "signup" | "forgot";
 
 export function Login({ onLogin, onSignUp }: LoginProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("login");
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    searchParams.get("mode") === "signup" ? "signup" : "login"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -164,6 +169,15 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-[#0B0F19] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        {/* Back to landing */}
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-200 mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Voltar
+        </button>
+
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-8 h-8 mb-4">

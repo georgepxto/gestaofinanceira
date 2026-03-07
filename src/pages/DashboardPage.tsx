@@ -4,8 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { useLocation } from "react-router-dom";
 import type { MetaGasto } from "../types";
 import { 
-  LayoutDashboard, 
-  Wallet, 
+  Wallet,
   TrendingUp, 
   TrendingDown, 
   Users, 
@@ -62,6 +61,7 @@ interface DashboardData {
   mediaGastosPorPessoa: number;
   economiasMes: number; // receitas - gastos
   top5Gastos: { descricao: string; valor: number; pessoa: string }[];
+  top5MeusGastos: { descricao: string; valor: number; categoria: string }[];
   parcelasProximasFim: { descricao: string; pessoa: string; parcelasRestantes: number }[];
   // Tendência 6 meses
   tendenciaMensal: { mes: string; meusGastos: number; compartilhados: number; total: number }[];
@@ -105,6 +105,7 @@ export const DashboardPage = () => {
     mediaGastosPorPessoa: 0,
     economiasMes: 0,
     top5Gastos: [],
+    top5MeusGastos: [],
     parcelasProximasFim: [],
     tendenciaMensal: [],
     metasGasto: [],
@@ -300,6 +301,16 @@ export const DashboardPage = () => {
         .sort((a, b) => b.valor - a.valor)
         .slice(0, 5);
 
+      // Top 5 meus gastos pessoais do mês
+      const top5MeusGastos = gastosDoMes
+        .map(g => ({
+          descricao: g.descricao || 'Sem descrição',
+          valor: g.valor,
+          categoria: g.categoria_gasto || g.categoria || 'Outros',
+        }))
+        .sort((a, b) => b.valor - a.valor)
+        .slice(0, 5);
+
       // 5. Parcelas próximas do fim (restam 1-3 parcelas)
       // Calcular parcela atual baseado na data_inicio e mês atual
       
@@ -381,6 +392,7 @@ export const DashboardPage = () => {
         mediaGastosPorPessoa,
         economiasMes,
         top5Gastos,
+        top5MeusGastos,
         parcelasProximasFim,
         tendenciaMensal,
         metasGasto,
@@ -411,14 +423,11 @@ export const DashboardPage = () => {
 
   return (
     <div className="space-y-6 pb-20 pt-4 px-4">
-      {/* Header com seletor de mês */}
+      {/* Header com saudação + seletor de mês */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3">
-          <LayoutDashboard className="w-7 h-7 text-emerald-600" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Visão geral das suas finanças</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'} 👋</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Visão geral das suas finanças</p>
         </div>
         
         {/* Seletor de Mês */}
@@ -508,6 +517,72 @@ export const DashboardPage = () => {
             {formatCurrency(data.saldoLivre)}
           </p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Após gastos fixos</p>
+        </div>
+      </div>
+
+      {/* Gastos por Mês + Últimos Gastos */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Gráfico de barras - Gastos por mês */}
+        <div className="md:col-span-2 bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Meus gastos por mês</span>
+            <span className="text-xs text-gray-400">Últimos 6 meses</span>
+          </div>
+          {data.tendenciaMensal.length > 0 ? (
+            <div className="h-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.tendenciaMensal}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+                  <XAxis dataKey="mes" stroke="#9CA3AF" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#9CA3AF" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                    labelStyle={{ color: '#111827', fontWeight: 600 }}
+                    formatter={(value: unknown) => [formatCurrency(Number(value) || 0), 'Meus Gastos']}
+                  />
+                  <Bar dataKey="meusGastos" radius={[6, 6, 0, 0]} fill="#3B82F6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-44 flex items-center justify-center text-gray-400 text-sm">
+              Sem dados suficientes
+            </div>
+          )}
+        </div>
+
+        {/* Últimos gastos (pessoais) */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
+          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 block">Últimos gastos</span>
+          {data.top5MeusGastos.length > 0 ? (
+            <div className="space-y-0">
+              {data.top5MeusGastos.slice(0, 5).map((gasto, i) => (
+                <div key={i} className="flex items-center justify-between py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-xs flex-shrink-0">
+                      {gasto.categoria.toLowerCase().includes('alimenta') ? '🛒' :
+                       gasto.categoria.toLowerCase().includes('transport') ? '🚗' :
+                       gasto.categoria.toLowerCase().includes('lazer') || gasto.categoria.toLowerCase().includes('entretenimento') ? '🎬' :
+                       gasto.categoria.toLowerCase().includes('saúde') || gasto.categoria.toLowerCase().includes('saude') ? '💊' :
+                       gasto.categoria.toLowerCase().includes('fixo') ? '🏠' :
+                       '💳'}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">{gasto.descricao}</p>
+                      <p className="text-[10px] text-gray-400 capitalize">{gasto.categoria}</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex-shrink-0 ml-2">
+                    -{formatCurrency(gasto.valor)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="h-32 flex items-center justify-center text-gray-400 text-sm">
+              Nenhum gasto este mês
+            </div>
+          )}
         </div>
       </div>
 

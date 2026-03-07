@@ -5,7 +5,7 @@ import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { formatCurrency } from "./utils/calculations";
 import { Login } from "./components/Login";
 import { Layout } from "./components/layout";
-import { DashboardPage, EuPage, GastosPage, DividasPage, ConfiguracoesPage, PessoasPage, ContasBancariasPage, CartoesCreditoPage, MetasPage, AdminPage } from "./pages";
+import { DashboardPage, EuPage, GastosPage, DividasPage, ConfiguracoesPage, PessoasPage, ContasBancariasPage, CartoesCreditoPage, MetasPage, AdminPage, LandingPage } from "./pages";
 import type { CartaoCredito, ContaBancaria } from "./types";
 import {
   FormGastoModal,
@@ -189,7 +189,13 @@ function AppContent() {
   }
 
   if (!user) {
-    return <Login onLogin={handleLogin} onSignUp={handleSignUp} />;
+    return (
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login onLogin={handleLogin} onSignUp={handleSignUp} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
   }
 
   // Loading de features/role

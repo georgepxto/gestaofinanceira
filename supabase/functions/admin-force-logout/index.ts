@@ -86,27 +86,22 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Usuário alvo não encontrado" }), { status: 404, headers });
     }
 
-    // 6. Marcar force_logout_at na tabela user_roles
-    //    O cliente faz polling via check_force_logout() e se desconecta em até 30s
-    const patchRes = await fetch(
-      `${supabaseUrl}/rest/v1/user_roles?user_id=eq.${target_user_id}`,
-      {
-        method: "PATCH",
-        headers: {
-          "apikey": serviceRoleKey,
-          "Authorization": `Bearer ${serviceRoleKey}`,
-          "Content-Type": "application/json",
-          "Prefer": "return=minimal",
-        },
-        body: JSON.stringify({ force_logout_at: new Date().toISOString() }),
-      }
-    );
+    // 6. Forçar logout via Admin API (invalida TODAS as sessões, todos os dispositivos)
+    const logoutRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${target_user_id}/logout`, {
+      method: "POST",
+      headers: {
+        "apikey": serviceRoleKey,
+        "Authorization": `Bearer ${serviceRoleKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ scope: "global" }),
+    });
 
-    if (!patchRes.ok) {
-      const patchErr = await patchRes.text();
-      console.error("[ForceLogout] Erro ao marcar force_logout_at:", patchErr);
+    if (!logoutRes.ok) {
+      const logoutErr = await logoutRes.text();
+      console.error("[ForceLogout] Erro na Admin API:", logoutErr);
       return new Response(
-        JSON.stringify({ error: `Falha ao forçar logout: ${patchErr}` }),
+        JSON.stringify({ error: `Falha ao invalidar sessão: ${logoutErr}` }),
         { status: 500, headers }
       );
     }
