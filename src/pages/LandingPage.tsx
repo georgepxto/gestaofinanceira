@@ -297,7 +297,7 @@ export const LandingPage = () => {
                   {/* Greeting */}
                   <div className="flex items-center justify-between mb-5">
                     <div>
-                      <h3 className="text-base font-bold text-gray-900">Olá, George 👋</h3>
+                      <h3 className="text-base font-bold text-gray-900">Olá, Usuário! 👋</h3>
                       <p className="text-xs text-gray-400">Março 2026</p>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold">G</div>

@@ -40,6 +40,15 @@ export const GastosPage = () => {
   } = useAppContext();
 
   const handleExportPDF = () => {
+    // Construir mapa de pagamentos parciais por pessoa
+    const pagamentosPorPessoa: Record<string, import("../types/extended").PagamentoParcial[]> = {};
+    pessoas.forEach(pessoa => {
+      const pagamentos = getPagamentosParciais(pessoa);
+      if (pagamentos.length > 0) {
+        pagamentosPorPessoa[pessoa] = pagamentos;
+      }
+    });
+
     generateGastosPDF(
       parcelasAtivas,
       resumoMensal,
@@ -49,7 +58,8 @@ export const GastosPage = () => {
         pessoa: filtroPessoaGasto,
         tipo: filtroTipoGasto,
         dia: filtroDiaGasto,
-      }
+      },
+      pagamentosPorPessoa
     );
   };
 

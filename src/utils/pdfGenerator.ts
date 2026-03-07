@@ -4,13 +4,15 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatCurrency, formatMonthYear } from "./calculations";
 import type { ParcelaAtiva, ResumoMensal, MeuGasto, MetaGasto } from "../types";
+import type { PagamentoParcial } from "../types/extended";
 
 export const generateGastosPDF = (
   parcelas: ParcelaAtiva[],
   resumo: ResumoMensal[],
   total: number,
   mes: Date,
-  filtros: { pessoa: string; tipo: string; dia: string }
+  filtros: { pessoa: string; tipo: string; dia: string },
+  pagamentosPorPessoa?: Record<string, PagamentoParcial[]>
 ) => {
   const doc = new jsPDF();
   
@@ -127,7 +129,64 @@ export const generateGastosPDF = (
       const textWidth = doc.getTextWidth(totalText);
       doc.text(totalText, 196 - textWidth, yPos);
       doc.setFont("helvetica", "normal");
-      yPos += 12;
+      yPos += 8;
+    }
+
+    // Pagamentos parciais da pessoa
+    const pagamentos = pagamentosPorPessoa?.[pessoa] || [];
+    if (pagamentos.length > 0) {
+      const resumoPessoa2 = resumo.find(r => r.pessoa === pessoa);
+      const totalDevido = resumoPessoa2?.total || 0;
+      const totalPago = pagamentos.reduce((sum, p) => sum + p.valor, 0);
+      const restante = totalDevido - totalPago;
+
+      // Verificar se precisa de nova página
+      if (yPos > doc.internal.pageSize.height - 60) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(34, 139, 34); // verde
+      doc.text(`Pagamentos Parciais — ${pessoa}`, 14, yPos);
+      yPos += 5;
+
+      const pagData = pagamentos.map(p => [
+        p.data,
+        formatCurrency(p.valor)
+      ]);
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [["Data", "Valor Pago"]],
+        body: pagData,
+        theme: "striped",
+        headStyles: {
+          fillColor: [34, 139, 34],
+          fontSize: 9,
+          fontStyle: "bold",
+        },
+        bodyStyles: { fontSize: 9 },
+        columnStyles: {
+          0: { cellWidth: 40 },
+          1: { cellWidth: 40, halign: "right" },
+        },
+        margin: { left: 14, right: 100 },
+        tableWidth: 80,
+      });
+
+      // @ts-ignore
+      yPos = doc.lastAutoTable.finalY + 4;
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(34, 139, 34);
+      doc.text(`Total pago: ${formatCurrency(totalPago)}`, 14, yPos);
+      doc.setTextColor(restante > 0 ? 200 : 100, restante > 0 ? 80 : 100, restante > 0 ? 50 : 100);
+      doc.text(`Falta: ${formatCurrency(Math.max(0, restante))}`, 70, yPos);
+      doc.setFont("helvetica", "normal");
+      yPos += 10;
     }
     
     // Separador entre pessoas
@@ -161,6 +220,80 @@ export const generateGastosPDF = (
   doc.setFont("helvetica", "normal");
   doc.setTextColor(120);
   doc.text(`${parcelas.length} ${parcelas.length === 1 ? "lançamento" : "lançamentos"}`, 14, yPos);
+  yPos += 12;
+
+  // Seção: Para o Saldo Devedor ( Restante do mês )
+  const pessoasNoPdf = Array.from(new Set(parcelas.map(p => p.gasto.pessoa)));
+  const devendoEsteMes: { pessoa: string; totalDevido: number; totalPago: number; restante: number }[] = [];
+
+  pessoasNoPdf.forEach(pessoa => {
+    const resumoPessoa = resumo.find(r => r.pessoa === pessoa);
+    const pagamentos = pagamentosPorPessoa?.[pessoa] || [];
+    const totalDevido = resumoPessoa?.total || 0;
+    const totalPago = pagamentos.reduce((sum, p) => sum + p.valor, 0);
+    const restante = totalDevido - totalPago;
+
+    // Apenas quem ainda deve algo deste mês específico
+    if (restante > 0.01) { // margem de arredondamento
+      devendoEsteMes.push({ pessoa, totalDevido, totalPago, restante });
+    }
+  });
+
+  if (devendoEsteMes.length > 0) {
+    if (yPos > doc.internal.pageSize.height - 60) {
+      doc.addPage();
+      yPos = 20;
+    }
+
+    doc.setDrawColor(220, 80, 50);
+    doc.setLineWidth(0.5);
+    doc.line(14, yPos - 2, 196, yPos - 2);
+    yPos += 6;
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(220, 80, 50);
+    doc.text("Para o Saldo Devedor (Não pago neste mês)", 14, yPos);
+    yPos += 6;
+
+    const dividasData = devendoEsteMes.map(d => [
+      d.pessoa,
+      formatCurrency(d.totalDevido),
+      formatCurrency(d.totalPago),
+      formatCurrency(d.restante),
+    ]);
+
+    autoTable(doc, {
+      startY: yPos,
+      head: [["Pessoa", "Total do Mês", "Valor Pago", "Vai para dívida"]],
+      body: dividasData,
+      theme: "striped",
+      headStyles: {
+        fillColor: [220, 80, 50],
+        fontSize: 9,
+        fontStyle: "bold",
+      },
+      bodyStyles: { fontSize: 9 },
+      columnStyles: {
+        0: { cellWidth: 40 },
+        1: { cellWidth: 35, halign: "right" },
+        2: { cellWidth: 35, halign: "right" },
+        3: { cellWidth: 35, halign: "right", fontStyle: "bold" },
+      },
+      margin: { left: 14, right: 14 },
+    });
+
+    // @ts-ignore
+    yPos = doc.lastAutoTable.finalY + 4;
+
+    const totalParaDivida = devendoEsteMes.reduce((sum, d) => sum + d.restante, 0);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(220, 80, 50);
+    const totalDivText = `Total para o Saldo Devedor: ${formatCurrency(totalParaDivida)}`;
+    const divTextW = doc.getTextWidth(totalDivText);
+    doc.text(totalDivText, 196 - divTextW, yPos);
+  }
 
   // Rodapé com data/hora de geração
   const pageCount = doc.getNumberOfPages();

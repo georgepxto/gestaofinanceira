@@ -70,8 +70,8 @@ interface DashboardData {
 }
 
 const CORES_GRAFICO = [
-  "#3B82F6", "#6366F1", "#0EA5E9", "#8B5CF6", "#2563EB", 
-  "#7C3AED", "#38BDF8", "#4F46E5", "#60A5FA", "#A78BFA"
+  "#10B981", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6", 
+  "#06B6D4", "#F97316", "#14B8A6", "#6366F1", "#EC4899"
 ];
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];

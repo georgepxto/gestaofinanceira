@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recha
 import { useAppContext } from "../context";
 import { formatCurrency, formatMonthYear } from "../utils/calculations";
 
-const COLORS = ["#3b82f6", "#6366f1"]; // blue, indigo
+const COLORS = ["#10B981", "#F59E0B"]; // emerald, amber
 
 export const PessoasPage = () => {
   const {
