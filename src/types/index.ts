@@ -74,6 +74,7 @@ export interface MeuGasto {
   parcela_atual?: number;
   cartao_id?: string;
   conta_id?: string;
+  meses_suspensos?: string[];
 }
 
 export interface MeuGastoForm {

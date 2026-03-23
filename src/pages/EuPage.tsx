@@ -23,6 +23,7 @@ export const EuPage = () => {
     meusGastosDoMes,
     handleEditMeuGasto,
     handleToggleGastoFixo,
+    handleToggleSuspenderGastoFixo,
     handleDeleteMeuGasto,
     handleTogglePagoMeuGasto,
     handlePagarTodosCredito,
@@ -128,6 +129,7 @@ export const EuPage = () => {
         meusGastosDoMes={meusGastosDoMes}
         handleEditMeuGasto={handleEditMeuGasto}
         handleToggleGastoFixo={handleToggleGastoFixo}
+        handleToggleSuspenderGastoFixo={handleToggleSuspenderGastoFixo}
         handleDeleteMeuGasto={handleDeleteMeuGasto}
         handleTogglePagoMeuGasto={handleTogglePagoMeuGasto}
         cartoes={cartoes}

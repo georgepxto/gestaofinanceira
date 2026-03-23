@@ -13,6 +13,8 @@ import {
   Edit3,
   Trash2,
   MinusCircle,
+  PauseCircle,
+  PlayCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -37,6 +39,7 @@ interface TabMeuGastoProps {
   handleToggleGastoFixo: (id: string) => void;
   handleDeleteMeuGasto: (id: string) => void;
   handleTogglePagoMeuGasto: (id: string) => void;
+  handleToggleSuspenderGastoFixo: (id: string, mesRef: Date) => void;
   cartoes: CartaoCredito[];
 }
 
@@ -58,6 +61,7 @@ export function TabMeuGasto({
   handleToggleGastoFixo,
   handleDeleteMeuGasto,
   handleTogglePagoMeuGasto,
+  handleToggleSuspenderGastoFixo,
   cartoes,
 }: TabMeuGastoProps) {
 
@@ -207,11 +211,16 @@ export function TabMeuGasto({
           <div className="space-y-2">
             {[...gastosFixos]
               .sort((a, b) => (b.dia_vencimento || 0) - (a.dia_vencimento || 0))
-              .map((gasto) => (
+              .map((gasto) => {
+                const isSuspenso = gasto.meses_suspensos?.includes(format(mesVisualizacao, "yyyy-MM"));
+                
+                return (
                 <div
                   key={gasto.id}
                   className={`flex items-center justify-between p-3 rounded-lg ${
-                    gasto.ativo !== false
+                    isSuspenso
+                      ? "bg-gray-200/50 dark:bg-gray-800/50 opacity-60 grayscale-[0.8]"
+                      : gasto.ativo !== false
                       ? "bg-gray-50 dark:bg-gray-800"
                       : "bg-gray-100 dark:bg-gray-800 opacity-60"
                   }`}
@@ -244,6 +253,17 @@ export function TabMeuGasto({
                       {formatCurrency(gasto.valor)}
                     </p>
                     <button
+                      onClick={() => handleToggleSuspenderGastoFixo(gasto.id, mesVisualizacao)}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        isSuspenso
+                          ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30"
+                          : "bg-amber-100 text-amber-600 hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30"
+                      }`}
+                      title={isSuspenso ? "Reativar neste mês" : "Suspender neste mês"}
+                    >
+                      {isSuspenso ? <PlayCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />}
+                    </button>
+                    <button
                       onClick={() => handleEditMeuGasto(gasto)}
                       className="p-1.5 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 hover:bg-blue-500/30 dark:hover:bg-blue-500/30 transition-colors"
                       title="Editar"
@@ -274,7 +294,7 @@ export function TabMeuGasto({
                     </button>
                   </div>
                 </div>
-              ))}
+              )})}
           </div>
         </div>
       )}
@@ -356,11 +376,15 @@ export function TabMeuGasto({
                         }
                       }
 
+                      const isSuspenso = gasto.categoria === "fixo" && gasto.meses_suspensos?.includes(format(mesVisualizacao, "yyyy-MM"));
+
                       return (
                         <li
                           key={gasto.id}
                           className={`p-4 rounded-xl border transition-all ${
-                            gasto.pago || gasto.tipo === "debito"
+                            isSuspenso
+                              ? "bg-gray-200/50 dark:bg-gray-800/50 border-gray-300 dark:border-gray-700 opacity-60 grayscale-[0.8]"
+                              : gasto.pago || gasto.tipo === "debito"
                               ? "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-800 opacity-70"
                               : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800"
                           }`}
@@ -412,6 +436,12 @@ export function TabMeuGasto({
                                       ? (nomeFatura ? `Crédito (Fatura de ${nomeFatura})` : "Crédito")
                                       : "Débito"}
                                   </span>
+                                  {isSuspenso && (
+                                    <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 flex items-center gap-1 font-semibold border border-amber-200 dark:border-amber-500/30">
+                                      {/* @ts-ignore */}
+                                      <PauseCircle className="w-3 h-3" /> Suspenso em {format(mesVisualizacao, "MMM", { locale: ptBR })}
+                                    </span>
+                                  )}
                                   {gasto.categoria === "dividido" && (
                                     <span className="text-xs px-2 py-0.5 rounded bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400 flex items-center gap-1">
                                       <Users className="w-3 h-3" />
@@ -443,6 +473,19 @@ export function TabMeuGasto({
                                 </p>
                               )}
                             <div className="flex items-center justify-end gap-1 mt-2">
+                              {gasto.categoria === "fixo" && (
+                                <button
+                                  onClick={() => handleToggleSuspenderGastoFixo(gasto.id, mesVisualizacao)}
+                                  className={`p-1.5 rounded-lg transition-colors ${
+                                    isSuspenso 
+                                      ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30" 
+                                      : "bg-amber-100 text-amber-600 hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30"
+                                  }`}
+                                  title={isSuspenso ? "Reativar neste mês" : "Suspender neste mês"}
+                                >
+                                  {isSuspenso ? <PlayCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />}
+                                </button>
+                              )}
                               <button
                                 onClick={() => handleEditMeuGasto(gasto)}
                                 className="p-1.5 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 hover:bg-blue-500/30 dark:hover:bg-blue-500/30 transition-colors"

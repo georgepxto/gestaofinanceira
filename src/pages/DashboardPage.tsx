@@ -157,7 +157,20 @@ export const DashboardPage = () => {
 
       // Calcular gastos fixos mensais
       const gastosFixos = (meusGastos as MeuGasto[] || [])
-        .filter(g => g.categoria === "fixo" && g.ativo !== false);
+        .filter(g => {
+          if (g.categoria !== "fixo" || g.ativo === false) return false;
+          
+          const mesAtualView = format(mesVisualizacao, "yyyy-MM");
+          if (g.meses_suspensos?.includes(mesAtualView)) return false;
+
+          const mesHoje = format(new Date(), "yyyy-MM");
+          if (mesAtualView === mesHoje && g.dia_vencimento) {
+            const hoje = new Date().getDate();
+            if (hoje < g.dia_vencimento) return false;
+          }
+
+          return true;
+        });
       const gastosFixosMensais = gastosFixos.reduce((acc, g) => acc + g.valor, 0);
 
       // Calcular receitas fixas mensais

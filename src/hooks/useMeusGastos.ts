@@ -143,7 +143,20 @@ export function useMeusGastos({
     );
 
   const totalGastosFixos = gastosFixos
-    .filter((g) => g.ativo !== false)
+    .filter((g) => {
+      if (g.ativo === false) return false;
+      
+      const mesAtualView = format(mesVisualizacao, "yyyy-MM");
+      if (g.meses_suspensos?.includes(mesAtualView)) return false;
+
+      const mesHoje = format(new Date(), "yyyy-MM");
+      if (mesAtualView === mesHoje && g.dia_vencimento) {
+        const hoje = new Date().getDate();
+        if (hoje < g.dia_vencimento) return false;
+      }
+
+      return true;
+    })
     .reduce((acc, g) => acc + g.valor, 0);
 
   // Adicionar meu gasto
@@ -616,6 +629,36 @@ export function useMeusGastos({
       setSaving(false);
     }
   };
+
+  // Suspender gasto fixo em um mês específico
+  const handleToggleSuspenderGastoFixo = async (id: string, mesRef: Date) => {
+    const gasto = meusGastos.find((g) => g.id === id);
+    if (!gasto) return;
+
+    const mesStr = format(mesRef, "yyyy-MM");
+    const mesesSuspensos = gasto.meses_suspensos || [];
+    
+    let novoArray: string[];
+    if (mesesSuspensos.includes(mesStr)) {
+      novoArray = mesesSuspensos.filter(m => m !== mesStr);
+    } else {
+      novoArray = [...mesesSuspensos, mesStr];
+    }
+
+    setSaving(true);
+    try {
+      if (isSupabaseConfigured && supabase) {
+        await meusGastosFunctions.update(id, { meses_suspensos: novoArray });
+      }
+
+      setMeusGastos((prev) =>
+        prev.map((g) => (g.id === id ? { ...g, meses_suspensos: novoArray } : g))
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Pagar todos os gastos de crédito pendentes do mês atual
   const handlePagarTodosCredito = async () => {
     const pendentes = meusGastosDoMes.filter(g => g.tipo === "credito" && !g.pago);
@@ -704,6 +747,7 @@ export function useMeusGastos({
     handleTogglePagoMeuGasto,
     handleDeleteMeuGasto,
     handleToggleGastoFixo,
+    handleToggleSuspenderGastoFixo,
     handlePagarTodosCredito,
     resetForm,
   };
