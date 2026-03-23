@@ -27,6 +27,7 @@ export const EuPage = () => {
     handleTogglePagoMeuGasto,
     setShowFormMeuGasto,
     features,
+    cartoes,
   } = useAppContext();
 
   const [exportingPDF, setExportingPDF] = useState(false);
@@ -118,6 +119,7 @@ export const EuPage = () => {
         handleToggleGastoFixo={handleToggleGastoFixo}
         handleDeleteMeuGasto={handleDeleteMeuGasto}
         handleTogglePagoMeuGasto={handleTogglePagoMeuGasto}
+        cartoes={cartoes}
       />
     </div>
   );

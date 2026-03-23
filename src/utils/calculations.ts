@@ -11,6 +11,18 @@ import { ptBR } from "date-fns/locale";
 import type { Gasto, ParcelaAtiva, ResumoMensal } from "../types";
 
 /**
+ * Ajusta o dia para o último dia válido do mês quando o dia excede.
+ * Ex: clampDay(31, 2026, 1) => 28 (fevereiro 2026 tem 28 dias)
+ * @param day - dia desejado (1-31)
+ * @param year - ano
+ * @param month - mês (0-indexed, como Date do JS)
+ */
+export function clampDay(day: number, year: number, month: number): number {
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  return Math.min(day, lastDay);
+}
+
+/**
  * Formata uma data para exibição (ex: "Janeiro 2024")
  */
 export function formatMonthYear(date: Date): string {

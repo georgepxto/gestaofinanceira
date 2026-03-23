@@ -26,12 +26,16 @@ Deno.serve(async (req) => {
 
     const today = new Date();
     const diaHoje = today.getDate();
+    const ultimoDiaMes = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    const isUltimoDia = diaHoje === ultimoDiaMes;
 
-    console.log(`[Push] Verificando gastos fixos para dia ${diaHoje}...`);
+    console.log(`[Push] Verificando gastos fixos para dia ${diaHoje} (último dia do mês: ${isUltimoDia})...`);
 
-    // Buscar todos os gastos fixos ativos com vencimento hoje
+    // Buscar gastos fixos ativos vencendo hoje
+    // No último dia do mês, também pega vencimentos de dias que não existem (ex: dia 31 em fev)
+    const filtroDia = isUltimoDia ? `dia_vencimento=gte.${diaHoje}` : `dia_vencimento=eq.${diaHoje}`;
     const gastosRes = await fetch(
-      `${supabaseUrl}/rest/v1/meus_gastos?categoria=eq.fixo&ativo=eq.true&dia_vencimento=eq.${diaHoje}&select=user_id,descricao,valor`,
+      `${supabaseUrl}/rest/v1/meus_gastos?categoria=eq.fixo&ativo=eq.true&${filtroDia}&select=user_id,descricao,valor`,
       {
         headers: {
           "apikey": serviceRoleKey,

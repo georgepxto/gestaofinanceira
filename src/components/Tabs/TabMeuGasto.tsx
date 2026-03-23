@@ -14,8 +14,9 @@ import {
   Trash2,
   MinusCircle,
 } from "lucide-react";
-import { format } from "date-fns";
-import type { MeuGasto } from "../../types";
+import { format, addMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import type { MeuGasto, CartaoCredito } from "../../types";
 import { formatCurrency, formatMonthYear } from "../../utils/calculations";
 
 interface TabMeuGastoProps {
@@ -36,6 +37,7 @@ interface TabMeuGastoProps {
   handleToggleGastoFixo: (id: string) => void;
   handleDeleteMeuGasto: (id: string) => void;
   handleTogglePagoMeuGasto: (id: string) => void;
+  cartoes: CartaoCredito[];
 }
 
 export function TabMeuGasto({
@@ -56,6 +58,7 @@ export function TabMeuGasto({
   handleToggleGastoFixo,
   handleDeleteMeuGasto,
   handleTogglePagoMeuGasto,
+  cartoes,
 }: TabMeuGastoProps) {
   return (
     <>
@@ -214,14 +217,14 @@ export function TabMeuGasto({
                     <div
                       className={`p-2 rounded-lg ${
                         gasto.tipo === "credito"
-                          ? "bg-purple-100"
-                          : "bg-emerald-100"
+                          ? "bg-purple-100 dark:bg-purple-500/20"
+                          : "bg-emerald-100 dark:bg-emerald-500/20"
                       }`}
                     >
                       {gasto.tipo === "credito" ? (
-                        <CreditCard className="w-4 h-4 text-purple-600" />
+                        <CreditCard className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                       ) : (
-                        <Wallet className="w-4 h-4 text-emerald-600" />
+                        <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       )}
                     </div>
                     <div>
@@ -239,7 +242,7 @@ export function TabMeuGasto({
                     </p>
                     <button
                       onClick={() => handleEditMeuGasto(gasto)}
-                      className="p-1.5 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-500/30 transition-colors"
+                      className="p-1.5 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 hover:bg-blue-500/30 dark:hover:bg-blue-500/30 transition-colors"
                       title="Editar"
                     >
                       <Edit3 className="w-4 h-4" />
@@ -248,7 +251,7 @@ export function TabMeuGasto({
                       onClick={() => handleToggleGastoFixo(gasto.id)}
                       className={`p-1.5 rounded-lg transition-colors ${
                         gasto.ativo !== false
-                          ? "bg-emerald-100 text-emerald-600 hover:bg-green-500/30"
+                          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 hover:bg-green-500/30 dark:hover:bg-green-500/30"
                           : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                       }`}
                       title={gasto.ativo !== false ? "Desativar" : "Ativar"}
@@ -261,7 +264,7 @@ export function TabMeuGasto({
                     </button>
                     <button
                       onClick={() => handleDeleteMeuGasto(gasto.id)}
-                      className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-500/30 transition-colors"
+                      className="p-1.5 rounded-lg bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 hover:bg-red-500/30 dark:hover:bg-red-500/30 transition-colors"
                       title="Excluir"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -334,79 +337,100 @@ export function TabMeuGasto({
                   </div>
                   {/* Lista de gastos do dia */}
                   <ul className="space-y-3">
-                    {gastosPorDia[dia].map((gasto) => (
-                      <li
-                        key={gasto.id}
-                        className={`p-4 rounded-xl border transition-all ${
-                          gasto.pago || gasto.tipo === "debito"
-                            ? "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-800 opacity-70"
-                            : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-3">
-                            {/* Só mostra checkbox para crédito */}
-                            {gasto.tipo === "credito" ? (
-                              <button
-                                onClick={() =>
-                                  handleTogglePagoMeuGasto(gasto.id)
-                                }
-                                className={`mt-1 p-2 rounded-lg transition-colors ${
-                                  gasto.pago
-                                    ? "bg-emerald-100 text-emerald-600"
-                                    : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
-                                }`}
-                              >
-                                {gasto.pago ? (
+                    {gastosPorDia[dia].map((gasto) => {
+                      let nomeFatura = "";
+                      if (gasto.tipo === "credito" && gasto.cartao_id) {
+                        const cartao = cartoes?.find((c) => c.id === gasto.cartao_id);
+                        if (cartao && cartao.melhor_dia_compra) {
+                          const diaCompra = parseInt(gasto.data.split("-")[2], 10);
+                          const [ano, mes] = gasto.data.split("-").map(Number);
+                          let dataFatura = new Date(ano, mes - 1, diaCompra);
+                          if (diaCompra >= cartao.melhor_dia_compra) {
+                            dataFatura = addMonths(dataFatura, 1);
+                          }
+                          nomeFatura = format(dataFatura, "MMMM", { locale: ptBR });
+                          nomeFatura = nomeFatura.charAt(0).toUpperCase() + nomeFatura.slice(1);
+                        } else {
+                          const [ano, mes, diaComp] = gasto.data.split("-").map(Number);
+                          const dataFatura = new Date(ano, mes - 1, diaComp);
+                          nomeFatura = format(dataFatura, "MMMM", { locale: ptBR });
+                          nomeFatura = nomeFatura.charAt(0).toUpperCase() + nomeFatura.slice(1);
+                        }
+                      }
+
+                      return (
+                        <li
+                          key={gasto.id}
+                          className={`p-4 rounded-xl border transition-all ${
+                            gasto.pago || gasto.tipo === "debito"
+                              ? "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-800 opacity-70"
+                              : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-3">
+                              {/* Só mostra checkbox para crédito */}
+                              {gasto.tipo === "credito" ? (
+                                <button
+                                  onClick={() =>
+                                    handleTogglePagoMeuGasto(gasto.id)
+                                  }
+                                  className={`mt-1 p-2 rounded-lg transition-colors ${
+                                    gasto.pago
+                                      ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                      : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
+                                  }`}
+                                >
+                                  {gasto.pago ? (
+                                    <CheckCircle className="w-5 h-5" />
+                                  ) : (
+                                    <div className="w-5 h-5 border-2 border-gray-400 rounded-full" />
+                                  )}
+                                </button>
+                              ) : (
+                                <div className="mt-1 p-2 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
                                   <CheckCircle className="w-5 h-5" />
-                                ) : (
-                                  <div className="w-5 h-5 border-2 border-gray-400 rounded-full" />
-                                )}
-                              </button>
-                            ) : (
-                              <div className="mt-1 p-2 rounded-lg bg-emerald-100 text-emerald-600">
-                                <CheckCircle className="w-5 h-5" />
+                                </div>
+                              )}
+                              <div>
+                                <p
+                                  className={`font-medium ${
+                                    gasto.pago || gasto.tipo === "debito"
+                                      ? "text-gray-500 dark:text-gray-400"
+                                      : "text-gray-900 dark:text-gray-100"
+                                  }`}
+                                >
+                                  {gasto.descricao}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                  <span
+                                    className={`text-xs px-2 py-0.5 rounded ${
+                                      gasto.tipo === "credito"
+                                        ? "bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400"
+                                        : "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                    }`}
+                                  >
+                                    {gasto.tipo === "credito"
+                                      ? (nomeFatura ? `Crédito (Fatura de ${nomeFatura})` : "Crédito")
+                                      : "Débito"}
+                                  </span>
+                                  {gasto.categoria === "dividido" && (
+                                    <span className="text-xs px-2 py-0.5 rounded bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400 flex items-center gap-1">
+                                      <Users className="w-3 h-3" />
+                                      {gasto.dividido_com}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                            )}
-                            <div>
+                            </div>
+                            <div className="text-right">
                               <p
-                                className={`font-medium ${
+                                className={`font-bold ${
                                   gasto.pago || gasto.tipo === "debito"
                                     ? "text-gray-500 dark:text-gray-400"
                                     : "text-gray-900 dark:text-gray-100"
                                 }`}
                               >
-                                {gasto.descricao}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                <span
-                                  className={`text-xs px-2 py-0.5 rounded ${
-                                    gasto.tipo === "credito"
-                                      ? "bg-purple-100 text-purple-600"
-                                      : "bg-emerald-100 text-emerald-600"
-                                  }`}
-                                >
-                                  {gasto.tipo === "credito"
-                                    ? "Crédito"
-                                    : "Débito"}
-                                </span>
-                                {gasto.categoria === "dividido" && (
-                                  <span className="text-xs px-2 py-0.5 rounded bg-pink-100 text-pink-600 flex items-center gap-1">
-                                    <Users className="w-3 h-3" />
-                                    {gasto.dividido_com}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p
-                              className={`font-bold ${
-                                gasto.pago || gasto.tipo === "debito"
-                                  ? "text-gray-500 dark:text-gray-400"
-                                  : "text-gray-900 dark:text-gray-100"
-                              }`}
-                            >
                               {formatCurrency(
                                 gasto.categoria === "dividido" &&
                                   gasto.minha_parte
@@ -423,14 +447,14 @@ export function TabMeuGasto({
                             <div className="flex items-center justify-end gap-1 mt-2">
                               <button
                                 onClick={() => handleEditMeuGasto(gasto)}
-                                className="p-1.5 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-500/30 transition-colors"
+                                className="p-1.5 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 hover:bg-blue-500/30 dark:hover:bg-blue-500/30 transition-colors"
                                 title="Editar"
                               >
                                 <Edit3 className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleDeleteMeuGasto(gasto.id)}
-                                className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-500/30 transition-colors"
+                                className="p-1.5 rounded-lg bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 hover:bg-red-500/30 dark:hover:bg-red-500/30 transition-colors"
                                 title="Excluir"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -438,8 +462,9 @@ export function TabMeuGasto({
                             </div>
                           </div>
                         </div>
-                      </li>
-                    ))}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               ));

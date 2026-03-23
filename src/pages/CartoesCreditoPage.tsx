@@ -118,14 +118,19 @@ export const CartoesCreditoPage = () => {
     const mes = mesVisualizacao.getMonth(); // 0-indexed
     
     // Fim do período: dia de fechamento do mês selecionado
-    const fimAno = mes === 11 && diaFechamento < 28 ? ano : ano;
+    // Clampar para o último dia válido do mês (ex: dia 31 em fev → dia 28)
+    const fimAno = ano;
     const fimMes = mes;
-    const fim = new Date(fimAno, fimMes, diaFechamento, 23, 59, 59);
+    const ultimoDiaFim = new Date(fimAno, fimMes + 1, 0).getDate();
+    const diaFechamentoFim = Math.min(diaFechamento, ultimoDiaFim);
+    const fim = new Date(fimAno, fimMes, diaFechamentoFim, 23, 59, 59);
     
     // Início do período: dia após fechamento do mês anterior
     const inicioMes = mes === 0 ? 11 : mes - 1;
     const inicioAno = mes === 0 ? ano - 1 : ano;
-    const inicio = new Date(inicioAno, inicioMes, diaFechamento + 1, 0, 0, 0);
+    const ultimoDiaInicio = new Date(inicioAno, inicioMes + 1, 0).getDate();
+    const diaFechamentoInicio = Math.min(diaFechamento, ultimoDiaInicio);
+    const inicio = new Date(inicioAno, inicioMes, diaFechamentoInicio + 1, 0, 0, 0);
     
     return { inicio, fim, diaFechamento };
   };
@@ -158,7 +163,7 @@ export const CartoesCreditoPage = () => {
     const gastos = getGastosDoMes(cartaoId).map(g => ({
       id: g.id, descricao: g.descricao, valor: g.minha_parte || g.valor, 
       categoria: g.categoria_gasto || g.categoria || "Gasto",
-      data: g.categoria === "fixo" ? format(mesVisualizacao, "yyyy-MM") + `-${String(g.dia_vencimento || 1).padStart(2, "0")}` : g.data, 
+      data: g.categoria === "fixo" ? format(mesVisualizacao, "yyyy-MM") + `-${String(Math.min(g.dia_vencimento || 1, new Date(mesVisualizacao.getFullYear(), mesVisualizacao.getMonth() + 1, 0).getDate())).padStart(2, "0")}` : g.data, 
       pago: g.pago, origem: "gasto" as const, pessoa: "",
     }));
     // Adicionar gastos compartilhados vinculados ao cartão (usando período de fatura)

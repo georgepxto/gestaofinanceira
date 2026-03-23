@@ -5,7 +5,7 @@ import {
   isSupabaseConfigured,
   meusGastosFunctions,
 } from "../lib/supabase";
-import type { MeuGasto, MeuGastoForm } from "../types";
+import type { MeuGasto, MeuGastoForm, CartaoCredito } from "../types";
 import { formatCurrency, parseCurrency } from "../utils/calculations";
 
 interface UseMeusGastosProps {
@@ -17,12 +17,14 @@ interface UseMeusGastosProps {
     mensagem: string;
     onConfirm: () => void;
   }) => void;
+  cartoes: CartaoCredito[];
 }
 
 export function useMeusGastos({
   user,
   mesVisualizacao,
   setModalConfirm,
+  cartoes,
 }: UseMeusGastosProps) {
   const [meusGastos, setMeusGastos] = useState<MeuGasto[]>([]);
   const [meusGastosLoaded, setMeusGastosLoaded] = useState<boolean>(false);
@@ -88,7 +90,22 @@ export function useMeusGastos({
 
   // Valores derivados
   const meusGastosDoMes = meusGastos.filter((g) => {
-    const mesGasto = g.data.substring(0, 7);
+    let mesGasto = g.data.substring(0, 7);
+
+    // Lógica da fatura do cartão de crédito
+    if (g.tipo === "credito" && g.cartao_id) {
+      const cartao = cartoes.find((c) => c.id === g.cartao_id);
+      if (cartao && cartao.melhor_dia_compra) {
+        const diaCompra = parseInt(g.data.split("-")[2], 10);
+        if (diaCompra >= cartao.melhor_dia_compra) {
+          const [ano, mes] = g.data.split("-").map(Number);
+          const dateObj = new Date(ano, mes - 1, diaCompra);
+          const proxMes = addMonths(dateObj, 1);
+          mesGasto = format(proxMes, "yyyy-MM");
+        }
+      }
+    }
+
     const mesAtual = format(mesVisualizacao, "yyyy-MM");
     const matchMes = mesGasto === mesAtual;
     const matchCategoria = filtroCategoriaMeuGasto

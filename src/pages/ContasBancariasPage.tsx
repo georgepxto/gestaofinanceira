@@ -49,12 +49,18 @@ export const ContasBancariasPage = () => {
 
   // Calcular saldo
   const calcularSaldoConta = (conta: ContaBancaria) => {
-    const diaAtual = new Date().getDate();
+    const hoje = new Date();
+    const diaAtual = hoje.getDate();
+    const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
     const receitasDaConta = receitas.filter(r => r.conta_id === conta.id);
     // Apenas receitas fixas e recorrentes que já venceram (avulso já está no saldo_atual)
+    // Se dia_recebimento > último dia do mês (ex: 31 em fev), considera o último dia
     const receitasRecebidas = receitasDaConta.filter(r => {
       if (r.tipo === "avulso") return false; // Avulso já foi adicionado diretamente ao saldo_atual
-      if (r.tipo === "fixo" || r.tipo === "recorrente") return r.dia_recebimento <= diaAtual;
+      if (r.tipo === "fixo" || r.tipo === "recorrente") {
+        const diaEfetivo = Math.min(r.dia_recebimento, ultimoDiaMes);
+        return diaEfetivo <= diaAtual;
+      }
       return false;
     });
     // Usar saldo_atual como base (que inclui pagamentos de fatura e receitas avulsas)

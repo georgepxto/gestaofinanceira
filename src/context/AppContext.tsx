@@ -9,10 +9,11 @@ import {
   useGastos,
   useSaldosDevedores,
   useMeusGastos,
+  useCartoes,
 } from "../hooks";
 import { useFeatureFlags } from "../hooks/useFeatureFlags";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
-import type { MeuGasto, MeuGastoForm, Gasto, GastoForm, SaldoDevedor, SaldoDevedorForm, ParcelaAtiva, ResumoMensal } from "../types";
+import type { MeuGasto, MeuGastoForm, Gasto, GastoForm, SaldoDevedor, SaldoDevedorForm, ParcelaAtiva, ResumoMensal, CartaoCredito } from "../types";
 import type { PagamentoParcial } from "../types/extended";
 import type { UserFeatures } from "../types/admin";
 
@@ -161,6 +162,7 @@ interface AppContextType {
   handleDeleteMeuGasto: (id: string) => void;
   handleToggleGastoFixo: (id: string) => Promise<void>;
   resetFormMeuGasto: () => void;
+  cartoes: CartaoCredito[];
 
   // Combined
   saving: boolean;
@@ -189,6 +191,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { isAdmin, isActive, features, loading: featuresLoading } = useFeatureFlags({ userId: user?.id });
 
   const { modalFeedback, setModalFeedback, modalConfirm, setModalConfirm } = useModals();
+
+  const { cartoes } = useCartoes({ user });
 
   const {
     pessoas,
@@ -347,6 +351,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     user,
     mesVisualizacao,
     setModalConfirm,
+    cartoes,
   });
 
   // Combined states
@@ -497,6 +502,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     handleDeleteMeuGasto,
     handleToggleGastoFixo,
     resetFormMeuGasto,
+    cartoes,
 
     // Combined
     saving,
