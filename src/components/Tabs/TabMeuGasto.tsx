@@ -384,40 +384,34 @@ export function TabMeuGasto({
                           className={`p-4 rounded-xl border transition-all ${
                             isSuspenso
                               ? "bg-gray-200/50 dark:bg-gray-800/50 border-gray-300 dark:border-gray-700 opacity-60 grayscale-[0.8]"
-                              : gasto.pago || gasto.tipo === "debito"
+                              : gasto.pago
                               ? "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-800 opacity-70"
                               : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800"
                           }`}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex items-start gap-3">
-                              {/* Só mostra checkbox para crédito */}
-                              {gasto.tipo === "credito" ? (
-                                <button
-                                  onClick={() =>
-                                    handleTogglePagoMeuGasto(gasto.id)
-                                  }
-                                  className={`mt-1 p-2 rounded-lg transition-colors ${
-                                    gasto.pago
-                                      ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
-                                      : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
-                                  }`}
-                                >
-                                  {gasto.pago ? (
-                                    <CheckCircle className="w-5 h-5" />
-                                  ) : (
-                                    <div className="w-5 h-5 border-2 border-gray-400 rounded-full" />
-                                  )}
-                                </button>
-                              ) : (
-                                <div className="mt-1 p-2 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+                              {/* Checkbox para todos (crédito e débito) */}
+                              <button
+                                onClick={() =>
+                                  handleTogglePagoMeuGasto(gasto.id)
+                                }
+                                className={`mt-1 p-2 rounded-lg transition-colors ${
+                                  gasto.pago
+                                    ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                    : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
+                                }`}
+                              >
+                                {gasto.pago ? (
                                   <CheckCircle className="w-5 h-5" />
-                                </div>
-                              )}
+                                ) : (
+                                  <div className="w-5 h-5 border-2 border-gray-400 rounded-full" />
+                                )}
+                              </button>
                               <div>
                                 <p
                                   className={`font-medium ${
-                                    gasto.pago || gasto.tipo === "debito"
+                                    gasto.pago
                                       ? "text-gray-500 dark:text-gray-400"
                                       : "text-gray-900 dark:text-gray-100"
                                   }`}
@@ -454,7 +448,7 @@ export function TabMeuGasto({
                             <div className="text-right">
                               <p
                                 className={`font-bold ${
-                                  gasto.pago || gasto.tipo === "debito"
+                                  gasto.pago
                                     ? "text-gray-500 dark:text-gray-400"
                                     : "text-gray-900 dark:text-gray-100"
                                 }`}

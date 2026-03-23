@@ -134,7 +134,7 @@ export function useMeusGastos({
     );
 
   const totalMeusGastosPagos = meusGastosDoMes
-    .filter((g) => g.pago || g.tipo === "debito")
+    .filter((g) => g.pago)
     .reduce(
       (acc, g) =>
         acc +
@@ -216,6 +216,12 @@ export function useMeusGastos({
           setMeusGastos((prev) => [...prev, novoGasto]);
         }
       } else {
+        const dataGasto = formMeuGasto.data;
+        const hojeIso = format(new Date(), "yyyy-MM-dd");
+        const isFuture = dataGasto > hojeIso;
+
+        const isPago = formMeuGasto.tipo === "debito" && !isFuture;
+
         const novoGasto: MeuGasto = {
           id: Date.now().toString(),
           descricao: formMeuGasto.descricao,
@@ -223,7 +229,7 @@ export function useMeusGastos({
           tipo: formMeuGasto.tipo,
           categoria: formMeuGasto.categoria,
           data: formMeuGasto.data,
-          pago: formMeuGasto.tipo === "debito",
+          pago: isPago,
           dividido_com:
             formMeuGasto.categoria === "dividido"
               ? formMeuGasto.dividido_com
@@ -245,8 +251,8 @@ export function useMeusGastos({
         if (isSupabaseConfigured && supabase) {
           await meusGastosFunctions.create(novoGasto);
           
-          // Se for débito e tiver conta selecionada, descontar do saldo (exceto se for gasto fixo, que debita apenas no dashboard)
-          if (formMeuGasto.tipo === "debito" && formMeuGasto.conta_id && formMeuGasto.categoria !== "fixo") {
+          // Se for débito e tiver conta selecionada, descontar do saldo Apenas se não for data futura
+          if (isPago && formMeuGasto.conta_id && formMeuGasto.categoria !== "fixo") {
             const { data: contaAtual } = await supabase
               .from("contas_bancarias")
               .select("saldo_atual")
@@ -557,6 +563,21 @@ export function useMeusGastos({
             await supabase.from("contas_bancarias")
               .update({ saldo_atual: novoSaldo })
               .eq("id", conta.id);
+          }
+        } else if (gasto.tipo === "debito" && gasto.conta_id && gasto.categoria !== "fixo") {
+          const { data: contaAtual } = await supabase
+            .from("contas_bancarias")
+            .select("saldo_atual")
+            .eq("id", gasto.conta_id)
+            .single();
+
+          if (contaAtual) {
+            const diferenca = novoStatus ? gasto.valor : -gasto.valor;
+            const novoSaldo = (contaAtual.saldo_atual || 0) - diferenca;
+            await supabase
+              .from("contas_bancarias")
+              .update({ saldo_atual: novoSaldo })
+              .eq("id", gasto.conta_id);
           }
         }
         await meusGastosFunctions.update(id, updates);
