@@ -547,6 +547,18 @@ export function useMeusGastos({
     setSaving(true);
     try {
       if (isSupabaseConfigured && supabase) {
+        if (gasto.tipo === "credito") {
+          const { data: contas } = await supabase.from("contas_bancarias").select("*").order("nome").limit(1);
+          if (contas && contas.length > 0) {
+            const conta = contas[0];
+            const diferenca = novoStatus ? gasto.valor : -gasto.valor;
+            const novoSaldo = (conta.saldo_atual || 0) - diferenca;
+            
+            await supabase.from("contas_bancarias")
+              .update({ saldo_atual: novoSaldo })
+              .eq("id", conta.id);
+          }
+        }
         await meusGastosFunctions.update(id, updates);
       }
 
@@ -674,6 +686,17 @@ export function useMeusGastos({
         if (!supabase) return;
         setSaving(true);
         try {
+          // Descontar do saldo total
+          const valorTotal = pendentes.reduce((acc, g) => acc + (g.valor || 0), 0);
+          if (valorTotal > 0) {
+            const { data: contasInfo } = await supabase.from("contas_bancarias").select("*").order("nome").limit(1);
+            if (contasInfo && contasInfo.length > 0) {
+              const conta = contasInfo[0];
+              const novoSaldo = (conta.saldo_atual || 0) - valorTotal;
+              await supabase.from("contas_bancarias").update({ saldo_atual: novoSaldo }).eq("id", conta.id);
+            }
+          }
+
           const ids = pendentes.map(g => g.id);
           const { error: updateError } = await supabase
             .from("meus_gastos")
