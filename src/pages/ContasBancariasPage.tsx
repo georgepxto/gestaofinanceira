@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { format } from "date-fns";
 import { Building2, Plus, Loader2, DollarSign, TrendingUp, Trash2, Edit2, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAppContext } from "../context";
 import { supabase } from "../lib/supabase";
@@ -7,7 +8,7 @@ import { CATEGORIAS_RECEITA, TIPOS_RECEITA, CATEGORIA_RECEITA_PADRAO } from "../
 import type { ContaBancaria, Receita, ContaBancariaForm, ReceitaForm } from "../types";
 
 export const ContasBancariasPage = () => {
-  const { user, setModalConfirm, mesVisualizacao, navegarMes, irParaHoje } = useAppContext();
+  const { user, setModalConfirm, setModalFeedback, mesVisualizacao, navegarMes, irParaHoje, gastosFixos } = useAppContext();
   
   const [contas, setContas] = useState<ContaBancaria[]>([]);
   const [receitas, setReceitas] = useState<Receita[]>([]);
@@ -63,9 +64,25 @@ export const ContasBancariasPage = () => {
       }
       return false;
     });
-    // Usar saldo_atual como base (que inclui pagamentos de fatura e receitas avulsas)
+    // Gastos fixos vinculados a esta conta que já venceram no mês atual (e não estão suspensos)
+    const mesAtualStr = format(mesVisualizacao, "yyyy-MM");
+    const gastosFixosDaConta = (gastosFixos || []).filter(g => {
+      if (g.conta_id !== conta.id) return false;
+      if (g.ativo === false) return false;
+      if (g.meses_suspensos?.includes(mesAtualStr)) return false;
+      
+      const diaVencimento = g.dia_vencimento || 1;
+      const diaEfetivo = Math.min(diaVencimento, ultimoDiaMes);
+      return diaEfetivo <= diaAtual;
+    });
+
+    // Usar saldo_atual como base (que inclui pagamentos de fatura e receitas/gastos avulsos)
     const saldoBase = conta.saldo_atual !== undefined && conta.saldo_atual !== null ? conta.saldo_atual : conta.saldo_inicial;
-    return saldoBase + receitasRecebidas.reduce((sum, r) => sum + r.valor, 0);
+    
+    const totalReceitas = receitasRecebidas.reduce((sum, r) => sum + r.valor, 0);
+    const totalGastos = gastosFixosDaConta.reduce((sum, g) => sum + g.valor, 0);
+
+    return saldoBase + totalReceitas - totalGastos;
   };
 
   // CRUD Conta
@@ -111,7 +128,26 @@ export const ContasBancariasPage = () => {
   const handleDeleteConta = (id: string, nome: string) => {
     setModalConfirm({
       show: true, titulo: "Excluir Conta", mensagem: `Excluir "${nome}"?`,
-      onConfirm: async () => { if (supabase) { await supabase.from("contas_bancarias").delete().eq("id", id); await fetchContas(); } },
+      onConfirm: async () => { 
+        if (!supabase) return;
+        const { error } = await supabase.from("contas_bancarias").delete().eq("id", id);
+        
+        if (error) {
+          console.error("Erro ao excluir conta:", error);
+          if (error.code === '23503' || String(error.message).includes('foreign key') || String(error.message).includes('Conflict')) {
+            setModalFeedback?.({
+              show: true,
+              titulo: "Não é possível excluir",
+              mensagem: "Esta conta não pode ser apagada pois existem gastos ou receitas vinculadas a ela.",
+              tipo: "info"
+            });
+          } else {
+            setModalFeedback?.({ show: true, titulo: "Erro", mensagem: "Erro ao excluir conta.", tipo: "info" });
+          }
+        } else {
+          await fetchContas(); 
+        }
+      },
     });
   };
 

@@ -245,8 +245,8 @@ export function useMeusGastos({
         if (isSupabaseConfigured && supabase) {
           await meusGastosFunctions.create(novoGasto);
           
-          // Se for débito e tiver conta selecionada, descontar do saldo
-          if (formMeuGasto.tipo === "debito" && formMeuGasto.conta_id) {
+          // Se for débito e tiver conta selecionada, descontar do saldo (exceto se for gasto fixo, que debita apenas no dashboard)
+          if (formMeuGasto.tipo === "debito" && formMeuGasto.conta_id && formMeuGasto.categoria !== "fixo") {
             const { data: contaAtual } = await supabase
               .from("contas_bancarias")
               .select("saldo_atual")
@@ -396,8 +396,8 @@ export function useMeusGastos({
               if (isSupabaseConfigured && supabase) {
                 await meusGastosFunctions.update(existente.id, dadosAtualizados);
                 
-                // Se for débito, verificar mudança de conta para descontar/estornar saldo
-                if (formMeuGasto.tipo === "debito") {
+                // Se for débito, verificar mudança de conta para descontar/estornar saldo (ignorando gastos fixos)
+                if (formMeuGasto.tipo === "debito" && formMeuGasto.categoria !== "fixo" && existente.categoria !== "fixo") {
                   const contaAntiga = existente.conta_id;
                   const contaNova = formMeuGasto.conta_id || "";
                   const valorAntigo = existente.valor || 0;
