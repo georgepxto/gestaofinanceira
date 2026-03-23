@@ -31,7 +31,7 @@ export const authFunctions = {
         data: {
           nome: nome,
         },
-        emailRedirectTo: "https://gestaofinanceira-orcin.vercel.app/",
+        emailRedirectTo: window.location.origin,
       },
     });
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, User, FileText, Loader2 } from "lucide-react";
+import { Plus, User, FileText, Loader2, CheckCircle2 } from "lucide-react";
 import { useAppContext } from "../context";
 import { TabMeuGasto } from "../components/Tabs";
 import { generateMeusGastosPDF } from "../utils/pdfGenerator";
@@ -25,6 +25,7 @@ export const EuPage = () => {
     handleToggleGastoFixo,
     handleDeleteMeuGasto,
     handleTogglePagoMeuGasto,
+    handlePagarTodosCredito,
     setShowFormMeuGasto,
     features,
     cartoes,
@@ -88,6 +89,16 @@ export const EuPage = () => {
                 <FileText className="w-5 h-5" />
               )}
               <span className="hidden sm:inline">PDF</span>
+            </button>
+          )}
+          {meusGastosDoMes.some(g => g.tipo === "credito" && !g.pago) && (
+            <button
+              onClick={handlePagarTodosCredito}
+              className="bg-purple-100/80 text-purple-700 hover:bg-purple-200 dark:bg-purple-500/20 dark:text-purple-400 dark:hover:bg-purple-500/30 px-3 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              title="Dar baixa em todas as despesas de crédito"
+            >
+              <CheckCircle2 className="w-5 h-5" />
+              <span className="hidden sm:inline">Pagar Fatura</span>
             </button>
           )}
           <button

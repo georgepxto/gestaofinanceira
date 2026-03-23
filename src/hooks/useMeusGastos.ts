@@ -16,6 +16,8 @@ interface UseMeusGastosProps {
     titulo: string;
     mensagem: string;
     onConfirm: () => void;
+    confirmLabel?: string;
+    confirmColor?: "red" | "green" | "blue" | "indigo" | "purple";
   }) => void;
   cartoes: CartaoCredito[];
   cartoesLoading?: boolean;
@@ -614,6 +616,42 @@ export function useMeusGastos({
       setSaving(false);
     }
   };
+  // Pagar todos os gastos de crédito pendentes do mês atual
+  const handlePagarTodosCredito = async () => {
+    const pendentes = meusGastosDoMes.filter(g => g.tipo === "credito" && !g.pago);
+    if (pendentes.length === 0) return;
+
+    setModalConfirm({
+      show: true,
+      titulo: "Pagar Fatura de Crédito",
+      mensagem: `Deseja dar baixa como pago em todos os ${pendentes.length} gastos de crédito listados neste mês?`,
+      confirmLabel: "Pagar Todos",
+      confirmColor: "green",
+      onConfirm: async () => {
+        if (!supabase) return;
+        setSaving(true);
+        try {
+          const ids = pendentes.map(g => g.id);
+          const { error: updateError } = await supabase
+            .from("meus_gastos")
+            .update({ pago: true })
+            .in("id", ids);
+
+          if (updateError) throw updateError;
+
+          setMeusGastos((prev) =>
+            prev.map((g) => ids.includes(g.id) ? { ...g, pago: true } : g)
+          );
+          setModalConfirm({ show: false, titulo: "", mensagem: "", onConfirm: () => {} });
+        } catch (err) {
+          console.error("Erro ao pagar todos:", err);
+          setError("Erro ao pagar gastos de crédito. Tente novamente.");
+        } finally {
+          setSaving(false);
+        }
+      }
+    });
+  };
 
   // Resetar formulário
   const resetForm = () => {
@@ -666,6 +704,7 @@ export function useMeusGastos({
     handleTogglePagoMeuGasto,
     handleDeleteMeuGasto,
     handleToggleGastoFixo,
+    handlePagarTodosCredito,
     resetForm,
   };
 }

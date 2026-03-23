@@ -161,6 +161,7 @@ interface AppContextType {
   handleTogglePagoMeuGasto: (id: string) => Promise<void>;
   handleDeleteMeuGasto: (id: string) => void;
   handleToggleGastoFixo: (id: string) => Promise<void>;
+  handlePagarTodosCredito: () => Promise<void>;
   resetFormMeuGasto: () => void;
   cartoes: CartaoCredito[];
 
@@ -346,6 +347,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     handleTogglePagoMeuGasto,
     handleDeleteMeuGasto,
     handleToggleGastoFixo,
+    handlePagarTodosCredito,
     resetForm: resetFormMeuGasto,
   } = useMeusGastos({
     user,
@@ -502,6 +504,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     handleTogglePagoMeuGasto,
     handleDeleteMeuGasto,
     handleToggleGastoFixo,
+    handlePagarTodosCredito,
     resetFormMeuGasto,
     cartoes,
 

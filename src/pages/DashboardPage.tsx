@@ -307,15 +307,19 @@ export const DashboardPage = () => {
         .sort((a, b) => b.valor - a.valor)
         .slice(0, 5);
 
-      // Top 5 meus gastos pessoais do mês
-      const top5MeusGastos = gastosDoMes
+      // Últimos 5 meus gastos pessoais do mês
+      const top5MeusGastos = [...gastosDoMes]
+        .sort((a, b) => {
+          const dateA = new Date(a.data || 0).getTime();
+          const dateB = new Date(b.data || 0).getTime();
+          return dateB - dateA;
+        })
+        .slice(0, 5)
         .map(g => ({
           descricao: g.descricao || 'Sem descrição',
           valor: g.valor,
           categoria: g.categoria_gasto || g.categoria || 'Outros',
-        }))
-        .sort((a, b) => b.valor - a.valor)
-        .slice(0, 5);
+        }));
 
       // 5. Parcelas próximas do fim (restam 1-3 parcelas)
       // Calcular parcela atual baseado na data_inicio e mês atual

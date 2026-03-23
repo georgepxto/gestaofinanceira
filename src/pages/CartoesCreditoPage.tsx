@@ -491,10 +491,10 @@ export const CartoesCreditoPage = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Limites por Cartão</h2>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><ChevronLeft className="w-4 h-4 text-gray-500 dark:text-gray-400" /></button>
-              <span className="text-gray-900 dark:text-gray-100 capitalize">{getMesAno()}</span>
-              <button onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><ChevronRight className="w-4 h-4 text-gray-500 dark:text-gray-400" /></button>
+            <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-1">
+              <button onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm transition-colors"><ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-300" /></button>
+              <span className="text-gray-900 dark:text-gray-100 capitalize font-medium text-sm min-w-[100px] text-center">{getMesAno()}</span>
+              <button onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm transition-colors"><ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-300" /></button>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -570,13 +570,13 @@ export const CartoesCreditoPage = () => {
             {/* Navegação de mês */}
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                  <span className="text-gray-900 dark:text-gray-100 font-medium capitalize">{getMesAno()}</span>
-                  <div className="flex gap-1">
-                    <button onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><ChevronLeft className="w-4 h-4 text-gray-500 dark:text-gray-400" /></button>
-                    <button onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><ChevronRight className="w-4 h-4 text-gray-500 dark:text-gray-400" /></button>
+                <div className="flex items-center gap-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-1">
+                  <button onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm transition-colors"><ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-300" /></button>
+                  <div className="flex items-center justify-center gap-2 min-w-[130px]">
+                    <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <span className="text-gray-900 dark:text-gray-100 font-medium capitalize text-sm">{getMesAno()}</span>
                   </div>
+                  <button onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))} className="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded shadow-sm transition-colors"><ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-300" /></button>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Melhor dia para compra: {cartaoSelecionado.melhor_dia_compra || "-"}</p>
               </div>

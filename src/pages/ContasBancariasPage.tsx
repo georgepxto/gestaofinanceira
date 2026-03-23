@@ -307,8 +307,8 @@ export const ContasBancariasPage = () => {
                     <p className="text-gray-400 dark:text-gray-500 text-xs">Inicial: {formatCurrency(c.saldo_inicial)}</p>
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => handleEditConta(c)} className="p-1.5 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 rounded"><Edit2 className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
-                    <button onClick={() => handleDeleteConta(c.id, c.nome)} className="p-1.5 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 rounded"><Trash2 className="w-4 h-4 text-gray-400 dark:text-gray-500 hover:text-red-500" /></button>
+                    <button onClick={() => handleEditConta(c)} className="p-1.5 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><Edit2 className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
+                    <button onClick={() => handleDeleteConta(c.id, c.nome)} className="p-1.5 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><Trash2 className="w-4 h-4 text-gray-400 dark:text-gray-500 hover:text-red-500" /></button>
                   </div>
                 </div>
               </div>
@@ -342,8 +342,8 @@ export const ContasBancariasPage = () => {
                   <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
                     <p className="text-emerald-600 font-semibold">{formatCurrency(r.valor)}</p>
                     <div className="flex gap-1">
-                      <button onClick={() => handleEditReceita(r)} className="p-1.5 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 rounded"><Edit2 className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
-                      <button onClick={() => handleDeleteReceita(r.id, r.descricao)} className="p-1.5 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 rounded"><Trash2 className="w-4 h-4 text-gray-400 dark:text-gray-500 hover:text-red-500" /></button>
+                      <button onClick={() => handleEditReceita(r)} className="p-1.5 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><Edit2 className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
+                      <button onClick={() => handleDeleteReceita(r.id, r.descricao)} className="p-1.5 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><Trash2 className="w-4 h-4 text-gray-400 dark:text-gray-500 hover:text-red-500" /></button>
                     </div>
                   </div>
                 </div>
@@ -363,7 +363,7 @@ export const ContasBancariasPage = () => {
             {receitasFiltradas.map(r => {
               const contaNome = contas.find(c => c.id === r.conta_id)?.nome || "Sem conta";
               return (
-                <div key={r.id} className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <div key={r.id} className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 rounded-lg">
                   <div>
                     <p className="text-gray-900 dark:text-gray-100 font-medium">{r.descricao}</p>
                     <p className="text-gray-500 dark:text-gray-400 text-sm">
@@ -371,9 +371,9 @@ export const ContasBancariasPage = () => {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded font-medium">+ {formatCurrency(r.valor)}</span>
-                    <button onClick={() => handleEditReceita(r)} className="p-1 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 rounded"><Edit2 className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
-                    <button onClick={() => handleDeleteReceita(r.id, r.descricao)} className="p-1 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 rounded"><Trash2 className="w-4 h-4 text-gray-400 dark:text-gray-500 hover:text-red-500" /></button>
+                    <span className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 px-2 py-1 rounded font-medium">+ {formatCurrency(r.valor)}</span>
+                    <button onClick={() => handleEditReceita(r)} className="p-1 transition-colors hover:bg-emerald-200 dark:hover:bg-emerald-800/50 rounded"><Edit2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" /></button>
+                    <button onClick={() => handleDeleteReceita(r.id, r.descricao)} className="p-1 transition-colors hover:bg-emerald-200 dark:hover:bg-emerald-800/50 rounded"><Trash2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400 hover:text-red-600 dark:hover:text-red-400" /></button>
                   </div>
                 </div>
               );

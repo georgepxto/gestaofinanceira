@@ -60,6 +60,7 @@ export function TabMeuGasto({
   handleTogglePagoMeuGasto,
   cartoes,
 }: TabMeuGastoProps) {
+
   return (
     <>
       {/* Navegação de Meses */}
@@ -98,9 +99,11 @@ export function TabMeuGasto({
       {/* Cards de Resumo */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-            <CreditCard className="w-3 h-3 text-purple-500" /> Crédito
-          </p>
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <CreditCard className="w-3 h-3 text-purple-500" /> Crédito
+            </p>
+          </div>
           <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             {formatCurrency(totalMeusGastosCredito)}
           </p>
