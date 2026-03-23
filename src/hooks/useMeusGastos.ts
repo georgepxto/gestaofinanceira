@@ -166,7 +166,8 @@ export function useMeusGastos({
     setSaving(true);
     try {
       if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
-        const dataInicio = new Date(formMeuGasto.data);
+        const [ano, mes, dia] = formMeuGasto.data.split("-").map(Number);
+        const dataInicio = new Date(ano, mes - 1, dia);
 
         for (let i = 0; i < numParcelas; i++) {
           const dataParcela = new Date(dataInicio);
@@ -320,7 +321,8 @@ export function useMeusGastos({
         });
 
         const indiceParcelaEditada = (editandoMeuGasto.parcela_atual || 1) - 1;
-        const dataAtualSelecionada = new Date(formMeuGasto.data);
+        const [ano, mes, dia] = formMeuGasto.data.split("-").map(Number);
+        const dataAtualSelecionada = new Date(ano, mes - 1, dia);
         const dataInicioReal = subMonths(
           dataAtualSelecionada,
           indiceParcelaEditada
