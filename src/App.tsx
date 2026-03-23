@@ -5,7 +5,7 @@ import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { formatCurrency } from "./utils/calculations";
 import { Login } from "./components/Login";
 import { Layout } from "./components/layout";
-import { DashboardPage, EuPage, GastosPage, DividasPage, ConfiguracoesPage, PessoasPage, ContasBancariasPage, CartoesCreditoPage, MetasPage, AdminPage, LandingPage } from "./pages";
+import { DashboardPage, EuPage, GastosPage, DividasPage, ConfiguracoesPage, PessoasPage, ContasBancariasPage, CartoesCreditoPage, MetasPage, AdminPage, LandingPage, ResetPasswordPage } from "./pages";
 import type { CartaoCredito, ContaBancaria } from "./types";
 import {
   FormGastoModal,
@@ -236,6 +236,7 @@ function AppContent() {
   return (
     <>
       <Routes>
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route
           element={
             <Layout
