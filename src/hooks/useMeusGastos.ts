@@ -6,7 +6,7 @@ import {
   meusGastosFunctions,
 } from "../lib/supabase";
 import type { MeuGasto, MeuGastoForm, CartaoCredito } from "../types";
-import { formatCurrency, parseCurrency } from "../utils/calculations";
+import { formatCurrency, parseCurrency, getMesFaturaCartao } from "../utils/calculations";
 
 interface UseMeusGastosProps {
   user: { id: string } | null;
@@ -18,6 +18,7 @@ interface UseMeusGastosProps {
     onConfirm: () => void;
   }) => void;
   cartoes: CartaoCredito[];
+  cartoesLoading?: boolean;
 }
 
 export function useMeusGastos({
@@ -25,6 +26,7 @@ export function useMeusGastos({
   mesVisualizacao,
   setModalConfirm,
   cartoes,
+  cartoesLoading = false,
 }: UseMeusGastosProps) {
   const [meusGastos, setMeusGastos] = useState<MeuGasto[]>([]);
   const [meusGastosLoaded, setMeusGastosLoaded] = useState<boolean>(false);
@@ -89,20 +91,15 @@ export function useMeusGastos({
   }, [meusGastos, meusGastosLoaded]);
 
   // Valores derivados
-  const meusGastosDoMes = meusGastos.filter((g) => {
+  const meusGastosDoMes = cartoesLoading ? [] : meusGastos.filter((g) => {
     let mesGasto = g.data.substring(0, 7);
 
     // Lógica da fatura do cartão de crédito
     if (g.tipo === "credito" && g.cartao_id) {
       const cartao = cartoes.find((c) => c.id === g.cartao_id);
       if (cartao && cartao.melhor_dia_compra) {
-        const diaCompra = parseInt(g.data.split("-")[2], 10);
-        if (diaCompra >= cartao.melhor_dia_compra) {
-          const [ano, mes] = g.data.split("-").map(Number);
-          const dateObj = new Date(ano, mes - 1, diaCompra);
-          const proxMes = addMonths(dateObj, 1);
-          mesGasto = format(proxMes, "yyyy-MM");
-        }
+        const proxMesDate = getMesFaturaCartao(g.data, cartao.melhor_dia_compra, cartao.dia_vencimento);
+        mesGasto = format(proxMesDate, "yyyy-MM");
       }
     }
 

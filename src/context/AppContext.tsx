@@ -192,7 +192,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const { modalFeedback, setModalFeedback, modalConfirm, setModalConfirm } = useModals();
 
-  const { cartoes } = useCartoes({ user });
+  const { cartoes, loading: cartoesLoading } = useCartoes({ user });
 
   const {
     pessoas,
@@ -352,6 +352,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     mesVisualizacao,
     setModalConfirm,
     cartoes,
+    cartoesLoading,
   });
 
   // Combined states

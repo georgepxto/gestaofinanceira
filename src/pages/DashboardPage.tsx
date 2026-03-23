@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { format, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useLocation } from "react-router-dom";
 import type { MetaGasto } from "../types";
@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useAppContext } from "../context";
 import { supabase } from "../lib/supabase";
-import { formatCurrency, isGastoAtivoNoMes } from "../utils/calculations";
+import { formatCurrency, isGastoAtivoNoMes, getMesFaturaCartao } from "../utils/calculations";
 import {
   LineChart,
   Line,
@@ -122,14 +122,27 @@ export const DashboardPage = () => {
         { data: saldosDevedores },
         { data: meusGastos },
         { data: receitas },
-        { data: gastosCompartilhados }
+        { data: gastosCompartilhados },
+        { data: cartoesCredito }
       ] = await Promise.all([
         supabase.from("contas_bancarias").select("*"),
         supabase.from("saldos_devedores").select("*"),
         supabase.from("meus_gastos").select("*"),
         supabase.from("receitas").select("*"),
         supabase.from("gastos").select("*"),
+        supabase.from("cartoes_credito").select("*"),
       ]);
+
+      const getMesRealDoGasto = (g: MeuGasto) => {
+        if (g.tipo === "credito" && g.cartao_id) {
+          const cartao = (cartoesCredito || []).find(c => c.id === g.cartao_id);
+          if (cartao && cartao.melhor_dia_compra) {
+            const date = getMesFaturaCartao(g.data, cartao.melhor_dia_compra, cartao.dia_vencimento);
+            return format(date, "yyyy-MM");
+          }
+        }
+        return g.data.substring(0, 7);
+      };
 
       // Calcular saldo total
       const saldoTotal = (contas as ContaBancaria[] || []).reduce(
@@ -172,10 +185,7 @@ export const DashboardPage = () => {
       // Gastos por categoria (mês selecionado)
       const mesAtualFiltro = format(mesVisualizacao, "yyyy-MM");
       const gastosDoMes = (meusGastos as MeuGasto[] || [])
-        .filter(g => {
-          const mesGasto = g.data.substring(0, 7);
-          return mesGasto === mesAtualFiltro;
-        });
+        .filter(g => getMesRealDoGasto(g) === mesAtualFiltro);
 
 
       const categoriaMap = new Map<string, number>();
@@ -225,14 +235,10 @@ export const DashboardPage = () => {
 
       // Calcular gastos do mês anterior
       const mesAnterior = subMonths(mesVisualizacao, 1);
-      const inicioMesAnterior = startOfMonth(mesAnterior);
-      const fimMesAnterior = endOfMonth(mesAnterior);
+      const mesAnteriorFiltro = format(mesAnterior, "yyyy-MM");
       
       const gastosDoMesAnterior = (meusGastos as MeuGasto[] || [])
-        .filter(g => {
-          const dataGasto = new Date(g.data);
-          return dataGasto >= inicioMesAnterior && dataGasto <= fimMesAnterior;
-        });
+        .filter(g => getMesRealDoGasto(g) === mesAnteriorFiltro);
       
       const gastosCompartilhadosDoMesAnterior = (gastosCompartilhados as Gasto[] || [])
         .filter(g => isGastoAtivoNoMes(g, mesAnterior));
@@ -341,7 +347,7 @@ export const DashboardPage = () => {
         const mesLabel = format(mesRef, "MMM", { locale: ptBR });
         
         const meusGastosMes = (meusGastos as MeuGasto[] || [])
-          .filter(g => g.data.substring(0, 7) === mesKey)
+          .filter(g => getMesRealDoGasto(g) === mesKey)
           .reduce((acc, g) => acc + g.valor, 0);
         
         const compartilhadosMes = (gastosCompartilhados as Gasto[] || [])

@@ -14,10 +14,10 @@ import {
   Trash2,
   MinusCircle,
 } from "lucide-react";
-import { format, addMonths } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { MeuGasto, CartaoCredito } from "../../types";
-import { formatCurrency, formatMonthYear } from "../../utils/calculations";
+import { formatCurrency, formatMonthYear, getMesFaturaCartao } from "../../utils/calculations";
 
 interface TabMeuGastoProps {
   mesVisualizacao: Date;
@@ -342,12 +342,7 @@ export function TabMeuGasto({
                       if (gasto.tipo === "credito" && gasto.cartao_id) {
                         const cartao = cartoes?.find((c) => c.id === gasto.cartao_id);
                         if (cartao && cartao.melhor_dia_compra) {
-                          const diaCompra = parseInt(gasto.data.split("-")[2], 10);
-                          const [ano, mes] = gasto.data.split("-").map(Number);
-                          let dataFatura = new Date(ano, mes - 1, diaCompra);
-                          if (diaCompra >= cartao.melhor_dia_compra) {
-                            dataFatura = addMonths(dataFatura, 1);
-                          }
+                          const dataFatura = getMesFaturaCartao(gasto.data, cartao.melhor_dia_compra, cartao.dia_vencimento);
                           nomeFatura = format(dataFatura, "MMMM", { locale: ptBR });
                           nomeFatura = nomeFatura.charAt(0).toUpperCase() + nomeFatura.slice(1);
                         } else {

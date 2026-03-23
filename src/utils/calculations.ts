@@ -11,6 +11,34 @@ import { ptBR } from "date-fns/locale";
 import type { Gasto, ParcelaAtiva, ResumoMensal } from "../types";
 
 /**
+ * Calcula o mês da fatura de um gasto no cartão de crédito, baseado 
+ * no dia da compra, no melhor dia para compra e no dia de vencimento do cartão.
+ * A lógica determina a quantos meses a frente a fatura será paga.
+ */
+export function getMesFaturaCartao(
+  dataCompraIso: string, 
+  melhorDiaCompra: number, 
+  diaVencimento: number
+): Date {
+  const [ano, mes, dia] = dataCompraIso.split("-").map(Number);
+  let mesesAdicionais = 0;
+  
+  // Regra 1: Compra no dia ou após o fechamento (melhor dia)
+  if (dia >= melhorDiaCompra) {
+    mesesAdicionais += 1;
+  }
+  
+  // Regra 2: Quando o vencimento ocorre antes do fechamento do mesmo mês
+  // (Exemplo: Vencimento dia 5, Fechamento/Melhor Dia 28)
+  if (diaVencimento < melhorDiaCompra) {
+    mesesAdicionais += 1;
+  }
+  
+  // Retorna dia 1 para evitar pulo de meses (ex: 31 de fev não existe)
+  return new Date(ano, mes - 1 + mesesAdicionais, 1);
+}
+
+/**
  * Ajusta o dia para o último dia válido do mês quando o dia excede.
  * Ex: clampDay(31, 2026, 1) => 28 (fevereiro 2026 tem 28 dias)
  * @param day - dia desejado (1-31)

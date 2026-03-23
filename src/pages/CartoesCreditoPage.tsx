@@ -4,7 +4,7 @@ import { format, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAppContext } from "../context";
 import { supabase } from "../lib/supabase";
-import { formatCurrency, formatCurrencyInput, parseCurrency } from "../utils/calculations";
+import { formatCurrency, formatCurrencyInput, parseCurrency, getMesFaturaCartao } from "../utils/calculations";
 
 import type { CartaoCredito, CartaoCreditoForm, TransacaoCartao, ContaBancaria, MeuGasto, Gasto } from "../types";
 
@@ -15,7 +15,9 @@ const CORES_CARTAO = [
 export const CartoesCreditoPage = () => {
   const { user, setModalConfirm, getTotalPagoParcial, resumoMensal } = useAppContext();
   
-  const [cartoes, setCartoes] = useState<CartaoCredito[]>([]);
+  // Usar os cartões do context que já carregam ou buscar locais para este componente? O componente já usa um estado local `cartoes` que não precisa se o AppContext fornece, mas vamos manter o fetchCartoes que existe aqui.
+  
+  const [cartoesState, setCartoesState] = useState<CartaoCredito[]>([]);
   const [transacoes, setTransacoes] = useState<TransacaoCartao[]>([]);
   const [meusGastos, setMeusGastos] = useState<MeuGasto[]>([]);
   const [gastosCompartilhados, setGastosCompartilhados] = useState<Gasto[]>([]);
@@ -44,8 +46,7 @@ export const CartoesCreditoPage = () => {
   const fetchCartoes = useCallback(async () => {
     if (!supabase || !user) return;
     const { data } = await supabase.from("cartoes_credito").select("*").order("nome");
-    setCartoes(data || []);
-    // Não auto-seleciona - deixa "Tudo" como padrão (null)
+    setCartoesState(data || []);
   }, [user]);
 
   const fetchTransacoes = useCallback(async () => {
@@ -108,38 +109,18 @@ export const CartoesCreditoPage = () => {
   // Calculações
   const getMesAno = () => format(mesVisualizacao, "MMMM yyyy", { locale: ptBR });
   
-  // Calcula o período da fatura baseado no dia de fechamento do cartão
-  // Ex: Se fatura fecha dia 20, a fatura de Janeiro inclui compras de 21/12 até 20/01
-  const getPeriodoFatura = (cartaoId: string) => {
-    const cartao = cartoes.find(c => c.id === cartaoId);
-    const diaFechamento = cartao?.dia_vencimento!; // obrigatório
-    
-    const ano = mesVisualizacao.getFullYear();
-    const mes = mesVisualizacao.getMonth(); // 0-indexed
-    
-    // Fim do período: dia de fechamento do mês selecionado
-    // Clampar para o último dia válido do mês (ex: dia 31 em fev → dia 28)
-    const fimAno = ano;
-    const fimMes = mes;
-    const ultimoDiaFim = new Date(fimAno, fimMes + 1, 0).getDate();
-    const diaFechamentoFim = Math.min(diaFechamento, ultimoDiaFim);
-    const fim = new Date(fimAno, fimMes, diaFechamentoFim, 23, 59, 59);
-    
-    // Início do período: dia após fechamento do mês anterior
-    const inicioMes = mes === 0 ? 11 : mes - 1;
-    const inicioAno = mes === 0 ? ano - 1 : ano;
-    const ultimoDiaInicio = new Date(inicioAno, inicioMes + 1, 0).getDate();
-    const diaFechamentoInicio = Math.min(diaFechamento, ultimoDiaInicio);
-    const inicio = new Date(inicioAno, inicioMes, diaFechamentoInicio + 1, 0, 0, 0);
-    
-    return { inicio, fim, diaFechamento };
-  };
-
   // Verifica se uma data está dentro do período da fatura
   const estaNoPeríodoFatura = (dataStr: string, cartaoId: string) => {
-    const { inicio, fim } = getPeriodoFatura(cartaoId);
-    const data = new Date(dataStr + "T12:00:00");
-    return data >= inicio && data <= fim;
+    const cartao = cartoesState.find((c) => c.id === cartaoId);
+    if (!cartao) return false;
+    
+    const melhorDia = cartao.melhor_dia_compra || cartao.dia_vencimento;
+    
+    const mesFatura = getMesFaturaCartao(dataStr, melhorDia, cartao.dia_vencimento);
+    const mesFaturaStr = format(mesFatura, "yyyy-MM");
+    const mesVisualizacaoStr = format(mesVisualizacao, "yyyy-MM");
+    
+    return mesFaturaStr === mesVisualizacaoStr;
   };
 
   const getTransacoesDoMes = (cartaoId: string) => {
@@ -241,7 +222,7 @@ export const CartoesCreditoPage = () => {
   };
 
   const getLimiteUsado = (cartaoId: string) => {
-    const cartao = cartoes.find(c => c.id === cartaoId);
+    const cartao = cartoesState.find(c => c.id === cartaoId);
     const dividaInicial = cartao?.divida_inicial || 0;
     // Transações não pagas
     const transNaoPagas = transacoes.filter(t => t.cartao_id === cartaoId && !t.pago);
@@ -267,8 +248,8 @@ export const CartoesCreditoPage = () => {
   };
 
   const getTotalConsolidado = () => {
-    const limiteTotal = cartoes.reduce((sum, c) => sum + (c.limite || 0), 0);
-    const usado = cartoes.reduce((sum, c) => sum + getLimiteUsado(c.id), 0);
+    const limiteTotal = cartoesState.reduce((sum, c) => sum + (c.limite || 0), 0);
+    const usado = cartoesState.reduce((sum, c) => sum + getLimiteUsado(c.id), 0);
     return { limiteTotal, usado, disponivel: limiteTotal - usado };
   };
 
@@ -458,10 +439,10 @@ export const CartoesCreditoPage = () => {
             <CreditCard className="w-5 h-5 text-blue-600" />
             <span className="text-gray-900 dark:text-gray-100 text-sm font-medium">Tudo</span>
           </div>
-          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatCurrency(cartoes.reduce((sum, c) => sum + getFaturaCartao(c.id), 0))}</p>
+          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatCurrency(cartoesState.reduce((sum, c) => sum + getFaturaCartao(c.id), 0))}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">Total {format(mesVisualizacao, "MMM", { locale: ptBR })}</p>
         </div>
-        {cartoes.map(c => (
+        {cartoesState.map(c => (
           <div
             key={c.id}
             onClick={() => setCartaoSelecionado(c)}
@@ -517,7 +498,7 @@ export const CartoesCreditoPage = () => {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cartoes.map(c => {
+            {cartoesState.map(c => {
               const usado = getLimiteUsado(c.id);
               const limite = c.limite || 0;
               const pct = limite > 0 ? (usado / limite) * 100 : 0;
