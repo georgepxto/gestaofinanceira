@@ -68,7 +68,7 @@ export function usePessoas({ user }: UsePessoasProps) {
         }
         const sucesso = await pessoasFunctions.create({ id: novoId, nome });
         if (!sucesso) {
-          console.error("Falha ao salvar pessoa no banco de dados");
+          alert(`Falha ao salvar: A pessoa "${nome}" já existe no banco de dados com este nome ou houve um problema de conexão.`);
           return; // Aborta e não adiciona na interface se der erro
         }
       }
