@@ -161,6 +161,18 @@ export const DashboardPage = () => {
           if (g.categoria !== "fixo" || g.ativo === false) return false;
           
           const mesAtualView = format(mesVisualizacao, "yyyy-MM");
+          
+          let mesCriacao = g.data.substring(0, 7);
+          if (g.tipo === "credito" && g.cartao_id) {
+            const cartao = (cartoesCredito || []).find((c: any) => c.id === g.cartao_id);
+            if (cartao && cartao.melhor_dia_compra) {
+              const proxMesDate = getMesFaturaCartao(g.data, cartao.melhor_dia_compra, cartao.dia_vencimento);
+              mesCriacao = format(proxMesDate, "yyyy-MM");
+            }
+          }
+          
+          if (mesAtualView < mesCriacao) return false;
+
           if (g.meses_suspensos?.includes(mesAtualView)) return false;
 
           const mesHoje = format(new Date(), "yyyy-MM");
@@ -260,9 +272,20 @@ export const DashboardPage = () => {
       const totalEmprestimosMesAnterior = gastosCompartilhadosDoMesAnterior.reduce((acc, g) => acc + g.valor_total / g.num_parcelas, 0);
 
       // Calcular gastos fixos vs variáveis do mês (de "Meus Gastos")
-      // Gastos fixos ativos são recorrentes, então sempre contam
+      // Gastos fixos ativos e já iniciados contam
       const gastosFixosAtivos = (meusGastos as MeuGasto[] || [])
-        .filter(g => g.categoria === 'fixo' && g.ativo !== false);
+        .filter(g => {
+          if (g.categoria !== 'fixo' || g.ativo === false) return false;
+          let mesCriacao = g.data.substring(0, 7);
+          if (g.tipo === "credito" && g.cartao_id) {
+            const cartao = (cartoesCredito || []).find((c: any) => c.id === g.cartao_id);
+            if (cartao && cartao.melhor_dia_compra) {
+              const proxMesDate = getMesFaturaCartao(g.data, cartao.melhor_dia_compra, cartao.dia_vencimento);
+              mesCriacao = format(proxMesDate, "yyyy-MM");
+            }
+          }
+          return format(mesVisualizacao, "yyyy-MM") >= mesCriacao;
+        });
       const gastosFixosMes = gastosFixosAtivos.reduce((acc, g) => acc + g.valor, 0);
       
       // Gastos variáveis (pessoais) do mês atual

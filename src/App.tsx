@@ -271,6 +271,7 @@ function AppContent() {
         error={error}
         cartoes={cartoes}
         contas={contas}
+        pessoas={pessoas}
         onClose={() => resetFormMeuGasto()}
         onFormChange={setFormMeuGasto}
         onSubmit={handleSaveMeuGasto}

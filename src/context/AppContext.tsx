@@ -357,6 +357,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setModalConfirm,
     cartoes,
     cartoesLoading,
+    onRefreshGastos: fetchGastos,
   });
 
   // Combined states

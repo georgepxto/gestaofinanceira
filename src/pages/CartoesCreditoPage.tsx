@@ -131,8 +131,22 @@ export const CartoesCreditoPage = () => {
   const getGastosDoMes = (cartaoId: string) => {
     return meusGastos.filter(g => {
       if (g.cartao_id !== cartaoId) return false;
-      // Gastos fixos ativos aparecem sempre
-      if (g.categoria === "fixo" && g.ativo) return true;
+      // Gastos fixos ativos aparecem sempre, desde que a fatura atual seja >= fatura de início
+      if (g.categoria === "fixo" && g.ativo) {
+        const cartao = cartoesState.find((c) => c.id === cartaoId);
+        if (!cartao) return false;
+        
+        const melhorDia = cartao.melhor_dia_compra || cartao.dia_vencimento;
+        const dataInicioFatura = getMesFaturaCartao(g.data, melhorDia, cartao.dia_vencimento);
+        const dataInicioStr = format(dataInicioFatura, "yyyy-MM");
+        const mesVisualizacaoStr = format(mesVisualizacao, "yyyy-MM");
+        
+        if (mesVisualizacaoStr >= dataInicioStr) {
+          const isSuspenso = g.meses_suspensos?.includes(mesVisualizacaoStr);
+          return !isSuspenso;
+        }
+        return false;
+      }
       // Outros gastos filtram pelo período da fatura
       return estaNoPeríodoFatura(g.data, cartaoId);
     });
@@ -223,15 +237,45 @@ export const CartoesCreditoPage = () => {
 
   const getLimiteUsado = (cartaoId: string) => {
     const cartao = cartoesState.find(c => c.id === cartaoId);
-    const dividaInicial = cartao?.divida_inicial || 0;
+    if (!cartao) return 0;
+    const dividaInicial = cartao.divida_inicial || 0;
     // Transações não pagas
     const transNaoPagas = transacoes.filter(t => t.cartao_id === cartaoId && !t.pago);
     const totalTrans = transNaoPagas.reduce((sum, t) => sum + t.valor, 0);
     // Gastos (meus_gastos) não pagos vinculados ao cartão
-    const gastosNaoPagos = meusGastos.filter(g => g.cartao_id === cartaoId && !g.pago);
+    const gastosNaoPagos = meusGastos.filter(g => {
+      if (g.cartao_id !== cartaoId || g.pago) return false;
+      
+      // Para gasto fixo, só consome limite se a data da fatura atual >= data da fatura de início
+      if (g.categoria === "fixo") {
+        const melhorDia = cartao.melhor_dia_compra || cartao.dia_vencimento;
+        const dataInicioFatura = getMesFaturaCartao(g.data, melhorDia, cartao.dia_vencimento);
+        const dataHojeFatura = getMesFaturaCartao(format(new Date(), "yyyy-MM-dd"), melhorDia, cartao.dia_vencimento);
+        
+        const dataInicioStr = format(dataInicioFatura, "yyyy-MM");
+        const dataHojeStr = format(dataHojeFatura, "yyyy-MM");
+        
+        if (dataHojeStr < dataInicioStr) return false;
+      }
+      return true;
+    });
     const totalGastos = gastosNaoPagos.reduce((sum, g) => sum + (g.minha_parte || g.valor), 0);
     // Gastos compartilhados vinculados ao cartão (calculando valor RESTANTE)
-    const compartilhadosCartao = gastosCompartilhados.filter(g => g.cartao_id === cartaoId);
+    const compartilhadosCartao = gastosCompartilhados.filter(g => {
+      if (g.cartao_id !== cartaoId) return false;
+      
+      if (g.recorrente) {
+        const melhorDia = cartao.melhor_dia_compra || cartao.dia_vencimento;
+        const dataInicioFatura = getMesFaturaCartao(g.data_inicio, melhorDia, cartao.dia_vencimento);
+        const dataHojeFatura = getMesFaturaCartao(format(new Date(), "yyyy-MM-dd"), melhorDia, cartao.dia_vencimento);
+        
+        const dataInicioStr = format(dataInicioFatura, "yyyy-MM");
+        const dataHojeStr = format(dataHojeFatura, "yyyy-MM");
+        
+        if (dataHojeStr < dataInicioStr) return false;
+      }
+      return true;
+    });
     const totalCompartilhados = compartilhadosCartao.reduce((sum, g) => {
       const resumoPessoa = resumoMensal.find(r => r.pessoa === g.pessoa);
       const totalDevido = resumoPessoa?.total || 0;

@@ -57,7 +57,20 @@ export function usePessoas({ user }: UsePessoasProps) {
     const nome = novaPessoa.trim();
     if (nome && !pessoas.includes(nome)) {
       if (isSupabaseConfigured && supabase) {
-        await pessoasFunctions.create({ id: `pessoa-${Date.now()}`, nome });
+        let novoId = "";
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+          novoId = crypto.randomUUID();
+        } else {
+          novoId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
+        }
+        const sucesso = await pessoasFunctions.create({ id: novoId, nome });
+        if (!sucesso) {
+          console.error("Falha ao salvar pessoa no banco de dados");
+          return; // Aborta e não adiciona na interface se der erro
+        }
       }
       setPessoas((prev) => [...prev, nome]);
       setNovaPessoa("");

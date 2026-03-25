@@ -4,7 +4,6 @@ import {
   Loader2,
   AlertCircle,
   User,
-  Users,
   Wallet,
   CreditCard,
   Repeat,
@@ -25,6 +24,7 @@ interface FormMeuGastoModalProps {
   error: string | null;
   cartoes?: CartaoCredito[];
   contas?: ContaBancaria[];
+  pessoas?: string[];
   onClose: () => void;
   onFormChange: (data: MeuGastoForm) => void;
   onSubmit: () => void;
@@ -38,11 +38,25 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
   error,
   cartoes = [],
   contas = [],
+  pessoas = [],
   onClose,
   onFormChange,
   onSubmit,
 }) => {
   if (!show) return null;
+
+  const isDividido = !!formData.dividido_com || formData.categoria === 'dividido';
+  const selectedPessoas = formData.dividido_com ? formData.dividido_com.split(',').map(p => p.trim()).filter(Boolean) : [];
+
+  const togglePessoa = (pessoa: string) => {
+    let newPessoas;
+    if (selectedPessoas.includes(pessoa)) {
+      newPessoas = selectedPessoas.filter(p => p !== pessoa);
+    } else {
+      newPessoas = [...selectedPessoas, pessoa];
+    }
+    onFormChange({ ...formData, dividido_com: newPessoas.join(', ') });
+  };
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center">
@@ -65,7 +79,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
             <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
               Tipo de Gasto
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() =>
@@ -75,30 +89,13 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                   })
                 }
                 className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
-                  formData.categoria === "pessoal"
+                  formData.categoria === "pessoal" || formData.categoria === "dividido"
                     ? "bg-blue-600 border-blue-500 text-gray-900 dark:text-gray-100"
                     : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                 }`}
               >
                 <User className="w-5 h-5" />
-                <span className="text-xs">Pessoal</span>
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  onFormChange({
-                    ...formData,
-                    categoria: "dividido",
-                  })
-                }
-                className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
-                  formData.categoria === "dividido"
-                    ? "bg-pink-600 border-pink-500 text-gray-900 dark:text-gray-100"
-                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
-                }`}
-              >
-                <Users className="w-5 h-5" />
-                <span className="text-xs">Dividido</span>
+                <span className="text-xs">Único</span>
               </button>
               <button
                 type="button"
@@ -161,29 +158,63 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
             </div>
           </div>
 
+{/* Toggle Dividir Gasto */}
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-800">
+            <div>
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Dividir gasto com outras pessoas?
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (!isDividido) {
+                  onFormChange({ ...formData, dividido_com: " " });
+                } else {
+                  onFormChange({ ...formData, dividido_com: "", minha_parte: "" });
+                }
+              }}
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                isDividido ? "bg-emerald-500" : "bg-gray-500"
+              }`}
+            >
+              <span
+                className={`absolute top-1 left-1 w-4 h-4 bg-white dark:bg-gray-900 rounded-full transition-all duration-200 ${
+                  isDividido ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+
           {/* Campos para Dividido */}
-          {formData.categoria === "dividido" && (
-            <>
+          {isDividido && (
+            <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-800">
               <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Dividido com
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Selecione as pessoas
                 </label>
-                <input
-                  type="text"
-                  value={formData.dividido_com}
-                  onChange={(e) =>
-                    onFormChange({
-                      ...formData,
-                      dividido_com: e.target.value,
-                    })
-                  }
-                  placeholder="Ex: João, Maria, etc."
-                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
-                />
+                {pessoas.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    {pessoas.map((pessoa) => (
+                      <label key={pessoa} className="flex items-center gap-2 p-2 rounded bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <input
+                          type="checkbox"
+                          checked={selectedPessoas.includes(pessoa)}
+                          onChange={() => togglePessoa(pessoa)}
+                          className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">{pessoa}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 py-1">Nenhuma pessoa cadastrada no sistema.</p>
+                )}
               </div>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Minha Parte
+                  Sua Parte (Quanto você vai pagar disso)
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -199,12 +230,12 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                       })
                     }
                     placeholder="0,00"
-                    className="w-full pl-10 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
+                    className="w-full pl-10 pr-3 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
                     inputMode="numeric"
                   />
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           {/* Campo para Fixo */}
@@ -218,12 +249,15 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 min="1"
                 max="31"
                 value={formData.dia_vencimento}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const dayStr = e.target.value.padStart(2, '0');
+                  const newData = formData.data.substring(0, 8) + (dayStr === '00' ? '01' : dayStr);
                   onFormChange({
                     ...formData,
                     dia_vencimento: e.target.value,
-                  })
-                }
+                    data: e.target.value ? newData : formData.data,
+                  });
+                }}
                 placeholder="Ex: 10"
                 className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
               />
@@ -251,22 +285,26 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
             </select>
           </div>
 
-          {/* Data (não para fixo) */}
-          {formData.categoria !== "fixo" && (
-            <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                Data
-              </label>
-              <input
-                type="date"
-                value={formData.data}
-                onChange={(e) =>
-                  onFormChange({ ...formData, data: e.target.value })
-                }
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
-              />
-            </div>
-          )}
+          {/* Data */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              {formData.categoria === "fixo" ? "Data de Início" : "Data"}
+            </label>
+            <input
+              type="date"
+              value={formData.data}
+              onChange={(e) => {
+                const newData = e.target.value;
+                const newDay = newData.substring(8, 10);
+                onFormChange({ 
+                  ...formData, 
+                  data: newData,
+                  dia_vencimento: formData.categoria === 'fixo' ? parseInt(newDay).toString() : formData.dia_vencimento
+                });
+              }}
+              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
+            />
+          </div>
 
           {/* Tipo (Crédito/Débito) */}
           <div>

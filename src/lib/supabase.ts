@@ -309,9 +309,15 @@ export const pessoasFunctions = {
   async create(pessoa: { id: string; nome: string }): Promise<boolean> {
     if (!supabase) return false;
     const user_id = await getCurrentUserId();
+    
+    // Incluir o ID gerado se estiver presente, senão o supabase deveria gerar (mas deu erro de not-null)
+    const payload = pessoa.id 
+      ? { id: pessoa.id, nome: pessoa.nome, user_id } 
+      : { nome: pessoa.nome, user_id };
+      
     const { error } = await supabase
       .from("pessoas")
-      .insert([{ ...pessoa, user_id }]);
+      .insert([payload]);
 
     if (error) {
       console.error("Erro ao criar pessoa:", error);

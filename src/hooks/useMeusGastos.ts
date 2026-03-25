@@ -7,6 +7,7 @@ import {
 } from "../lib/supabase";
 import type { MeuGasto, MeuGastoForm, CartaoCredito } from "../types";
 import { formatCurrency, parseCurrency, getMesFaturaCartao } from "../utils/calculations";
+import { CATEGORIA_PADRAO } from "../utils/categories";
 
 interface UseMeusGastosProps {
   user: { id: string } | null;
@@ -21,6 +22,7 @@ interface UseMeusGastosProps {
   }) => void;
   cartoes: CartaoCredito[];
   cartoesLoading?: boolean;
+  onRefreshGastos?: () => Promise<void>;
 }
 
 export function useMeusGastos({
@@ -29,6 +31,7 @@ export function useMeusGastos({
   setModalConfirm,
   cartoes,
   cartoesLoading = false,
+  onRefreshGastos,
 }: UseMeusGastosProps) {
   const [meusGastos, setMeusGastos] = useState<MeuGasto[]>([]);
   const [meusGastosLoaded, setMeusGastosLoaded] = useState<boolean>(false);
@@ -113,14 +116,31 @@ export function useMeusGastos({
     return matchMes && matchCategoria;
   });
 
-  const gastosFixos = meusGastos.filter((g) => g.categoria === "fixo");
+  const gastosFixos = meusGastos.filter((g) => {
+    if (g.categoria !== "fixo") return false;
+    
+    let mesCriacao = g.data.substring(0, 7);
+    
+    // Se for no cartão de crédito, o mês de "início" é o mês da primeira fatura
+    if (g.tipo === "credito" && g.cartao_id) {
+      const cartao = cartoes.find((c) => c.id === g.cartao_id);
+      if (cartao && cartao.melhor_dia_compra) {
+        const proxMesDate = getMesFaturaCartao(g.data, cartao.melhor_dia_compra, cartao.dia_vencimento);
+        mesCriacao = format(proxMesDate, "yyyy-MM");
+      }
+    }
+
+    // Mostrar apenas se o mês de visualização for igual ou posterior ao mês de criação real
+    const mesAtual = format(mesVisualizacao, "yyyy-MM");
+    return mesAtual >= mesCriacao;
+  });
 
   const totalMeusGastosCredito = meusGastosDoMes
     .filter((g) => g.tipo === "credito")
     .reduce(
       (acc, g) =>
         acc +
-        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
+        (g.dividido_com && g.minha_parte ? g.minha_parte : g.valor),
       0
     );
 
@@ -129,7 +149,7 @@ export function useMeusGastos({
     .reduce(
       (acc, g) =>
         acc +
-        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
+        (g.dividido_com && g.minha_parte ? g.minha_parte : g.valor),
       0
     );
 
@@ -138,7 +158,7 @@ export function useMeusGastos({
     .reduce(
       (acc, g) =>
         acc +
-        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
+        (g.dividido_com && g.minha_parte ? g.minha_parte : g.valor),
       0
     );
 
@@ -168,7 +188,7 @@ export function useMeusGastos({
     }
 
     let minhaParte = valor;
-    if (formMeuGasto.categoria === "dividido" && formMeuGasto.minha_parte) {
+    if (formMeuGasto.dividido_com && formMeuGasto.minha_parte) {
       minhaParte = parseCurrency(formMeuGasto.minha_parte);
     }
 
@@ -196,14 +216,8 @@ export function useMeusGastos({
             categoria: formMeuGasto.categoria,
             data: format(dataParcela, "yyyy-MM-dd"),
             pago: false,
-            dividido_com:
-              formMeuGasto.categoria === "dividido"
-                ? formMeuGasto.dividido_com
-                : undefined,
-            minha_parte:
-              formMeuGasto.categoria === "dividido"
-                ? minhaParte / numParcelas
-                : undefined,
+            dividido_com: formMeuGasto.dividido_com ? formMeuGasto.dividido_com : undefined,
+            minha_parte: formMeuGasto.dividido_com ? minhaParte / numParcelas : undefined,
             num_parcelas: numParcelas,
             parcela_atual: i + 1,
             cartao_id: formMeuGasto.tipo === "credito" ? formMeuGasto.cartao_id || undefined : undefined,
@@ -212,6 +226,35 @@ export function useMeusGastos({
 
           if (isSupabaseConfigured && supabase) {
             await meusGastosFunctions.create(novoGasto);
+
+            // Criar despesa compartilhada para as outras pessoas na aba "Gastos"
+            if (formMeuGasto.dividido_com) {
+              const nomes = formMeuGasto.dividido_com.split(",").map((n) => n.trim()).filter(Boolean);
+              if (nomes.length > 0) {
+                const valorRestante = valorParcela - (minhaParte / numParcelas);
+                const valorPorPessoa = valorRestante / nomes.length;
+                
+                if (valorPorPessoa > 0) {
+                  const promessasGastos = nomes.map(async (nome) => {
+                    const gastoCompartilhado = {
+                      descricao: `Dividido: ${formMeuGasto.descricao} (${i + 1}/${numParcelas})`,
+                      pessoa: nome,
+                      valor_total: valorPorPessoa,
+                      num_parcelas: 1, // Já está sendo dividido na parcela atual do loop
+                      data_inicio: format(dataParcela, "yyyy-MM-dd"),
+                      tipo: formMeuGasto.tipo,
+                      categoria: formMeuGasto.categoria_gasto || CATEGORIA_PADRAO,
+                      recorrente: false,
+                      cartao_id: formMeuGasto.tipo === "credito" ? formMeuGasto.cartao_id || null : null,
+                      conta_id: formMeuGasto.tipo === "debito" ? formMeuGasto.conta_id || null : null,
+                      user_id: user?.id,
+                    };
+                    return supabase!.from("gastos").insert(gastoCompartilhado);
+                  });
+                  await Promise.all(promessasGastos);
+                }
+              }
+            }
           }
           setMeusGastos((prev) => [...prev, novoGasto]);
         }
@@ -230,12 +273,8 @@ export function useMeusGastos({
           categoria: formMeuGasto.categoria,
           data: formMeuGasto.data,
           pago: isPago,
-          dividido_com:
-            formMeuGasto.categoria === "dividido"
-              ? formMeuGasto.dividido_com
-              : undefined,
-          minha_parte:
-            formMeuGasto.categoria === "dividido" ? minhaParte : undefined,
+          dividido_com: formMeuGasto.dividido_com ? formMeuGasto.dividido_com : undefined,
+          minha_parte: formMeuGasto.dividido_com ? minhaParte : undefined,
           dia_vencimento:
             formMeuGasto.categoria === "fixo"
               ? parseInt(formMeuGasto.dia_vencimento)
@@ -250,6 +289,35 @@ export function useMeusGastos({
 
         if (isSupabaseConfigured && supabase) {
           await meusGastosFunctions.create(novoGasto);
+          
+          // Criar despesa compartilhada para as outras pessoas na aba "Gastos"
+          if (formMeuGasto.dividido_com) {
+            const nomes = formMeuGasto.dividido_com.split(",").map((n) => n.trim()).filter(Boolean);
+            if (nomes.length > 0) {
+              const valorRestante = valor - minhaParte;
+              const valorPorPessoa = valorRestante / nomes.length;
+              
+              if (valorPorPessoa > 0) {
+                const promessasGastos = nomes.map(async (nome) => {
+                  const gastoCompartilhado = {
+                    descricao: `Dividido: ${formMeuGasto.descricao}`,
+                    pessoa: nome,
+                    valor_total: valorPorPessoa,
+                    num_parcelas: 1,
+                    data_inicio: formMeuGasto.data,
+                    tipo: formMeuGasto.tipo,
+                    categoria: formMeuGasto.categoria_gasto || CATEGORIA_PADRAO,
+                    recorrente: formMeuGasto.categoria === "fixo", // Fixos vão como recorrentes
+                    cartao_id: formMeuGasto.tipo === "credito" ? formMeuGasto.cartao_id || null : null,
+                    conta_id: formMeuGasto.tipo === "debito" ? formMeuGasto.conta_id || null : null,
+                    user_id: user?.id,
+                  };
+                  return supabase!.from("gastos").insert(gastoCompartilhado);
+                });
+                await Promise.all(promessasGastos);
+              }
+            }
+          }
           
           // Se for débito e tiver conta selecionada, descontar do saldo Apenas se não for data futura
           if (isPago && formMeuGasto.conta_id && formMeuGasto.categoria !== "fixo") {
@@ -317,7 +385,7 @@ export function useMeusGastos({
       setSaving(true);
       try {
         let minhaParte = valor;
-        if (formMeuGasto.categoria === "dividido" && formMeuGasto.minha_parte) {
+        if (formMeuGasto.dividido_com && formMeuGasto.minha_parte) {
           minhaParte = parseCurrency(formMeuGasto.minha_parte);
         }
 
@@ -374,14 +442,8 @@ export function useMeusGastos({
               categoria: formMeuGasto.categoria,
               categoria_gasto: formMeuGasto.categoria_gasto || undefined,
               data: dataFormatada,
-              dividido_com:
-                formMeuGasto.categoria === "dividido"
-                  ? formMeuGasto.dividido_com
-                  : undefined,
-              minha_parte:
-                formMeuGasto.categoria === "dividido"
-                  ? minhaParte / novoNumParcelas
-                  : undefined,
+              dividido_com: formMeuGasto.dividido_com ? formMeuGasto.dividido_com : undefined,
+              minha_parte: formMeuGasto.dividido_com ? minhaParte / novoNumParcelas : undefined,
               num_parcelas: novoNumParcelas,
               parcela_atual: numParcela,
               dia_vencimento:
@@ -537,6 +599,10 @@ export function useMeusGastos({
     } else {
       await handleAddMeuGasto();
     }
+    
+    if (onRefreshGastos && formMeuGasto.dividido_com) {
+      await onRefreshGastos();
+    }
   };
 
   // Marcar meu gasto como pago/não pago
@@ -622,6 +688,15 @@ export function useMeusGastos({
           for (const parcela of parcelasRelacionadas) {
             if (isSupabaseConfigured && supabase) {
               await meusGastosFunctions.delete(parcela.id);
+              
+              if (parcela.dividido_com) {
+                const descCompartilhada = `Dividido: ${parcela.descricao}`;
+                await supabase
+                  .from("gastos")
+                  .delete()
+                  .eq("descricao", descCompartilhada)
+                  .in("pessoa", parcela.dividido_com.split(",").map(n => n.trim()));
+              }
             }
           }
 

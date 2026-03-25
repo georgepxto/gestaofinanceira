@@ -240,8 +240,13 @@ export function TabMeuGasto({
                       )}
                     </div>
                     <div>
-                      <p className="text-gray-900 dark:text-gray-100 font-medium">
+                      <p className="text-gray-900 dark:text-gray-100 font-medium flex items-center gap-2 flex-wrap">
                         {gasto.descricao}
+                        {gasto.dividido_com && (
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
+                            Dividido com {gasto.dividido_com}
+                          </span>
+                        )}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         Todo dia {gasto.dia_vencimento}
@@ -436,8 +441,8 @@ export function TabMeuGasto({
                                       <PauseCircle className="w-3 h-3" /> Suspenso em {format(mesVisualizacao, "MMM", { locale: ptBR })}
                                     </span>
                                   )}
-                                  {gasto.categoria === "dividido" && (
-                                    <span className="text-xs px-2 py-0.5 rounded bg-pink-100 text-pink-600 dark:bg-pink-500/20 dark:text-pink-400 flex items-center gap-1">
+                                  {!!gasto.dividido_com && (
+                                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800 flex items-center gap-1">
                                       <Users className="w-3 h-3" />
                                       {gasto.dividido_com}
                                     </span>
@@ -454,13 +459,13 @@ export function TabMeuGasto({
                                 }`}
                               >
                               {formatCurrency(
-                                gasto.categoria === "dividido" &&
+                                !!gasto.dividido_com &&
                                   gasto.minha_parte
                                   ? gasto.minha_parte
                                   : gasto.valor
                               )}
                             </p>
-                            {gasto.categoria === "dividido" &&
+                            {!!gasto.dividido_com &&
                               gasto.minha_parte && (
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                   Total: {formatCurrency(gasto.valor)}
