@@ -552,6 +552,45 @@ export function useMeusGastos({
                     }
                   }
                 }
+
+                if (existente.dividido_com || formMeuGasto.dividido_com) {
+                  const descCompartilhadaAntiga = `Dividido: ${existente.descricao}`;
+                  await supabase
+                    .from("gastos")
+                    .delete()
+                    .eq("descricao", descCompartilhadaAntiga);
+
+                  if (formMeuGasto.dividido_com) {
+                    const nomes = formMeuGasto.dividido_com.split(",").map((n) => n.trim()).filter(Boolean);
+                    if (nomes.length > 0) {
+                      const valorTotal = dadosAtualizados.valor || novoValorParcela;
+                      const parteUsuario = dadosAtualizados.minha_parte || (valorTotal / (nomes.length + 1));
+                      const valorRestante = valorTotal - parteUsuario;
+                      const valorPorPessoa = valorRestante / nomes.length;
+
+                      if (valorPorPessoa > 0) {
+                        const promessasGastos = nomes.map(async (nome) => {
+                          const descNova = `Dividido: ${dadosAtualizados.descricao}`;
+                          const gastoCompartilhado = {
+                            descricao: descNova,
+                            pessoa: nome,
+                            valor_total: valorPorPessoa,
+                            num_parcelas: 1,
+                            data_inicio: dadosAtualizados.data,
+                            tipo: dadosAtualizados.tipo,
+                            categoria: dadosAtualizados.categoria_gasto || CATEGORIA_PADRAO,
+                            recorrente: formMeuGasto.categoria === "fixo", 
+                            cartao_id: dadosAtualizados.cartao_id || null,
+                            conta_id: dadosAtualizados.conta_id || null,
+                            user_id: user?.id,
+                          };
+                          return supabase!.from("gastos").insert(gastoCompartilhado);
+                        });
+                        await Promise.all(promessasGastos);
+                      }
+                    }
+                  }
+                }
               }
               setMeusGastos((prev) =>
                 prev.map((g) =>
@@ -577,6 +616,37 @@ export function useMeusGastos({
 
               if (isSupabaseConfigured && supabase) {
                 await meusGastosFunctions.create(novoGasto);
+
+                if (formMeuGasto.dividido_com) {
+                  const nomes = formMeuGasto.dividido_com.split(",").map((n) => n.trim()).filter(Boolean);
+                  if (nomes.length > 0) {
+                    const valorTotal = dadosAtualizados.valor || novoValorParcela;
+                    const parteUsuario = dadosAtualizados.minha_parte || (valorTotal / (nomes.length + 1));
+                    const valorRestante = valorTotal - parteUsuario;
+                    const valorPorPessoa = valorRestante / nomes.length;
+
+                    if (valorPorPessoa > 0) {
+                      const promessasGastos = nomes.map(async (nome) => {
+                        const descNova = `Dividido: ${dadosAtualizados.descricao}`;
+                        const gastoCompartilhado = {
+                          descricao: descNova,
+                          pessoa: nome,
+                          valor_total: valorPorPessoa,
+                          num_parcelas: 1,
+                          data_inicio: dadosAtualizados.data,
+                          tipo: dadosAtualizados.tipo,
+                          categoria: dadosAtualizados.categoria_gasto || CATEGORIA_PADRAO,
+                          recorrente: formMeuGasto.categoria === "fixo", 
+                          cartao_id: dadosAtualizados.cartao_id || null,
+                          conta_id: dadosAtualizados.conta_id || null,
+                          user_id: user?.id,
+                        };
+                        return supabase!.from("gastos").insert(gastoCompartilhado);
+                      });
+                      await Promise.all(promessasGastos);
+                    }
+                  }
+                }
               }
               setMeusGastos((prev) => [...prev, novoGasto]);
             }
@@ -584,6 +654,14 @@ export function useMeusGastos({
             if (existente) {
               if (isSupabaseConfigured && supabase) {
                 await meusGastosFunctions.delete(existente.id);
+
+                if (existente.dividido_com) {
+                  const descCompartilhadaAntiga = `Dividido: ${existente.descricao}`;
+                  await supabase
+                    .from("gastos")
+                    .delete()
+                    .eq("descricao", descCompartilhadaAntiga);
+                }
               }
               setMeusGastos((prev) =>
                 prev.filter((g) => g.id !== existente.id)
