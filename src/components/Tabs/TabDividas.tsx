@@ -231,7 +231,7 @@ export function TabDividas({
       {/* Lista de Dívidas */}
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-800">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <History className="w-5 h-5 text-orange-400" />
             Saldos Devedores
             {filtroPessoaDivida && (
@@ -283,7 +283,7 @@ export function TabDividas({
                         </span>
                       )}
                     </div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">{divida.descricao}</p>
+                    <p className="font-medium text-gray-800 dark:text-gray-100">{divida.descricao}</p>
                     <div className="flex items-center gap-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
                       <span>
                         Original: {formatCurrency(divida.valor_original)}

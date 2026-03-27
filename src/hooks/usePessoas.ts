@@ -4,6 +4,7 @@ import {
   isSupabaseConfigured,
   pessoasFunctions,
 } from "../lib/supabase";
+import { toast } from "../components/ui/Toaster";
 
 interface UsePessoasProps {
   user: { id: string } | null;
@@ -76,6 +77,7 @@ export function usePessoas({ user }: UsePessoasProps) {
       setNovaPessoa("");
       setShowAddPessoa(false);
       onSuccess?.(nome);
+      toast.success(`A pessoa ${nome} foi adicionada com sucesso!`);
     }
   };
 

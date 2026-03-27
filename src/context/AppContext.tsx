@@ -161,7 +161,8 @@ interface AppContextType {
   handleTogglePagoMeuGasto: (id: string) => Promise<void>;
   handleDeleteMeuGasto: (id: string) => void;
   handleToggleGastoFixo: (id: string) => Promise<void>;
-  handleToggleSuspenderGastoFixo: (id: string, mesRef: Date) => Promise<void>;
+  handleReativarGastoFixo: (id: string, mesRef: Date) => Promise<void>;
+  handleSuspenderMultiplosMeses: (id: string, meses: string[], mesRef: Date) => Promise<void>;
   handlePagarTodosCredito: () => Promise<void>;
   resetFormMeuGasto: () => void;
   cartoes: CartaoCredito[];
@@ -348,7 +349,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     handleTogglePagoMeuGasto,
     handleDeleteMeuGasto,
     handleToggleGastoFixo,
-    handleToggleSuspenderGastoFixo,
+    handleReativarGastoFixo,
+    handleSuspenderMultiplosMeses,
     handlePagarTodosCredito,
     resetForm: resetFormMeuGasto,
   } = useMeusGastos({
@@ -507,7 +509,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     handleTogglePagoMeuGasto,
     handleDeleteMeuGasto,
     handleToggleGastoFixo,
-    handleToggleSuspenderGastoFixo,
+    handleReativarGastoFixo,
+    handleSuspenderMultiplosMeses,
     handlePagarTodosCredito,
     resetFormMeuGasto,
     cartoes,

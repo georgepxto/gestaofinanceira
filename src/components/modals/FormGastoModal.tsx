@@ -57,7 +57,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
       <div className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-800">
         {/* Header do Modal */}
         <div className="sticky top-0 bg-white dark:bg-gray-900 p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between z-10">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             {isEditing ? "Editar Lançamento" : "Novo Lançamento"}
           </h2>
           <button
@@ -113,7 +113,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                 name="cartao_id"
                 value={formData.cartao_id}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100"
               >
                 <option value="">Selecione um cartão</option>
                 {cartoes.map((c) => (
@@ -135,7 +135,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                 name="conta_id"
                 value={formData.conta_id}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100"
               >
                 <option value="">Selecione uma conta (opcional)</option>
                 {contas.map((c) => (
@@ -163,7 +163,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               value={formData.descricao}
               onChange={handleInputChange}
               placeholder="Ex: iPhone 15, Supermercado..."
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
               required
             />
           </div>
@@ -181,7 +181,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               name="pessoa"
               value={formData.pessoa}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100"
               required
             >
               <option value="">Selecione</option>
@@ -209,7 +209,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               name="categoria"
               value={formData.categoria}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100"
               required
             >
               {CATEGORIAS.map((cat) => (
@@ -239,7 +239,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                 value={formData.valor_total}
                 onChange={handleInputChange}
                 placeholder="0,00"
-                className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+                className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                 inputMode="numeric"
                 required
               />
@@ -281,7 +281,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               value={formData.recorrente ? 1 : formData.num_parcelas}
               onChange={handleInputChange}
               disabled={formData.recorrente}
-              className={`w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
+              className={`w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 ${
                 formData.recorrente ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
@@ -316,7 +316,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               name="data_inicio"
               value={formData.data_inicio}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100"
               required
             />
           </div>
@@ -325,7 +325,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
           {formData.valor_total && (
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Resumo:</p>
-              <p className="font-medium text-gray-900 dark:text-gray-100">
+              <p className="font-medium text-gray-800 dark:text-gray-100">
                 {formData.num_parcelas}x de{" "}
                 {formatCurrency(
                   parseCurrency(formData.valor_total) / formData.num_parcelas

@@ -320,7 +320,7 @@ export const AdminPage = () => {
             <Shield className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
               Painel Admin
             </h1>
             <p className="text-gray-500 dark:text-gray-400 text-sm">
@@ -367,7 +367,7 @@ export const AdminPage = () => {
                 <Users className="w-4 h-4 text-indigo-500" />
                 <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{totalUsers}</p>
+              <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{totalUsers}</p>
             </div>
             <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
@@ -394,7 +394,7 @@ export const AdminPage = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por nome ou email..."
-                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
               />
             </div>
             <div className="flex gap-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-1">
@@ -462,7 +462,7 @@ export const AdminPage = () => {
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                        <span className="font-semibold text-gray-800 dark:text-gray-100 truncate">
                           {user.nome || "Sem nome"}
                         </span>
                         {user.role === "admin" && (
@@ -596,7 +596,7 @@ export const AdminPage = () => {
                                     <div className="w-4 h-4 bg-white rounded-full shadow mx-0.5" />
                                   </div>
                                   <div className="min-w-0">
-                                    <span className={`text-sm font-medium block ${isEnabled ? "text-gray-900 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"}`}>
+                                    <span className={`text-sm font-medium block ${isEnabled ? "text-gray-800 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"}`}>
                                       {FEATURE_LABELS[feature]}
                                     </span>
                                     <span className="text-[11px] text-gray-400 dark:text-gray-500 block truncate">
@@ -651,29 +651,29 @@ export const AdminPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Logins */}
                 <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-4">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-4">
                     <Activity className="w-5 h-5 text-blue-500" />
                     Logins
                   </h3>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-500 dark:text-gray-400">Hoje</span>
-                      <span className="font-bold text-gray-900 dark:text-gray-100">{usageStats.logins_today}</span>
+                      <span className="font-bold text-gray-800 dark:text-gray-100">{usageStats.logins_today}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-500 dark:text-gray-400">Últimos 7 dias</span>
-                      <span className="font-bold text-gray-900 dark:text-gray-100">{usageStats.logins_7d}</span>
+                      <span className="font-bold text-gray-800 dark:text-gray-100">{usageStats.logins_7d}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-500 dark:text-gray-400">Últimos 30 dias</span>
-                      <span className="font-bold text-gray-900 dark:text-gray-100">{usageStats.logins_30d}</span>
+                      <span className="font-bold text-gray-800 dark:text-gray-100">{usageStats.logins_30d}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Novos Usuários */}
                 <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-4">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-4">
                     <TrendingUp className="w-5 h-5 text-emerald-500" />
                     Novos Cadastros
                   </h3>
@@ -701,7 +701,7 @@ export const AdminPage = () => {
               {/* Gráfico de Logins por Dia */}
               <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
                     <BarChart3 className="w-5 h-5 text-indigo-500" />
                     Logins por Dia (últimos 30 dias)
                   </h3>
@@ -738,7 +738,7 @@ export const AdminPage = () => {
 
               {/* Gráfico de Cadastros por Dia */}
               <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 mb-4">
+                <h3 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-4">
                   <Calendar className="w-5 h-5 text-emerald-500" />
                   Novos Cadastros por Dia (últimos 30 dias)
                 </h3>
@@ -835,7 +835,7 @@ export const AdminPage = () => {
                     <UserMinus className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">
                       {iu.nome || "Sem nome"}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{iu.email}</p>
@@ -963,7 +963,7 @@ function StatCard({
         <span className={colorMap[color] || "text-gray-500"}>{icon}</span>
         <span className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{label}</span>
       </div>
-      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+      <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{value}</p>
     </div>
   );
 }

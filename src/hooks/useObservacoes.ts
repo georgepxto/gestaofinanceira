@@ -5,6 +5,7 @@ import {
   isSupabaseConfigured,
   observacoesFunctions,
 } from "../lib/supabase";
+import { toast } from "../components/ui/Toaster";
 
 interface UseObservacoesProps {
   mesVisualizacao: Date;
@@ -94,6 +95,7 @@ export function useObservacoes({ mesVisualizacao, user }: UseObservacoesProps) {
       }
       setShowObsModal(null);
       setObsTexto("");
+      toast.success("Observação salva com sucesso!");
     } finally {
       setSaving(false);
     }

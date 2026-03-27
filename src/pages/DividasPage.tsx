@@ -29,7 +29,7 @@ export const DividasPage = () => {
         <div className="flex items-center gap-3">
           <TrendingDown className="w-7 h-7 text-orange-600" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Saldo Devedor</h1>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Saldo Devedor</h1>
             <p className="text-gray-500 dark:text-gray-400 text-sm">Controle de dívidas e valores a receber</p>
           </div>
         </div>

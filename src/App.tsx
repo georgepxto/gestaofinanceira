@@ -7,6 +7,7 @@ import { Login } from "./components/Login";
 import { Layout } from "./components/layout";
 import { DashboardPage, EuPage, GastosPage, DividasPage, ConfiguracoesPage, PessoasPage, ContasBancariasPage, CartoesCreditoPage, MetasPage, AdminPage, LandingPage, ResetPasswordPage } from "./pages";
 import type { CartaoCredito, ContaBancaria } from "./types";
+import { Toaster } from "./components/ui/Toaster";
 import {
   FormGastoModal,
   FormDividaModal,
@@ -215,7 +216,7 @@ function AppContent() {
           <div className="w-16 h-16 bg-red-100 dark:bg-red-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <ShieldAlert className="w-8 h-8 text-red-500" />
           </div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
             Conta Desativada
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mb-6">
@@ -406,6 +407,7 @@ function AppContent() {
         onTudo={(valor) => setValorPagamento(formatCurrency(valor))}
         onSubmit={handlePagamento}
       />
+      <Toaster />
     </>
   );
 }

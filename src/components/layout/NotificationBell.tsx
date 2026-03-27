@@ -96,7 +96,7 @@ export const NotificationBell = () => {
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
               <Bell className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               Notificações
               {totalCount > 0 && (

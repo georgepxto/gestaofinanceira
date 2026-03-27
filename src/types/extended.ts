@@ -18,6 +18,7 @@ export interface ModalConfirm {
   titulo: string;
   mensagem: string;
   onConfirm: () => void;
-  confirmLabel?: string;  // default: "Excluir"
-  confirmColor?: "red" | "green" | "blue" | "indigo" | "purple"; // default: "red"
+  confirmLabel?: string;  
+  confirmColor?: "red" | "green" | "blue" | "indigo" | "purple"; 
+  successMessage?: string;
 }

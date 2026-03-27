@@ -10,6 +10,7 @@ import {
   calcularTotalMes,
 } from "../utils/calculations";
 import { CATEGORIA_PADRAO } from "../utils/categories";
+import { toast } from "../components/ui/Toaster";
 
 interface UseGastosProps {
   user: { id: string } | null;
@@ -254,6 +255,7 @@ export function useGastos({
         conta_id: "",
       });
       setShowForm(false);
+      toast.success(editandoGasto ? "Gasto atualizado com sucesso!" : "Gasto adicionado com sucesso!");
     } catch (err) {
       console.error("Erro ao salvar gasto:", err);
       setError("Erro ao salvar o gasto. Tente novamente.");

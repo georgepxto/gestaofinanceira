@@ -67,19 +67,19 @@ export const MetasPage = () => {
       <div className="flex items-center gap-3">
         <Target className="w-7 h-7 text-purple-600" />
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Metas de Gasto</h1>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Metas de Gasto</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm">Defina tetos mensais por categoria</p>
         </div>
       </div>
 
       {/* Adicionar nova meta */}
       <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Nova Meta</h2>
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Nova Meta</h2>
         <div className="flex flex-col sm:flex-row gap-3">
           <select
             value={novaMeta.categoria}
             onChange={(e) => setNovaMeta({ ...novaMeta, categoria: e.target.value })}
-            className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none appearance-none"
+            className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none appearance-none"
           >
             <option value="" disabled>Selecione uma categoria</option>
             {CATEGORIAS
@@ -96,7 +96,7 @@ export const MetasPage = () => {
               value={novaMeta.limite}
               onChange={(e) => setNovaMeta({ ...novaMeta, limite: e.target.value })}
               placeholder="0,00"
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
             />
           </div>
           <button
@@ -115,7 +115,7 @@ export const MetasPage = () => {
 
       {/* Lista de metas */}
       <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Suas Metas</h2>
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Suas Metas</h2>
         {metas.length > 0 ? (
           <div className="space-y-3">
             {metas.map((meta) => (
@@ -125,7 +125,7 @@ export const MetasPage = () => {
                     <Target className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 capitalize">{meta.categoria}</span>
+                    <span className="text-sm font-medium text-gray-800 dark:text-gray-100 capitalize">{meta.categoria}</span>
                     <p className="text-gray-400 dark:text-gray-500 text-xs">Limite: {formatCurrency(meta.limite)} / mês</p>
                   </div>
                 </div>

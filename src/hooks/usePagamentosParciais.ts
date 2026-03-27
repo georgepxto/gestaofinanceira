@@ -7,6 +7,7 @@ import {
 } from "../lib/supabase";
 import type { PagamentoParcial } from "../types/extended";
 import { formatCurrency, parseCurrency } from "../utils/calculations";
+import { toast } from "../components/ui/Toaster";
 
 interface UsePagamentosParciaisProps {
   user: { id: string } | null;
@@ -33,7 +34,6 @@ export function usePagamentosParciais({
   getObsKey,
   getMesAtual,
   setModalConfirm,
-  setModalFeedback,
   resumoMensal,
   setError,
 }: UsePagamentosParciaisProps) {
@@ -163,14 +163,7 @@ export function usePagamentosParciais({
       setShowPagamentoParcial(null);
       setError(null);
 
-      setModalFeedback({
-        show: true,
-        titulo: "Pagamento Registrado!",
-        mensagem: `${pessoa} pagou ${formatCurrency(
-          valor
-        )}.\nFalta: ${formatCurrency(restante - valor)}`,
-        tipo: "sucesso",
-      });
+      toast.success(`${pessoa} pagou ${formatCurrency(valor)}.\nFalta: ${formatCurrency(restante - valor)}`);
     } finally {
       setSaving(false);
     }

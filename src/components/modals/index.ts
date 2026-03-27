@@ -7,3 +7,4 @@ export * from "./ObservacaoModal";
 export * from "./PagamentoParcialModal";
 export * from "./FecharMesModal";
 export * from "./PagamentoModal";
+export * from "./SuspensaoModal";

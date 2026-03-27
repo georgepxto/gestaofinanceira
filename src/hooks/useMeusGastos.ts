@@ -8,6 +8,7 @@ import {
 import type { MeuGasto, MeuGastoForm, CartaoCredito } from "../types";
 import { formatCurrency, parseCurrency, getMesFaturaCartao } from "../utils/calculations";
 import { CATEGORIA_PADRAO } from "../utils/categories";
+import { toast } from "../components/ui/Toaster";
 
 interface UseMeusGastosProps {
   user: { id: string } | null;
@@ -338,6 +339,7 @@ export function useMeusGastos({
         }
         setMeusGastos((prev) => [...prev, novoGasto]);
       }
+      toast.success("Gasto adicionado com sucesso!");
 
       resetForm();
     } finally {
@@ -671,6 +673,7 @@ export function useMeusGastos({
         }
 
         resetForm();
+        toast.success("Gasto atualizado com sucesso!");
       } finally {
         setSaving(false);
       }
@@ -816,20 +819,51 @@ export function useMeusGastos({
     }
   };
 
-  // Suspender gasto fixo em um mês específico
-  const handleToggleSuspenderGastoFixo = async (id: string, mesRef: Date) => {
+// Reativar gasto fixo (remover suspensao de um mês específico pra frente)
+  const handleReativarGastoFixo = async (id: string, mesRef: Date) => {
     const gasto = meusGastos.find((g) => g.id === id);
     if (!gasto) return;
 
-    const mesStr = format(mesRef, "yyyy-MM");
+    const mesAtualIndex = mesRef.getFullYear() * 12 + mesRef.getMonth();
     const mesesSuspensos = gasto.meses_suspensos || [];
-    
-    let novoArray: string[];
-    if (mesesSuspensos.includes(mesStr)) {
-      novoArray = mesesSuspensos.filter(m => m !== mesStr);
-    } else {
-      novoArray = [...mesesSuspensos, mesStr];
+
+    // Limpa a suspensão desse mês e de QUALQUER mês futuro
+    const novoArray = mesesSuspensos.filter((m) => {
+      const [anoStr, mesStr] = m.split("-");
+      const mIndex = parseInt(anoStr) * 12 + (parseInt(mesStr) - 1);
+      return mIndex < mesAtualIndex;
+    });
+
+    setSaving(true);
+    try {
+      if (isSupabaseConfigured && supabase) {
+        await meusGastosFunctions.update(id, { meses_suspensos: novoArray });
+      }
+
+      setMeusGastos((prev) =>
+        prev.map((g) => (g.id === id ? { ...g, meses_suspensos: novoArray } : g))
+      );
+    } finally {
+      setSaving(false);
     }
+  };
+
+  // Suspender gasto fixo por múltiplos meses (substituindo qualquer suspensão antiga a partir do mes atual)
+  const handleSuspenderMultiplosMeses = async (id: string, meses: string[], mesRef: Date) => {
+    const gasto = meusGastos.find((g) => g.id === id);
+    if (!gasto) return;
+
+    const mesAtualIndex = mesRef.getFullYear() * 12 + mesRef.getMonth();
+    const mesesSuspensos = gasto.meses_suspensos || [];
+
+    // Remove qualquer suspensão futura que ja estava lá para recriar as novas
+    const historicoAntigo = mesesSuspensos.filter((m) => {
+      const [anoStr, mesStr] = m.split("-");
+      const mIndex = parseInt(anoStr) * 12 + (parseInt(mesStr) - 1);
+      return mIndex < mesAtualIndex; // mantem só passado
+    });
+
+    const novoArray = Array.from(new Set([...historicoAntigo, ...meses]));
 
     setSaving(true);
     try {
@@ -944,7 +978,8 @@ export function useMeusGastos({
     handleTogglePagoMeuGasto,
     handleDeleteMeuGasto,
     handleToggleGastoFixo,
-    handleToggleSuspenderGastoFixo,
+    handleReativarGastoFixo,
+    handleSuspenderMultiplosMeses,
     handlePagarTodosCredito,
     resetForm,
   };

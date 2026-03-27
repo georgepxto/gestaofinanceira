@@ -23,7 +23,8 @@ export const EuPage = () => {
     meusGastosDoMes,
     handleEditMeuGasto,
     handleToggleGastoFixo,
-    handleToggleSuspenderGastoFixo,
+    handleReativarGastoFixo,
+    handleSuspenderMultiplosMeses,
     handleDeleteMeuGasto,
     handleTogglePagoMeuGasto,
     handlePagarTodosCredito,
@@ -72,7 +73,7 @@ export const EuPage = () => {
         <div className="flex items-center gap-3">
           <User className="w-7 h-7 text-emerald-600" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Meus Gastos</h1>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Meus Gastos</h1>
             <p className="text-gray-500 dark:text-gray-400 text-sm">Despesas pessoais e gastos fixos</p>
           </div>
         </div>
@@ -129,7 +130,8 @@ export const EuPage = () => {
         meusGastosDoMes={meusGastosDoMes}
         handleEditMeuGasto={handleEditMeuGasto}
         handleToggleGastoFixo={handleToggleGastoFixo}
-        handleToggleSuspenderGastoFixo={handleToggleSuspenderGastoFixo}
+          handleReativarGastoFixo={handleReativarGastoFixo}
+          handleSuspenderMultiplosMeses={handleSuspenderMultiplosMeses}
         handleDeleteMeuGasto={handleDeleteMeuGasto}
         handleTogglePagoMeuGasto={handleTogglePagoMeuGasto}
         cartoes={cartoes}

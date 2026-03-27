@@ -42,7 +42,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
       <div className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-md border border-gray-200 dark:border-gray-800">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-emerald-600" />
             Fechar Mês - {pessoa}
           </h2>
@@ -59,13 +59,13 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
           <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">Mês:</span>
-              <span className="text-gray-900 dark:text-gray-100 font-medium">
+              <span className="text-gray-800 dark:text-gray-100 font-medium">
                 {formatMonthYear(mesVisualizacao)}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">Total do mês:</span>
-              <span className="text-gray-900 dark:text-gray-100 font-medium">
+              <span className="text-gray-800 dark:text-gray-100 font-medium">
                 {formatCurrency(totalDevido)}
               </span>
             </div>
@@ -101,7 +101,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
                   onValorChange(formatCurrencyInput(e.target.value))
                 }
                 placeholder="0,00"
-                className="w-full pl-10 pr-3 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500 outline-none"
+                className="w-full pl-10 pr-3 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500 outline-none"
                 inputMode="numeric"
               />
             </div>
@@ -121,7 +121,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
               </button>
               <button
                 onClick={() => onValorChange("")}
-                className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 rounded font-medium transition-colors"
+                className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100 rounded font-medium transition-colors"
               >
                 Limpar
               </button>
@@ -177,7 +177,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
             <button
               onClick={onClose}
               disabled={saving}
-              className={`flex-1 px-4 py-3 text-gray-900 dark:text-gray-100 rounded-lg font-medium transition-colors ${
+              className={`flex-1 px-4 py-3 text-gray-800 dark:text-gray-100 rounded-lg font-medium transition-colors ${
                 saving
                   ? "bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
                   : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
@@ -188,7 +188,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
             <button
               onClick={() => onSubmit(pessoa)}
               disabled={saving}
-              className={`flex-1 px-4 py-3 text-gray-900 dark:text-gray-100 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+              className={`flex-1 px-4 py-3 text-gray-800 dark:text-gray-100 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
                 saving
                   ? "bg-gray-200 dark:bg-gray-700 cursor-not-allowed"
                   : "bg-green-600 hover:bg-green-700"

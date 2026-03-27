@@ -113,7 +113,7 @@ export const ConfiguracoesPage = () => {
       {/* Page Header */}
       <div className="flex items-center gap-3">
         <Settings className="w-7 h-7 text-gray-600 dark:text-gray-400" />
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Configurações</h1>
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Configurações</h1>
       </div>
 
       {/* Seção Aparência */}
@@ -124,12 +124,12 @@ export const ConfiguracoesPage = () => {
           ) : (
             <Sun className="w-5 h-5 text-amber-500" />
           )}
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Aparência</h2>
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Aparência</h2>
         </div>
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Tema</p>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-100">Tema</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               {theme === "dark" ? "Modo escuro ativado" : "Modo claro ativado"}
             </p>
@@ -158,7 +158,7 @@ export const ConfiguracoesPage = () => {
       <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <User className="w-5 h-5 text-blue-500" />
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Perfil</h2>
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Perfil</h2>
         </div>
 
         {/* Email (somente leitura) */}
@@ -186,7 +186,7 @@ export const ConfiguracoesPage = () => {
               value={novoNome}
               onChange={(e) => setNovoNome(e.target.value)}
               placeholder="Seu nome"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
             <button
               onClick={handleAlterarNome}
@@ -237,7 +237,7 @@ export const ConfiguracoesPage = () => {
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
                 placeholder="EXCLUIR"
-                className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-red-300 dark:border-red-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-red-300 dark:border-red-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
               />
               <button
                 onClick={handleExcluirConta}

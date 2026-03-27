@@ -9,6 +9,7 @@ import {
 import type { SaldoDevedor, SaldoDevedorForm, ResumoMensal } from "../types";
 import type { PagamentoParcial } from "../types/extended";
 import { formatCurrency, parseCurrency, formatMonthYear } from "../utils/calculations";
+import { toast } from "../components/ui/Toaster";
 
 interface UseSaldosDevedoresProps {
   user: { id: string } | null;
@@ -204,6 +205,7 @@ export function useSaldosDevedores({
       setFormDivida({ pessoa: "", descricao: "", valor: "" });
       setShowFormDivida(false);
       setError(null);
+      toast.success("Dívida adicionada com sucesso!");
     } finally {
       setSaving(false);
     }

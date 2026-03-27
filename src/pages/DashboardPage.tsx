@@ -472,7 +472,7 @@ export const DashboardPage = () => {
       {/* Header com saudação + seletor de mês */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'} 👋</h1>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'} 👋</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm">Visão geral das suas finanças</p>
         </div>
         
@@ -484,7 +484,7 @@ export const DashboardPage = () => {
           >
             <ChevronLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
-          <span className="px-4 py-1 text-gray-900 dark:text-gray-100 font-medium min-w-[140px] text-center">
+          <span className="px-4 py-1 text-gray-800 dark:text-gray-100 font-medium min-w-[140px] text-center">
             {format(mesVisualizacao, "MMMM yyyy", { locale: ptBR })}
           </span>
           <button
@@ -504,7 +504,7 @@ export const DashboardPage = () => {
             <Wallet className="w-5 h-5 text-emerald-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Saldo Total</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.saldoTotal)}</p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.saldoTotal)}</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Todas as contas</p>
         </div>
 
@@ -514,7 +514,7 @@ export const DashboardPage = () => {
             <Users className="w-5 h-5 text-blue-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">A Receber</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Gastos compartilhados do mês</p>
         </div>
 
@@ -524,7 +524,7 @@ export const DashboardPage = () => {
             <TrendingUp className="w-5 h-5 text-green-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Receitas Fixas</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.receitasFixasMensais)}</p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.receitasFixasMensais)}</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Por mês</p>
         </div>
 
@@ -534,7 +534,7 @@ export const DashboardPage = () => {
             <Receipt className="w-5 h-5 text-amber-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Gastos Fixos</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.gastosFixosMensais)}</p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.gastosFixosMensais)}</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Por mês</p>
         </div>
       </div>
@@ -571,7 +571,7 @@ export const DashboardPage = () => {
         {/* Gráfico de barras - Gastos por mês */}
         <div className="md:col-span-2 bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Meus gastos por mês</span>
+            <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">Meus gastos por mês</span>
             <span className="text-xs text-gray-400">Últimos 6 meses</span>
           </div>
           {data.tendenciaMensal.length > 0 ? (
@@ -599,7 +599,7 @@ export const DashboardPage = () => {
 
         {/* Últimos gastos (pessoais) */}
         <div className="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 block">Últimos gastos</span>
+          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-4 block">Últimos gastos</span>
           {data.top5MeusGastos.length > 0 ? (
             <div className="space-y-0">
               {data.top5MeusGastos.slice(0, 5).map((gasto, i) => (
@@ -614,7 +614,7 @@ export const DashboardPage = () => {
                        '💳'}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">{gasto.descricao}</p>
+                      <p className="text-xs font-medium text-gray-800 dark:text-gray-100 truncate">{gasto.descricao}</p>
                       <p className="text-[10px] text-gray-400 capitalize">{gasto.categoria}</p>
                     </div>
                   </div>
@@ -634,7 +634,7 @@ export const DashboardPage = () => {
 
       {/* Tendência de Gastos */}
       <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
           <TrendingDown className="w-5 h-5 text-orange-500" />
           Tendência de Gastos (vs mês anterior)
         </h2>
@@ -642,7 +642,7 @@ export const DashboardPage = () => {
           {/* Meus Gastos */}
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-100 dark:border-gray-800">
             <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mb-1">Meus Gastos</p>
-            <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.totalGastosMesAtual)}</p>
+            <p className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.totalGastosMesAtual)}</p>
             {data.totalGastosMesAnterior > 0 && (
               <div className="flex items-center gap-1 mt-1 sm:mt-2 flex-wrap">
                 {data.totalGastosMesAtual > data.totalGastosMesAnterior ? (
@@ -663,7 +663,7 @@ export const DashboardPage = () => {
           {/* Empréstimos/Gastos Compartilhados */}
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-100 dark:border-gray-800">
             <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mb-1">Gastos Compartilhados</p>
-            <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
+            <p className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
             {data.totalEmprestimosMesAnterior > 0 && (
               <div className="flex items-center gap-1 mt-1 sm:mt-2 flex-wrap">
                 {data.totalEmprestimosMesAtual > data.totalEmprestimosMesAnterior ? (
@@ -687,7 +687,7 @@ export const DashboardPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Meus Gastos */}
           <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm min-w-0 overflow-hidden">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-blue-600" />
               Meus Gastos (6 meses)
             </h2>
@@ -716,7 +716,7 @@ export const DashboardPage = () => {
 
           {/* Gastos Compartilhados */}
           <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm min-w-0 overflow-hidden">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
               <Users className="w-5 h-5 text-emerald-600" />
               Compartilhados (6 meses)
             </h2>
@@ -748,7 +748,7 @@ export const DashboardPage = () => {
       {/* Metas de Gasto por Categoria */}
       {data.metasGasto.length > 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Target className="w-5 h-5 text-purple-600" />
             Metas de Gasto
           </h2>
@@ -805,7 +805,7 @@ export const DashboardPage = () => {
             <CheckCircle className="w-5 h-5 text-indigo-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Taxa de Quitação</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{data.taxaQuitacao.toFixed(0)}%</p>
+          <p className="text-3xl font-bold text-gray-800 dark:text-gray-100">{data.taxaQuitacao.toFixed(0)}%</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
             {data.pessoasQuitadas} de {data.totalPessoas} pessoas quitaram
           </p>
@@ -823,7 +823,7 @@ export const DashboardPage = () => {
             <Users className="w-5 h-5 text-cyan-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Média por Pessoa</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.mediaGastosPorPessoa)}</p>
+          <p className="text-3xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.mediaGastosPorPessoa)}</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
             {data.totalPessoas} pessoas com gastos este mês
           </p>
@@ -853,7 +853,7 @@ export const DashboardPage = () => {
         {/* Top 5 Gastos do Mês */}
         {data.top5Gastos.length > 0 && (
           <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
               <Receipt className="w-5 h-5 text-amber-500" />
               Top 5 Gastos do Mês
             </h3>
@@ -865,11 +865,11 @@ export const DashboardPage = () => {
                       {index + 1}
                     </span>
                     <div>
-                      <p className="text-gray-900 dark:text-gray-100 text-sm font-medium truncate max-w-[140px]">{gasto.descricao}</p>
+                      <p className="text-gray-800 dark:text-gray-100 text-sm font-medium truncate max-w-[140px]">{gasto.descricao}</p>
                       <p className="text-gray-400 dark:text-gray-500 text-xs">{gasto.pessoa}</p>
                     </div>
                   </div>
-                  <p className="text-gray-900 dark:text-gray-100 font-semibold">{formatCurrency(gasto.valor)}</p>
+                  <p className="text-gray-800 dark:text-gray-100 font-semibold">{formatCurrency(gasto.valor)}</p>
                 </div>
               ))}
             </div>
@@ -879,7 +879,7 @@ export const DashboardPage = () => {
         {/* Parcelas Próximas do Fim */}
         {data.parcelasProximasFim.length > 0 && (
           <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-amber-500" />
               Parcelas Acabando
             </h3>
@@ -887,7 +887,7 @@ export const DashboardPage = () => {
               {data.parcelasProximasFim.map((parcela, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg">
                   <div>
-                    <p className="text-gray-900 dark:text-gray-100 text-sm font-medium truncate max-w-[180px]">{parcela.descricao}</p>
+                    <p className="text-gray-800 dark:text-gray-100 text-sm font-medium truncate max-w-[180px]">{parcela.descricao}</p>
                     <p className="text-gray-400 dark:text-gray-500 text-xs">{parcela.pessoa}</p>
                   </div>
                   <div className="text-right">
@@ -905,7 +905,7 @@ export const DashboardPage = () => {
 
       {/* Gráfico de Projeção Anual */}
       <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-blue-600" />
           Projeção de Saldo (12 meses)
         </h2>
@@ -946,7 +946,7 @@ export const DashboardPage = () => {
       {/* Gastos Fixos vs Variáveis */}
       {(data.gastosFixosMes > 0 || data.gastosVariaveisMes > 0) && (
         <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Receipt className="w-5 h-5 text-cyan-600" />
             Gastos Fixos vs Variáveis (Meus Gastos)
           </h2>
@@ -979,12 +979,12 @@ export const DashboardPage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 !border-l-blue-500">
                 <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">Gastos Fixos</p>
-                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.gastosFixosMes)}</p>
+                <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.gastosFixosMes)}</p>
                 <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Contas recorrentes</p>
               </div>
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 !border-l-indigo-400">
                 <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">Gastos Variáveis</p>
-                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.gastosVariaveisMes)}</p>
+                <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.gastosVariaveisMes)}</p>
                 <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Gastos pessoais</p>
               </div>
             </div>
@@ -995,7 +995,7 @@ export const DashboardPage = () => {
       {/* Gráfico de Gastos por Categoria */}
       {data.gastosPorCategoria.length > 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
             <TrendingDown className="w-5 h-5 text-red-500" />
             Gastos por Categoria (30 dias)
           </h2>
@@ -1041,7 +1041,7 @@ export const DashboardPage = () => {
       {/* Gráfico de Empréstimos por Pessoa */}
       {data.emprestadosPorPessoa.length > 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Users className="w-5 h-5 text-blue-600" />
             Empréstimos por Pessoa
           </h2>
@@ -1087,7 +1087,7 @@ export const DashboardPage = () => {
       {/* Gráfico de Empréstimos por Categoria */}
       {data.emprestadosPorCategoria.length > 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Receipt className="w-5 h-5 text-amber-500" />
             Empréstimos por Categoria
           </h2>

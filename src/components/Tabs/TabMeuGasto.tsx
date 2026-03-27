@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -16,8 +17,9 @@ import {
   PauseCircle,
   PlayCircle,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { SuspensaoModal } from "../modals/SuspensaoModal";
 import type { MeuGasto, CartaoCredito } from "../../types";
 import { formatCurrency, formatMonthYear, getMesFaturaCartao } from "../../utils/calculations";
 
@@ -39,7 +41,8 @@ interface TabMeuGastoProps {
   handleToggleGastoFixo: (id: string) => void;
   handleDeleteMeuGasto: (id: string) => void;
   handleTogglePagoMeuGasto: (id: string) => void;
-  handleToggleSuspenderGastoFixo: (id: string, mesRef: Date) => void;
+  handleReativarGastoFixo: (id: string, mesRef: Date) => void;
+  handleSuspenderMultiplosMeses: (id: string, meses: string[], mesRef: Date) => Promise<void>;
   cartoes: CartaoCredito[];
 }
 
@@ -61,9 +64,32 @@ export function TabMeuGasto({
   handleToggleGastoFixo,
   handleDeleteMeuGasto,
   handleTogglePagoMeuGasto,
-  handleToggleSuspenderGastoFixo,
+  handleReativarGastoFixo,
+  handleSuspenderMultiplosMeses,
   cartoes,
 }: TabMeuGastoProps) {
+
+  const [modalSuspensao, setModalSuspensao] = useState<{show: boolean, id: string, nome: string} | null>(null);
+
+  const handleClickSuspender = (gasto: MeuGasto, isSuspenso: boolean) => {
+    if (isSuspenso) {
+      handleReativarGastoFixo(gasto.id, mesVisualizacao);
+    } else {
+      setModalSuspensao({ show: true, id: gasto.id, nome: gasto.descricao });
+    }
+  };
+
+  const getMesReativacao = (gasto: MeuGasto) => {
+    if (!gasto.meses_suspensos || gasto.meses_suspensos.length === 0) return null;
+    const mesStr = format(mesVisualizacao, "yyyy-MM");
+    if (!gasto.meses_suspensos.includes(mesStr)) return null;
+
+    let checkDate = mesVisualizacao;
+    while (gasto.meses_suspensos.includes(format(checkDate, "yyyy-MM"))) {
+      checkDate = addMonths(checkDate, 1);
+    }
+    return format(checkDate, "MM/yyyy");
+  };
 
   return (
     <>
@@ -79,7 +105,7 @@ export function TabMeuGasto({
           </button>
 
           <div className="text-center">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 capitalize">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 capitalize">
               {formatMonthYear(mesVisualizacao)}
             </h2>
             <button
@@ -108,7 +134,7 @@ export function TabMeuGasto({
               <CreditCard className="w-3 h-3 text-purple-500" /> Crédito
             </p>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
             {formatCurrency(totalMeusGastosCredito)}
           </p>
         </div>
@@ -116,7 +142,7 @@ export function TabMeuGasto({
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
             <Wallet className="w-3 h-3 text-green-500" /> Débito
           </p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
             {formatCurrency(totalMeusGastosDebito)}
           </p>
         </div>
@@ -124,7 +150,7 @@ export function TabMeuGasto({
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
             <CheckCircle className="w-3 h-3 text-emerald-500" /> Pago
           </p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
             {formatCurrency(totalMeusGastosPagos)}
           </p>
         </div>
@@ -132,7 +158,7 @@ export function TabMeuGasto({
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
             <Repeat className="w-3 h-3 text-amber-500" /> Fixos
           </p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
             {formatCurrency(totalGastosFixos)}
           </p>
         </div>
@@ -185,14 +211,14 @@ export function TabMeuGasto({
                 onChange={(e) => setFiltroDiaMeuGasto(e.target.value)}
                 max={format(mesVisualizacao, "yyyy-MM") + "-31"}
                 min={format(mesVisualizacao, "yyyy-MM") + "-01"}
-                className="w-full px-3 py-1.5 pl-10 rounded-lg text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none [color-scheme:dark]"
+                className="w-full px-3 py-1.5 pl-10 rounded-lg text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none [color-scheme:dark]"
               />
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400 pointer-events-none" />
             </div>
             {filtroDiaMeuGasto && (
               <button
                 onClick={() => setFiltroDiaMeuGasto("")}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-600 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 transition-colors"
+                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-600 text-white hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 transition-colors"
               >
                 Limpar
               </button>
@@ -204,7 +230,7 @@ export function TabMeuGasto({
       {/* Gastos Fixos */}
       {gastosFixos.length > 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800">
-          <h3 className="text-gray-900 dark:text-gray-100 font-semibold mb-3 flex items-center gap-2">
+          <h3 className="text-gray-800 dark:text-gray-100 font-semibold mb-3 flex items-center gap-2">
             <Repeat className="w-4 h-4 text-amber-600" />
             Gastos Fixos Mensais
           </h3>
@@ -240,11 +266,16 @@ export function TabMeuGasto({
                       )}
                     </div>
                     <div>
-                      <p className="text-gray-900 dark:text-gray-100 font-medium flex items-center gap-2 flex-wrap">
+                      <p className="text-gray-800 dark:text-gray-100 font-medium flex items-center gap-2 flex-wrap">
                         {gasto.descricao}
                         {gasto.dividido_com && (
                           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
                             Dividido com {gasto.dividido_com}
+                          </span>
+                        )}
+                        {isSuspenso && (
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                            Pausado (Volta em {getMesReativacao(gasto)})
                           </span>
                         )}
                       </p>
@@ -254,11 +285,11 @@ export function TabMeuGasto({
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <p className="text-gray-900 dark:text-gray-100 font-semibold">
+                    <p className="text-gray-800 dark:text-gray-100 font-semibold">
                       {formatCurrency(gasto.valor)}
                     </p>
                     <button
-                      onClick={() => handleToggleSuspenderGastoFixo(gasto.id, mesVisualizacao)}
+                        onClick={() => handleClickSuspender(gasto, !!isSuspenso)}
                       className={`p-1.5 rounded-lg transition-colors ${
                         isSuspenso
                           ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30"
@@ -306,7 +337,7 @@ export function TabMeuGasto({
 
       {/* Lista de Meus Gastos do Mês */}
       <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800">
-        <h3 className="text-gray-900 dark:text-gray-100 font-semibold mb-3 flex items-center gap-2">
+        <h3 className="text-gray-800 dark:text-gray-100 font-semibold mb-3 flex items-center gap-2">
           <Receipt className="w-4 h-4 text-emerald-400" />
           Meus Gastos do Mês ({meusGastosDoMes.length})
         </h3>
@@ -418,7 +449,7 @@ export function TabMeuGasto({
                                   className={`font-medium ${
                                     gasto.pago
                                       ? "text-gray-500 dark:text-gray-400"
-                                      : "text-gray-900 dark:text-gray-100"
+                                      : "text-gray-800 dark:text-gray-100"
                                   }`}
                                 >
                                   {gasto.descricao}
@@ -437,8 +468,7 @@ export function TabMeuGasto({
                                   </span>
                                   {isSuspenso && (
                                     <span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 flex items-center gap-1 font-semibold border border-amber-200 dark:border-amber-500/30">
-                                      {/* @ts-ignore */}
-                                      <PauseCircle className="w-3 h-3" /> Suspenso em {format(mesVisualizacao, "MMM", { locale: ptBR })}
+                                      <PauseCircle className="w-3 h-3" /> Pausado (Volta em {getMesReativacao(gasto)})
                                     </span>
                                   )}
                                   {!!gasto.dividido_com && (
@@ -455,7 +485,7 @@ export function TabMeuGasto({
                                 className={`font-bold ${
                                   gasto.pago
                                     ? "text-gray-500 dark:text-gray-400"
-                                    : "text-gray-900 dark:text-gray-100"
+                                    : "text-gray-800 dark:text-gray-100"
                                 }`}
                               >
                               {formatCurrency(
@@ -474,7 +504,7 @@ export function TabMeuGasto({
                             <div className="flex items-center justify-end gap-1 mt-2">
                               {gasto.categoria === "fixo" && (
                                 <button
-                                  onClick={() => handleToggleSuspenderGastoFixo(gasto.id, mesVisualizacao)}
+                                    onClick={() => handleClickSuspender(gasto, !!isSuspenso)}
                                   className={`p-1.5 rounded-lg transition-colors ${
                                     isSuspenso 
                                       ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30" 
@@ -512,6 +542,18 @@ export function TabMeuGasto({
           </div>
         )}
       </div>
+
+      {modalSuspensao && (
+        <SuspensaoModal
+          show={modalSuspensao.show}
+          onClose={() => setModalSuspensao(null)}
+          onConfirm={async (meses) => {
+            await handleSuspenderMultiplosMeses(modalSuspensao.id, meses, mesVisualizacao);
+          }}
+          mesRef={mesVisualizacao}
+          nomeGasto={modalSuspensao.nome}
+        />
+      )}
     </>
   );
 }

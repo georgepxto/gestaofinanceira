@@ -62,7 +62,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center">
       <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto border-t sm:border border-gray-200 dark:border-gray-800">
         <div className="sticky top-0 bg-white dark:bg-gray-900 p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between z-10">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">
             {isEditing ? "Editar Gasto Pessoal" : "Novo Gasto Pessoal"}
           </h2>
           <button
@@ -90,7 +90,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 }
                 className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
                   formData.categoria === "pessoal" || formData.categoria === "dividido"
-                    ? "bg-blue-600 border-blue-500 text-gray-900 dark:text-gray-100"
+                    ? "bg-blue-600 border-blue-500 text-white"
                     : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                 }`}
               >
@@ -107,7 +107,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 }
                 className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
                   formData.categoria === "fixo"
-                    ? "bg-amber-600 border-amber-500 text-gray-900 dark:text-gray-100"
+                    ? "bg-amber-600 border-amber-500 text-white"
                     : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                 }`}
               >
@@ -129,7 +129,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 onFormChange({ ...formData, descricao: e.target.value })
               }
               placeholder="Ex: Netflix, Almoço, etc."
-              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
 
@@ -152,7 +152,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                   })
                 }
                 placeholder="0,00"
-                className="w-full pl-10 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full pl-10 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
                 inputMode="numeric"
               />
             </div>
@@ -230,7 +230,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                       })
                     }
                     placeholder="0,00"
-                    className="w-full pl-10 pr-3 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
+                    className="w-full pl-10 pr-3 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
                     inputMode="numeric"
                   />
                 </div>
@@ -259,7 +259,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                   });
                 }}
                 placeholder="Ex: 10"
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
           )}
@@ -274,7 +274,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
               onChange={(e) =>
                 onFormChange({ ...formData, categoria_gasto: e.target.value })
               }
-              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
             >
               <option value="">Selecione uma categoria</option>
               {CATEGORIAS.map((cat) => (
@@ -302,7 +302,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                   dia_vencimento: formData.categoria === 'fixo' ? parseInt(newDay).toString() : formData.dia_vencimento
                 });
               }}
-              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
 
@@ -323,7 +323,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 }
                 className={`p-3 rounded-lg border transition-colors flex items-center justify-center gap-2 ${
                   formData.tipo === "debito"
-                    ? "bg-green-600 border-green-500 text-gray-900 dark:text-gray-100"
+                    ? "bg-green-600 border-green-500 text-white"
                     : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                 }`}
               >
@@ -335,7 +335,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 onClick={() => onFormChange({ ...formData, tipo: "credito" })}
                 className={`p-3 rounded-lg border transition-colors flex items-center justify-center gap-2 ${
                   formData.tipo === "credito"
-                    ? "bg-purple-600 border-purple-500 text-gray-900 dark:text-gray-100"
+                    ? "bg-purple-600 border-purple-500 text-white"
                     : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                 }`}
               >
@@ -356,7 +356,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 onChange={(e) =>
                   onFormChange({ ...formData, cartao_id: e.target.value })
                 }
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
               >
                 <option value="">Selecione um cartão</option>
                 {cartoes.map((c) => (
@@ -379,7 +379,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 onChange={(e) =>
                   onFormChange({ ...formData, conta_id: e.target.value })
                 }
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-teal-500 outline-none"
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-teal-500 outline-none"
               >
                 <option value="">Selecione uma conta (opcional)</option>
                 {contas.map((c) => (
@@ -407,7 +407,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                       num_parcelas: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
                   {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
                     <option key={num} value={num}>
@@ -438,7 +438,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
           )}
 
           {error && (
-            <div className="bg-red-100 border border-red-500/50 rounded-lg p-3 flex items-center gap-2">
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3 flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
               <p className="text-red-600 text-sm">{error}</p>
             </div>
@@ -447,7 +447,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
           <button
             onClick={onSubmit}
             disabled={saving}
-            className={`w-full py-3 text-gray-900 dark:text-gray-100 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
+            className={`w-full py-3 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
               saving
                 ? "bg-gray-200 dark:bg-gray-700 cursor-not-allowed"
                 : "bg-emerald-600 hover:bg-emerald-700"

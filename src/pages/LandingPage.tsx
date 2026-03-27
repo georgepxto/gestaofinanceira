@@ -168,7 +168,7 @@ export const LandingPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#FAFBFF] text-gray-900 overflow-x-hidden">
+    <div className="min-h-screen bg-[#FAFBFF] text-gray-800 overflow-x-hidden">
       {/* ===== CSS ===== */}
       <style>{`
         @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
@@ -186,15 +186,15 @@ export const LandingPage = () => {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img src="/favicon-light.png" alt="Hedge" className="w-7 h-7" />
-            <span className="text-lg font-bold tracking-tight text-gray-900">Hedge</span>
+            <span className="text-lg font-bold tracking-tight text-gray-800">Hedge</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500">
-            <a href="#features" className="hover:text-gray-900 transition-colors">Funcionalidades</a>
-            <a href="#how" className="hover:text-gray-900 transition-colors">Como funciona</a>
-            <a href="#reviews" className="hover:text-gray-900 transition-colors">Depoimentos</a>
+            <a href="#features" className="hover:text-gray-800 transition-colors">Funcionalidades</a>
+            <a href="#how" className="hover:text-gray-800 transition-colors">Como funciona</a>
+            <a href="#reviews" className="hover:text-gray-800 transition-colors">Depoimentos</a>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/login")} className="px-5 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+            <button onClick={() => navigate("/login")} className="px-5 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors">
               Entrar
             </button>
             <button onClick={() => navigate("/login?mode=signup")} className="px-5 py-2.5 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-full transition-all shadow-lg shadow-gray-900/20">
@@ -223,7 +223,7 @@ export const LandingPage = () => {
           </Reveal>
 
           <Reveal delay={80}>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-extrabold leading-[1.06] tracking-tight mb-6 text-gray-900">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-extrabold leading-[1.06] tracking-tight mb-6 text-gray-800">
               Seu futuro financeiro
               <br />
               <span className="bg-gradient-to-r from-blue-600 via-violet-500 to-emerald-500 bg-clip-text text-transparent shimmer-text">
@@ -282,7 +282,7 @@ export const LandingPage = () => {
                 <div className="hidden md:flex flex-col w-52 border-r border-gray-100 bg-gray-50/50 p-4 gap-2">
                   <div className="flex items-center gap-2 mb-4">
                     <img src="/favicon-light.png" alt="" className="w-5 h-5" />
-                    <span className="text-sm font-bold text-gray-900">Hedge</span>
+                    <span className="text-sm font-bold text-gray-800">Hedge</span>
                   </div>
                   {["Dashboard", "Meus Gastos", "Gastos", "Cartões", "Metas", "Contas"].map((item, i) => (
                     <div key={item} className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${i === 0 ? "bg-blue-50 text-blue-700" : "text-gray-500 hover:bg-gray-100"}`}>
@@ -297,7 +297,7 @@ export const LandingPage = () => {
                   {/* Greeting */}
                   <div className="flex items-center justify-between mb-5">
                     <div>
-                      <h3 className="text-base font-bold text-gray-900">Olá, Usuário! 👋</h3>
+                      <h3 className="text-base font-bold text-gray-800">Olá, Usuário! 👋</h3>
                       <p className="text-xs text-gray-400">Março 2026</p>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold">G</div>
@@ -316,7 +316,7 @@ export const LandingPage = () => {
                           <c.icon className={`w-3.5 h-3.5 ${c.iconColor}`} />
                           <span className="text-[10px] font-medium text-gray-500">{c.label}</span>
                         </div>
-                        <p className="text-sm md:text-base font-bold text-gray-900">{c.value}</p>
+                        <p className="text-sm md:text-base font-bold text-gray-800">{c.value}</p>
                       </div>
                     ))}
                   </div>
@@ -380,7 +380,7 @@ export const LandingPage = () => {
               { value: 0, suffix: "", label: "Anúncios", display: "Zero" },
             ].map((s) => (
               <div key={s.label} className="p-5 rounded-2xl bg-white border border-gray-100 shadow-sm">
-                <p className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-1">
+                <p className="text-3xl md:text-4xl font-extrabold text-gray-800 mb-1">
                   {s.display || <Counter end={s.value} suffix={s.suffix} />}
                 </p>
                 <p className="text-xs text-gray-400 font-medium">{s.label}</p>
@@ -398,7 +398,7 @@ export const LandingPage = () => {
               <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-xs font-semibold text-blue-600 mb-5">
                 Funcionalidades
               </span>
-              <h2 className="text-3xl md:text-[2.75rem] font-extrabold text-gray-900 mb-4 leading-tight">
+              <h2 className="text-3xl md:text-[2.75rem] font-extrabold text-gray-800 mb-4 leading-tight">
                 Tudo para organizar<br />suas finanças
               </h2>
               <p className="text-gray-500 max-w-lg mx-auto font-medium">
@@ -417,7 +417,7 @@ export const LandingPage = () => {
                   <div className={`w-10 h-10 rounded-xl ${f.iconBg} flex items-center justify-center mb-3 shadow-md`}>
                     <f.icon className="w-[18px] h-[18px] text-white" />
                   </div>
-                  <h3 className="text-base font-bold text-gray-900 mb-1.5">{f.title}</h3>
+                  <h3 className="text-base font-bold text-gray-800 mb-1.5">{f.title}</h3>
                   <p className="text-[0.85rem] text-gray-500 leading-relaxed">{f.desc}</p>
                   <FeatureVisual type={f.visual} />
                 </div>
@@ -435,7 +435,7 @@ export const LandingPage = () => {
               <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 text-xs font-semibold text-emerald-600 mb-5">
                 Como funciona
               </span>
-              <h2 className="text-3xl md:text-[2.75rem] font-extrabold text-gray-900 mb-4 leading-tight">
+              <h2 className="text-3xl md:text-[2.75rem] font-extrabold text-gray-800 mb-4 leading-tight">
                 Três passos para o<br />controle total
               </h2>
               <p className="text-gray-500 max-w-lg mx-auto font-medium">
@@ -454,7 +454,7 @@ export const LandingPage = () => {
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-5 shadow-lg shadow-blue-500/20">
                     <s.icon className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">{s.title}</h3>
+                  <h3 className="text-lg font-bold text-gray-800 mb-2">{s.title}</h3>
                   <p className="text-[0.9rem] text-gray-500 leading-relaxed">{s.desc}</p>
                   {i < steps.length - 1 && (
                     <div className="hidden md:block absolute top-1/2 -right-4 md:-right-5 w-8 md:w-10 border-t-2 border-dashed border-gray-200 z-10" />
@@ -475,7 +475,7 @@ export const LandingPage = () => {
                 <Star className="w-3 h-3 mr-1 fill-amber-500 text-amber-500" />
                 Depoimentos
               </span>
-              <h2 className="text-3xl md:text-[2.75rem] font-extrabold text-gray-900 mb-4 leading-tight">
+              <h2 className="text-3xl md:text-[2.75rem] font-extrabold text-gray-800 mb-4 leading-tight">
                 O que nossos usuários<br />estão dizendo
               </h2>
             </div>
@@ -497,7 +497,7 @@ export const LandingPage = () => {
                       {t.name.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{t.name}</p>
+                      <p className="text-sm font-semibold text-gray-800">{t.name}</p>
                       <p className="text-xs text-gray-400">{t.role}</p>
                     </div>
                   </div>
@@ -527,7 +527,7 @@ export const LandingPage = () => {
                   Crie sua conta gratuitamente e comece a organizar suas finanças hoje.
                 </p>
                 <button onClick={() => navigate("/login?mode=signup")}
-                  className="group px-8 py-4 bg-white text-gray-900 font-semibold rounded-full hover:bg-gray-100 transition-all shadow-lg flex items-center gap-2.5 mx-auto text-base">
+                  className="group px-8 py-4 bg-white text-gray-800 font-semibold rounded-full hover:bg-gray-100 transition-all shadow-lg flex items-center gap-2.5 mx-auto text-base">
                   Criar conta grátis
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                 </button>
@@ -542,7 +542,7 @@ export const LandingPage = () => {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <img src="/favicon-light.png" alt="Hedge" className="w-5 h-5" />
-            <span className="text-sm font-semibold text-gray-900">Hedge</span>
+            <span className="text-sm font-semibold text-gray-800">Hedge</span>
             <span className="text-xs text-gray-400 ml-1">© {new Date().getFullYear()}</span>
           </div>
           <p className="text-xs text-gray-400 font-medium">Suas contas na régua.</p>

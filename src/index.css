@@ -16,7 +16,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f3f4f6; /* gray-100 */
-  color: #111827; /* gray-900 */
+  color: #1f2937; /* gray-800 instead of gray-900 for softer dark text */
 }
 
 .dark body,

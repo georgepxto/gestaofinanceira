@@ -75,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
           isActive
             ? "bg-emerald-50 dark:bg-blue-950/30 text-emerald-700 dark:text-blue-400 font-semibold border-l-4 border-emerald-600 dark:border-blue-500"
-            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100"
+            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-100"
         }`}
       >
         <Icon className="w-5 h-5 flex-shrink-0" />
@@ -97,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
           </button>
           <img src="/favicon-light.png" alt="Hedge" className="w-4 h-4 ml-3 dark:hidden" />
           <img src="/favicon-dark.png" alt="Hedge" className="w-4 h-4 ml-3 hidden dark:block" />
-          <h1 className="ml-2 text-lg font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="ml-2 text-lg font-bold text-gray-800 dark:text-gray-100">
             Hedge
           </h1>
         </div>
@@ -133,7 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
             <img src="/favicon-light.png" alt="Hedge" className="w-5 h-5 dark:hidden flex-shrink-0" />
             <img src="/favicon-dark.png" alt="Hedge" className="w-5 h-5 hidden dark:block flex-shrink-0" />
             {!isCollapsed && (
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
                 Hedge
               </h2>
             )}
@@ -180,7 +180,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
                 <User className="w-5 h-5 text-emerald-600 dark:text-blue-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-gray-900 dark:text-gray-100 font-medium truncate">{userName || "Usuário"}</p>
+                <p className="text-gray-800 dark:text-gray-100 font-medium truncate">{userName || "Usuário"}</p>
                 <p className="text-xs text-emerald-600 dark:text-blue-400 truncate">{userEmail || ""}</p>
               </div>
             </div>
