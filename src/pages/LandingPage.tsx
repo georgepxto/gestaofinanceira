@@ -86,11 +86,11 @@ function MiniDonut({ pct, color }: { pct: number; color: string }) {
   const r = 18, c = 2 * Math.PI * r;
   return (
     <svg width="48" height="48" className="mt-2">
-      <circle cx="24" cy="24" r={r} fill="none" stroke="#e5e7eb" strokeWidth="5" />
+      <circle cx="24" cy="24" r={r} fill="none" className="stroke-gray-200 dark:stroke-gray-800" strokeWidth="5" />
       <circle cx="24" cy="24" r={r} fill="none" stroke={color} strokeWidth="5"
         strokeDasharray={`${c * pct} ${c * (1 - pct)}`} strokeDashoffset={c * 0.25}
         strokeLinecap="round" className="transition-all duration-700" />
-      <text x="24" y="28" textAnchor="middle" className="fill-gray-700 text-[10px] font-bold">{Math.round(pct * 100)}%</text>
+      <text x="24" y="28" textAnchor="middle" className="fill-gray-700 dark:fill-gray-300 text-[10px] font-bold">{Math.round(pct * 100)}%</text>
     </svg>
   );
 }
@@ -543,7 +543,7 @@ export const LandingPage = () => {
       <footer className="py-10 px-6 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <img src="/favicon-light.png" alt="Hedge" className="w-5 h-5" />
+            <img src={theme === "dark" ? "/favicon-dark.png" : "/favicon-light.png"} alt="Hedge" className="w-5 h-5" />
             <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">Hedge</span>
             <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 ml-1">© {new Date().getFullYear()}</span>
           </div>
