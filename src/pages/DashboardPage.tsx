@@ -614,7 +614,9 @@ export const DashboardPage = () => {
                        '💳'}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-xs font-medium text-gray-800 dark:text-gray-100 truncate">{gasto.descricao}</p>
+                      <p className="text-xs font-medium text-gray-800 dark:text-gray-100 truncate">
+                        {gasto.descricao} {gasto.categoria === "divida" && <span className="text-orange-500/80 font-normal ml-1">(Dívida)</span>}
+                      </p>
                       <p className="text-[10px] text-gray-400 capitalize">{gasto.categoria}</p>
                     </div>
                   </div>

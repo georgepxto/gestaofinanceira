@@ -198,6 +198,16 @@ export function TabMeuGasto({
           >
             <Users className="w-3 h-3" /> Dividido
           </button>
+          <button
+            onClick={() => setFiltroCategoriaMeuGasto("divida")}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
+              filtroCategoriaMeuGasto === "divida"
+                ? "bg-orange-600 text-white"
+                : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
+            }`}
+          >
+            <Receipt className="w-3 h-3" /> Dívida
+          </button>
         </div>
 
         {/* Filtro por Data */}
@@ -432,6 +442,8 @@ export function TabMeuGasto({
                               ? "bg-gray-200/50 dark:bg-gray-800/50 border-gray-300 dark:border-gray-700 opacity-60 grayscale-[0.8]"
                               : gasto.pago
                               ? "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-800 opacity-70"
+                              : gasto.categoria === "divida"
+                              ? "bg-orange-50/50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-800/50"
                               : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800"
                           }`}
                         >
@@ -445,13 +457,15 @@ export function TabMeuGasto({
                                 className={`mt-1 p-2 rounded-lg transition-colors ${
                                   gasto.pago
                                     ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
+                                    : gasto.categoria === "divida"
+                                    ? "bg-orange-100/50 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 hover:bg-orange-200/50 dark:hover:bg-orange-900/60"
                                     : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                                 }`}
                               >
                                 {gasto.pago ? (
                                   <CheckCircle className="w-5 h-5" />
                                 ) : (
-                                  <div className="w-5 h-5 border-2 border-gray-400 rounded-full" />
+                                  <div className={`w-5 h-5 border-2 rounded-full ${gasto.categoria === "divida" ? "border-orange-400" : "border-gray-400"}`} />
                                 )}
                               </button>
                               <div>
@@ -485,6 +499,11 @@ export function TabMeuGasto({
                                     <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800 flex items-center gap-1">
                                       <Users className="w-3 h-3" />
                                       {gasto.dividido_com}
+                                    </span>
+                                  )}
+                                  {gasto.categoria === "divida" && (
+                                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800 flex items-center gap-1">
+                                      <Receipt className="w-3 h-3" /> Dívida
                                     </span>
                                   )}
                                 </div>

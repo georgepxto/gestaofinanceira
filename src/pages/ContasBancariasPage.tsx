@@ -9,7 +9,7 @@ import { toast } from "../components/ui/Toaster";
 import type { ContaBancaria, Receita, ContaBancariaForm, ReceitaForm } from "../types";
 
 export const ContasBancariasPage = () => {
-  const { user, setModalConfirm, setModalFeedback, mesVisualizacao, navegarMes, irParaHoje, gastosFixos } = useAppContext();
+  const { user, setModalConfirm, setModalFeedback, mesVisualizacao, navegarMes, irParaHoje, gastosFixos, meusGastosDoMes } = useAppContext();
   
   const [contas, setContas] = useState<ContaBancaria[]>([]);
   const [receitas, setReceitas] = useState<Receita[]>([]);
@@ -77,13 +77,23 @@ export const ContasBancariasPage = () => {
       return diaEfetivo <= diaAtual;
     });
 
+    // Gastos tipo "divida" (conta a pagar) vinculados a esta conta cuja data já chegou
+    const hojeStr = format(hoje, "yyyy-MM-dd");
+    const gastosDividaDaConta = (meusGastosDoMes || []).filter(g => {
+      if (g.categoria !== "divida") return false;
+      if (g.conta_id !== conta.id) return false;
+      if (g.tipo !== "debito") return false;
+      return g.data <= hojeStr;
+    });
+
     // Usar saldo_atual como base (que inclui pagamentos de fatura e receitas/gastos avulsos)
     const saldoBase = conta.saldo_atual !== undefined && conta.saldo_atual !== null ? conta.saldo_atual : conta.saldo_inicial;
     
     const totalReceitas = receitasRecebidas.reduce((sum, r) => sum + r.valor, 0);
-    const totalGastos = gastosFixosDaConta.reduce((sum, g) => sum + g.valor, 0);
+    const totalGastosFixos = gastosFixosDaConta.reduce((sum, g) => sum + g.valor, 0);
+    const totalGastosDivida = gastosDividaDaConta.reduce((sum, g) => sum + g.valor, 0);
 
-    return saldoBase + totalReceitas - totalGastos;
+    return saldoBase + totalReceitas - totalGastosFixos - totalGastosDivida;
   };
 
   // CRUD Conta

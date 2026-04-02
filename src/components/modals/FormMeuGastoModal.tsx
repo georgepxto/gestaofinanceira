@@ -7,6 +7,7 @@ import {
   Wallet,
   CreditCard,
   Repeat,
+  CalendarClock,
 } from "lucide-react";
 import type { MeuGastoForm, CartaoCredito, ContaBancaria } from "../../types";
 import {
@@ -79,7 +80,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
             <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
               Tipo de Gasto
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() =>
@@ -113,6 +114,23 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
               >
                 <Repeat className="w-5 h-5" />
                 <span className="text-xs">Fixo</span>
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  onFormChange({
+                    ...formData,
+                    categoria: "divida",
+                  })
+                }
+                className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
+                  formData.categoria === "divida"
+                    ? "bg-orange-600 border-orange-500 text-white"
+                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
+                }`}
+              >
+                <CalendarClock className="w-5 h-5" />
+                <span className="text-xs">Dívida</span>
               </button>
             </div>
           </div>
@@ -288,7 +306,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
           {/* Data */}
           <div>
             <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-              {formData.categoria === "fixo" ? "Data de Início" : "Data"}
+              {formData.categoria === "fixo" ? "Data de Início" : formData.categoria === "divida" ? "Data de Vencimento" : "Data"}
             </label>
             <input
               type="date"
@@ -464,6 +482,8 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
               <>
                 {formData.categoria === "fixo"
                   ? "Adicionar Gasto Fixo"
+                  : formData.categoria === "divida"
+                  ? "Adicionar Dívida"
                   : "Adicionar Gasto"}
               </>
             )}

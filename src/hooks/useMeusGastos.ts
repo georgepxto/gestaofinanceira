@@ -320,8 +320,8 @@ export function useMeusGastos({
             }
           }
           
-          // Se for débito e tiver conta selecionada, descontar do saldo Apenas se não for data futura
-          if (isPago && formMeuGasto.conta_id && formMeuGasto.categoria !== "fixo") {
+          // Se for débito e tiver conta selecionada, descontar do saldo Apenas se não for data futura (e não for fixo ou conta a pagar)
+          if (isPago && formMeuGasto.conta_id && formMeuGasto.categoria !== "fixo" && formMeuGasto.categoria !== "divida") {
             const { data: contaAtual } = await supabase
               .from("contas_bancarias")
               .select("saldo_atual")
@@ -455,11 +455,11 @@ export function useMeusGastos({
               cartao_id: formMeuGasto.tipo === "credito" ? formMeuGasto.cartao_id || undefined : undefined,
               conta_id: formMeuGasto.tipo === "debito" ? formMeuGasto.conta_id || undefined : undefined,
               pago:
-                formMeuGasto.tipo === "debito"
-                  ? true
-                  : existente
-                  ? existente.pago
-                  : false,
+                existente
+                  ? (existente.tipo === "credito" && formMeuGasto.tipo === "debito" && dataFormatada <= format(new Date(), "yyyy-MM-dd")) 
+                      ? true 
+                      : existente.pago
+                  : (formMeuGasto.tipo === "debito" && dataFormatada <= format(new Date(), "yyyy-MM-dd")),
             };
 
             if (existente) {

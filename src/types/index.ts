@@ -61,7 +61,7 @@ export interface MeuGasto {
   descricao: string;
   valor: number;
   tipo: "credito" | "debito";
-  categoria: "pessoal" | "dividido" | "fixo";
+  categoria: "pessoal" | "dividido" | "fixo" | "divida";
   categoria_gasto?: string;
   data: string;
   pago: boolean;
@@ -81,7 +81,7 @@ export interface MeuGastoForm {
   descricao: string;
   valor: string;
   tipo: "credito" | "debito";
-  categoria: "pessoal" | "dividido" | "fixo";
+  categoria: "pessoal" | "dividido" | "fixo" | "divida";
   categoria_gasto: string;
   data: string;
   dividido_com: string;
