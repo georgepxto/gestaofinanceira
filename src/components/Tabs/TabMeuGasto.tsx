@@ -243,91 +243,101 @@ export function TabMeuGasto({
                 return (
                 <div
                   key={gasto.id}
-                  className={`flex items-center justify-between p-3 rounded-lg ${
+                  className={`p-3 rounded-xl border flex items-center gap-3 ${
                     isSuspenso
-                      ? "bg-gray-200/50 dark:bg-gray-800/50 opacity-60 grayscale-[0.8]"
+                      ? "bg-gray-100/60 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 opacity-60 grayscale-[0.7]"
                       : gasto.ativo !== false
-                      ? "bg-gray-50 dark:bg-gray-800"
-                      : "bg-gray-100 dark:bg-gray-800 opacity-60"
+                      ? "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                      : "bg-gray-100 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700 opacity-60"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`p-2 rounded-lg ${
-                        gasto.tipo === "credito"
-                          ? "bg-purple-100 dark:bg-purple-500/20"
-                          : "bg-emerald-100 dark:bg-emerald-500/20"
-                      }`}
-                    >
-                      {gasto.tipo === "credito" ? (
-                        <CreditCard className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                      ) : (
-                        <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  {/* Ícone */}
+                  <div className={`p-2 rounded-lg flex-shrink-0 ${
+                    gasto.tipo === "credito"
+                      ? "bg-purple-100 dark:bg-purple-500/20"
+                      : "bg-emerald-100 dark:bg-emerald-500/20"
+                  }`}>
+                    {gasto.tipo === "credito" ? (
+                      <CreditCard className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    ) : (
+                      <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    )}
+                  </div>
+
+                  {/* Nome + info */}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-gray-800 dark:text-gray-100 font-semibold text-sm truncate">
+                      {gasto.descricao}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Dia {gasto.dia_vencimento}
+                      </span>
+                      {gasto.dividido_com && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800 font-medium">
+                          c/ {gasto.dividido_com}
+                        </span>
                       )}
-                    </div>
-                    <div>
-                      <p className="text-gray-800 dark:text-gray-100 font-medium flex items-center gap-2 flex-wrap">
-                        {gasto.descricao}
-                        {gasto.dividido_com && (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
-                            Dividido com {gasto.dividido_com}
-                          </span>
-                        )}
-                        {isSuspenso && (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-                            Pausado (Volta em {getMesReativacao(gasto)})
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Todo dia {gasto.dia_vencimento}
-                      </p>
+                      {isSuspenso && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800 font-medium">
+                          ⏸ Pausado
+                        </span>
+                      )}
+                      {gasto.ativo === false && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400 font-medium">
+                          Inativo
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-gray-800 dark:text-gray-100 font-semibold">
+
+                  {/* Valor + ações */}
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                    <p className="text-gray-800 dark:text-gray-100 font-bold text-sm whitespace-nowrap">
                       {formatCurrency(gasto.valor)}
                     </p>
-                    <button
+                    <div className="flex items-center gap-1">
+                      <button
                         onClick={() => handleClickSuspender(gasto, !!isSuspenso)}
-                      className={`p-1.5 rounded-lg transition-colors ${
-                        isSuspenso
-                          ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30"
-                          : "bg-amber-100 text-amber-600 hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30"
-                      }`}
-                      title={isSuspenso ? "Reativar neste mês" : "Suspender neste mês"}
-                    >
-                      {isSuspenso ? <PlayCircle className="w-4 h-4" /> : <PauseCircle className="w-4 h-4" />}
-                    </button>
-                    <button
-                      onClick={() => handleEditMeuGasto(gasto)}
-                      className="p-1.5 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 hover:bg-blue-500/30 dark:hover:bg-blue-500/30 transition-colors"
-                      title="Editar"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleToggleGastoFixo(gasto.id)}
-                      className={`p-1.5 rounded-lg transition-colors ${
-                        gasto.ativo !== false
-                          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 hover:bg-green-500/30 dark:hover:bg-green-500/30"
-                          : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
-                      }`}
-                      title={gasto.ativo !== false ? "Desativar" : "Ativar"}
-                    >
-                      {gasto.ativo !== false ? (
-                        <CheckCircle className="w-4 h-4" />
-                      ) : (
-                        <MinusCircle className="w-4 h-4" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => handleDeleteMeuGasto(gasto.id)}
-                      className="p-1.5 rounded-lg bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 hover:bg-red-500/30 dark:hover:bg-red-500/30 transition-colors"
-                      title="Excluir"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          isSuspenso
+                            ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400"
+                            : "bg-amber-100 text-amber-600 hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-400"
+                        }`}
+                        title={isSuspenso ? "Reativar neste mês" : "Suspender neste mês"}
+                      >
+                        {isSuspenso ? <PlayCircle className="w-3.5 h-3.5" /> : <PauseCircle className="w-3.5 h-3.5" />}
+                      </button>
+                      <button
+                        onClick={() => handleEditMeuGasto(gasto)}
+                        className="p-1.5 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 hover:bg-blue-500/30 dark:hover:bg-blue-500/30 transition-colors"
+                        title="Editar"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleToggleGastoFixo(gasto.id)}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          gasto.ativo !== false
+                            ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 hover:bg-green-500/30 dark:hover:bg-green-500/30"
+                            : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600"
+                        }`}
+                        title={gasto.ativo !== false ? "Desativar" : "Ativar"}
+                      >
+                        {gasto.ativo !== false ? (
+                          <CheckCircle className="w-4 h-4" />
+                        ) : (
+                          <MinusCircle className="w-4 h-4" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMeuGasto(gasto.id)}
+                        className="p-1.5 rounded-lg bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 hover:bg-red-500/30 dark:hover:bg-red-500/30 transition-colors"
+                        title="Excluir"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )})}
