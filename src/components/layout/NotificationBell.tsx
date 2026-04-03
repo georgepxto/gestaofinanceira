@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useAppContext } from "../../context";
 import {
   Bell,
   X,
@@ -35,9 +36,35 @@ const AlertIcon = ({ alerta }: { alerta: Alerta }) => {
 };
 
 export const NotificationBell = () => {
+  const { user } = useAppContext();
   const { alertas, loading } = useAlertas();
   const [isOpen, setIsOpen] = useState(false);
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  
+  const getStorageKey = () => `reppago_dismissed_notifications_${user?.id || 'guest'}`;
+  
+  const [dismissed, setDismissed] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem(getStorageKey());
+      if (stored) {
+        return new Set(JSON.parse(stored));
+      }
+    } catch {
+      // Ignore errors
+    }
+    return new Set();
+  });
+  
+  // Update storage whenever dismissed changes
+  useEffect(() => {
+    try {
+      if (user) {
+        localStorage.setItem(getStorageKey(), JSON.stringify(Array.from(dismissed)));
+      }
+    } catch {
+      // Ignore errors
+    }
+  }, [dismissed, user]);
+
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
