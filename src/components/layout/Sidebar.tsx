@@ -115,7 +115,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-50 shadow-sm
+          fixed top-0 left-0 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-50 shadow-sm flex flex-col
           transition-all duration-300 ease-in-out
           
           /* Mobile: drawer */
@@ -160,41 +160,43 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="p-4 space-y-1">
-          {navItems.map((item) => (
-            <NavItem key={item.path} {...item} />
-          ))}
-        </nav>
+        <div className="flex-1 min-h-0 flex flex-col">
+          {/* Navigation */}
+          <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1">
+            {navItems.map((item) => (
+              <NavItem key={item.path} {...item} />
+            ))}
+          </nav>
 
-        {/* Bottom Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 space-y-3">
-          {bottomNavItems.map((item) => (
-            <NavItem key={item.path} {...item} />
-          ))}
-          
-          {/* User Info */}
-          {!isCollapsed && (
-            <div className="flex items-center gap-3 px-2 py-2">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-blue-950/30 flex items-center justify-center">
-                <User className="w-5 h-5 text-emerald-600 dark:text-blue-400" />
+          {/* Bottom Section */}
+          <div className="shrink-0 p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 space-y-3">
+            {bottomNavItems.map((item) => (
+              <NavItem key={item.path} {...item} />
+            ))}
+            
+            {/* User Info */}
+            {!isCollapsed && (
+              <div className="flex items-center gap-3 px-2 py-2">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-blue-950/30 flex items-center justify-center">
+                  <User className="w-5 h-5 text-emerald-600 dark:text-blue-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-gray-800 dark:text-gray-100 font-medium truncate">{userName || "Usuário"}</p>
+                  <p className="text-xs text-emerald-600 dark:text-blue-400 truncate">{userEmail || ""}</p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-gray-800 dark:text-gray-100 font-medium truncate">{userName || "Usuário"}</p>
-                <p className="text-xs text-emerald-600 dark:text-blue-400 truncate">{userEmail || ""}</p>
-              </div>
-            </div>
-          )}
-          
-          <button
-            onClick={onLogout}
-            className={`flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 border border-red-200 dark:border-red-900 transition-colors ${
-              isCollapsed ? "justify-center" : ""
-            }`}
-          >
-            <LogOut className="w-4 h-4 flex-shrink-0" />
-            {!isCollapsed && <span className="font-medium">Sair</span>}
-          </button>
+            )}
+            
+            <button
+              onClick={onLogout}
+              className={`flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 border border-red-200 dark:border-red-900 transition-colors ${
+                isCollapsed ? "justify-center" : ""
+              }`}
+            >
+              <LogOut className="w-4 h-4 flex-shrink-0" />
+              {!isCollapsed && <span className="font-medium">Sair</span>}
+            </button>
+          </div>
         </div>
       </aside>
     </>

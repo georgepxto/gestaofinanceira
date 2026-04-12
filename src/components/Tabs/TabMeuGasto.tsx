@@ -94,7 +94,7 @@ export function TabMeuGasto({
   return (
     <>
       {/* Navegação de Meses */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-800" data-tour="eu-navegacao-mes">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navegarMes("anterior")}
@@ -127,8 +127,8 @@ export function TabMeuGasto({
       </div>
 
       {/* Cards de Resumo */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800">
+      <div className="grid grid-cols-2 gap-4" data-tour="eu-resumo-cards">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800" data-tour="eu-card-credito">
           <div className="flex items-center justify-between mb-1">
             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
               <CreditCard className="w-3 h-3 text-purple-500" /> Crédito
@@ -138,7 +138,7 @@ export function TabMeuGasto({
             {formatCurrency(totalMeusGastosCredito)}
           </p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800" data-tour="eu-card-debito">
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
             <Wallet className="w-3 h-3 text-green-500" /> Débito
           </p>
@@ -146,7 +146,7 @@ export function TabMeuGasto({
             {formatCurrency(totalMeusGastosDebito)}
           </p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800" data-tour="eu-card-pagos">
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
             <CheckCircle className="w-3 h-3 text-emerald-500" /> Pago
           </p>
@@ -154,7 +154,7 @@ export function TabMeuGasto({
             {formatCurrency(totalMeusGastosPagos)}
           </p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800" data-tour="eu-card-fixos">
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
             <Repeat className="w-3 h-3 text-amber-500" /> Fixos
           </p>
@@ -165,7 +165,7 @@ export function TabMeuGasto({
       </div>
 
       {/* Filtro de Categoria */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800" data-tour="eu-filtro-categoria">
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Filtrar por:</p>
         <div className="flex gap-2 flex-wrap">
           <button
@@ -211,7 +211,7 @@ export function TabMeuGasto({
         </div>
 
         {/* Filtro por Data */}
-        <div className="mt-3">
+        <div className="mt-3" data-tour="eu-filtro-dia">
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Filtrar por dia:</p>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
@@ -239,7 +239,7 @@ export function TabMeuGasto({
 
       {/* Gastos Fixos */}
       {gastosFixos.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800" data-tour="eu-gastos-fixos">
           <h3 className="text-gray-800 dark:text-gray-100 font-semibold mb-3 flex items-center gap-2">
             <Repeat className="w-4 h-4 text-amber-600" />
             Gastos Fixos Mensais
@@ -356,7 +356,7 @@ export function TabMeuGasto({
       )}
 
       {/* Lista de Meus Gastos do Mês */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800" data-tour="eu-lista-gastos">
         <h3 className="text-gray-800 dark:text-gray-100 font-semibold mb-3 flex items-center gap-2">
           <Receipt className="w-4 h-4 text-emerald-400" />
           Meus Gastos do Mês ({meusGastosDoMes.length})
@@ -530,7 +530,7 @@ export function TabMeuGasto({
                                   Total: {formatCurrency(gasto.valor)}
                                 </p>
                               )}
-                            <div className="flex items-center justify-end gap-1 mt-2">
+                            <div className="flex items-center justify-end gap-1 mt-2" data-tour="eu-item-acoes">
                               {gasto.categoria === "fixo" && (
                                 <button
                                     onClick={() => handleClickSuspender(gasto, !!isSuspenso)}

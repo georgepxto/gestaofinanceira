@@ -210,6 +210,13 @@ const DASHBOARD_TUTORIAL_STEPS: DashboardTutorialStep[] = [
       "Aqui você vê se o mês terminou com sobra ou com déficit.",
   },
   {
+    target: "[data-tour='projecao-saldo']",
+    alvo: "Projeção de saldo",
+    titulo: "Projeção de Saldo (12 meses)",
+    descricao:
+      "Este gráfico estima como seu saldo pode evoluir nos próximos 12 meses com base no seu fluxo mensal atual (receitas fixas menos gastos fixos).",
+  },
+  {
     target: "[data-tour='top5-gastos']",
     alvo: "Top 5 gastos",
     titulo: "Maiores gastos do mês",
@@ -693,14 +700,62 @@ export const DashboardPage = () => {
           Math.max(16, viewportSize.width - tooltipWidth - 16)
         )
     : 16;
-  const showTooltipBelow = currentTutorialStep?.placement === "below" || false;
-  const tooltipTop = highlightRect
-    ? isMobile
-      ? Math.max(12, viewportSize.height - tooltipHeight - 12)
-      : showTooltipBelow
-      ? Math.min(highlightRect.bottom + 12, Math.max(16, viewportSize.height - tooltipHeight - 16))
-      : Math.max(16, highlightRect.top - tooltipHeight - 8)
-    : 16;
+  const { tooltipTop, showTooltipBelow } = (() => {
+    if (!highlightRect) {
+      return { tooltipTop: 16, showTooltipBelow: false };
+    }
+
+    if (isMobile) {
+      return {
+        tooltipTop: Math.max(12, viewportSize.height - tooltipHeight - 12),
+        showTooltipBelow: true,
+      };
+    }
+
+    const minTop = 16;
+    const maxTop = Math.max(16, viewportSize.height - tooltipHeight - 16);
+    const spacing = 12;
+    const preferredBelow = currentTutorialStep?.placement === "below";
+    const topBelow = highlightRect.bottom + spacing;
+    const topAbove = highlightRect.top - tooltipHeight - spacing;
+    const canPlaceBelow = topBelow <= maxTop;
+    const canPlaceAbove = topAbove >= minTop;
+
+    if (preferredBelow && canPlaceBelow) {
+      return { tooltipTop: topBelow, showTooltipBelow: true };
+    }
+
+    if (!preferredBelow && canPlaceAbove) {
+      return { tooltipTop: topAbove, showTooltipBelow: false };
+    }
+
+    if (canPlaceBelow) {
+      return { tooltipTop: topBelow, showTooltipBelow: true };
+    }
+
+    if (canPlaceAbove) {
+      return { tooltipTop: topAbove, showTooltipBelow: false };
+    }
+
+    const clampedBelow = Math.min(Math.max(topBelow, minTop), maxTop);
+    const clampedAbove = Math.min(Math.max(topAbove, minTop), maxTop);
+    const overlapBelow = Math.max(
+      0,
+      Math.min(clampedBelow + tooltipHeight, highlightRect.bottom) -
+        Math.max(clampedBelow, highlightRect.top)
+    );
+    const overlapAbove = Math.max(
+      0,
+      Math.min(clampedAbove + tooltipHeight, highlightRect.bottom) -
+        Math.max(clampedAbove, highlightRect.top)
+    );
+
+    if (overlapBelow <= overlapAbove) {
+      return { tooltipTop: clampedBelow, showTooltipBelow: true };
+    }
+
+    return { tooltipTop: clampedAbove, showTooltipBelow: false };
+  })();
 
   if (loading) {
     return (
@@ -711,7 +766,17 @@ export const DashboardPage = () => {
   }
 
   return (
-    <div className="space-y-6 pb-20 pt-4 px-4">
+    <div className="relative space-y-6 pb-20 pt-4 px-4">
+      <button
+        onClick={openTutorial}
+        data-tour="help-button"
+        className="hidden md:flex absolute -top-9 right-12 z-30 w-8 h-8 rounded-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 text-gray-500 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-400 dark:hover:border-blue-500 items-center justify-center shadow-sm transition-colors"
+        title="Ver tutorial da dashboard"
+        aria-label="Ver tutorial da dashboard"
+      >
+        <HelpCircle className="w-4 h-4" />
+      </button>
+
       {/* Header com saudação + seletor de mês */}
       <div className="flex items-center justify-between flex-wrap gap-4" data-tour="dashboard-header">
         <div>
@@ -738,15 +803,6 @@ export const DashboardPage = () => {
           </button>
         </div>
 
-        <button
-          onClick={openTutorial}
-          data-tour="help-button"
-          className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-sm transition-colors"
-          title="Ver tutorial da dashboard"
-          aria-label="Ver tutorial da dashboard"
-        >
-          <HelpCircle className="w-5 h-5" />
-        </button>
       </div>
 
       {/* Cards de Resumo */}
@@ -1157,7 +1213,7 @@ export const DashboardPage = () => {
       </div>
 
       {/* Gráfico de Projeção Anual */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="projecao-saldo">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-blue-600" />
           Projeção de Saldo (12 meses)

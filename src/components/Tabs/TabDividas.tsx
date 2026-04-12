@@ -55,7 +55,7 @@ export function TabDividas({
   return (
     <>
       {/* Card Total Dívidas */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800" data-tour="dividas-total-card">
         <p className={`text-sm mb-1 flex items-center gap-2 ${
           filtroStatusDivida === "pendentes" ? "text-orange-600 dark:text-orange-400" : "text-emerald-600 dark:text-emerald-400"
         }`}>
@@ -96,7 +96,7 @@ export function TabDividas({
       </div>
 
       {/* Filtro por Status */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800" data-tour="dividas-filtro-status">
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Status:</p>
         <div className="flex gap-2">
           <button
@@ -154,7 +154,7 @@ export function TabDividas({
 
       {/* Filtro por Pessoa */}
       {pessoasComDividas.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800" data-tour="dividas-filtro-pessoa">
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Filtrar por devedor:</p>
           <div className="flex flex-wrap gap-2">
             <button
@@ -229,7 +229,7 @@ export function TabDividas({
       )}
 
       {/* Lista de Dívidas */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-800" data-tour="dividas-lista">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <h3 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <History className="w-5 h-5 text-orange-400" />
@@ -383,7 +383,7 @@ export function TabDividas({
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">restante</p>
 
-                    <div className="flex gap-1 mt-2 justify-end">
+                    <div className="flex gap-1 mt-2 justify-end" data-tour="dividas-item-acoes">
                       {divida.valor_atual > 0 && (
                         <button
                           onClick={() =>

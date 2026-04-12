@@ -89,7 +89,7 @@ export function TabGastos({
   return (
     <>
       {/* Navegação de Meses */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-800" data-tour="gastos-navegacao-mes">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navegarMes("anterior")}
@@ -130,9 +130,9 @@ export function TabGastos({
       )}
 
       {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-tour="gastos-resumo-cards">
         {/* Card Total Geral */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800" data-tour="gastos-card-total">
           <p className="text-sm text-blue-600 mb-1">Total do Mês</p>
           <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalMes)}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
@@ -315,8 +315,8 @@ export function TabGastos({
 
       {/* Lista de Lançamentos */}
       {!loading && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-800">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-800" data-tour="gastos-lista">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-800" data-tour="gastos-filtros">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Empréstimos do Mês
             </h3>
@@ -533,7 +533,7 @@ export function TabGastos({
                                 <p className="font-semibold text-gray-900 dark:text-gray-100">
                                   {formatCurrency(valor_parcela)}
                                 </p>
-                                <div className="flex items-center justify-end gap-1 mt-2">
+                                <div className="flex items-center justify-end gap-1 mt-2" data-tour="gastos-item-acoes">
                                   <button
                                     onClick={() => handleEditGasto(gasto)}
                                     className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 transition-colors"
