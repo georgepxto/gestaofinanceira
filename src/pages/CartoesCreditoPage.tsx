@@ -712,7 +712,7 @@ export const CartoesCreditoPage = () => {
       <button
         onClick={openTutorial}
         data-tour="cartoes-help-button"
-        className="hidden md:flex absolute -top-9 right-12 z-30 w-8 h-8 rounded-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 text-gray-500 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-400 dark:hover:border-blue-500 items-center justify-center shadow-sm transition-colors"
+        className="flex fixed top-4 right-16 md:right-20 z-40 w-8 h-8 rounded-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 text-gray-500 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-400 dark:hover:border-blue-500 items-center justify-center shadow-sm transition-colors"
         title="Ver tutorial da aba Cartões de Crédito"
         aria-label="Ver tutorial da aba Cartões de Crédito"
       >
