@@ -36,9 +36,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   const allNavItems = [
     { path: "/", label: "Dashboard", icon: LayoutDashboard, feature: "dashboard" as const },
     { path: "/eu", label: "Meus Gastos", icon: User, feature: "meus_gastos" as const },
-    { path: "/gastos", label: "Gastos do Mês", icon: CreditCard, feature: "gastos_compartilhados" as const },
-    { path: "/dividas", label: "Saldo Devedor", icon: TrendingDown, feature: "saldo_devedor" as const },
-    { path: "/pessoas", label: "Pessoas", icon: Users, feature: "pessoas" as const },
+    { path: "/gastos", label: "Empréstimos do Mês", icon: CreditCard, feature: "gastos_compartilhados" as const },
+    { path: "/dividas", label: "Dívidas em Aberto", icon: TrendingDown, feature: "saldo_devedor" as const },
+    { path: "/pessoas", label: "Devedores", icon: Users, feature: "pessoas" as const },
     { path: "/contas", label: "Contas Bancárias", icon: Building2, feature: "contas_bancarias" as const },
     { path: "/cartoes", label: "Cartões de Crédito", icon: Wallet, feature: "cartoes_credito" as const },
     { path: "/metas", label: "Metas de Gasto", icon: Target, feature: "metas" as const },

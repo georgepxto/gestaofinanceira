@@ -6,7 +6,11 @@ import {
   formatCurrencyInput,
   parseCurrency,
 } from "../../utils/calculations";
-import { PARCELAS_OPTIONS } from "../../utils/constants";
+import {
+  PARCELAS_OPTIONS,
+  PARCELAS_PRESET_MAX,
+  PARCELAS_MAX,
+} from "../../utils/constants";
 import { CATEGORIAS } from "../../utils/categories";
 
 interface FormGastoModalProps {
@@ -36,7 +40,19 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
   onFormChange,
   onSubmit,
 }) => {
-  if (!show) return null;
+  const [customParcelasMode, setCustomParcelasMode] = React.useState(
+    formData.num_parcelas > PARCELAS_PRESET_MAX
+  );
+  const [customParcelasInput, setCustomParcelasInput] = React.useState(
+    String(formData.num_parcelas)
+  );
+
+  React.useEffect(() => {
+    if (show) {
+      setCustomParcelasMode(formData.num_parcelas > PARCELAS_PRESET_MAX);
+      setCustomParcelasInput(String(formData.num_parcelas));
+    }
+  }, [show]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -46,11 +62,47 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
     if (name === "valor_total") {
       onFormChange({ ...formData, [name]: formatCurrencyInput(value) });
     } else if (name === "num_parcelas") {
+      if (value === "custom") {
+        setCustomParcelasMode(true);
+        setCustomParcelasInput("");
+        return;
+      }
+      setCustomParcelasMode(false);
+      setCustomParcelasInput(value);
       onFormChange({ ...formData, [name]: parseInt(value, 10) });
     } else {
       onFormChange({ ...formData, [name]: value });
     }
   };
+
+  const handleCustomParcelasChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const nextValue = e.target.value;
+    if (!/^\d*$/.test(nextValue)) return;
+
+    setCustomParcelasInput(nextValue);
+
+    if (nextValue === "") return;
+
+    const parsed = parseInt(nextValue, 10);
+    if (parsed >= 1 && parsed <= PARCELAS_MAX) {
+      onFormChange({ ...formData, num_parcelas: parsed });
+    }
+  };
+
+  const handleCustomParcelasBlur = () => {
+    if (customParcelasInput === "") {
+      return;
+    }
+
+    const parsed = parseInt(customParcelasInput, 10);
+    const safeParcelas = Math.min(Math.max(parsed, 1), PARCELAS_MAX);
+    setCustomParcelasInput(String(safeParcelas));
+    onFormChange({ ...formData, num_parcelas: safeParcelas });
+  };
+
+  if (!show) return null;
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
@@ -278,7 +330,13 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
             <select
               id="num_parcelas"
               name="num_parcelas"
-              value={formData.recorrente ? 1 : formData.num_parcelas}
+              value={
+                formData.recorrente
+                  ? "1"
+                  : customParcelasMode
+                  ? "custom"
+                  : String(formData.num_parcelas)
+              }
               onChange={handleInputChange}
               disabled={formData.recorrente}
               className={`w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 ${
@@ -294,7 +352,23 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                     )}`}
                 </option>
               ))}
+              <option value="custom">Personalizado (ate 48x)</option>
             </select>
+            {!formData.recorrente && customParcelasMode && (
+              <div className="mt-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={customParcelasInput}
+                  onChange={handleCustomParcelasChange}
+                  onBlur={handleCustomParcelasBlur}
+                  className="w-full px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Informe entre 1x e {PARCELAS_MAX}x.
+                </p>
+              </div>
+            )}
             {formData.recorrente && (
               <p className="text-xs text-teal-400 mt-1">
                 ✓ Gasto fixo: aparece todo mês automaticamente

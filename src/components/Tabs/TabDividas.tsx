@@ -66,10 +66,10 @@ export function TabDividas({
           )}
           {filtroPessoaDivida
             ? filtroStatusDivida === "pendentes"
-              ? `Dívidas de ${filtroPessoaDivida}`
+              ? `Em aberto de ${filtroPessoaDivida}`
               : `Quitado por ${filtroPessoaDivida}`
             : filtroStatusDivida === "pendentes"
-            ? "Total de Dívidas Pendentes"
+            ? "Total em Aberto"
             : "Total Quitado"}
         </p>
         <p className={`text-3xl font-bold ${
@@ -155,7 +155,7 @@ export function TabDividas({
       {/* Filtro por Pessoa */}
       {pessoasComDividas.length > 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Filtrar por pessoa:</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Filtrar por devedor:</p>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFiltroPessoaDivida("")}
@@ -233,7 +233,7 @@ export function TabDividas({
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <h3 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <History className="w-5 h-5 text-orange-400" />
-            Saldos Devedores
+            Cobranças em Aberto
             {filtroPessoaDivida && (
               <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
                 — {filtroPessoaDivida}
@@ -241,7 +241,7 @@ export function TabDividas({
             )}
           </h3>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Dívidas antigas que estão sendo pagas aos poucos
+            Valores pendentes que estão sendo pagos aos poucos
           </p>
         </div>
 
@@ -250,8 +250,8 @@ export function TabDividas({
             <Clock className="w-12 h-12 mx-auto mb-3 text-gray-600 dark:text-gray-400" />
             <p>
               {filtroPessoaDivida
-                ? `Nenhuma dívida para ${filtroPessoaDivida}`
-                : "Nenhuma dívida pendente"}
+                ? `Nenhuma cobrança para ${filtroPessoaDivida}`
+                : "Nenhuma cobrança pendente"}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               {filtroPessoaDivida ? (
@@ -259,10 +259,10 @@ export function TabDividas({
                   onClick={() => setFiltroPessoaDivida("")}
                   className="text-orange-400 hover:underline"
                 >
-                  Ver todas as dívidas
+                  Ver todas as cobranças
                 </button>
               ) : (
-                'Clique em "Nova Dívida" para adicionar'
+                'Clique em "Nova Cobrança" para adicionar'
               )}
             </p>
           </div>

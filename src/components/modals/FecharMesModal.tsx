@@ -148,7 +148,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
                 {valorParaDebito > 0 ? (
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-gray-400">
-                      Vai para Saldo Devedor:
+                      Vai para Dívidas em Aberto:
                     </span>
                     <span className="text-orange-400 font-medium">
                       {formatCurrency(valorParaDebito)}
