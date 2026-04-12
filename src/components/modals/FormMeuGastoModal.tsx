@@ -4,10 +4,10 @@ import {
   Loader2,
   AlertCircle,
   User,
+  Users,
   Wallet,
   CreditCard,
   Repeat,
-  CalendarClock,
 } from "lucide-react";
 import type { MeuGastoForm, CartaoCredito, ContaBancaria } from "../../types";
 import {
@@ -16,6 +16,11 @@ import {
   parseCurrency,
 } from "../../utils/calculations";
 import { CATEGORIAS } from "../../utils/categories";
+import {
+  PARCELAS_OPTIONS,
+  PARCELAS_PRESET_MAX,
+  PARCELAS_MAX,
+} from "../../utils/constants";
 
 interface FormMeuGastoModalProps {
   show: boolean;
@@ -39,31 +44,59 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
   error,
   cartoes = [],
   contas = [],
-  pessoas = [],
   onClose,
   onFormChange,
   onSubmit,
 }) => {
-  if (!show) return null;
+  const parcelasSelecionadas = parseInt(formData.num_parcelas, 10) || 1;
+  const [customParcelasMode, setCustomParcelasMode] = React.useState(
+    parcelasSelecionadas > PARCELAS_PRESET_MAX
+  );
+  const [customParcelasInput, setCustomParcelasInput] = React.useState(
+    formData.num_parcelas
+  );
 
-  const isDividido = !!formData.dividido_com || formData.categoria === 'dividido';
-  const selectedPessoas = formData.dividido_com ? formData.dividido_com.split(',').map(p => p.trim()).filter(Boolean) : [];
-
-  const togglePessoa = (pessoa: string) => {
-    let newPessoas;
-    if (selectedPessoas.includes(pessoa)) {
-      newPessoas = selectedPessoas.filter(p => p !== pessoa);
-    } else {
-      newPessoas = [...selectedPessoas, pessoa];
+  React.useEffect(() => {
+    if (show) {
+      setCustomParcelasMode(parcelasSelecionadas > PARCELAS_PRESET_MAX);
+      setCustomParcelasInput(formData.num_parcelas);
     }
-    onFormChange({ ...formData, dividido_com: newPessoas.join(', ') });
+  }, [show]);
+
+  const handleCustomParcelasChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const nextValue = e.target.value;
+    if (!/^\d*$/.test(nextValue)) return;
+
+    setCustomParcelasInput(nextValue);
+
+    if (nextValue === "") return;
+
+    const parsed = parseInt(nextValue, 10);
+    if (parsed >= 1 && parsed <= PARCELAS_MAX) {
+      onFormChange({ ...formData, num_parcelas: String(parsed) });
+    }
   };
+
+  const handleCustomParcelasBlur = () => {
+    if (customParcelasInput === "") {
+      return;
+    }
+
+    const parsed = parseInt(customParcelasInput, 10);
+    const safeParcelas = Math.min(Math.max(parsed, 1), PARCELAS_MAX);
+    setCustomParcelasInput(String(safeParcelas));
+    onFormChange({ ...formData, num_parcelas: String(safeParcelas) });
+  };
+
+  if (!show) return null;
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center">
       <div className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto border-t sm:border border-gray-200 dark:border-gray-800">
         <div className="sticky top-0 bg-white dark:bg-gray-900 p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between z-10">
-          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
             {isEditing ? "Editar Gasto Pessoal" : "Novo Gasto Pessoal"}
           </h2>
           <button
@@ -90,13 +123,30 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                   })
                 }
                 className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
-                  formData.categoria === "pessoal" || formData.categoria === "dividido"
-                    ? "bg-blue-600 border-blue-500 text-white"
+                  formData.categoria === "pessoal"
+                    ? "bg-blue-600 border-blue-500 text-gray-900 dark:text-gray-100"
                     : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                 }`}
               >
                 <User className="w-5 h-5" />
-                <span className="text-xs">Único</span>
+                <span className="text-xs">Pessoal</span>
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  onFormChange({
+                    ...formData,
+                    categoria: "dividido",
+                  })
+                }
+                className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
+                  formData.categoria === "dividido"
+                    ? "bg-pink-600 border-pink-500 text-gray-900 dark:text-gray-100"
+                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
+                }`}
+              >
+                <Users className="w-5 h-5" />
+                <span className="text-xs">Dividido</span>
               </button>
               <button
                 type="button"
@@ -108,29 +158,12 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 }
                 className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
                   formData.categoria === "fixo"
-                    ? "bg-amber-600 border-amber-500 text-white"
+                    ? "bg-amber-600 border-amber-500 text-gray-900 dark:text-gray-100"
                     : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                 }`}
               >
                 <Repeat className="w-5 h-5" />
                 <span className="text-xs">Fixo</span>
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  onFormChange({
-                    ...formData,
-                    categoria: "divida",
-                  })
-                }
-                className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
-                  formData.categoria === "divida"
-                    ? "bg-orange-600 border-orange-500 text-white"
-                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
-                }`}
-              >
-                <CalendarClock className="w-5 h-5" />
-                <span className="text-xs">Dívida</span>
               </button>
             </div>
           </div>
@@ -147,7 +180,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 onFormChange({ ...formData, descricao: e.target.value })
               }
               placeholder="Ex: Netflix, Almoço, etc."
-              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
 
@@ -170,69 +203,35 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                   })
                 }
                 placeholder="0,00"
-                className="w-full pl-10 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full pl-10 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
                 inputMode="numeric"
               />
             </div>
           </div>
 
-{/* Toggle Dividir Gasto */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-800">
-            <div>
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Dividir gasto com outras pessoas?
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (!isDividido) {
-                  onFormChange({ ...formData, dividido_com: " " });
-                } else {
-                  onFormChange({ ...formData, dividido_com: "", minha_parte: "" });
-                }
-              }}
-              className={`relative w-11 h-6 rounded-full transition-colors ${
-                isDividido ? "bg-emerald-500" : "bg-gray-500"
-              }`}
-            >
-              <span
-                className={`absolute top-1 left-1 w-4 h-4 bg-white dark:bg-gray-900 rounded-full transition-all duration-200 ${
-                  isDividido ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
-          </div>
-
           {/* Campos para Dividido */}
-          {isDividido && (
-            <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-800">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Selecione as pessoas
-                </label>
-                {pessoas.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {pessoas.map((pessoa) => (
-                      <label key={pessoa} className="flex items-center gap-2 p-2 rounded bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <input
-                          type="checkbox"
-                          checked={selectedPessoas.includes(pessoa)}
-                          onChange={() => togglePessoa(pessoa)}
-                          className="w-4 h-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                        />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">{pessoa}</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-gray-500 py-1">Nenhuma pessoa cadastrada no sistema.</p>
-                )}
-              </div>
-              
+          {formData.categoria === "dividido" && (
+            <>
               <div>
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Sua Parte (Quanto você vai pagar disso)
+                  Dividido com
+                </label>
+                <input
+                  type="text"
+                  value={formData.dividido_com}
+                  onChange={(e) =>
+                    onFormChange({
+                      ...formData,
+                      dividido_com: e.target.value,
+                    })
+                  }
+                  placeholder="Ex: João, Maria, etc."
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  Minha Parte
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -248,12 +247,12 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                       })
                     }
                     placeholder="0,00"
-                    className="w-full pl-10 pr-3 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
+                    className="w-full pl-10 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
                     inputMode="numeric"
                   />
                 </div>
               </div>
-            </div>
+            </>
           )}
 
           {/* Campo para Fixo */}
@@ -267,17 +266,14 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 min="1"
                 max="31"
                 value={formData.dia_vencimento}
-                onChange={(e) => {
-                  const dayStr = e.target.value.padStart(2, '0');
-                  const newData = formData.data.substring(0, 8) + (dayStr === '00' ? '01' : dayStr);
+                onChange={(e) =>
                   onFormChange({
                     ...formData,
                     dia_vencimento: e.target.value,
-                    data: e.target.value ? newData : formData.data,
-                  });
-                }}
+                  })
+                }
                 placeholder="Ex: 10"
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
           )}
@@ -292,7 +288,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
               onChange={(e) =>
                 onFormChange({ ...formData, categoria_gasto: e.target.value })
               }
-              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
             >
               <option value="">Selecione uma categoria</option>
               {CATEGORIAS.map((cat) => (
@@ -303,26 +299,22 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
             </select>
           </div>
 
-          {/* Data */}
-          <div>
-            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-              {formData.categoria === "fixo" ? "Data de Início" : formData.categoria === "divida" ? "Data de Vencimento" : "Data"}
-            </label>
-            <input
-              type="date"
-              value={formData.data}
-              onChange={(e) => {
-                const newData = e.target.value;
-                const newDay = newData.substring(8, 10);
-                onFormChange({ 
-                  ...formData, 
-                  data: newData,
-                  dia_vencimento: formData.categoria === 'fixo' ? parseInt(newDay).toString() : formData.dia_vencimento
-                });
-              }}
-              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
-            />
-          </div>
+          {/* Data (não para fixo) */}
+          {formData.categoria !== "fixo" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                Data
+              </label>
+              <input
+                type="date"
+                value={formData.data}
+                onChange={(e) =>
+                  onFormChange({ ...formData, data: e.target.value })
+                }
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+            </div>
+          )}
 
           {/* Tipo (Crédito/Débito) */}
           <div>
@@ -341,7 +333,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 }
                 className={`p-3 rounded-lg border transition-colors flex items-center justify-center gap-2 ${
                   formData.tipo === "debito"
-                    ? "bg-green-600 border-green-500 text-white"
+                    ? "bg-green-600 border-green-500 text-gray-900 dark:text-gray-100"
                     : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                 }`}
               >
@@ -353,7 +345,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 onClick={() => onFormChange({ ...formData, tipo: "credito" })}
                 className={`p-3 rounded-lg border transition-colors flex items-center justify-center gap-2 ${
                   formData.tipo === "credito"
-                    ? "bg-purple-600 border-purple-500 text-white"
+                    ? "bg-purple-600 border-purple-500 text-gray-900 dark:text-gray-100"
                     : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                 }`}
               >
@@ -374,7 +366,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 onChange={(e) =>
                   onFormChange({ ...formData, cartao_id: e.target.value })
                 }
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
               >
                 <option value="">Selecione um cartão</option>
                 {cartoes.map((c) => (
@@ -397,7 +389,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 onChange={(e) =>
                   onFormChange({ ...formData, conta_id: e.target.value })
                 }
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-teal-500 outline-none"
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-teal-500 outline-none"
               >
                 <option value="">Selecione uma conta (opcional)</option>
                 {contas.map((c) => (
@@ -418,16 +410,25 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                   Número de Parcelas
                 </label>
                 <select
-                  value={formData.num_parcelas}
-                  onChange={(e) =>
+                  value={customParcelasMode ? "custom" : formData.num_parcelas}
+                  onChange={(e) => {
+                    if (e.target.value === "custom") {
+                      setCustomParcelasMode(true);
+                      setCustomParcelasInput("");
+                      return;
+                    }
+
+                    setCustomParcelasMode(false);
+                    setCustomParcelasInput(e.target.value);
+
                     onFormChange({
                       ...formData,
                       num_parcelas: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
+                    });
+                  }}
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
-                  {Array.from({ length: 24 }, (_, i) => i + 1).map((num) => (
+                  {PARCELAS_OPTIONS.map((num) => (
                     <option key={num} value={num}>
                       {num}x{" "}
                       {num === 1
@@ -441,7 +442,23 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                           }`}
                     </option>
                   ))}
+                  <option value="custom">Personalizado (ate 48x)</option>
                 </select>
+                {customParcelasMode && (
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={customParcelasInput}
+                      onChange={handleCustomParcelasChange}
+                      onBlur={handleCustomParcelasBlur}
+                      className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Informe entre 1x e {PARCELAS_MAX}x.
+                    </p>
+                  </div>
+                )}
                 {parseInt(formData.num_parcelas) > 1 && formData.valor && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     {formData.num_parcelas}x de{" "}
@@ -456,7 +473,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
           )}
 
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3 flex items-center gap-2">
+            <div className="bg-red-100 border border-red-500/50 rounded-lg p-3 flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
               <p className="text-red-600 text-sm">{error}</p>
             </div>
@@ -465,7 +482,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
           <button
             onClick={onSubmit}
             disabled={saving}
-            className={`w-full py-3 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
+            className={`w-full py-3 text-gray-900 dark:text-gray-100 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
               saving
                 ? "bg-gray-200 dark:bg-gray-700 cursor-not-allowed"
                 : "bg-emerald-600 hover:bg-emerald-700"
@@ -482,8 +499,6 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
               <>
                 {formData.categoria === "fixo"
                   ? "Adicionar Gasto Fixo"
-                  : formData.categoria === "divida"
-                  ? "Adicionar Dívida"
                   : "Adicionar Gasto"}
               </>
             )}

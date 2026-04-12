@@ -1,13 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { format, addMonths, subMonths } from "date-fns";
+import { format, addMonths, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useLocation } from "react-router-dom";
-import type { MetaGasto } from "../types";
-import { 
+import {
   Wallet,
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
+  TrendingUp,
+  TrendingDown,
+  Users,
   CalendarDays,
   PiggyBank,
   Receipt,
@@ -15,19 +14,22 @@ import {
   ChevronRight,
   CheckCircle,
   AlertCircle,
-  Target
+  Target,
+  HelpCircle,
+  X,
 } from "lucide-react";
 import { useAppContext } from "../context";
 import { supabase } from "../lib/supabase";
-import { formatCurrency, isGastoAtivoNoMes, getMesFaturaCartao } from "../utils/calculations";
+import { formatCurrency, isGastoAtivoNoMes } from "../utils/calculations";
+import type { MetaGasto } from "../types";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  LineChart,
+  Line,
   BarChart,
   Bar,
   Cell,
@@ -46,42 +48,212 @@ interface DashboardData {
   gastosPorCategoria: { categoria: string; valor: number }[];
   emprestadosPorPessoa: { pessoa: string; valor: number }[];
   emprestadosPorCategoria: { categoria: string; valor: number }[];
-  // Tendência de gastos
   totalGastosMesAtual: number;
   totalGastosMesAnterior: number;
   totalEmprestimosMesAtual: number;
   totalEmprestimosMesAnterior: number;
-  // Gastos fixos vs variáveis
   gastosFixosMes: number;
   gastosVariaveisMes: number;
-  // Novas métricas
-  taxaQuitacao: number; // % pessoas que fecharam o mês
+  taxaQuitacao: number;
   totalPessoas: number;
   pessoasQuitadas: number;
   mediaGastosPorPessoa: number;
-  economiasMes: number; // receitas - gastos
+  economiasMes: number;
   top5Gastos: { descricao: string; valor: number; pessoa: string }[];
   top5MeusGastos: { descricao: string; valor: number; categoria: string }[];
   parcelasProximasFim: { descricao: string; pessoa: string; parcelasRestantes: number }[];
-  // Tendência 6 meses
   tendenciaMensal: { mes: string; meusGastos: number; compartilhados: number; total: number }[];
-  // Metas de gasto
   metasGasto: (MetaGasto & { gastoAtual: number })[];
 }
 
 const CORES_GRAFICO = [
-  "#10B981", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6", 
+  "#10B981", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6",
   "#06B6D4", "#F97316", "#14B8A6", "#6366F1", "#EC4899"
 ];
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
+interface DashboardTutorialStep {
+  target: string;
+  alvo: string;
+  titulo: string;
+  descricao: string;
+  placement?: "above" | "below";
+}
+
+const DASHBOARD_TUTORIAL_KEY = "dashboard_tutorial_seen_v1";
+
+const DASHBOARD_TUTORIAL_STEPS: DashboardTutorialStep[] = [
+  {
+    target: "[data-tour='dashboard-header']",
+    alvo: "Cabeçalho da dashboard",
+    titulo: "Visão geral da Dashboard",
+    descricao:
+      "Esta tela resume sua vida financeira em um só lugar: saldos, valores a receber, metas e tendências.",
+    placement: "below",
+  },
+  {
+    target: "[data-tour='month-selector']",
+    alvo: "Seletor de mês",
+    titulo: "Seletor de mês",
+    descricao:
+      "Use as setas no topo para trocar o mês analisado. Os cartões e gráficos se atualizam automaticamente.",
+    placement: "below",
+  },
+  {
+    target: "[data-tour='card-saldo-total']",
+    alvo: "Saldo Total",
+    titulo: "Saldo total disponível",
+    descricao:
+      "Mostra o total somado de todas as suas contas bancárias. É o dinheiro que está realmente disponível agora.",
+    placement: "below",
+  },
+  {
+    target: "[data-tour='card-a-receber']",
+    alvo: "A Receber",
+    titulo: "Valores a receber neste mês",
+    descricao:
+      "Este cartão mostra quanto outras pessoas precisam te pagar neste mês. É a soma dos gastos compartilhados do período.",
+    placement: "below",
+  },
+  {
+    target: "[data-tour='card-receitas-fixas']",
+    alvo: "Receitas Fixas",
+    titulo: "Receitas fixas mensais",
+    descricao:
+      "Aqui entram as entradas recorrentes, como salários ou rendas fixas. Elas ajudam a projetar seu saldo futuro.",
+    placement: "below",
+  },
+  {
+    target: "[data-tour='card-gastos-fixos']",
+    alvo: "Gastos Fixos",
+    titulo: "Gastos fixos do mês",
+    descricao:
+      "São despesas recorrentes que acontecem todo mês, como aluguel, internet ou assinatura.",
+    placement: "below",
+  },
+  {
+    target: "[data-tour='fluxo-mensal']",
+    alvo: "Fluxo mensal",
+    titulo: "Fluxo mensal",
+    descricao:
+      "Mostra a diferença entre receitas e gastos fixos. Se ficar positivo, sobra dinheiro no mês.",
+  },
+  {
+    target: "[data-tour='saldo-livre']",
+    alvo: "Saldo livre",
+    titulo: "Saldo livre",
+    descricao:
+      "É o que sobra depois dos gastos fixos. Ajuda a entender quanto você realmente pode usar.",
+  },
+  {
+    target: "[data-tour='grafico-mensal']",
+    alvo: "Gráfico mensal",
+    titulo: "Meus gastos por mês",
+    descricao:
+      "Esse gráfico mostra a evolução dos seus gastos pessoais nos últimos meses.",
+  },
+  {
+    target: "[data-tour='ultimos-gastos']",
+    alvo: "Últimos gastos",
+    titulo: "Últimos lançamentos",
+    descricao:
+      "Aqui aparecem os gastos pessoais mais recentes e os valores de cada um.",
+  },
+  {
+    target: "[data-tour='trend-comparison']",
+    alvo: "Comparativo mensal",
+    titulo: "Comparação com o mês anterior",
+    descricao:
+      "Veja se seus gastos e valores a receber aumentaram ou diminuíram em relação ao mês anterior.",
+  },
+  {
+    target: "[data-tour='trend-6meses-meus']",
+    alvo: "Tendência de gastos",
+    titulo: "Tendência de 6 meses",
+    descricao:
+      "Esse gráfico mostra como seus gastos evoluíram ao longo dos últimos 6 meses.",
+  },
+  {
+    target: "[data-tour='trend-6meses-compartilhados']",
+    alvo: "Compartilhados 6 meses",
+    titulo: "Gastos compartilhados",
+    descricao:
+      "Mostra a tendência dos valores a receber de gastos compartilhados nos últimos 6 meses.",
+  },
+  {
+    target: "[data-tour='metas-section']",
+    alvo: "Metas de gasto",
+    titulo: "Metas e alertas",
+    descricao:
+      "Monitore metas por categoria e identifique rapidamente onde está perto de estourar o limite.",
+  },
+  {
+    target: "[data-tour='taxa-quitacao']",
+    alvo: "Taxa de quitação",
+    titulo: "Taxa de quitação",
+    descricao:
+      "Mostra quantas pessoas já quitaram os valores do mês. É um indicador rápido do andamento.",
+  },
+  {
+    target: "[data-tour='media-por-pessoa']",
+    alvo: "Média por pessoa",
+    titulo: "Média por pessoa",
+    descricao:
+      "Exibe a média de valores a receber por pessoa neste mês.",
+  },
+  {
+    target: "[data-tour='economias-mes']",
+    alvo: "Economias do mês",
+    titulo: "Economias do mês",
+    descricao:
+      "Aqui você vê se o mês terminou com sobra ou com déficit.",
+  },
+  {
+    target: "[data-tour='top5-gastos']",
+    alvo: "Top 5 gastos",
+    titulo: "Maiores gastos do mês",
+    descricao:
+      "Lista os 5 maiores gastos compartilhados do mês, do maior para o menor.",
+  },
+  {
+    target: "[data-tour='parcelas-acabando']",
+    alvo: "Parcelas acabando",
+    titulo: "Parcelas próximas do fim",
+    descricao:
+      "Mostra quais lançamentos parcelados estão quase terminando.",
+    placement: "below",
+  },
+  {
+    target: "[data-tour='fixos-variaveis']",
+    alvo: "Fixos x variáveis",
+    titulo: "Gastos fixos vs variáveis",
+    descricao:
+      "Compara o que é recorrente com o que é variável nos seus gastos pessoais.",
+  },
+  {
+    target: "[data-tour='help-button']",
+    alvo: "Botão de ajuda",
+    titulo: "Precisa rever?",
+    descricao:
+      "Clique no botão (?) no topo da Dashboard sempre que quiser abrir este tutorial novamente.",
+  },
+];
+
 export const DashboardPage = () => {
   const { user } = useAppContext();
   const location = useLocation();
+  const [viewportSize, setViewportSize] = useState(() => ({
+    width: typeof window !== "undefined" ? window.innerWidth : 0,
+    height: typeof window !== "undefined" ? window.innerHeight : 0,
+  }));
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [mesVisualizacao, setMesVisualizacao] = useState(new Date());
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0);
+  const [tutorialSteps, setTutorialSteps] = useState<DashboardTutorialStep[]>([]);
+  const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
   const [data, setData] = useState<DashboardData>({
     saldoTotal: 0,
     totalDevido: 0,
@@ -122,27 +294,14 @@ export const DashboardPage = () => {
         { data: saldosDevedores },
         { data: meusGastos },
         { data: receitas },
-        { data: gastosCompartilhados },
-        { data: cartoesCredito }
+        { data: gastosCompartilhados }
       ] = await Promise.all([
         supabase.from("contas_bancarias").select("*"),
         supabase.from("saldos_devedores").select("*"),
         supabase.from("meus_gastos").select("*"),
         supabase.from("receitas").select("*"),
         supabase.from("gastos").select("*"),
-        supabase.from("cartoes_credito").select("*"),
       ]);
-
-      const getMesRealDoGasto = (g: MeuGasto) => {
-        if (g.tipo === "credito" && g.cartao_id) {
-          const cartao = (cartoesCredito || []).find(c => c.id === g.cartao_id);
-          if (cartao && cartao.melhor_dia_compra) {
-            const date = getMesFaturaCartao(g.data, cartao.melhor_dia_compra, cartao.dia_vencimento);
-            return format(date, "yyyy-MM");
-          }
-        }
-        return g.data.substring(0, 7);
-      };
 
       // Calcular saldo total
       const saldoTotal = (contas as ContaBancaria[] || []).reduce(
@@ -157,32 +316,7 @@ export const DashboardPage = () => {
 
       // Calcular gastos fixos mensais
       const gastosFixos = (meusGastos as MeuGasto[] || [])
-        .filter(g => {
-          if (g.categoria !== "fixo" || g.ativo === false) return false;
-          
-          const mesAtualView = format(mesVisualizacao, "yyyy-MM");
-          
-          let mesCriacao = g.data.substring(0, 7);
-          if (g.tipo === "credito" && g.cartao_id) {
-            const cartao = (cartoesCredito || []).find((c: any) => c.id === g.cartao_id);
-            if (cartao && cartao.melhor_dia_compra) {
-              const proxMesDate = getMesFaturaCartao(g.data, cartao.melhor_dia_compra, cartao.dia_vencimento);
-              mesCriacao = format(proxMesDate, "yyyy-MM");
-            }
-          }
-          
-          if (mesAtualView < mesCriacao) return false;
-
-          if (g.meses_suspensos?.includes(mesAtualView)) return false;
-
-          const mesHoje = format(new Date(), "yyyy-MM");
-          if (mesAtualView === mesHoje && g.dia_vencimento) {
-            const hoje = new Date().getDate();
-            if (hoje < g.dia_vencimento) return false;
-          }
-
-          return true;
-        });
+        .filter(g => g.categoria === "fixo" && g.ativo !== false);
       const gastosFixosMensais = gastosFixos.reduce((acc, g) => acc + g.valor, 0);
 
       // Calcular receitas fixas mensais
@@ -210,7 +344,10 @@ export const DashboardPage = () => {
       // Gastos por categoria (mês selecionado)
       const mesAtualFiltro = format(mesVisualizacao, "yyyy-MM");
       const gastosDoMes = (meusGastos as MeuGasto[] || [])
-        .filter(g => getMesRealDoGasto(g) === mesAtualFiltro);
+        .filter(g => {
+          const mesGasto = g.data.substring(0, 7);
+          return mesGasto === mesAtualFiltro;
+        });
 
 
       const categoriaMap = new Map<string, number>();
@@ -260,10 +397,14 @@ export const DashboardPage = () => {
 
       // Calcular gastos do mês anterior
       const mesAnterior = subMonths(mesVisualizacao, 1);
-      const mesAnteriorFiltro = format(mesAnterior, "yyyy-MM");
+      const inicioMesAnterior = startOfMonth(mesAnterior);
+      const fimMesAnterior = endOfMonth(mesAnterior);
       
       const gastosDoMesAnterior = (meusGastos as MeuGasto[] || [])
-        .filter(g => getMesRealDoGasto(g) === mesAnteriorFiltro);
+        .filter(g => {
+          const dataGasto = new Date(g.data);
+          return dataGasto >= inicioMesAnterior && dataGasto <= fimMesAnterior;
+        });
       
       const gastosCompartilhadosDoMesAnterior = (gastosCompartilhados as Gasto[] || [])
         .filter(g => isGastoAtivoNoMes(g, mesAnterior));
@@ -272,20 +413,9 @@ export const DashboardPage = () => {
       const totalEmprestimosMesAnterior = gastosCompartilhadosDoMesAnterior.reduce((acc, g) => acc + g.valor_total / g.num_parcelas, 0);
 
       // Calcular gastos fixos vs variáveis do mês (de "Meus Gastos")
-      // Gastos fixos ativos e já iniciados contam
+      // Gastos fixos ativos são recorrentes, então sempre contam
       const gastosFixosAtivos = (meusGastos as MeuGasto[] || [])
-        .filter(g => {
-          if (g.categoria !== 'fixo' || g.ativo === false) return false;
-          let mesCriacao = g.data.substring(0, 7);
-          if (g.tipo === "credito" && g.cartao_id) {
-            const cartao = (cartoesCredito || []).find((c: any) => c.id === g.cartao_id);
-            if (cartao && cartao.melhor_dia_compra) {
-              const proxMesDate = getMesFaturaCartao(g.data, cartao.melhor_dia_compra, cartao.dia_vencimento);
-              mesCriacao = format(proxMesDate, "yyyy-MM");
-            }
-          }
-          return format(mesVisualizacao, "yyyy-MM") >= mesCriacao;
-        });
+        .filter(g => g.categoria === 'fixo' && g.ativo !== false);
       const gastosFixosMes = gastosFixosAtivos.reduce((acc, g) => acc + g.valor, 0);
       
       // Gastos variáveis (pessoais) do mês atual
@@ -343,19 +473,15 @@ export const DashboardPage = () => {
         .sort((a, b) => b.valor - a.valor)
         .slice(0, 5);
 
-      // Últimos 5 meus gastos pessoais do mês
-      const top5MeusGastos = [...gastosDoMes]
-        .sort((a, b) => {
-          const dateA = new Date(a.data || 0).getTime();
-          const dateB = new Date(b.data || 0).getTime();
-          return dateB - dateA;
-        })
-        .slice(0, 5)
+      // Top 5 meus gastos pessoais do mês
+      const top5MeusGastos = gastosDoMes
         .map(g => ({
           descricao: g.descricao || 'Sem descrição',
           valor: g.valor,
           categoria: g.categoria_gasto || g.categoria || 'Outros',
-        }));
+        }))
+        .sort((a, b) => b.valor - a.valor)
+        .slice(0, 5);
 
       // 5. Parcelas próximas do fim (restam 1-3 parcelas)
       // Calcular parcela atual baseado na data_inicio e mês atual
@@ -387,7 +513,7 @@ export const DashboardPage = () => {
         const mesLabel = format(mesRef, "MMM", { locale: ptBR });
         
         const meusGastosMes = (meusGastos as MeuGasto[] || [])
-          .filter(g => getMesRealDoGasto(g) === mesKey)
+          .filter(g => g.data.substring(0, 7) === mesKey)
           .reduce((acc, g) => acc + g.valor, 0);
         
         const compartilhadosMes = (gastosCompartilhados as Gasto[] || [])
@@ -459,6 +585,123 @@ export const DashboardPage = () => {
     fetchDashboardData();
   }, [fetchDashboardData, mesVisualizacao, refreshKey]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const alreadySeen = localStorage.getItem(DASHBOARD_TUTORIAL_KEY);
+    if (!alreadySeen) {
+      const availableSteps = DASHBOARD_TUTORIAL_STEPS.filter((step) =>
+        Boolean(document.querySelector(step.target))
+      );
+      setTutorialSteps(availableSteps);
+      setShowTutorial(availableSteps.length > 0);
+      setTutorialStepIndex(0);
+      localStorage.setItem(DASHBOARD_TUTORIAL_KEY, "true");
+    }
+  }, []);
+
+  const openTutorial = () => {
+    const availableSteps = DASHBOARD_TUTORIAL_STEPS.filter((step) =>
+      Boolean(document.querySelector(step.target))
+    );
+    setTutorialSteps(availableSteps);
+    setTutorialStepIndex(0);
+    setShowTutorial(availableSteps.length > 0);
+  };
+
+  const closeTutorial = () => {
+    setShowTutorial(false);
+  };
+
+  const nextTutorialStep = () => {
+    if (tutorialStepIndex >= tutorialSteps.length - 1) {
+      closeTutorial();
+      return;
+    }
+    setTutorialStepIndex((prev) => prev + 1);
+  };
+
+  const previousTutorialStep = () => {
+    setTutorialStepIndex((prev) => Math.max(prev - 1, 0));
+  };
+
+  useEffect(() => {
+    if (!showTutorial || tutorialSteps.length === 0) return;
+
+    const currentStep = tutorialSteps[tutorialStepIndex];
+    const targetElement = document.querySelector(currentStep.target);
+
+    if (!targetElement) {
+      setHighlightRect(null);
+      return;
+    }
+
+    const updateRect = () => {
+      const el = document.querySelector(currentStep.target);
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setHighlightRect(rect);
+    };
+
+    const targetRect = (targetElement as HTMLElement).getBoundingClientRect();
+    const isFullyVisible =
+      targetRect.top >= 96 &&
+      targetRect.bottom <= window.innerHeight - 96 &&
+      targetRect.left >= 16 &&
+      targetRect.right <= window.innerWidth - 16;
+
+    if (!isFullyVisible && tutorialStepIndex > 0) {
+      (targetElement as HTMLElement).scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      });
+    }
+
+    updateRect();
+    window.addEventListener("resize", updateRect);
+    window.addEventListener("scroll", updateRect, true);
+
+    return () => {
+      window.removeEventListener("resize", updateRect);
+      window.removeEventListener("scroll", updateRect, true);
+    };
+  }, [showTutorial, tutorialStepIndex, tutorialSteps]);
+
+  const currentTutorialStep = tutorialSteps[tutorialStepIndex];
+
+  const isMobile = viewportSize.width < 640;
+  const tooltipWidth = isMobile ? Math.min(viewportSize.width - 24, 360) : 340;
+  const tooltipHeight = isMobile ? 320 : 300;
+  const tooltipLeft = highlightRect
+    ? isMobile
+      ? 12
+      : Math.min(
+          Math.max(16, highlightRect.left + highlightRect.width / 2 - tooltipWidth / 2),
+          Math.max(16, viewportSize.width - tooltipWidth - 16)
+        )
+    : 16;
+  const showTooltipBelow = currentTutorialStep?.placement === "below" || false;
+  const tooltipTop = highlightRect
+    ? isMobile
+      ? Math.max(12, viewportSize.height - tooltipHeight - 12)
+      : showTooltipBelow
+      ? Math.min(highlightRect.bottom + 12, Math.max(16, viewportSize.height - tooltipHeight - 16))
+      : Math.max(16, highlightRect.top - tooltipHeight - 8)
+    : 16;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -470,21 +713,21 @@ export const DashboardPage = () => {
   return (
     <div className="space-y-6 pb-20 pt-4 px-4">
       {/* Header com saudação + seletor de mês */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex items-center justify-between flex-wrap gap-4" data-tour="dashboard-header">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'} 👋</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'} 👋</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm">Visão geral das suas finanças</p>
         </div>
         
         {/* Seletor de Mês */}
-        <div className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-xl p-2 border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-xl p-2 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="month-selector">
           <button
             onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             <ChevronLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
-          <span className="px-4 py-1 text-gray-800 dark:text-gray-100 font-medium min-w-[140px] text-center">
+          <span className="px-4 py-1 text-gray-900 dark:text-gray-100 font-medium min-w-[140px] text-center">
             {format(mesVisualizacao, "MMMM yyyy", { locale: ptBR })}
           </span>
           <button
@@ -494,47 +737,57 @@ export const DashboardPage = () => {
             <ChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
+
+        <button
+          onClick={openTutorial}
+          data-tour="help-button"
+          className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-sm transition-colors"
+          title="Ver tutorial da dashboard"
+          aria-label="Ver tutorial da dashboard"
+        >
+          <HelpCircle className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Cards de Resumo */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Saldo Total */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="card-saldo-total">
           <div className="flex items-center gap-2 mb-2">
             <Wallet className="w-5 h-5 text-emerald-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Saldo Total</span>
           </div>
-          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.saldoTotal)}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.saldoTotal)}</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Todas as contas</p>
         </div>
 
         {/* Valor a Receber do Mês */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="card-a-receber">
           <div className="flex items-center gap-2 mb-2">
             <Users className="w-5 h-5 text-blue-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">A Receber</span>
           </div>
-          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Gastos compartilhados do mês</p>
         </div>
 
         {/* Receitas Fixas */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="card-receitas-fixas">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-5 h-5 text-green-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Receitas Fixas</span>
           </div>
-          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.receitasFixasMensais)}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.receitasFixasMensais)}</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Por mês</p>
         </div>
 
         {/* Gastos Fixos */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="card-gastos-fixos">
           <div className="flex items-center gap-2 mb-2">
             <Receipt className="w-5 h-5 text-amber-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Gastos Fixos</span>
           </div>
-          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.gastosFixosMensais)}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.gastosFixosMensais)}</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Por mês</p>
         </div>
       </div>
@@ -542,7 +795,7 @@ export const DashboardPage = () => {
       {/* Cards Secundários */}
       <div className="grid grid-cols-2 gap-4">
         {/* Fluxo Mensal */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="fluxo-mensal">
           <div className="flex items-center gap-2 mb-2">
             <CalendarDays className="w-5 h-5 text-purple-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Fluxo Mensal</span>
@@ -550,11 +803,11 @@ export const DashboardPage = () => {
           <p className={`text-xl font-bold ${data.receitasFixasMensais - data.gastosFixosMensais >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
             {data.receitasFixasMensais - data.gastosFixosMensais >= 0 ? '+' : ''}{formatCurrency(data.receitasFixasMensais - data.gastosFixosMensais)}
           </p>
-          <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Receitas - Gastos</p>
+          <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Entradas fixas menos saídas fixas</p>
         </div>
 
         {/* Saldo Livre */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="saldo-livre">
           <div className="flex items-center gap-2 mb-2">
             <PiggyBank className="w-5 h-5 text-pink-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Saldo Livre</span>
@@ -569,9 +822,9 @@ export const DashboardPage = () => {
       {/* Gastos por Mês + Últimos Gastos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Gráfico de barras - Gastos por mês */}
-        <div className="md:col-span-2 bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="md:col-span-2 bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="grafico-mensal">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">Meus gastos por mês</span>
+            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Meus gastos por mês</span>
             <span className="text-xs text-gray-400">Últimos 6 meses</span>
           </div>
           {data.tendenciaMensal.length > 0 ? (
@@ -598,8 +851,8 @@ export const DashboardPage = () => {
         </div>
 
         {/* Últimos gastos (pessoais) */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-4 block">Últimos gastos</span>
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="ultimos-gastos">
+          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 block">Últimos gastos</span>
           {data.top5MeusGastos.length > 0 ? (
             <div className="space-y-0">
               {data.top5MeusGastos.slice(0, 5).map((gasto, i) => (
@@ -614,9 +867,7 @@ export const DashboardPage = () => {
                        '💳'}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-xs font-medium text-gray-800 dark:text-gray-100 truncate">
-                        {gasto.descricao} {gasto.categoria === "divida" && <span className="text-orange-500/80 font-normal ml-1">(Dívida)</span>}
-                      </p>
+                      <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">{gasto.descricao}</p>
                       <p className="text-[10px] text-gray-400 capitalize">{gasto.categoria}</p>
                     </div>
                   </div>
@@ -635,8 +886,8 @@ export const DashboardPage = () => {
       </div>
 
       {/* Tendência de Gastos */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="trend-comparison">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
           <TrendingDown className="w-5 h-5 text-orange-500" />
           Tendência de Gastos (vs mês anterior)
         </h2>
@@ -644,7 +895,7 @@ export const DashboardPage = () => {
           {/* Meus Gastos */}
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-100 dark:border-gray-800">
             <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mb-1">Meus Gastos</p>
-            <p className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.totalGastosMesAtual)}</p>
+            <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.totalGastosMesAtual)}</p>
             {data.totalGastosMesAnterior > 0 && (
               <div className="flex items-center gap-1 mt-1 sm:mt-2 flex-wrap">
                 {data.totalGastosMesAtual > data.totalGastosMesAnterior ? (
@@ -665,7 +916,7 @@ export const DashboardPage = () => {
           {/* Empréstimos/Gastos Compartilhados */}
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-100 dark:border-gray-800">
             <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mb-1">Gastos Compartilhados</p>
-            <p className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
+            <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
             {data.totalEmprestimosMesAnterior > 0 && (
               <div className="flex items-center gap-1 mt-1 sm:mt-2 flex-wrap">
                 {data.totalEmprestimosMesAtual > data.totalEmprestimosMesAnterior ? (
@@ -688,8 +939,8 @@ export const DashboardPage = () => {
       {data.tendenciaMensal.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Meus Gastos */}
-          <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm min-w-0 overflow-hidden">
-            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm min-w-0 overflow-hidden" data-tour="trend-6meses-meus">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-blue-600" />
               Meus Gastos (6 meses)
             </h2>
@@ -717,8 +968,8 @@ export const DashboardPage = () => {
           </div>
 
           {/* Gastos Compartilhados */}
-          <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm min-w-0 overflow-hidden">
-            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm min-w-0 overflow-hidden" data-tour="trend-6meses-compartilhados">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
               <Users className="w-5 h-5 text-emerald-600" />
               Compartilhados (6 meses)
             </h2>
@@ -749,8 +1000,8 @@ export const DashboardPage = () => {
 
       {/* Metas de Gasto por Categoria */}
       {data.metasGasto.length > 0 && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="metas-section">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Target className="w-5 h-5 text-purple-600" />
             Metas de Gasto
           </h2>
@@ -802,12 +1053,12 @@ export const DashboardPage = () => {
       {/* Novas Métricas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Taxa de Quitação */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="taxa-quitacao">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className="w-5 h-5 text-indigo-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Taxa de Quitação</span>
           </div>
-          <p className="text-3xl font-bold text-gray-800 dark:text-gray-100">{data.taxaQuitacao.toFixed(0)}%</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{data.taxaQuitacao.toFixed(0)}%</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
             {data.pessoasQuitadas} de {data.totalPessoas} pessoas quitaram
           </p>
@@ -820,19 +1071,19 @@ export const DashboardPage = () => {
         </div>
 
         {/* Média por Pessoa */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="media-por-pessoa">
           <div className="flex items-center gap-2 mb-2">
             <Users className="w-5 h-5 text-cyan-600" />
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Média por Pessoa</span>
           </div>
-          <p className="text-3xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.mediaGastosPorPessoa)}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.mediaGastosPorPessoa)}</p>
           <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
             {data.totalPessoas} pessoas com gastos este mês
           </p>
         </div>
 
         {/* Economias do Mês */}
-        <div className={`bg-white dark:bg-gray-900 rounded-xl p-4 border shadow-sm ${data.economiasMes >= 0 ? 'border-emerald-200' : 'border-red-200'}`}>
+        <div className={`bg-white dark:bg-gray-900 rounded-xl p-4 border shadow-sm ${data.economiasMes >= 0 ? 'border-emerald-200' : 'border-red-200'}`} data-tour="economias-mes">
           <div className="flex items-center gap-2 mb-2">
             {data.economiasMes >= 0 ? (
               <TrendingUp className="w-5 h-5 text-emerald-600" />
@@ -854,8 +1105,8 @@ export const DashboardPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Top 5 Gastos do Mês */}
         {data.top5Gastos.length > 0 && (
-          <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="top5-gastos">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
               <Receipt className="w-5 h-5 text-amber-500" />
               Top 5 Gastos do Mês
             </h3>
@@ -867,11 +1118,11 @@ export const DashboardPage = () => {
                       {index + 1}
                     </span>
                     <div>
-                      <p className="text-gray-800 dark:text-gray-100 text-sm font-medium truncate max-w-[140px]">{gasto.descricao}</p>
+                      <p className="text-gray-900 dark:text-gray-100 text-sm font-medium truncate max-w-[140px]">{gasto.descricao}</p>
                       <p className="text-gray-400 dark:text-gray-500 text-xs">{gasto.pessoa}</p>
                     </div>
                   </div>
-                  <p className="text-gray-800 dark:text-gray-100 font-semibold">{formatCurrency(gasto.valor)}</p>
+                  <p className="text-gray-900 dark:text-gray-100 font-semibold">{formatCurrency(gasto.valor)}</p>
                 </div>
               ))}
             </div>
@@ -880,8 +1131,8 @@ export const DashboardPage = () => {
 
         {/* Parcelas Próximas do Fim */}
         {data.parcelasProximasFim.length > 0 && (
-          <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="parcelas-acabando">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-amber-500" />
               Parcelas Acabando
             </h3>
@@ -889,7 +1140,7 @@ export const DashboardPage = () => {
               {data.parcelasProximasFim.map((parcela, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg">
                   <div>
-                    <p className="text-gray-800 dark:text-gray-100 text-sm font-medium truncate max-w-[180px]">{parcela.descricao}</p>
+                    <p className="text-gray-900 dark:text-gray-100 text-sm font-medium truncate max-w-[180px]">{parcela.descricao}</p>
                     <p className="text-gray-400 dark:text-gray-500 text-xs">{parcela.pessoa}</p>
                   </div>
                   <div className="text-right">
@@ -907,7 +1158,7 @@ export const DashboardPage = () => {
 
       {/* Gráfico de Projeção Anual */}
       <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-blue-600" />
           Projeção de Saldo (12 meses)
         </h2>
@@ -947,8 +1198,8 @@ export const DashboardPage = () => {
 
       {/* Gastos Fixos vs Variáveis */}
       {(data.gastosFixosMes > 0 || data.gastosVariaveisMes > 0) && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="fixos-variaveis">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Receipt className="w-5 h-5 text-cyan-600" />
             Gastos Fixos vs Variáveis (Meus Gastos)
           </h2>
@@ -981,12 +1232,12 @@ export const DashboardPage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 !border-l-blue-500">
                 <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">Gastos Fixos</p>
-                <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.gastosFixosMes)}</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.gastosFixosMes)}</p>
                 <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Contas recorrentes</p>
               </div>
               <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 !border-l-indigo-400">
                 <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">Gastos Variáveis</p>
-                <p className="text-xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(data.gastosVariaveisMes)}</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.gastosVariaveisMes)}</p>
                 <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Gastos pessoais</p>
               </div>
             </div>
@@ -997,7 +1248,7 @@ export const DashboardPage = () => {
       {/* Gráfico de Gastos por Categoria */}
       {data.gastosPorCategoria.length > 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <TrendingDown className="w-5 h-5 text-red-500" />
             Gastos por Categoria (30 dias)
           </h2>
@@ -1043,7 +1294,7 @@ export const DashboardPage = () => {
       {/* Gráfico de Empréstimos por Pessoa */}
       {data.emprestadosPorPessoa.length > 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Users className="w-5 h-5 text-blue-600" />
             Empréstimos por Pessoa
           </h2>
@@ -1089,7 +1340,7 @@ export const DashboardPage = () => {
       {/* Gráfico de Empréstimos por Categoria */}
       {data.emprestadosPorCategoria.length > 0 && (
         <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Receipt className="w-5 h-5 text-amber-500" />
             Empréstimos por Categoria
           </h2>
@@ -1128,6 +1379,135 @@ export const DashboardPage = () => {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {showTutorial && currentTutorialStep && (
+        <div className="fixed inset-0 z-[60] pointer-events-none" style={{ position: 'fixed' }}>
+          {highlightRect && (
+            <>
+              <div
+                className="fixed bg-black/75"
+                style={{
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: Math.max(0, highlightRect.top - 8),
+                }}
+              />
+              <div
+                className="fixed bg-black/75"
+                style={{
+                  top: Math.max(0, highlightRect.top - 8),
+                  left: 0,
+                  width: Math.max(0, highlightRect.left - 8),
+                  height: highlightRect.height + 16,
+                }}
+              />
+              <div
+                className="fixed bg-black/75"
+                style={{
+                  top: Math.max(0, highlightRect.top - 8),
+                  left: highlightRect.right + 8,
+                  width: Math.max(0, viewportSize.width - highlightRect.right - 8),
+                  height: highlightRect.height + 16,
+                }}
+              />
+              <div
+                className="fixed bg-black/75"
+                style={{
+                  top: highlightRect.bottom + 8,
+                  left: 0,
+                  width: "100%",
+                  height: Math.max(0, viewportSize.height - highlightRect.bottom - 8),
+                }}
+              />
+              <div
+                className="fixed rounded-2xl border-2 border-blue-300 bg-transparent"
+                style={{
+                  top: highlightRect.top - 8,
+                  left: highlightRect.left - 8,
+                  width: highlightRect.width + 16,
+                  height: highlightRect.height + 16,
+                  boxShadow: "0 0 0 2px rgba(96,165,250,0.55), 0 0 24px rgba(59,130,246,0.18)",
+                }}
+              />
+            </>
+          )}
+
+          {highlightRect && (
+            <div
+              className="absolute w-0 h-0"
+              style={{
+                left: highlightRect.left + highlightRect.width / 2 - 10,
+                top: showTooltipBelow ? highlightRect.bottom + 6 : highlightRect.top - 16,
+                borderLeft: "10px solid transparent",
+                borderRight: "10px solid transparent",
+                borderTop: showTooltipBelow ? "12px solid #2563EB" : "0px solid transparent",
+                borderBottom: showTooltipBelow ? "0px solid transparent" : "12px solid #2563EB",
+              }}
+            />
+          )}
+
+          <div
+            className="absolute pointer-events-auto bg-gray-900 text-gray-100 w-[calc(100vw-24px)] max-w-[360px] rounded-2xl border border-blue-900 overflow-hidden shadow-2xl max-h-[calc(100vh-24px)] overflow-y-auto"
+            style={{ left: tooltipLeft, top: tooltipTop }}
+          >
+            <div className="px-4 py-3 border-b border-blue-900 flex items-start justify-between gap-3 bg-blue-700">
+              <div>
+                <p className="text-xs font-medium text-blue-100">
+                  Tutorial da Dashboard • Passo {tutorialStepIndex + 1} de {tutorialSteps.length}
+                </p>
+                <h3 className="text-base font-semibold text-white mt-1">
+                  {currentTutorialStep.titulo}
+                </h3>
+              </div>
+              <button
+                onClick={closeTutorial}
+                className="p-1.5 rounded-lg hover:bg-blue-800 transition-colors"
+                aria-label="Fechar tutorial"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            </div>
+
+            <div className="px-4 py-4">
+              <div className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-950 text-blue-200 text-xs font-semibold mb-3 border border-blue-900">
+                {currentTutorialStep.alvo}
+              </div>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                {currentTutorialStep.descricao}
+              </p>
+
+              <div className="flex gap-1.5 mt-4">
+                {tutorialSteps.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1.5 flex-1 rounded-full transition-colors ${
+                      i <= tutorialStepIndex ? "bg-blue-500" : "bg-gray-700"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="px-4 py-3 border-t border-gray-800 flex items-center justify-between gap-2 bg-gray-950">
+              <button
+                onClick={previousTutorialStep}
+                disabled={tutorialStepIndex === 0}
+                className="px-3 py-1.5 rounded-lg border border-gray-700 text-gray-300 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                Voltar
+              </button>
+
+              <button
+                onClick={nextTutorialStep}
+                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm"
+              >
+                {tutorialStepIndex === tutorialSteps.length - 1 ? "Concluir" : "Próximo"}
+              </button>
+            </div>
           </div>
         </div>
       )}

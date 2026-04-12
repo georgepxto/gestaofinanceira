@@ -6,9 +6,8 @@ import {
   meusGastosFunctions,
 } from "../lib/supabase";
 import type { MeuGasto, MeuGastoForm, CartaoCredito } from "../types";
-import { formatCurrency, parseCurrency, getMesFaturaCartao } from "../utils/calculations";
-import { CATEGORIA_PADRAO } from "../utils/categories";
-import { toast } from "../components/ui/Toaster";
+import { formatCurrency, parseCurrency } from "../utils/calculations";
+import { PARCELAS_MAX } from "../utils/constants";
 
 interface UseMeusGastosProps {
   user: { id: string } | null;
@@ -18,8 +17,6 @@ interface UseMeusGastosProps {
     titulo: string;
     mensagem: string;
     onConfirm: () => void;
-    confirmLabel?: string;
-    confirmColor?: "red" | "green" | "blue" | "indigo" | "purple";
   }) => void;
   cartoes: CartaoCredito[];
   cartoesLoading?: boolean;
@@ -104,8 +101,13 @@ export function useMeusGastos({
     if (g.tipo === "credito" && g.cartao_id) {
       const cartao = cartoes.find((c) => c.id === g.cartao_id);
       if (cartao && cartao.melhor_dia_compra) {
-        const proxMesDate = getMesFaturaCartao(g.data, cartao.melhor_dia_compra, cartao.dia_vencimento);
-        mesGasto = format(proxMesDate, "yyyy-MM");
+        const diaCompra = parseInt(g.data.split("-")[2], 10);
+        if (diaCompra >= cartao.melhor_dia_compra) {
+          const [ano, mes] = g.data.split("-").map(Number);
+          const dateObj = new Date(ano, mes - 1, diaCompra);
+          const proxMes = addMonths(dateObj, 1);
+          mesGasto = format(proxMes, "yyyy-MM");
+        }
       }
     }
 
@@ -117,31 +119,14 @@ export function useMeusGastos({
     return matchMes && matchCategoria;
   });
 
-  const gastosFixos = meusGastos.filter((g) => {
-    if (g.categoria !== "fixo") return false;
-    
-    let mesCriacao = g.data.substring(0, 7);
-    
-    // Se for no cartão de crédito, o mês de "início" é o mês da primeira fatura
-    if (g.tipo === "credito" && g.cartao_id) {
-      const cartao = cartoes.find((c) => c.id === g.cartao_id);
-      if (cartao && cartao.melhor_dia_compra) {
-        const proxMesDate = getMesFaturaCartao(g.data, cartao.melhor_dia_compra, cartao.dia_vencimento);
-        mesCriacao = format(proxMesDate, "yyyy-MM");
-      }
-    }
-
-    // Mostrar apenas se o mês de visualização for igual ou posterior ao mês de criação real
-    const mesAtual = format(mesVisualizacao, "yyyy-MM");
-    return mesAtual >= mesCriacao;
-  });
+  const gastosFixos = meusGastos.filter((g) => g.categoria === "fixo");
 
   const totalMeusGastosCredito = meusGastosDoMes
     .filter((g) => g.tipo === "credito")
     .reduce(
       (acc, g) =>
         acc +
-        (g.dividido_com && g.minha_parte ? g.minha_parte : g.valor),
+        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
       0
     );
 
@@ -150,34 +135,21 @@ export function useMeusGastos({
     .reduce(
       (acc, g) =>
         acc +
-        (g.dividido_com && g.minha_parte ? g.minha_parte : g.valor),
+        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
       0
     );
 
   const totalMeusGastosPagos = meusGastosDoMes
-    .filter((g) => g.pago)
+    .filter((g) => g.pago || g.tipo === "debito")
     .reduce(
       (acc, g) =>
         acc +
-        (g.dividido_com && g.minha_parte ? g.minha_parte : g.valor),
+        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
       0
     );
 
   const totalGastosFixos = gastosFixos
-    .filter((g) => {
-      if (g.ativo === false) return false;
-      
-      const mesAtualView = format(mesVisualizacao, "yyyy-MM");
-      if (g.meses_suspensos?.includes(mesAtualView)) return false;
-
-      const mesHoje = format(new Date(), "yyyy-MM");
-      if (mesAtualView === mesHoje && g.dia_vencimento) {
-        const hoje = new Date().getDate();
-        if (hoje < g.dia_vencimento) return false;
-      }
-
-      return true;
-    })
+    .filter((g) => g.ativo !== false)
     .reduce((acc, g) => acc + g.valor, 0);
 
   // Adicionar meu gasto
@@ -189,7 +161,7 @@ export function useMeusGastos({
     }
 
     let minhaParte = valor;
-    if (formMeuGasto.dividido_com && formMeuGasto.minha_parte) {
+    if (formMeuGasto.categoria === "dividido" && formMeuGasto.minha_parte) {
       minhaParte = parseCurrency(formMeuGasto.minha_parte);
     }
 
@@ -197,13 +169,21 @@ export function useMeusGastos({
       formMeuGasto.tipo === "credito"
         ? parseInt(formMeuGasto.num_parcelas) || 1
         : 1;
+
+    if (
+      formMeuGasto.tipo === "credito" &&
+      (!Number.isInteger(numParcelas) || numParcelas < 1 || numParcelas > PARCELAS_MAX)
+    ) {
+      setError(`Número de parcelas inválido. Use entre 1 e ${PARCELAS_MAX}.`);
+      return;
+    }
+
     const valorParcela = valor / numParcelas;
 
     setSaving(true);
     try {
       if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
-        const [ano, mes, dia] = formMeuGasto.data.split("-").map(Number);
-        const dataInicio = new Date(ano, mes - 1, dia);
+        const dataInicio = new Date(formMeuGasto.data);
 
         for (let i = 0; i < numParcelas; i++) {
           const dataParcela = new Date(dataInicio);
@@ -217,8 +197,14 @@ export function useMeusGastos({
             categoria: formMeuGasto.categoria,
             data: format(dataParcela, "yyyy-MM-dd"),
             pago: false,
-            dividido_com: formMeuGasto.dividido_com ? formMeuGasto.dividido_com : undefined,
-            minha_parte: formMeuGasto.dividido_com ? minhaParte / numParcelas : undefined,
+            dividido_com:
+              formMeuGasto.categoria === "dividido"
+                ? formMeuGasto.dividido_com
+                : undefined,
+            minha_parte:
+              formMeuGasto.categoria === "dividido"
+                ? minhaParte / numParcelas
+                : undefined,
             num_parcelas: numParcelas,
             parcela_atual: i + 1,
             cartao_id: formMeuGasto.tipo === "credito" ? formMeuGasto.cartao_id || undefined : undefined,
@@ -227,45 +213,10 @@ export function useMeusGastos({
 
           if (isSupabaseConfigured && supabase) {
             await meusGastosFunctions.create(novoGasto);
-
-            // Criar despesa compartilhada para as outras pessoas na aba "Gastos"
-            if (formMeuGasto.dividido_com) {
-              const nomes = formMeuGasto.dividido_com.split(",").map((n) => n.trim()).filter(Boolean);
-              if (nomes.length > 0) {
-                const valorRestante = valorParcela - (minhaParte / numParcelas);
-                const valorPorPessoa = valorRestante / nomes.length;
-                
-                if (valorPorPessoa > 0) {
-                  const promessasGastos = nomes.map(async (nome) => {
-                    const gastoCompartilhado = {
-                      descricao: `Dividido: ${formMeuGasto.descricao} (${i + 1}/${numParcelas})`,
-                      pessoa: nome,
-                      valor_total: valorPorPessoa,
-                      num_parcelas: 1, // Já está sendo dividido na parcela atual do loop
-                      data_inicio: format(dataParcela, "yyyy-MM-dd"),
-                      tipo: formMeuGasto.tipo,
-                      categoria: formMeuGasto.categoria_gasto || CATEGORIA_PADRAO,
-                      recorrente: false,
-                      cartao_id: formMeuGasto.tipo === "credito" ? formMeuGasto.cartao_id || null : null,
-                      conta_id: formMeuGasto.tipo === "debito" ? formMeuGasto.conta_id || null : null,
-                      user_id: user?.id,
-                    };
-                    return supabase!.from("gastos").insert(gastoCompartilhado);
-                  });
-                  await Promise.all(promessasGastos);
-                }
-              }
-            }
           }
           setMeusGastos((prev) => [...prev, novoGasto]);
         }
       } else {
-        const dataGasto = formMeuGasto.data;
-        const hojeIso = format(new Date(), "yyyy-MM-dd");
-        const isFuture = dataGasto > hojeIso;
-
-        const isPago = formMeuGasto.tipo === "debito" && !isFuture;
-
         const novoGasto: MeuGasto = {
           id: Date.now().toString(),
           descricao: formMeuGasto.descricao,
@@ -273,9 +224,13 @@ export function useMeusGastos({
           tipo: formMeuGasto.tipo,
           categoria: formMeuGasto.categoria,
           data: formMeuGasto.data,
-          pago: isPago,
-          dividido_com: formMeuGasto.dividido_com ? formMeuGasto.dividido_com : undefined,
-          minha_parte: formMeuGasto.dividido_com ? minhaParte : undefined,
+          pago: formMeuGasto.tipo === "debito",
+          dividido_com:
+            formMeuGasto.categoria === "dividido"
+              ? formMeuGasto.dividido_com
+              : undefined,
+          minha_parte:
+            formMeuGasto.categoria === "dividido" ? minhaParte : undefined,
           dia_vencimento:
             formMeuGasto.categoria === "fixo"
               ? parseInt(formMeuGasto.dia_vencimento)
@@ -291,37 +246,8 @@ export function useMeusGastos({
         if (isSupabaseConfigured && supabase) {
           await meusGastosFunctions.create(novoGasto);
           
-          // Criar despesa compartilhada para as outras pessoas na aba "Gastos"
-          if (formMeuGasto.dividido_com) {
-            const nomes = formMeuGasto.dividido_com.split(",").map((n) => n.trim()).filter(Boolean);
-            if (nomes.length > 0) {
-              const valorRestante = valor - minhaParte;
-              const valorPorPessoa = valorRestante / nomes.length;
-              
-              if (valorPorPessoa > 0) {
-                const promessasGastos = nomes.map(async (nome) => {
-                  const gastoCompartilhado = {
-                    descricao: `Dividido: ${formMeuGasto.descricao}`,
-                    pessoa: nome,
-                    valor_total: valorPorPessoa,
-                    num_parcelas: 1,
-                    data_inicio: formMeuGasto.data,
-                    tipo: formMeuGasto.tipo,
-                    categoria: formMeuGasto.categoria_gasto || CATEGORIA_PADRAO,
-                    recorrente: formMeuGasto.categoria === "fixo", // Fixos vão como recorrentes
-                    cartao_id: formMeuGasto.tipo === "credito" ? formMeuGasto.cartao_id || null : null,
-                    conta_id: formMeuGasto.tipo === "debito" ? formMeuGasto.conta_id || null : null,
-                    user_id: user?.id,
-                  };
-                  return supabase!.from("gastos").insert(gastoCompartilhado);
-                });
-                await Promise.all(promessasGastos);
-              }
-            }
-          }
-          
-          // Se for débito e tiver conta selecionada, descontar do saldo Apenas se não for data futura (e não for fixo ou conta a pagar)
-          if (isPago && formMeuGasto.conta_id && formMeuGasto.categoria !== "fixo" && formMeuGasto.categoria !== "divida") {
+          // Se for débito e tiver conta selecionada, descontar do saldo
+          if (formMeuGasto.tipo === "debito" && formMeuGasto.conta_id) {
             const { data: contaAtual } = await supabase
               .from("contas_bancarias")
               .select("saldo_atual")
@@ -339,7 +265,10 @@ export function useMeusGastos({
         }
         setMeusGastos((prev) => [...prev, novoGasto]);
       }
-      toast.success("Gasto adicionado com sucesso!");
+
+      if (onRefreshGastos) {
+        await onRefreshGastos();
+      }
 
       resetForm();
     } finally {
@@ -387,7 +316,7 @@ export function useMeusGastos({
       setSaving(true);
       try {
         let minhaParte = valor;
-        if (formMeuGasto.dividido_com && formMeuGasto.minha_parte) {
+        if (formMeuGasto.categoria === "dividido" && formMeuGasto.minha_parte) {
           minhaParte = parseCurrency(formMeuGasto.minha_parte);
         }
 
@@ -395,6 +324,15 @@ export function useMeusGastos({
           formMeuGasto.tipo === "credito"
             ? parseInt(formMeuGasto.num_parcelas) || 1
             : 1;
+
+        if (
+          formMeuGasto.tipo === "credito" &&
+          (!Number.isInteger(novoNumParcelas) || novoNumParcelas < 1 || novoNumParcelas > PARCELAS_MAX)
+        ) {
+          setError(`Número de parcelas inválido. Use entre 1 e ${PARCELAS_MAX}.`);
+          return;
+        }
+
         const novoValorParcela = valor / novoNumParcelas;
 
         const descricaoBaseOriginal = editandoMeuGasto.descricao.replace(
@@ -412,8 +350,7 @@ export function useMeusGastos({
         });
 
         const indiceParcelaEditada = (editandoMeuGasto.parcela_atual || 1) - 1;
-        const [ano, mes, dia] = formMeuGasto.data.split("-").map(Number);
-        const dataAtualSelecionada = new Date(ano, mes - 1, dia);
+        const dataAtualSelecionada = new Date(formMeuGasto.data);
         const dataInicioReal = subMonths(
           dataAtualSelecionada,
           indiceParcelaEditada
@@ -444,8 +381,14 @@ export function useMeusGastos({
               categoria: formMeuGasto.categoria,
               categoria_gasto: formMeuGasto.categoria_gasto || undefined,
               data: dataFormatada,
-              dividido_com: formMeuGasto.dividido_com ? formMeuGasto.dividido_com : undefined,
-              minha_parte: formMeuGasto.dividido_com ? minhaParte / novoNumParcelas : undefined,
+              dividido_com:
+                formMeuGasto.categoria === "dividido"
+                  ? formMeuGasto.dividido_com
+                  : undefined,
+              minha_parte:
+                formMeuGasto.categoria === "dividido"
+                  ? minhaParte / novoNumParcelas
+                  : undefined,
               num_parcelas: novoNumParcelas,
               parcela_atual: numParcela,
               dia_vencimento:
@@ -455,19 +398,19 @@ export function useMeusGastos({
               cartao_id: formMeuGasto.tipo === "credito" ? formMeuGasto.cartao_id || undefined : undefined,
               conta_id: formMeuGasto.tipo === "debito" ? formMeuGasto.conta_id || undefined : undefined,
               pago:
-                existente
-                  ? (existente.tipo === "credito" && formMeuGasto.tipo === "debito" && dataFormatada <= format(new Date(), "yyyy-MM-dd")) 
-                      ? true 
-                      : existente.pago
-                  : (formMeuGasto.tipo === "debito" && dataFormatada <= format(new Date(), "yyyy-MM-dd")),
+                formMeuGasto.tipo === "debito"
+                  ? true
+                  : existente
+                  ? existente.pago
+                  : false,
             };
 
             if (existente) {
               if (isSupabaseConfigured && supabase) {
                 await meusGastosFunctions.update(existente.id, dadosAtualizados);
                 
-                // Se for débito, verificar mudança de conta para descontar/estornar saldo (ignorando gastos fixos)
-                if (formMeuGasto.tipo === "debito" && formMeuGasto.categoria !== "fixo" && existente.categoria !== "fixo") {
+                // Se for débito, verificar mudança de conta para descontar/estornar saldo
+                if (formMeuGasto.tipo === "debito") {
                   const contaAntiga = existente.conta_id;
                   const contaNova = formMeuGasto.conta_id || "";
                   const valorAntigo = existente.valor || 0;
@@ -554,45 +497,6 @@ export function useMeusGastos({
                     }
                   }
                 }
-
-                if (existente.dividido_com || formMeuGasto.dividido_com) {
-                  const descCompartilhadaAntiga = `Dividido: ${existente.descricao}`;
-                  await supabase
-                    .from("gastos")
-                    .delete()
-                    .eq("descricao", descCompartilhadaAntiga);
-
-                  if (formMeuGasto.dividido_com) {
-                    const nomes = formMeuGasto.dividido_com.split(",").map((n) => n.trim()).filter(Boolean);
-                    if (nomes.length > 0) {
-                      const valorTotal = dadosAtualizados.valor || novoValorParcela;
-                      const parteUsuario = dadosAtualizados.minha_parte || (valorTotal / (nomes.length + 1));
-                      const valorRestante = valorTotal - parteUsuario;
-                      const valorPorPessoa = valorRestante / nomes.length;
-
-                      if (valorPorPessoa > 0) {
-                        const promessasGastos = nomes.map(async (nome) => {
-                          const descNova = `Dividido: ${dadosAtualizados.descricao}`;
-                          const gastoCompartilhado = {
-                            descricao: descNova,
-                            pessoa: nome,
-                            valor_total: valorPorPessoa,
-                            num_parcelas: 1,
-                            data_inicio: dadosAtualizados.data,
-                            tipo: dadosAtualizados.tipo,
-                            categoria: dadosAtualizados.categoria_gasto || CATEGORIA_PADRAO,
-                            recorrente: formMeuGasto.categoria === "fixo", 
-                            cartao_id: dadosAtualizados.cartao_id || null,
-                            conta_id: dadosAtualizados.conta_id || null,
-                            user_id: user?.id,
-                          };
-                          return supabase!.from("gastos").insert(gastoCompartilhado);
-                        });
-                        await Promise.all(promessasGastos);
-                      }
-                    }
-                  }
-                }
               }
               setMeusGastos((prev) =>
                 prev.map((g) =>
@@ -618,37 +522,6 @@ export function useMeusGastos({
 
               if (isSupabaseConfigured && supabase) {
                 await meusGastosFunctions.create(novoGasto);
-
-                if (formMeuGasto.dividido_com) {
-                  const nomes = formMeuGasto.dividido_com.split(",").map((n) => n.trim()).filter(Boolean);
-                  if (nomes.length > 0) {
-                    const valorTotal = dadosAtualizados.valor || novoValorParcela;
-                    const parteUsuario = dadosAtualizados.minha_parte || (valorTotal / (nomes.length + 1));
-                    const valorRestante = valorTotal - parteUsuario;
-                    const valorPorPessoa = valorRestante / nomes.length;
-
-                    if (valorPorPessoa > 0) {
-                      const promessasGastos = nomes.map(async (nome) => {
-                        const descNova = `Dividido: ${dadosAtualizados.descricao}`;
-                        const gastoCompartilhado = {
-                          descricao: descNova,
-                          pessoa: nome,
-                          valor_total: valorPorPessoa,
-                          num_parcelas: 1,
-                          data_inicio: dadosAtualizados.data,
-                          tipo: dadosAtualizados.tipo,
-                          categoria: dadosAtualizados.categoria_gasto || CATEGORIA_PADRAO,
-                          recorrente: formMeuGasto.categoria === "fixo", 
-                          cartao_id: dadosAtualizados.cartao_id || null,
-                          conta_id: dadosAtualizados.conta_id || null,
-                          user_id: user?.id,
-                        };
-                        return supabase!.from("gastos").insert(gastoCompartilhado);
-                      });
-                      await Promise.all(promessasGastos);
-                    }
-                  }
-                }
               }
               setMeusGastos((prev) => [...prev, novoGasto]);
             }
@@ -656,14 +529,6 @@ export function useMeusGastos({
             if (existente) {
               if (isSupabaseConfigured && supabase) {
                 await meusGastosFunctions.delete(existente.id);
-
-                if (existente.dividido_com) {
-                  const descCompartilhadaAntiga = `Dividido: ${existente.descricao}`;
-                  await supabase
-                    .from("gastos")
-                    .delete()
-                    .eq("descricao", descCompartilhadaAntiga);
-                }
               }
               setMeusGastos((prev) =>
                 prev.filter((g) => g.id !== existente.id)
@@ -673,16 +538,11 @@ export function useMeusGastos({
         }
 
         resetForm();
-        toast.success("Gasto atualizado com sucesso!");
       } finally {
         setSaving(false);
       }
     } else {
       await handleAddMeuGasto();
-    }
-    
-    if (onRefreshGastos && formMeuGasto.dividido_com) {
-      await onRefreshGastos();
     }
   };
 
@@ -700,39 +560,16 @@ export function useMeusGastos({
     setSaving(true);
     try {
       if (isSupabaseConfigured && supabase) {
-        if (gasto.tipo === "credito") {
-          const { data: contas } = await supabase.from("contas_bancarias").select("*").order("nome").limit(1);
-          if (contas && contas.length > 0) {
-            const conta = contas[0];
-            const diferenca = novoStatus ? gasto.valor : -gasto.valor;
-            const novoSaldo = (conta.saldo_atual || 0) - diferenca;
-            
-            await supabase.from("contas_bancarias")
-              .update({ saldo_atual: novoSaldo })
-              .eq("id", conta.id);
-          }
-        } else if (gasto.tipo === "debito" && gasto.conta_id && gasto.categoria !== "fixo") {
-          const { data: contaAtual } = await supabase
-            .from("contas_bancarias")
-            .select("saldo_atual")
-            .eq("id", gasto.conta_id)
-            .single();
-
-          if (contaAtual) {
-            const diferenca = novoStatus ? gasto.valor : -gasto.valor;
-            const novoSaldo = (contaAtual.saldo_atual || 0) - diferenca;
-            await supabase
-              .from("contas_bancarias")
-              .update({ saldo_atual: novoSaldo })
-              .eq("id", gasto.conta_id);
-          }
-        }
         await meusGastosFunctions.update(id, updates);
       }
 
       setMeusGastos((prev) =>
         prev.map((g) => (g.id === id ? { ...g, ...updates } : g))
       );
+
+      if (onRefreshGastos) {
+        await onRefreshGastos();
+      }
     } finally {
       setSaving(false);
     }
@@ -769,15 +606,6 @@ export function useMeusGastos({
           for (const parcela of parcelasRelacionadas) {
             if (isSupabaseConfigured && supabase) {
               await meusGastosFunctions.delete(parcela.id);
-              
-              if (parcela.dividido_com) {
-                const descCompartilhada = `Dividido: ${parcela.descricao}`;
-                await supabase
-                  .from("gastos")
-                  .delete()
-                  .eq("descricao", descCompartilhada)
-                  .in("pessoa", parcela.dividido_com.split(",").map(n => n.trim()));
-              }
             }
           }
 
@@ -785,6 +613,9 @@ export function useMeusGastos({
           setMeusGastos((prev) =>
             prev.filter((g) => !idsParaExcluir.has(g.id))
           );
+          if (onRefreshGastos) {
+            await onRefreshGastos();
+          }
           setModalConfirm({
             show: false,
             titulo: "",
@@ -814,117 +645,114 @@ export function useMeusGastos({
       setMeusGastos((prev) =>
         prev.map((g) => (g.id === id ? { ...g, ativo: novoStatus } : g))
       );
+
+      if (onRefreshGastos) {
+        await onRefreshGastos();
+      }
     } finally {
       setSaving(false);
     }
   };
 
-// Reativar gasto fixo (remover suspensao de um mês específico pra frente)
   const handleReativarGastoFixo = async (id: string, mesRef: Date) => {
-    const gasto = meusGastos.find((g) => g.id === id);
+    const gasto = meusGastos.find((item) => item.id === id);
     if (!gasto) return;
 
-    const mesAtualIndex = mesRef.getFullYear() * 12 + mesRef.getMonth();
-    const mesesSuspensos = gasto.meses_suspensos || [];
+    const mesSuspensao = format(mesRef, "yyyy-MM");
+    const mesesSuspensos = (gasto.meses_suspensos || []).filter(
+      (mes) => mes !== mesSuspensao
+    );
 
-    // Limpa a suspensão desse mês e de QUALQUER mês futuro
-    const novoArray = mesesSuspensos.filter((m) => {
-      const [anoStr, mesStr] = m.split("-");
-      const mIndex = parseInt(anoStr) * 12 + (parseInt(mesStr) - 1);
-      return mIndex < mesAtualIndex;
-    });
+    const updates = {
+      meses_suspensos: mesesSuspensos.length > 0 ? mesesSuspensos : undefined,
+    };
 
     setSaving(true);
     try {
       if (isSupabaseConfigured && supabase) {
-        await meusGastosFunctions.update(id, { meses_suspensos: novoArray });
+        await meusGastosFunctions.update(id, updates);
       }
 
       setMeusGastos((prev) =>
-        prev.map((g) => (g.id === id ? { ...g, meses_suspensos: novoArray } : g))
+        prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
       );
+
+      if (onRefreshGastos) {
+        await onRefreshGastos();
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  // Suspender gasto fixo por múltiplos meses (substituindo qualquer suspensão antiga a partir do mes atual)
-  const handleSuspenderMultiplosMeses = async (id: string, meses: string[], mesRef: Date) => {
-    const gasto = meusGastos.find((g) => g.id === id);
+  const handleSuspenderMultiplosMeses = async (
+    id: string,
+    meses: string[],
+    mesRef: Date
+  ) => {
+    const gasto = meusGastos.find((item) => item.id === id);
     if (!gasto) return;
 
-    const mesAtualIndex = mesRef.getFullYear() * 12 + mesRef.getMonth();
-    const mesesSuspensos = gasto.meses_suspensos || [];
+    const mesReferencia = format(mesRef, "yyyy-MM");
 
-    // Remove qualquer suspensão futura que ja estava lá para recriar as novas
-    const historicoAntigo = mesesSuspensos.filter((m) => {
-      const [anoStr, mesStr] = m.split("-");
-      const mIndex = parseInt(anoStr) * 12 + (parseInt(mesStr) - 1);
-      return mIndex < mesAtualIndex; // mantem só passado
-    });
+    const mesesSuspensos = Array.from(
+      new Set([...(gasto.meses_suspensos || []), mesReferencia, ...meses])
+    );
 
-    const novoArray = Array.from(new Set([...historicoAntigo, ...meses]));
+    const updates = {
+      meses_suspensos: mesesSuspensos,
+    };
 
     setSaving(true);
     try {
       if (isSupabaseConfigured && supabase) {
-        await meusGastosFunctions.update(id, { meses_suspensos: novoArray });
+        await meusGastosFunctions.update(id, updates);
       }
 
       setMeusGastos((prev) =>
-        prev.map((g) => (g.id === id ? { ...g, meses_suspensos: novoArray } : g))
+        prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
       );
+
+      if (onRefreshGastos) {
+        await onRefreshGastos();
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  // Pagar todos os gastos de crédito pendentes do mês atual
   const handlePagarTodosCredito = async () => {
-    const pendentes = meusGastosDoMes.filter(g => g.tipo === "credito" && !g.pago);
-    if (pendentes.length === 0) return;
+    const creditosPendentes = meusGastosDoMes.filter(
+      (gasto) => gasto.tipo === "credito" && !gasto.pago
+    );
 
-    setModalConfirm({
-      show: true,
-      titulo: "Pagar Fatura de Crédito",
-      mensagem: `Deseja dar baixa como pago em todos os ${pendentes.length} gastos de crédito listados neste mês?`,
-      confirmLabel: "Pagar Todos",
-      confirmColor: "green",
-      onConfirm: async () => {
-        if (!supabase) return;
-        setSaving(true);
-        try {
-          // Descontar do saldo total
-          const valorTotal = pendentes.reduce((acc, g) => acc + (g.valor || 0), 0);
-          if (valorTotal > 0) {
-            const { data: contasInfo } = await supabase.from("contas_bancarias").select("*").order("nome").limit(1);
-            if (contasInfo && contasInfo.length > 0) {
-              const conta = contasInfo[0];
-              const novoSaldo = (conta.saldo_atual || 0) - valorTotal;
-              await supabase.from("contas_bancarias").update({ saldo_atual: novoSaldo }).eq("id", conta.id);
-            }
-          }
+    if (creditosPendentes.length === 0) return;
 
-          const ids = pendentes.map(g => g.id);
-          const { error: updateError } = await supabase
-            .from("meus_gastos")
-            .update({ pago: true })
-            .in("id", ids);
+    setSaving(true);
+    try {
+      const dataPagamento = format(new Date(), "yyyy-MM-dd");
 
-          if (updateError) throw updateError;
+      for (const gasto of creditosPendentes) {
+        const updates = {
+          pago: true,
+          data_pagamento: dataPagamento,
+        };
 
-          setMeusGastos((prev) =>
-            prev.map((g) => ids.includes(g.id) ? { ...g, pago: true } : g)
-          );
-          setModalConfirm({ show: false, titulo: "", mensagem: "", onConfirm: () => {} });
-        } catch (err) {
-          console.error("Erro ao pagar todos:", err);
-          setError("Erro ao pagar gastos de crédito. Tente novamente.");
-        } finally {
-          setSaving(false);
+        if (isSupabaseConfigured && supabase) {
+          await meusGastosFunctions.update(gasto.id, updates);
         }
+
+        setMeusGastos((prev) =>
+          prev.map((item) => (item.id === gasto.id ? { ...item, ...updates } : item))
+        );
       }
-    });
+
+      if (onRefreshGastos) {
+        await onRefreshGastos();
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Resetar formulário

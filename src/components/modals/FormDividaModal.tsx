@@ -39,9 +39,9 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
       <div className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-800">
         {/* Header do Modal */}
         <div className="sticky top-0 bg-white dark:bg-gray-900 p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between z-10">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             <Clock className="w-5 h-5 text-orange-400" />
-            Nova Dívida Pendente
+            Nova Cobrança em Aberto
           </h2>
           <button
             onClick={onClose}
@@ -53,10 +53,10 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
 
         {/* Formulário */}
         <div className="p-4 space-y-4">
-          <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 rounded-lg p-3">
-            <p className="text-sm text-orange-800 dark:text-orange-400">
-              Use esta seção para registrar dívidas que não são gastos do mês
-              atual. Ex: Alguém te deve dinheiro e vai pagar aos poucos.
+          <div className="bg-orange-900/30 border border-orange-200 rounded-lg p-3">
+            <p className="text-sm text-orange-600">
+              Use esta seção para registrar valores a receber que não são
+              empréstimos do mês atual. Ex: alguém te deve e vai pagar aos poucos.
             </p>
           </div>
 
@@ -71,7 +71,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
               onChange={(e) =>
                 onFormChange({ ...formData, pessoa: e.target.value })
               }
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none appearance-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none appearance-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             >
               <option value="">Selecione...</option>
               {pessoas.map((pessoa) => (
@@ -95,7 +95,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
                 onFormChange({ ...formData, descricao: e.target.value })
               }
               placeholder="Ex: Empréstimo de Janeiro, Dívida do carro..."
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
 
@@ -119,7 +119,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
                   })
                 }
                 placeholder="0,00"
-                className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+                className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
                 inputMode="numeric"
               />
             </div>
@@ -150,7 +150,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
               type="button"
               onClick={onSubmit}
               disabled={saving}
-              className={`flex-1 px-4 py-3 text-white rounded-lg transition-colors flex items-center justify-center gap-2 ${
+              className={`flex-1 px-4 py-3 text-gray-900 dark:text-gray-100 rounded-lg transition-colors flex items-center justify-center gap-2 ${
                 saving
                   ? "bg-gray-200 dark:bg-gray-700 cursor-not-allowed"
                   : "bg-orange-600 hover:bg-orange-700"
@@ -162,7 +162,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
                   Salvando...
                 </>
               ) : (
-                "Adicionar Dívida"
+                "Adicionar Cobrança"
               )}
             </button>
           </div>

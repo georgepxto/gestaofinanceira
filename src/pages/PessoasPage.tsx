@@ -81,8 +81,8 @@ export const PessoasPage = () => {
         <div className="flex items-center gap-3">
           <Users className="w-7 h-7 text-blue-600" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Pessoas</h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Gerencie quem compartilha gastos com você</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Devedores</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Gerencie pessoas com valores em aberto com você</p>
           </div>
         </div>
         <button
@@ -90,7 +90,7 @@ export const PessoasPage = () => {
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
         >
           <Plus className="w-5 h-5" />
-          <span className="hidden sm:inline">Nova Pessoa</span>
+          <span className="hidden sm:inline">Novo Devedor</span>
         </button>
       </div>
 
@@ -105,7 +105,7 @@ export const PessoasPage = () => {
             <ChevronLeft className="w-6 h-6 text-gray-500 dark:text-gray-400" />
           </button>
           <div className="text-center">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 capitalize">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 capitalize">
               {formatMonthYear(mesVisualizacao)}
             </h2>
             <button
@@ -128,14 +128,14 @@ export const PessoasPage = () => {
       {/* Add Person Form */}
       {showAddForm && (
         <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Adicionar Pessoa</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Adicionar Devedor</h3>
           <div className="space-y-3">
             <input
               type="text"
               value={novaPessoa}
               onChange={(e) => setNovaPessoa(e.target.value)}
-              placeholder="Nome da pessoa"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              placeholder="Nome do devedor"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               autoFocus
             />
@@ -164,7 +164,7 @@ export const PessoasPage = () => {
         {pessoas.length === 0 ? (
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-8 text-center shadow-sm">
             <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 dark:text-gray-400">Nenhuma pessoa cadastrada</p>
+            <p className="text-gray-500 dark:text-gray-400">Nenhum devedor cadastrado</p>
           </div>
         ) : (
           pessoas.map((pessoa) => {
@@ -192,7 +192,7 @@ export const PessoasPage = () => {
                       </span>
                     </div>
                     <div className="text-left">
-                      <h3 className="text-gray-800 dark:text-gray-100 font-semibold text-lg">{pessoa}</h3>
+                      <h3 className="text-gray-900 dark:text-gray-100 font-semibold text-lg">{pessoa}</h3>
                       <p className="text-gray-500 dark:text-gray-400 text-sm">
                         {formatCurrency(stats.gastosMesAtual + stats.totalDividas)} total
                       </p>
@@ -220,11 +220,11 @@ export const PessoasPage = () => {
                     <div className="grid grid-cols-2 gap-3 mt-4 mb-4">
                       <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
                         <p className="text-blue-600 dark:text-blue-400 text-xs mb-1">Gastos do Mês</p>
-                        <p className="text-gray-800 dark:text-gray-100 font-semibold">{formatCurrency(stats.gastosMesAtual)}</p>
+                        <p className="text-gray-900 dark:text-gray-100 font-semibold">{formatCurrency(stats.gastosMesAtual)}</p>
                       </div>
                       <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-3">
                         <p className="text-orange-600 dark:text-orange-400 text-xs mb-1">Dívidas Pendentes</p>
-                        <p className="text-gray-800 dark:text-gray-100 font-semibold">{formatCurrency(stats.totalDividas)}</p>
+                        <p className="text-gray-900 dark:text-gray-100 font-semibold">{formatCurrency(stats.totalDividas)}</p>
                       </div>
                     </div>
 
@@ -271,16 +271,16 @@ export const PessoasPage = () => {
       {/* Gráfico Total */}
       {pessoas.length > 0 && (totalGastosMes > 0 || totalDividasGeral > 0) && (
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4 text-center">Resumo Total</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 text-center">Resumo Total</h3>
           
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 text-center">
               <p className="text-blue-600 dark:text-blue-400 text-xs mb-1">Total Gastos do Mês</p>
-              <p className="text-gray-800 dark:text-gray-100 font-bold text-lg">{formatCurrency(totalGastosMes)}</p>
+              <p className="text-gray-900 dark:text-gray-100 font-bold text-lg">{formatCurrency(totalGastosMes)}</p>
             </div>
             <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-3 text-center">
               <p className="text-orange-600 dark:text-orange-400 text-xs mb-1">Total Dívidas</p>
-              <p className="text-gray-800 dark:text-gray-100 font-bold text-lg">{formatCurrency(totalDividasGeral)}</p>
+              <p className="text-gray-900 dark:text-gray-100 font-bold text-lg">{formatCurrency(totalDividasGeral)}</p>
             </div>
           </div>
 
@@ -317,7 +317,7 @@ export const PessoasPage = () => {
 
           <div className="text-center mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <p className="text-gray-500 dark:text-gray-400 text-sm">Total Geral</p>
-            <p className="text-gray-800 dark:text-gray-100 font-bold text-2xl">
+            <p className="text-gray-900 dark:text-gray-100 font-bold text-2xl">
               {formatCurrency(totalGastosMes + totalDividasGeral)}
             </p>
           </div>

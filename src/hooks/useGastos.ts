@@ -10,7 +10,7 @@ import {
   calcularTotalMes,
 } from "../utils/calculations";
 import { CATEGORIA_PADRAO } from "../utils/categories";
-import { toast } from "../components/ui/Toaster";
+import { PARCELAS_MAX } from "../utils/constants";
 
 interface UseGastosProps {
   user: { id: string } | null;
@@ -157,6 +157,12 @@ export function useGastos({
         return;
       }
 
+      const numParcelas = formData.recorrente ? 1 : Number(formData.num_parcelas);
+      if (!Number.isInteger(numParcelas) || numParcelas < 1 || numParcelas > PARCELAS_MAX) {
+        setError(`Número de parcelas inválido. Use entre 1 e ${PARCELAS_MAX}.`);
+        return;
+      }
+
       // Se está editando
       if (editandoGasto) {
         const { error: updateError } = await supabase
@@ -165,7 +171,7 @@ export function useGastos({
             descricao: formData.descricao.trim(),
             pessoa: formData.pessoa,
             valor_total: valorNumerico,
-            num_parcelas: formData.recorrente ? 1 : formData.num_parcelas,
+            num_parcelas: numParcelas,
             data_inicio: formData.data_inicio,
             tipo: formData.tipo,
             categoria: formData.categoria,
@@ -220,7 +226,7 @@ export function useGastos({
           descricao: formData.descricao.trim(),
           pessoa: formData.pessoa,
           valor_total: valorNumerico,
-          num_parcelas: formData.recorrente ? 1 : formData.num_parcelas,
+          num_parcelas: numParcelas,
           data_inicio: formData.data_inicio,
           tipo: formData.tipo,
           categoria: formData.categoria,
@@ -255,10 +261,30 @@ export function useGastos({
         conta_id: "",
       });
       setShowForm(false);
-      toast.success(editandoGasto ? "Gasto atualizado com sucesso!" : "Gasto adicionado com sucesso!");
     } catch (err) {
-      console.error("Erro ao salvar gasto:", err);
-      setError("Erro ao salvar o gasto. Tente novamente.");
+      const errorMessage =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message?: string }).message)
+          : "Erro ao salvar o gasto. Tente novamente.";
+
+      const errorDetails =
+        err && typeof err === "object" && "details" in err
+          ? String((err as { details?: string }).details || "")
+          : "";
+
+      const errorHint =
+        err && typeof err === "object" && "hint" in err
+          ? String((err as { hint?: string }).hint || "")
+          : "";
+
+      console.error("Erro ao salvar gasto:", {
+        message: errorMessage,
+        details: errorDetails,
+        hint: errorHint,
+        raw: err,
+      });
+
+      setError(errorDetails ? `${errorMessage} (${errorDetails})` : errorMessage);
     } finally {
       setSaving(false);
     }

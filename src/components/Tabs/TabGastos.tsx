@@ -100,7 +100,7 @@ export function TabGastos({
           </button>
 
           <div className="text-center">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 capitalize">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 capitalize">
               {formatMonthYear(mesVisualizacao)}
             </h2>
             <button
@@ -134,7 +134,7 @@ export function TabGastos({
         {/* Card Total Geral */}
         <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800">
           <p className="text-sm text-blue-600 mb-1">Total do Mês</p>
-          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{formatCurrency(totalMes)}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalMes)}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             {parcelasAtivas.length} lançamentos
           </p>
@@ -173,7 +173,7 @@ export function TabGastos({
                       </span>
                     )}
                   </p>
-                  <p className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100">
+                  <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
                     {formatCurrency(resumo.total)}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -317,8 +317,8 @@ export function TabGastos({
       {!loading && (
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-800">
           <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-            <h3 className="font-semibold text-gray-800 dark:text-gray-100 mb-4">
-              Lançamentos do Mês
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              Empréstimos do Mês
             </h3>
 
             {/* Filtros */}
@@ -326,7 +326,7 @@ export function TabGastos({
               {/* Filtro por Pessoa */}
               <div>
                 <label className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block">
-                  Filtrar por pessoa:
+                  Filtrar por devedor:
                 </label>
                 <div className="flex flex-wrap gap-1.5">
                   <button
@@ -365,7 +365,7 @@ export function TabGastos({
                     onClick={() => setFiltroTipoGasto("")}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       filtroTipoGasto === ""
-                        ? "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100"
+                        ? "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                     }`}
                   >
@@ -375,7 +375,7 @@ export function TabGastos({
                     onClick={() => setFiltroTipoGasto("credito")}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                       filtroTipoGasto === "credito"
-                        ? "bg-amber-600 text-white"
+                        ? "bg-amber-600 text-gray-900 dark:text-gray-100"
                         : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                     }`}
                   >
@@ -386,7 +386,7 @@ export function TabGastos({
                     onClick={() => setFiltroTipoGasto("debito")}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                       filtroTipoGasto === "debito"
-                        ? "bg-teal-600 text-white"
+                        ? "bg-teal-600 text-gray-900 dark:text-gray-100"
                         : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
                     }`}
                   >
@@ -409,14 +409,14 @@ export function TabGastos({
                       onChange={(e) => setFiltroDiaGasto(e.target.value)}
                       max={format(mesVisualizacao, "yyyy-MM") + "-31"}
                       min={format(mesVisualizacao, "yyyy-MM") + "-01"}
-                      className="w-full px-3 py-1.5 pl-10 rounded-lg text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none [color-scheme:dark]"
+                      className="w-full px-3 py-1.5 pl-10 rounded-lg text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none [color-scheme:dark]"
                     />
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-600 pointer-events-none" />
                   </div>
                   {filtroDiaGasto && (
                     <button
                       onClick={() => setFiltroDiaGasto("")}
-                      className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-600 text-white hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 transition-colors"
+                      className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-600 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 transition-colors"
                     >
                       Limpar
                     </button>
@@ -512,7 +512,7 @@ export function TabGastos({
                                     {gasto.pessoa}
                                   </span>
                                 </div>
-                                <p className="font-medium text-gray-800 dark:text-gray-100 truncate">
+                                <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
                                   {gasto.descricao}
                                 </p>
                                 <div className="flex items-center gap-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -530,7 +530,7 @@ export function TabGastos({
                                 </div>
                               </div>
                               <div className="text-right flex-shrink-0">
-                                <p className="font-semibold text-gray-800 dark:text-gray-100">
+                                <p className="font-semibold text-gray-900 dark:text-gray-100">
                                   {formatCurrency(valor_parcela)}
                                 </p>
                                 <div className="flex items-center justify-end gap-1 mt-2">
