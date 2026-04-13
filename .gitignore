@@ -29,3 +29,7 @@ vapid_keys.json
 # Playwright artifacts
 playwright-report/
 test-results/
+
+# Test screenshots/images
+screenshots/
+tests/e2e/screenshots/

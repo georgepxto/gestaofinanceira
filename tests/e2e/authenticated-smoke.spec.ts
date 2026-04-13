@@ -1,12 +1,81 @@
+import { appendFile, writeFile } from "node:fs/promises";
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 
 const EMAIL = process.env.E2E_EMAIL;
 const PASSWORD = process.env.E2E_PASSWORD;
 
+const reportPaths = new Map<string, string>();
+const stepCounters = new Map<string, number>();
+
+async function initTxtReport(testInfo: TestInfo, title: string) {
+  const now = new Date();
+  const path = testInfo.outputPath("test-execution-report.txt");
+  reportPaths.set(testInfo.outputDir, path);
+
+  const header = [
+    "===============================================",
+    "RELATORIO DETALHADO DE EXECUCAO E2E",
+    "===============================================",
+    `Titulo: ${title}`,
+    `Dia da semana: ${now.toLocaleDateString("pt-BR", { weekday: "long" })}`,
+    `Data/Hora inicio: ${now.toLocaleString("pt-BR")}`,
+    "Arquivo base: tests/e2e/authenticated-smoke.spec.ts",
+    "",
+    "Formato:",
+    "- CHECKLIST: botoes/acoes previstos para a secao",
+    "- PASSO N: execucao cronologica com URL",
+    "",
+    "INICIO DA EXECUCAO",
+    "-----------------------------------------------",
+    "",
+  ].join("\n");
+
+  stepCounters.set(testInfo.outputDir, 0);
+  await writeFile(path, header, "utf-8");
+}
+
+async function appendTxt(testInfo: TestInfo, message: string) {
+  const path = reportPaths.get(testInfo.outputDir);
+  if (!path) return;
+  await appendFile(path, `${new Date().toLocaleString("pt-BR")} | ${message}\n`, "utf-8");
+}
+
+async function appendChecklist(testInfo: TestInfo, section: string, items: string[]) {
+  await appendTxt(testInfo, `CHECKLIST | ${section}`);
+  for (let i = 0; i < items.length; i += 1) {
+    await appendTxt(testInfo, `  ${i + 1}. ${items[i]}`);
+  }
+}
+
+async function appendStep(testInfo: TestInfo, detail: string) {
+  const current = stepCounters.get(testInfo.outputDir) ?? 0;
+  const next = current + 1;
+  stepCounters.set(testInfo.outputDir, next);
+  await appendTxt(testInfo, `PASSO ${next}: ${detail}`);
+}
+
+async function finalizeTxtReport(testInfo: TestInfo, status: "SUCESSO" | "FALHA") {
+  const path = reportPaths.get(testInfo.outputDir);
+  if (!path) return;
+
+  await appendFile(
+    path,
+    [
+      "",
+      "-----------------------------------------------",
+      `Status final: ${status}`,
+      `Data/Hora fim: ${new Date().toLocaleString("pt-BR")}`,
+      "FIM DA EXECUCAO",
+      "===============================================",
+      "",
+    ].join("\n"),
+    "utf-8"
+  );
+  await testInfo.attach("relatorio-execucao", { path, contentType: "text/plain" });
+}
+
 async function attachScreenshot(page: Page, name: string, testInfo: TestInfo) {
-  const path = testInfo.outputPath(`${name}.png`);
-  await page.screenshot({ path, fullPage: true });
-  await testInfo.attach(name, { path, contentType: "image/png" });
+  await appendStep(testInfo, `Checkpoint ${name} confirmado | URL atual: ${page.url()}`);
 }
 
 async function navigateAllEnabledPages(page: Page, testInfo: TestInfo) {
@@ -39,6 +108,7 @@ async function navigateAllEnabledPages(page: Page, testInfo: TestInfo) {
 }
 
 async function runMetasCrud(page: Page, testInfo: TestInfo) {
+  await appendChecklist(testInfo, "Metas", ["Salvar", "Atualizar", "Excluir"]);
   await page.goto("/metas");
   await expect(page.getByRole("heading", { name: "Metas de Gasto" })).toBeVisible();
 
@@ -71,6 +141,7 @@ async function runMetasCrud(page: Page, testInfo: TestInfo) {
 }
 
 async function ensureContaForPayment(page: Page, testInfo: TestInfo) {
+  await appendChecklist(testInfo, "Contas (pre-cartao)", ["Nova Conta (somente se nenhuma conta existir)"]);
   await page.goto("/contas");
   await expect(page.getByRole("heading", { name: "Contas Bancárias" })).toBeVisible();
 
@@ -90,6 +161,15 @@ async function ensureContaForPayment(page: Page, testInfo: TestInfo) {
 }
 
 async function runCartoesFullFlow(page: Page, testInfo: TestInfo) {
+  await appendChecklist(testInfo, "Cartoes", [
+    "Novo cartao",
+    "Criar",
+    "Editar / Salvar",
+    "Pagar Fatura",
+    "Confirmar Pagamento",
+    "Desfazer pagamento (quando exibido)",
+    "Excluir",
+  ]);
   const cardName = `Cartao E2E ${Date.now()}`;
 
   await ensureContaForPayment(page, testInfo);
@@ -154,6 +234,17 @@ async function runCartoesFullFlow(page: Page, testInfo: TestInfo) {
 }
 
 async function runContasBancariasFullFlow(page: Page, testInfo: TestInfo) {
+  await appendChecklist(testInfo, "Contas Bancarias", [
+    "Proximo mes",
+    "Mes anterior",
+    "Ir para hoje",
+    "Nova Conta / Criar",
+    "Editar Conta / Salvar",
+    "Nova Receita",
+    "Editar Receita",
+    "Excluir Receita",
+    "Excluir Conta",
+  ]);
   const contaName = `Conta E2E ${Date.now()}`;
   const receitaDesc = `Receita E2E ${Date.now()}`;
   const contaSection = page.locator("section[data-tour='contas-section-contas']");
@@ -246,6 +337,14 @@ async function runContasBancariasFullFlow(page: Page, testInfo: TestInfo) {
 }
 
 async function runDevedoresFullFlow(page: Page, testInfo: TestInfo) {
+  await appendChecklist(testInfo, "Devedores", [
+    "Proximo mes",
+    "Mes anterior",
+    "Ir para hoje",
+    "Novo Devedor",
+    "Adicionar",
+    "Excluir",
+  ]);
   const devedorName = `Devedor E2E ${Date.now()}`;
   const listaDevedores = page.locator("div[data-tour='devedores-lista']");
 
@@ -294,6 +393,16 @@ async function runDevedoresFullFlow(page: Page, testInfo: TestInfo) {
 }
 
 async function runDividasEmAbertoFullFlow(page: Page, testInfo: TestInfo) {
+  await appendChecklist(testInfo, "Dividas em Aberto", [
+    "Pagos",
+    "Pendentes",
+    "Todos",
+    "Nova Cobranca",
+    "Adicionar Cobranca",
+    "Registrar Pagamento",
+    "Confirmar Pagamento",
+    "Excluir",
+  ]);
   const descricaoDivida = `Divida E2E ${Date.now()}`;
   const listaDividas = page.locator("div[data-tour='dividas-lista']");
   const getDividaItem = () => listaDividas.locator("li", { hasText: descricaoDivida }).first();
@@ -362,6 +471,18 @@ async function runDividasEmAbertoFullFlow(page: Page, testInfo: TestInfo) {
 }
 
 async function runEmprestimosMesFullFlow(page: Page, testInfo: TestInfo) {
+  await appendChecklist(testInfo, "Emprestimos do Mes", [
+    "Proximo mes",
+    "Mes anterior",
+    "Ir para hoje",
+    "Filtros: Todos / Credito / Debito / Limpar",
+    "Novo Emprestimo",
+    "Salvar / Editar",
+    "Pagamento parcial",
+    "Registrar",
+    "Desfazer ultimo (quando exibido)",
+    "Excluir",
+  ]);
   const descricao = `Emprestimo E2E ${Date.now()}`;
   let pessoaSelecionada = "";
   const listaGastos = page.locator("div[data-tour='gastos-lista']");
@@ -470,6 +591,19 @@ async function runEmprestimosMesFullFlow(page: Page, testInfo: TestInfo) {
 }
 
 async function runMeusGastosFullFlow(page: Page, testInfo: TestInfo) {
+  await appendChecklist(testInfo, "Meus Gastos", [
+    "Proximo mes",
+    "Mes anterior",
+    "Ir para hoje",
+    "Filtro Todos",
+    "Limpar dia",
+    "Novo",
+    "Adicionar Gasto",
+    "Editar",
+    "Salvar Alteracoes",
+    "Marcar pago",
+    "Excluir",
+  ]);
   const descricaoBase = `Meu Gasto E2E ${Date.now()}`;
   const descricaoEditada = `${descricaoBase} Editado`;
   const listaMeusGastos = page.locator("div[data-tour='eu-lista-gastos']");
@@ -553,36 +687,51 @@ test.describe("Fluxo autenticado (opcional)", () => {
   test("login, navegacao e fluxos completos das abas principais", async ({ page }, testInfo) => {
     test.setTimeout(180000);
 
-    await page.goto("/login");
+    await initTxtReport(testInfo, "Fluxo autenticado integrado");
+    await appendStep(testInfo, "Inicio do fluxo autenticado: login e navegacao pelas abas habilitadas.");
 
-    await page.getByPlaceholder("seu@email.com").fill(EMAIL as string);
-    await page.getByPlaceholder("••••••••").fill(PASSWORD as string);
-    await page.getByRole("button", { name: /^Entrar$/ }).click();
+    try {
+      await page.goto("/login");
 
-    await expect(page).not.toHaveURL(/\/login/);
-    await attachScreenshot(page, "10-home-logado", testInfo);
+      await appendStep(testInfo, "Botao testado: Entrar (com credenciais E2E).");
+      await page.getByPlaceholder("seu@email.com").fill(EMAIL as string);
+      await page.getByPlaceholder("••••••••").fill(PASSWORD as string);
+      await page.getByRole("button", { name: /^Entrar$/ }).click();
 
-    const flowFailures: string[] = [];
+      await expect(page).not.toHaveURL(/\/login/);
+      await attachScreenshot(page, "10-home-logado", testInfo);
 
-    const runSection = async (name: string, fn: () => Promise<void>) => {
-      try {
-        await fn();
-      } catch (error) {
-        flowFailures.push(`${name}: ${error instanceof Error ? error.message : String(error)}`);
+      const flowFailures: string[] = [];
+
+      const runSection = async (name: string, fn: () => Promise<void>) => {
+        await appendStep(testInfo, `Secao iniciada: ${name}`);
+        try {
+          await fn();
+          await appendStep(testInfo, `Secao concluida com sucesso: ${name}`);
+        } catch (error) {
+          flowFailures.push(`${name}: ${error instanceof Error ? error.message : String(error)}`);
+          await appendStep(testInfo, `Secao com falha: ${name} -> ${error instanceof Error ? error.message : String(error)}`);
+        }
+      };
+
+      await runSection("Navegacao", async () => navigateAllEnabledPages(page, testInfo));
+      await runSection("Metas", async () => runMetasCrud(page, testInfo));
+      await runSection("Emprestimos do Mes", async () => runEmprestimosMesFullFlow(page, testInfo));
+      await runSection("Cartoes", async () => runCartoesFullFlow(page, testInfo));
+      await runSection("Contas", async () => runContasBancariasFullFlow(page, testInfo));
+      await runSection("Devedores", async () => runDevedoresFullFlow(page, testInfo));
+      await runSection("Dividas em Aberto", async () => runDividasEmAbertoFullFlow(page, testInfo));
+      await runSection("Meus Gastos", async () => runMeusGastosFullFlow(page, testInfo));
+
+      if (flowFailures.length > 0) {
+        await finalizeTxtReport(testInfo, "FALHA");
+        throw new Error(`Falhas em secoes do fluxo integrado:\n- ${flowFailures.join("\n- ")}`);
       }
-    };
 
-    await runSection("Navegacao", async () => navigateAllEnabledPages(page, testInfo));
-    await runSection("Metas", async () => runMetasCrud(page, testInfo));
-    await runSection("Emprestimos do Mes", async () => runEmprestimosMesFullFlow(page, testInfo));
-    await runSection("Cartoes", async () => runCartoesFullFlow(page, testInfo));
-    await runSection("Contas", async () => runContasBancariasFullFlow(page, testInfo));
-    await runSection("Devedores", async () => runDevedoresFullFlow(page, testInfo));
-    await runSection("Dividas em Aberto", async () => runDividasEmAbertoFullFlow(page, testInfo));
-    await runSection("Meus Gastos", async () => runMeusGastosFullFlow(page, testInfo));
-
-    if (flowFailures.length > 0) {
-      throw new Error(`Falhas em secoes do fluxo integrado:\n- ${flowFailures.join("\n- ")}`);
+      await finalizeTxtReport(testInfo, "SUCESSO");
+    } catch (error) {
+      await finalizeTxtReport(testInfo, "FALHA");
+      throw error;
     }
   });
 });
