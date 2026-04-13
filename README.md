@@ -258,6 +258,48 @@ VITE_SUPABASE_URL=https://seu-projeto.supabase.co
 VITE_SUPABASE_ANON_KEY=sua-chave-anonima
 ```
 
+## 🧪 Testes E2E Visuais (Playwright)
+
+Esta configuração abre navegador real e gera evidências visuais (screenshots, trace e relatório HTML).
+
+### Rodar testes públicos (landing/login)
+
+```bash
+npm run test:e2e
+```
+
+### Rodar vendo o navegador
+
+```bash
+npm run test:e2e:headed
+```
+
+### Rodar no modo UI do Playwright
+
+```bash
+npm run test:e2e:ui
+```
+
+### Testar páginas internas autenticadas (opcional)
+
+Defina credenciais válidas antes de executar:
+
+```bash
+export E2E_EMAIL="seu-email"
+export E2E_PASSWORD="sua-senha"
+npm run test:e2e:auth
+```
+
+Se `E2E_EMAIL` e `E2E_PASSWORD` não estiverem definidos, o teste autenticado é ignorado automaticamente.
+
+### Ver relatório
+
+Após executar os testes:
+
+```bash
+npx playwright show-report
+```
+
 Se não configurado, a app usa modo demo com localStorage.
 
 ## 📊 Dados de Demonstração

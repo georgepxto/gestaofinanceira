@@ -503,6 +503,7 @@ export const CartoesCreditoPage = () => {
       setShowPagarFatura(false);
       setValorPagamento("");
       setContaPagamento("");
+      toast.success("Pagamento da fatura registrado com sucesso!");
     } finally { setSaving(false); }
   };
 
@@ -543,6 +544,7 @@ export const CartoesCreditoPage = () => {
             !(p.cartao_id === cartaoSelecionado.id && p.mes === mesFatura)
           ));
           await fetchContas();
+          toast.success("Pagamento da fatura desfeito com sucesso!");
         } finally { setSaving(false); }
       },
     });

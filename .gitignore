@@ -25,3 +25,7 @@ dist-ssr
 
 # VAPID keys (não commitar a private key!)
 vapid_keys.json
+
+# Playwright artifacts
+playwright-report/
+test-results/
