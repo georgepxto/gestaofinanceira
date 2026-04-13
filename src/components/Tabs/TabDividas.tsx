@@ -53,7 +53,7 @@ export function TabDividas({
   children,
 }: TabDividasProps) {
   return (
-    <>
+    <div className="space-y-4 md:space-y-6">
       {/* Card Total Dívidas */}
       <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-800" data-tour="dividas-total-card">
         <p className={`text-sm mb-1 flex items-center gap-2 ${
@@ -415,6 +415,6 @@ export function TabDividas({
           </ul>
         )}
       </div>
-    </>
+    </div>
   );
 }

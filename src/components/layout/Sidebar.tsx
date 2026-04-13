@@ -18,6 +18,7 @@ import {
   Shield,
 } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
+import { useTutorialHelpContext } from "./TutorialHelpContext";
 import { useAppContext } from "../../context";
 
 interface SidebarProps {
@@ -30,6 +31,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
+  const { helpButton } = useTutorialHelpContext();
   const { isAdmin, features } = useAppContext();
 
   // Construir itens do menu baseados nas features do usuário
@@ -101,7 +103,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
             Hedge
           </h1>
         </div>
-        <NotificationBell />
+        <div className="flex items-center gap-2">
+          {helpButton && (
+            <button
+              onClick={helpButton.onClick}
+              data-tour={helpButton.dataTour}
+              title={helpButton.title}
+              aria-label={helpButton.ariaLabel}
+              className="flex w-8 h-8 rounded-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 text-gray-500 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-400 dark:hover:border-blue-500 items-center justify-center shadow-sm transition-colors"
+            >
+              ?
+            </button>
+          )}
+          <NotificationBell />
+        </div>
       </header>
 
       {/* Mobile Overlay */}

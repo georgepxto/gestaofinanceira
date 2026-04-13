@@ -9,3 +9,5 @@ export { useMeusGastos } from "./useMeusGastos";
 export { useCartoes } from "./useCartoes";
 export { useFeatureFlags } from "./useFeatureFlags";
 export { useAdmin } from "./useAdmin";
+export { useGuidedTour } from "./useGuidedTour";
+export { usePageTutorialHelpButton } from "./usePageTutorialHelpButton";

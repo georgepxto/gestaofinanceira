@@ -3,6 +3,7 @@ import { Settings, User, Trash2, Loader2, AlertTriangle, Check, Sun, Moon } from
 import { useAppContext } from "../context";
 import { supabase } from "../lib/supabase";
 import { useTheme } from "../hooks/useTheme";
+import { PAGE_CONTAINER_CLASS } from "../utils/layout";
 
 export const ConfiguracoesPage = () => {
   const { user, handleLogout, setModalFeedback } = useAppContext();
@@ -176,7 +177,7 @@ export const ConfiguracoesPage = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className={PAGE_CONTAINER_CLASS}>
       {/* Page Header */}
       <div className="flex items-center gap-3">
         <Settings className="w-7 h-7 text-gray-600 dark:text-gray-400" />

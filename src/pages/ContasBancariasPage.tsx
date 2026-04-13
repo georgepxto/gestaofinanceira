@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { format } from "date-fns";
-import { Building2, Plus, Loader2, DollarSign, TrendingUp, Trash2, Edit2, X, ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
+import { Building2, Plus, Loader2, DollarSign, TrendingUp, Trash2, Edit2, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAppContext } from "../context";
+import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
+import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
 import { formatCurrency, formatCurrencyInput, parseCurrency, formatMonthYear } from "../utils/calculations";
+import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { CATEGORIAS_RECEITA, TIPOS_RECEITA, CATEGORIA_RECEITA_PADRAO } from "../utils/receitas";
+import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { toast } from "../components/ui/Toaster";
 import type { ContaBancaria, Receita, ContaBancariaForm, ReceitaForm } from "../types";
 
@@ -98,14 +102,6 @@ export const ContasBancariasPage = () => {
     conta_id: "", descricao: "", valor: "", categoria: CATEGORIA_RECEITA_PADRAO,
     tipo: "fixo", dia_recebimento: "1", num_meses: "12",
   });
-  const [viewportSize, setViewportSize] = useState(() => ({
-    width: typeof window !== "undefined" ? window.innerWidth : 0,
-    height: typeof window !== "undefined" ? window.innerHeight : 0,
-  }));
-  const [showTutorial, setShowTutorial] = useState(false);
-  const [tutorialStepIndex, setTutorialStepIndex] = useState(0);
-  const [tutorialSteps, setTutorialSteps] = useState<ContasTutorialStep[]>([]);
-  const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
 
   // Fetches
   const fetchContas = useCallback(async () => {
@@ -126,171 +122,31 @@ export const ContasBancariasPage = () => {
       Promise.all([fetchContas(), fetchReceitas()]).finally(() => setLoading(false));
     }
   }, [user, fetchContas, fetchReceitas]);
+  const {
+    viewportSize,
+    showTutorial,
+    tutorialStepIndex,
+    tutorialSteps,
+    currentTutorialStep,
+    highlightRect,
+    tooltipLeft,
+    tooltipTop,
+    showTooltipBelow,
+    openTutorial,
+    closeTutorial,
+    nextTutorialStep,
+    previousTutorialStep,
+  } = useGuidedTour<ContasTutorialStep>({
+    steps: CONTAS_TUTORIAL_STEPS,
+    storageKey: CONTAS_TUTORIAL_KEY,
+  });
 
-  useEffect(() => {
-    const handleResize = () => {
-      setViewportSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-
-    window.addEventListener("resize", handleResize);
-    handleResize();
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    const alreadySeen = localStorage.getItem(CONTAS_TUTORIAL_KEY);
-    if (!alreadySeen) {
-      const availableSteps = CONTAS_TUTORIAL_STEPS.filter((step) =>
-        Boolean(document.querySelector(step.target))
-      );
-      setTutorialSteps(availableSteps);
-      setShowTutorial(availableSteps.length > 0);
-      setTutorialStepIndex(0);
-      localStorage.setItem(CONTAS_TUTORIAL_KEY, "true");
-    }
-  }, []);
-
-  const openTutorial = () => {
-    const availableSteps = CONTAS_TUTORIAL_STEPS.filter((step) =>
-      Boolean(document.querySelector(step.target))
-    );
-    setTutorialSteps(availableSteps);
-    setTutorialStepIndex(0);
-    setShowTutorial(availableSteps.length > 0);
-  };
-
-  const closeTutorial = () => {
-    setShowTutorial(false);
-  };
-
-  const nextTutorialStep = () => {
-    if (tutorialStepIndex >= tutorialSteps.length - 1) {
-      closeTutorial();
-      return;
-    }
-    setTutorialStepIndex((prev) => prev + 1);
-  };
-
-  const previousTutorialStep = () => {
-    setTutorialStepIndex((prev) => Math.max(prev - 1, 0));
-  };
-
-  useEffect(() => {
-    if (!showTutorial || tutorialSteps.length === 0) return;
-
-    const currentStep = tutorialSteps[tutorialStepIndex];
-    const targetElement = document.querySelector(currentStep.target);
-
-    if (!targetElement) {
-      setHighlightRect(null);
-      return;
-    }
-
-    const updateRect = () => {
-      const el = document.querySelector(currentStep.target);
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      setHighlightRect(rect);
-    };
-
-    const targetRect = (targetElement as HTMLElement).getBoundingClientRect();
-    const isFullyVisible =
-      targetRect.top >= 96 &&
-      targetRect.bottom <= window.innerHeight - 96 &&
-      targetRect.left >= 16 &&
-      targetRect.right <= window.innerWidth - 16;
-
-    if (!isFullyVisible && tutorialStepIndex > 0) {
-      (targetElement as HTMLElement).scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "nearest",
-      });
-    }
-
-    updateRect();
-    window.addEventListener("resize", updateRect);
-    window.addEventListener("scroll", updateRect, true);
-
-    return () => {
-      window.removeEventListener("resize", updateRect);
-      window.removeEventListener("scroll", updateRect, true);
-    };
-  }, [showTutorial, tutorialStepIndex, tutorialSteps]);
-
-  const currentTutorialStep = tutorialSteps[tutorialStepIndex];
-
-  const isMobile = viewportSize.width < 640;
-  const tooltipWidth = isMobile ? Math.min(viewportSize.width - 24, 360) : 340;
-  const tooltipHeight = isMobile ? 320 : 300;
-  const tooltipLeft = highlightRect
-    ? isMobile
-      ? 12
-      : Math.min(
-          Math.max(16, highlightRect.left + highlightRect.width / 2 - tooltipWidth / 2),
-          Math.max(16, viewportSize.width - tooltipWidth - 16)
-        )
-    : 16;
-  const { tooltipTop, showTooltipBelow } = (() => {
-    if (!highlightRect) {
-      return { tooltipTop: 16, showTooltipBelow: false };
-    }
-
-    if (isMobile) {
-      return {
-        tooltipTop: Math.max(12, viewportSize.height - tooltipHeight - 12),
-        showTooltipBelow: true,
-      };
-    }
-
-    const minTop = 16;
-    const maxTop = Math.max(16, viewportSize.height - tooltipHeight - 16);
-    const spacing = 12;
-    const preferredPlacement = currentTutorialStep?.placement;
-    const topBelow = highlightRect.bottom + spacing;
-    const topAbove = highlightRect.top - tooltipHeight - spacing;
-    const canPlaceBelow = topBelow <= maxTop;
-    const canPlaceAbove = topAbove >= minTop;
-
-    if (preferredPlacement === "below" && canPlaceBelow) {
-      return { tooltipTop: topBelow, showTooltipBelow: true };
-    }
-
-    if (preferredPlacement === "above" && canPlaceAbove) {
-      return { tooltipTop: topAbove, showTooltipBelow: false };
-    }
-
-    if (canPlaceBelow) {
-      return { tooltipTop: topBelow, showTooltipBelow: true };
-    }
-
-    if (canPlaceAbove) {
-      return { tooltipTop: topAbove, showTooltipBelow: false };
-    }
-
-    const clampedBelow = Math.min(Math.max(topBelow, minTop), maxTop);
-    const clampedAbove = Math.min(Math.max(topAbove, minTop), maxTop);
-    const overlapBelow = Math.max(
-      0,
-      Math.min(clampedBelow + tooltipHeight, highlightRect.bottom) -
-        Math.max(clampedBelow, highlightRect.top)
-    );
-    const overlapAbove = Math.max(
-      0,
-      Math.min(clampedAbove + tooltipHeight, highlightRect.bottom) -
-        Math.max(clampedAbove, highlightRect.top)
-    );
-
-    if (overlapBelow <= overlapAbove) {
-      return { tooltipTop: clampedBelow, showTooltipBelow: true };
-    }
-
-    return { tooltipTop: clampedAbove, showTooltipBelow: false };
-  })();
+  usePageTutorialHelpButton({
+    onClick: openTutorial,
+    title: "Ver tutorial da aba Contas Bancárias",
+    ariaLabel: "Ver tutorial da aba Contas Bancárias",
+    dataTour: "contas-help-button",
+  });
 
   // Calcular saldo
   const calcularSaldoConta = (conta: ContaBancaria) => {
@@ -314,7 +170,7 @@ export const ContasBancariasPage = () => {
       if (g.conta_id !== conta.id) return false;
       if (g.ativo === false) return false;
       if (g.meses_suspensos?.includes(mesAtualStr)) return false;
-      
+
       const diaVencimento = g.dia_vencimento || 1;
       const diaEfetivo = Math.min(diaVencimento, ultimoDiaMes);
       return diaEfetivo <= diaAtual;
@@ -331,7 +187,7 @@ export const ContasBancariasPage = () => {
 
     // Usar saldo_atual como base (que inclui pagamentos de fatura e receitas/gastos avulsos)
     const saldoBase = conta.saldo_atual !== undefined && conta.saldo_atual !== null ? conta.saldo_atual : conta.saldo_inicial;
-    
+
     const totalReceitas = receitasRecebidas.reduce((sum, r) => sum + r.valor, 0);
     const totalGastosFixos = gastosFixosDaConta.reduce((sum, g) => sum + g.valor, 0);
     const totalGastosDivida = gastosDividaDaConta.reduce((sum, g) => sum + g.valor, 0);
@@ -347,20 +203,20 @@ export const ContasBancariasPage = () => {
     try {
       const saldoInicial = parseCurrency(formConta.saldo_inicial);
       const saldoAtual = parseCurrency(formConta.saldo_atual);
-      const dados = { 
-        nome: formConta.nome.trim(), 
-        banco: formConta.banco.trim(), 
+      const dados = {
+        nome: formConta.nome.trim(),
+        banco: formConta.banco.trim(),
         saldo_inicial: saldoInicial,
-        saldo_atual: saldoAtual
+        saldo_atual: saldoAtual,
       };
       if (editandoConta) {
         await supabase.from("contas_bancarias").update(dados).eq("id", editandoConta.id);
       } else {
         // Ao criar nova conta, saldo_atual começa igual ao saldo_inicial
-        await supabase.from("contas_bancarias").insert({ 
-          ...dados, 
+        await supabase.from("contas_bancarias").insert({
+          ...dados,
           saldo_atual: saldoInicial,
-          user_id: user.id 
+          user_id: user.id,
         });
       }
       await fetchContas();
@@ -370,11 +226,11 @@ export const ContasBancariasPage = () => {
   };
 
   const handleEditConta = (c: ContaBancaria) => {
-    setFormConta({ 
-      nome: c.nome, 
-      banco: c.banco || "", 
+    setFormConta({
+      nome: c.nome,
+      banco: c.banco || "",
       saldo_inicial: formatCurrency(c.saldo_inicial).replace("R$\u00a0", ""),
-      saldo_atual: formatCurrency(c.saldo_atual || c.saldo_inicial).replace("R$\u00a0", "")
+      saldo_atual: formatCurrency(c.saldo_atual || c.saldo_inicial).replace("R$\u00a0", ""),
     });
     setEditandoConta(c);
     setShowModalConta(true);
@@ -383,24 +239,24 @@ export const ContasBancariasPage = () => {
   const handleDeleteConta = (id: string, nome: string) => {
     setModalConfirm({
       show: true, titulo: "Excluir Conta", mensagem: `Excluir "${nome}"?`,
-      onConfirm: async () => { 
+      onConfirm: async () => {
         if (!supabase) return;
         const { error } = await supabase.from("contas_bancarias").delete().eq("id", id);
-        
+
         if (error) {
           console.error("Erro ao excluir conta:", error);
-          if (error.code === '23503' || String(error.message).includes('foreign key') || String(error.message).includes('Conflict')) {
+          if (error.code === "23503" || String(error.message).includes("foreign key") || String(error.message).includes("Conflict")) {
             setModalFeedback?.({
               show: true,
               titulo: "Não é possível excluir",
               mensagem: "Esta conta não pode ser apagada pois existem gastos ou receitas vinculadas a ela.",
-              tipo: "info"
+              tipo: "info",
             });
           } else {
             setModalFeedback?.({ show: true, titulo: "Erro", mensagem: "Erro ao excluir conta.", tipo: "info" });
           }
         } else {
-          await fetchContas(); 
+          await fetchContas();
         }
       },
     });
@@ -420,10 +276,10 @@ export const ContasBancariasPage = () => {
     try {
       const valorReceita = parseCurrency(formReceita.valor);
       const dados = {
-        descricao: formReceita.descricao.trim(), 
-        valor: valorReceita, 
+        descricao: formReceita.descricao.trim(),
+        valor: valorReceita,
         categoria: formReceita.categoria,
-        tipo: formReceita.tipo, 
+        tipo: formReceita.tipo,
         dia_recebimento: formReceita.tipo === "avulso" ? new Date().getDate() : parseInt(formReceita.dia_recebimento) || 1,
         num_meses: formReceita.tipo === "recorrente" ? parseInt(formReceita.num_meses) : null,
         conta_id: formReceita.conta_id || null,
@@ -433,13 +289,13 @@ export const ContasBancariasPage = () => {
       if (editandoReceita) {
         const { error } = await supabase.from("receitas").update(dados).eq("id", editandoReceita.id);
         if (error) console.error("Erro update:", error);
-        
+
         // Se for avulso e a conta mudou, transferir o valor
         if (editandoReceita.tipo === "avulso") {
           const contaAntiga = editandoReceita.conta_id;
           const contaNova = formReceita.conta_id;
           const valorAntigo = editandoReceita.valor;
-          
+
           // Remover da conta antiga
           if (contaAntiga) {
             const conta = contas.find(c => c.id === contaAntiga);
@@ -461,7 +317,7 @@ export const ContasBancariasPage = () => {
       } else {
         const { error } = await supabase.from("receitas").insert({ ...dados, user_id: user.id });
         if (error) console.error("Erro insert:", error);
-        
+
         // Se for receita avulsa, adicionar imediatamente ao saldo_atual da conta
         if (formReceita.tipo === "avulso" && formReceita.conta_id) {
           const conta = contas.find(c => c.id === formReceita.conta_id);
@@ -518,17 +374,7 @@ export const ContasBancariasPage = () => {
   if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
 
   return (
-    <div className="relative p-4 md:p-6 space-y-6">
-      <button
-        onClick={openTutorial}
-        data-tour="contas-help-button"
-        className="flex fixed top-4 right-16 md:right-20 z-40 w-8 h-8 rounded-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 text-gray-500 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-400 dark:hover:border-blue-500 items-center justify-center shadow-sm transition-colors"
-        title="Ver tutorial da aba Contas Bancárias"
-        aria-label="Ver tutorial da aba Contas Bancárias"
-      >
-        <HelpCircle className="w-4 h-4" />
-      </button>
-
+    <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
       {/* Header */}
       <div className="flex items-center gap-3" data-tour="contas-header">
         <Building2 className="w-7 h-7 text-blue-600" />
@@ -741,134 +587,21 @@ export const ContasBancariasPage = () => {
         </div>
       )}
 
-      {showTutorial && currentTutorialStep && (
-        <div className="fixed inset-0 z-[60] pointer-events-none" style={{ position: "fixed" }}>
-          {highlightRect && (
-            <>
-              <div
-                className="fixed bg-black/75"
-                style={{
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: Math.max(0, highlightRect.top - 8),
-                }}
-              />
-              <div
-                className="fixed bg-black/75"
-                style={{
-                  top: Math.max(0, highlightRect.top - 8),
-                  left: 0,
-                  width: Math.max(0, highlightRect.left - 8),
-                  height: highlightRect.height + 16,
-                }}
-              />
-              <div
-                className="fixed bg-black/75"
-                style={{
-                  top: Math.max(0, highlightRect.top - 8),
-                  left: highlightRect.right + 8,
-                  width: Math.max(0, viewportSize.width - highlightRect.right - 8),
-                  height: highlightRect.height + 16,
-                }}
-              />
-              <div
-                className="fixed bg-black/75"
-                style={{
-                  top: highlightRect.bottom + 8,
-                  left: 0,
-                  width: "100%",
-                  height: Math.max(0, viewportSize.height - highlightRect.bottom - 8),
-                }}
-              />
-              <div
-                className="fixed rounded-2xl border-2 border-blue-300 bg-transparent"
-                style={{
-                  top: highlightRect.top - 8,
-                  left: highlightRect.left - 8,
-                  width: highlightRect.width + 16,
-                  height: highlightRect.height + 16,
-                  boxShadow: "0 0 0 2px rgba(96,165,250,0.55), 0 0 24px rgba(59,130,246,0.18)",
-                }}
-              />
-            </>
-          )}
-
-          {highlightRect && (
-            <div
-              className="absolute w-0 h-0"
-              style={{
-                left: highlightRect.left + highlightRect.width / 2 - 10,
-                top: showTooltipBelow ? highlightRect.bottom + 6 : highlightRect.top - 16,
-                borderLeft: "10px solid transparent",
-                borderRight: "10px solid transparent",
-                borderTop: showTooltipBelow ? "12px solid #2563EB" : "0px solid transparent",
-                borderBottom: showTooltipBelow ? "0px solid transparent" : "12px solid #2563EB",
-              }}
-            />
-          )}
-
-          <div
-            className="absolute pointer-events-auto bg-gray-900 text-gray-100 w-[calc(100vw-24px)] max-w-[360px] rounded-2xl border border-blue-900 overflow-hidden shadow-2xl max-h-[calc(100vh-24px)] overflow-y-auto"
-            style={{ left: tooltipLeft, top: tooltipTop }}
-          >
-            <div className="px-4 py-3 border-b border-blue-900 flex items-start justify-between gap-3 bg-blue-700">
-              <div>
-                <p className="text-xs font-medium text-blue-100">
-                  Tutorial de Contas • Passo {tutorialStepIndex + 1} de {tutorialSteps.length}
-                </p>
-                <h3 className="text-base font-semibold text-white mt-1">
-                  {currentTutorialStep.titulo}
-                </h3>
-              </div>
-              <button
-                onClick={closeTutorial}
-                className="p-1.5 rounded-lg hover:bg-blue-800 transition-colors"
-                aria-label="Fechar tutorial"
-              >
-                <X className="w-4 h-4 text-white" />
-              </button>
-            </div>
-
-            <div className="px-4 py-4">
-              <div className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-950 text-blue-200 text-xs font-semibold mb-3 border border-blue-900">
-                {currentTutorialStep.alvo}
-              </div>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                {currentTutorialStep.descricao}
-              </p>
-
-              <div className="flex gap-1.5 mt-4">
-                {tutorialSteps.map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1.5 flex-1 rounded-full transition-colors ${
-                      i <= tutorialStepIndex ? "bg-blue-500" : "bg-gray-700"
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="px-4 py-3 border-t border-gray-800 flex items-center justify-between gap-2 bg-gray-950">
-              <button
-                onClick={previousTutorialStep}
-                disabled={tutorialStepIndex === 0}
-                className="px-3 py-1.5 rounded-lg border border-gray-700 text-gray-300 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-              >
-                Voltar
-              </button>
-
-              <button
-                onClick={nextTutorialStep}
-                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm"
-              >
-                {tutorialStepIndex === tutorialSteps.length - 1 ? "Concluir" : "Próximo"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <GuidedTourOverlay
+        show={showTutorial}
+        tutorialTitle={TUTORIAL_TITLES.contas}
+        currentStep={currentTutorialStep}
+        stepIndex={tutorialStepIndex}
+        totalSteps={tutorialSteps.length}
+        highlightRect={highlightRect}
+        viewportSize={viewportSize}
+        tooltipLeft={tooltipLeft}
+        tooltipTop={tooltipTop}
+        showTooltipBelow={showTooltipBelow}
+        onClose={closeTutorial}
+        onPrevious={previousTutorialStep}
+        onNext={nextTutorialStep}
+      />
     </div>
   );
 };

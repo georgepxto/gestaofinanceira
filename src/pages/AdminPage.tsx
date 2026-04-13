@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useAdmin } from "../hooks/useAdmin";
 import { useAppContext } from "../context";
+import { PAGE_CONTAINER_CLASS } from "../utils/layout";
 import type { AdminUser, UserFeatures, AdminTab, ActivityLog, InactiveUser } from "../types/admin";
 import {
   DEFAULT_FEATURES,
@@ -312,7 +313,7 @@ export const AdminPage = () => {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6 pb-20">
+    <div className={`${PAGE_CONTAINER_CLASS} pb-20`}>
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
