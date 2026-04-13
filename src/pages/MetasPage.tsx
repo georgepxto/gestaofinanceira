@@ -68,7 +68,7 @@ const METAS_TUTORIAL_STEPS: MetasTutorialStep[] = [
 ];
 
 export const MetasPage = () => {
-  const { user } = useAppContext();
+  const { user, setModalConfirm } = useAppContext();
 
   const [metas, setMetas] = useState<MetaGasto[]>([]);
   const [novaMeta, setNovaMeta] = useState({ categoria: "", limite: "" });
@@ -160,15 +160,30 @@ export const MetasPage = () => {
     }
   };
 
-  const handleDeleteMeta = async (id: string) => {
-    if (!supabase) return;
-    await supabase.from("metas_gasto").delete().eq("id", id);
-    await fetchMetas(false);
+  const handleDeleteMeta = (meta: MetaGasto) => {
+    setModalConfirm({
+      show: true,
+      titulo: "Excluir meta",
+      mensagem: `Deseja realmente excluir a meta de "${meta.categoria}"?`,
+      onConfirm: async () => {
+        if (!supabase) return;
+        try {
+          const { error } = await supabase.from("metas_gasto").delete().eq("id", meta.id);
+          if (error) throw error;
 
-    if (metaEmEdicao?.id === id) {
-      setMetaEmEdicao(null);
-      setNovaMeta({ categoria: "", limite: "" });
-    }
+          await fetchMetas(false);
+
+          if (metaEmEdicao?.id === meta.id) {
+            setMetaEmEdicao(null);
+            setNovaMeta({ categoria: "", limite: "" });
+          }
+        } catch (err) {
+          console.error("Erro ao excluir meta:", err);
+          toast.error("Não foi possível excluir a meta.");
+          throw err;
+        }
+      },
+    });
   };
 
   const handleEditarMeta = (meta: MetaGasto) => {
@@ -291,7 +306,7 @@ export const MetasPage = () => {
                   </button>
 
                   <button
-                    onClick={() => handleDeleteMeta(meta.id)}
+                    onClick={() => handleDeleteMeta(meta)}
                     data-tour="metas-item-remover"
                     className="p-1.5 hover:bg-red-50 rounded-lg transition-colors group"
                     title="Remover meta"
