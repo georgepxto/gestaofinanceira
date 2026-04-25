@@ -18,9 +18,11 @@ import {
 } from "lucide-react";
 import { useAppContext } from "../context";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
+import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
 import { formatCurrency, isGastoAtivoNoMes } from "../utils/calculations";
+import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import type { MetaGasto } from "../types";
@@ -253,6 +255,7 @@ export const DashboardPage = () => {
   const { user } = useAppContext();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [mesVisualizacao, setMesVisualizacao] = useState(new Date());
   const [data, setData] = useState<DashboardData>({
@@ -313,6 +316,7 @@ export const DashboardPage = () => {
     if (!supabase || !user) return;
     
     setLoading(true);
+    setLoadError(null);
     try {
       // Buscar todos os dados em paralelo para acelerar o carregamento
       const [
@@ -597,6 +601,7 @@ export const DashboardPage = () => {
       });
     } catch (err) {
       console.error("Erro ao carregar dashboard:", err);
+      setLoadError(toActionableErrorMessage(err, "Não foi possível carregar os indicadores da dashboard."));
     } finally {
       setLoading(false);
     }
@@ -612,10 +617,17 @@ export const DashboardPage = () => {
   }, [fetchDashboardData, mesVisualizacao, refreshKey]);
 
   if (loading) {
+    return <PageLoadingState title="Carregando dashboard" description="Estamos calculando os principais indicadores do mês." />;
+  }
+
+  if (loadError) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-      </div>
+      <PageErrorState
+        title="Não foi possível carregar a dashboard"
+        description={loadError}
+        onAction={() => fetchDashboardData()}
+        actionLabel="Recarregar indicadores"
+      />
     );
   }
 
@@ -744,9 +756,11 @@ export const DashboardPage = () => {
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-44 flex items-center justify-center text-gray-400 text-sm">
-              Sem dados suficientes
-            </div>
+            <PageEmptyState
+              compact
+              title="Sem dados para o gráfico"
+              description="Adicione novos gastos neste mês para visualizar a tendência."
+            />
           )}
         </div>
 
@@ -778,9 +792,11 @@ export const DashboardPage = () => {
               ))}
             </div>
           ) : (
-            <div className="h-32 flex items-center justify-center text-gray-400 text-sm">
-              Nenhum gasto este mês
-            </div>
+            <PageEmptyState
+              compact
+              title="Nenhum gasto no período"
+              description="Quando você registrar gastos, eles aparecerão aqui automaticamente."
+            />
           )}
         </div>
       </div>

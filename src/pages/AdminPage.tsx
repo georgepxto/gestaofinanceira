@@ -11,7 +11,6 @@ import {
   ToggleRight,
   Search,
   RefreshCw,
-  AlertCircle,
   CheckCircle,
   Clock,
   Mail,
@@ -29,6 +28,8 @@ import {
 } from "lucide-react";
 import { useAdmin } from "../hooks/useAdmin";
 import { useAppContext } from "../context";
+import { PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
+import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import { PAGE_CONTAINER_CLASS } from "../utils/layout";
 import type { AdminUser, UserFeatures, AdminTab, ActivityLog, InactiveUser } from "../types/admin";
 import {
@@ -306,9 +307,10 @@ export const AdminPage = () => {
 
   if (loading && users.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-      </div>
+      <PageLoadingState
+        title="Carregando painel admin"
+        description="Estamos sincronizando usuários, permissões e atividade recente."
+      />
     );
   }
 
@@ -351,11 +353,16 @@ export const AdminPage = () => {
 
       {/* Erro global */}
       {error && (
-        <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <p className="text-sm">{error}</p>
-          <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-600">✕</button>
-        </div>
+        <PageErrorState
+          compact
+          title="Ocorreu um problema no painel admin"
+          description={toActionableErrorMessage(error, "Não foi possível concluir a última ação administrativa.")}
+          onAction={() => {
+            setError(null);
+            fetchUsers();
+          }}
+          actionLabel="Recarregar usuários"
+        />
       )}
 
       {/* ==================== TAB: USERS ==================== */}

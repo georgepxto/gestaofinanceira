@@ -8,6 +8,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { format } from "date-fns";
+import { PageEmptyState } from "../ui/AsyncState";
 import type { SaldoDevedor } from "../../types";
 import { formatCurrency } from "../../utils/calculations";
 
@@ -246,26 +247,31 @@ export function TabDividas({
         </div>
 
         {dividasFiltradas.length === 0 ? (
-          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-            <Clock className="w-12 h-12 mx-auto mb-3 text-gray-600 dark:text-gray-400" />
-            <p>
-              {filtroPessoaDivida
-                ? `Nenhuma cobrança para ${filtroPessoaDivida}`
-                : "Nenhuma cobrança pendente"}
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <div className="p-4">
+              <PageEmptyState
+                compact
+                title={
+                  filtroPessoaDivida
+                    ? `Nenhuma cobrança para ${filtroPessoaDivida}`
+                    : "Nenhuma cobrança pendente"
+                }
+                description={
+                  filtroPessoaDivida
+                    ? "Limpe o filtro por pessoa para ver todas as cobranças do período."
+                    : "Adicione uma nova cobrança para começar a acompanhar valores em aberto."
+                }
+              />
               {filtroPessoaDivida ? (
-                <button
-                  onClick={() => setFiltroPessoaDivida("")}
-                  className="text-orange-400 hover:underline"
-                >
-                  Ver todas as cobranças
-                </button>
-              ) : (
-                'Clique em "Nova Cobrança" para adicionar'
-              )}
-            </p>
-          </div>
+                <div className="text-center mt-2">
+                  <button
+                    onClick={() => setFiltroPessoaDivida("")}
+                    className="text-orange-500 hover:underline text-sm"
+                  >
+                    Limpar filtro
+                  </button>
+                </div>
+              ) : null}
+            </div>
         ) : (
           <ul className="divide-y divide-gray-700">
             {dividasFiltradas.map((divida) => (

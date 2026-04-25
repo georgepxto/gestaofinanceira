@@ -3,6 +3,7 @@ import { Users, Plus, Trash2, Loader2, ChevronDown, ChevronUp, ChevronLeft, Chev
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { useAppContext } from "../context";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
+import { PageEmptyState } from "../components/ui/AsyncState";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { formatCurrency, formatMonthYear } from "../utils/calculations";
 import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
@@ -256,9 +257,12 @@ export const PessoasPage = () => {
       {/* People List with Charts */}
       <div className="space-y-3" data-tour="devedores-lista">
         {pessoas.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-8 text-center shadow-sm">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 dark:text-gray-400">Nenhum devedor cadastrado</p>
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm">
+            <PageEmptyState
+              compact
+              title="Nenhum devedor cadastrado"
+              description="Clique em Novo Devedor para começar a acompanhar valores em aberto."
+            />
           </div>
         ) : (
           pessoas.map((pessoa) => {
@@ -352,7 +356,11 @@ export const PessoasPage = () => {
                         </ResponsiveContainer>
                       </div>
                     ) : (
-                      <p className="text-gray-400 dark:text-gray-500 text-center py-4">Sem dados para exibir</p>
+                      <PageEmptyState
+                        compact
+                        title="Sem dados para exibir"
+                        description="Quando houver gastos ou dívidas para esta pessoa, o gráfico aparecerá aqui."
+                      />
                     )}
                   </div>
                 )}

@@ -1,7 +1,6 @@
 import {
   ChevronLeft,
   ChevronRight,
-  AlertCircle,
   Calendar,
   User,
   Hash,
@@ -9,16 +8,17 @@ import {
   Trash2,
   CreditCard,
   Banknote,
-  Loader2,
   Undo2,
   MessageSquare,
   CheckCircle,
   Repeat,
 } from "lucide-react";
 import { format } from "date-fns";
+import { PageEmptyState, PageErrorState, PageLoadingState } from "../ui/AsyncState";
 import type { ParcelaAtiva, ResumoMensal } from "../../types";
 import type { PagamentoParcial } from "../../types/extended";
 import { formatCurrency, formatMonthYear } from "../../utils/calculations";
+import { toActionableErrorMessage } from "../../utils/feedbackMessages";
 import { CORES_CARDS } from "../../utils/constants";
 
 interface TabGastosProps {
@@ -123,10 +123,11 @@ export function TabGastos({
 
       {/* Mensagem de Erro */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <p className="text-red-600 text-sm">{error}</p>
-        </div>
+        <PageErrorState
+          compact
+          title="Não foi possível carregar os empréstimos"
+          description={toActionableErrorMessage(error, "Não foi possível carregar os lançamentos do mês.")}
+        />
       )}
 
       {/* Cards de Resumo */}
@@ -308,9 +309,11 @@ export function TabGastos({
 
       {/* Loading */}
       {loading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-        </div>
+        <PageLoadingState
+          compact
+          title="Carregando lançamentos"
+          description="Estamos atualizando os empréstimos e os resumos deste mês."
+        />
       )}
 
       {/* Lista de Lançamentos */}
@@ -427,19 +430,16 @@ export function TabGastos({
           </div>
 
           {parcelasAtivas.length === 0 ? (
-            <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-              <Calendar className="w-12 h-12 mx-auto mb-3 text-blue-600" />
-              <p>
-                Nenhum lançamento{" "}
-                {filtroPessoaGasto ? `de ${filtroPessoaGasto} ` : ""}
-                {filtroTipoGasto
-                  ? `(${filtroTipoGasto === "credito" ? "crédito" : "débito"}) `
-                  : ""}
-                {filtroDiaGasto
-                  ? `no dia ${filtroDiaGasto.substring(8, 10)} `
-                  : ""}
-                para este mês
-              </p>
+            <div className="p-4">
+              <PageEmptyState
+                compact
+                title="Nenhum lançamento encontrado"
+                description={`Ajuste os filtros ou crie um novo empréstimo para este mês.${
+                  filtroPessoaGasto || filtroTipoGasto || filtroDiaGasto
+                    ? " Os filtros atuais podem estar ocultando resultados."
+                    : ""
+                }`}
+              />
             </div>
           ) : (
             <div className="space-y-4 p-4">

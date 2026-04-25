@@ -4,6 +4,7 @@ import { useAppContext } from "../context";
 import { supabase } from "../lib/supabase";
 import { useTheme } from "../hooks/useTheme";
 import { PAGE_CONTAINER_CLASS } from "../utils/layout";
+import { toActionableErrorMessage } from "../utils/feedbackMessages";
 
 export const ConfiguracoesPage = () => {
   const { user, handleLogout, setModalFeedback } = useAppContext();
@@ -52,8 +53,8 @@ export const ConfiguracoesPage = () => {
       console.error("Erro ao atualizar nome:", err);
       setModalFeedback({
         show: true,
-        titulo: "Erro",
-        mensagem: "Não foi possível atualizar o nome. Tente novamente.",
+        titulo: "Erro ao atualizar nome",
+        mensagem: toActionableErrorMessage(err, "Não foi possível atualizar seu nome. Tente novamente em instantes."),
         tipo: "info",
       });
     } finally {
@@ -66,8 +67,8 @@ export const ConfiguracoesPage = () => {
     if (resetConfirmText !== "RESETAR") {
       setModalFeedback({
         show: true,
-        titulo: "Erro",
-        mensagem: "Digite 'RESETAR' para confirmar.",
+        titulo: "Confirmação inválida",
+        mensagem: "Digite exatamente 'RESETAR' no campo para confirmar a limpeza de dados.",
         tipo: "info",
       });
       return;
@@ -114,8 +115,8 @@ export const ConfiguracoesPage = () => {
       console.error("Erro ao resetar conta:", err);
       setModalFeedback({
         show: true,
-        titulo: "Erro",
-        mensagem: "Não foi possível resetar a conta. Tente novamente.",
+        titulo: "Erro ao resetar dados",
+        mensagem: toActionableErrorMessage(err, "Não conseguimos limpar seus dados. Aguarde um momento e tente novamente."),
         tipo: "info",
       });
     } finally {
@@ -128,8 +129,8 @@ export const ConfiguracoesPage = () => {
     if (deleteConfirmText !== "EXCLUIR") {
       setModalFeedback({
         show: true,
-        titulo: "Erro",
-        mensagem: "Digite 'EXCLUIR' para confirmar.",
+        titulo: "Confirmação inválida",
+        mensagem: "Digite exatamente 'EXCLUIR' no campo para confirmar a exclusão permanente.",
         tipo: "info",
       });
       return;
@@ -146,8 +147,8 @@ export const ConfiguracoesPage = () => {
         console.error("Erro ao excluir conta:", error);
         setModalFeedback({
           show: true,
-          titulo: "Erro",
-          mensagem: "Não foi possível excluir a conta. Tente novamente.",
+          titulo: "Erro ao excluir conta",
+          mensagem: toActionableErrorMessage(error, "Não conseguimos excluir sua conta. Tente novamente ou entre em contato com o suporte."),
           tipo: "info",
         });
         return;
@@ -167,8 +168,8 @@ export const ConfiguracoesPage = () => {
       console.error("Erro ao excluir conta:", err);
       setModalFeedback({
         show: true,
-        titulo: "Erro",
-        mensagem: "Não foi possível excluir a conta. Tente novamente.",
+        titulo: "Erro ao excluir conta",
+        mensagem: toActionableErrorMessage(err, "Não conseguimos excluir sua conta. Tente novamente ou entre em contato com o suporte."),
         tipo: "info",
       });
     } finally {

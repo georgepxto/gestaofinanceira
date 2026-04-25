@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Lock, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAppContext } from "../context";
+import { PageErrorState, PageSuccessState } from "../components/ui/AsyncState";
+import { toActionableErrorMessage } from "../utils/feedbackMessages";
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -130,14 +132,18 @@ export function ResetPasswordPage() {
 
             {/* Error & Success Messages */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm">
-                {error}
-              </div>
+              <PageErrorState
+                compact
+                title="Não foi possível atualizar a senha"
+                description={toActionableErrorMessage(error, "Não conseguimos finalizar a atualização da sua senha.")}
+              />
             )}
             {success && (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-emerald-600 text-sm">
-                {success}
-              </div>
+              <PageSuccessState
+                compact
+                title="Senha atualizada com sucesso"
+                description="Você será redirecionado automaticamente em alguns segundos."
+              />
             )}
 
             {/* Submit Button */}

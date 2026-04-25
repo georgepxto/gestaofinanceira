@@ -10,6 +10,8 @@ import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { CATEGORIAS_RECEITA, TIPOS_RECEITA, CATEGORIA_RECEITA_PADRAO } from "../utils/receitas";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { toast } from "../components/ui/Toaster";
+import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
+import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import type { ContaBancaria, Receita, ContaBancariaForm, ReceitaForm } from "../types";
 
 interface ContasTutorialStep {
@@ -88,6 +90,7 @@ export const ContasBancariasPage = () => {
   const [contas, setContas] = useState<ContaBancaria[]>([]);
   const [receitas, setReceitas] = useState<Receita[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   
   // Modal conta
@@ -119,7 +122,12 @@ export const ContasBancariasPage = () => {
   useEffect(() => {
     if (user) {
       setLoading(true);
-      Promise.all([fetchContas(), fetchReceitas()]).finally(() => setLoading(false));
+      setLoadError(null);
+      Promise.all([fetchContas(), fetchReceitas()])
+        .catch((err) => {
+          setLoadError(toActionableErrorMessage(err, "Não foi possível carregar contas e receitas."));
+        })
+        .finally(() => setLoading(false));
     }
   }, [user, fetchContas, fetchReceitas]);
   const {
@@ -222,6 +230,8 @@ export const ContasBancariasPage = () => {
       await fetchContas();
       resetFormConta();
       toast.success(editandoConta ? "Conta atualizada com sucesso!" : "Conta adicionada com sucesso!");
+    } catch (err) {
+      toast.error(toActionableErrorMessage(err, "Não foi possível salvar a conta."));
     } finally { setSaving(false); }
   };
 
@@ -249,11 +259,11 @@ export const ContasBancariasPage = () => {
             setModalFeedback?.({
               show: true,
               titulo: "Não é possível excluir",
-              mensagem: "Esta conta não pode ser apagada pois existem gastos ou receitas vinculadas a ela.",
+              mensagem: "Esta conta possui vínculos. Remova receitas/gastos associados e tente novamente.",
               tipo: "info",
             });
           } else {
-            setModalFeedback?.({ show: true, titulo: "Erro", mensagem: "Erro ao excluir conta.", tipo: "info" });
+            setModalFeedback?.({ show: true, titulo: "Erro ao excluir conta", mensagem: toActionableErrorMessage(error, "Não foi possível excluir a conta."), tipo: "info" });
           }
         } else {
           await fetchContas();
@@ -331,6 +341,8 @@ export const ContasBancariasPage = () => {
       await fetchReceitas();
       resetFormReceita();
       toast.success(editandoReceita ? "Receita atualizada com sucesso!" : "Receita adicionada com sucesso!");
+    } catch (err) {
+      toast.error(toActionableErrorMessage(err, "Não foi possível salvar a receita."));
     } finally { setSaving(false); }
   };
 
@@ -346,7 +358,15 @@ export const ContasBancariasPage = () => {
   const handleDeleteReceita = (id: string, desc: string) => {
     setModalConfirm({
       show: true, titulo: "Excluir Receita", mensagem: `Excluir "${desc}"?`,
-      onConfirm: async () => { if (supabase) { await supabase.from("receitas").delete().eq("id", id); await fetchReceitas(); } },
+      onConfirm: async () => {
+        if (!supabase) return;
+        const { error } = await supabase.from("receitas").delete().eq("id", id);
+        if (error) {
+          toast.error(toActionableErrorMessage(error, "Não foi possível excluir a receita."));
+          throw error;
+        }
+        await fetchReceitas();
+      },
     });
   };
 
@@ -371,7 +391,24 @@ export const ContasBancariasPage = () => {
   const totalReceitasMes = receitasFiltradas.reduce((sum, r) => sum + r.valor, 0);
   const saldoTotal = contas.reduce((sum, c) => sum + calcularSaldoConta(c), 0);
 
-  if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
+  if (loading) return <PageLoadingState title="Carregando contas" description="Estamos atualizando contas bancárias e receitas." />;
+
+  if (loadError) {
+    return (
+      <PageErrorState
+        title="Não foi possível carregar contas"
+        description={loadError}
+        onAction={() => {
+          setLoading(true);
+          setLoadError(null);
+          Promise.all([fetchContas(), fetchReceitas()])
+            .catch((err) => setLoadError(toActionableErrorMessage(err, "Não foi possível carregar contas e receitas.")))
+            .finally(() => setLoading(false));
+        }}
+        actionLabel="Tentar novamente"
+      />
+    );
+  }
 
   return (
     <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
@@ -440,7 +477,7 @@ export const ContasBancariasPage = () => {
           </button>
         </div>
         {contas.length === 0 ? (
-          <div className="text-center py-8"><Building2 className="w-12 h-12 text-gray-300 mx-auto mb-3" /><p className="text-gray-500 dark:text-gray-400">Nenhuma conta</p></div>
+          <PageEmptyState compact title="Nenhuma conta cadastrada" description="Clique em Nova Conta para começar e acompanhar seu saldo total." />
         ) : (
           <div className="space-y-2">
             {contas.map(c => (
@@ -476,7 +513,7 @@ export const ContasBancariasPage = () => {
         {(() => {
           const receitasProgramadas = receitas.filter(r => r.tipo === "fixo" || r.tipo === "recorrente");
           return receitasProgramadas.length === 0 ? (
-            <div className="text-center py-6"><TrendingUp className="w-10 h-10 text-gray-300 mx-auto mb-2" /><p className="text-gray-500 dark:text-gray-400 text-sm">Nenhuma receita programada</p></div>
+            <PageEmptyState compact title="Nenhuma receita programada" description="Cadastre receitas fixas ou recorrentes para melhorar sua previsão de caixa." />
           ) : (
             <div className="space-y-2">
               {receitasProgramadas.map(r => (
@@ -505,7 +542,7 @@ export const ContasBancariasPage = () => {
       <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4" data-tour="contas-section-historico">
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Receitas do Mês</h2>
         {receitasFiltradas.length === 0 ? (
-          <div className="text-center py-6"><p className="text-gray-500 dark:text-gray-400 text-sm">Nenhuma receita registrada neste mês</p></div>
+          <PageEmptyState compact title="Sem receitas neste mês" description="Se houver entradas no período, elas aparecerão aqui automaticamente." />
         ) : (
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {receitasFiltradas.map(r => {

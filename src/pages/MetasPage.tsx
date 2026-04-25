@@ -9,6 +9,8 @@ import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { CATEGORIAS } from "../utils/categories";
 import { toast } from "../components/ui/Toaster";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
+import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
+import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import type { MetaGasto } from "../types";
 
 interface MetasTutorialStep {
@@ -75,22 +77,29 @@ export const MetasPage = () => {
   const [metaEmEdicao, setMetaEmEdicao] = useState<MetaGasto | null>(null);
   const [savingMeta, setSavingMeta] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchMetas = useCallback(async (showLoading = true) => {
     if (!supabase) return;
     if (showLoading) {
       setLoading(true);
+      setLoadError(null);
     }
 
-    const { data } = await supabase
-      .from("metas_gasto")
-      .select("*")
-      .order("categoria");
+    try {
+      const { data, error } = await supabase
+        .from("metas_gasto")
+        .select("*")
+        .order("categoria");
 
-    setMetas(data || []);
-
-    if (showLoading) {
-      setLoading(false);
+      if (error) throw error;
+      setMetas(data || []);
+    } catch (err) {
+      setLoadError(toActionableErrorMessage(err, "Não foi possível carregar as metas."));
+    } finally {
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -154,7 +163,7 @@ export const MetasPage = () => {
       );
     } catch (err) {
       console.error("Erro ao salvar meta:", err);
-      toast.error("Não foi possível salvar a meta.");
+      toast.error(toActionableErrorMessage(err, "Não foi possível salvar a meta."));
     } finally {
       setSavingMeta(false);
     }
@@ -179,7 +188,7 @@ export const MetasPage = () => {
           }
         } catch (err) {
           console.error("Erro ao excluir meta:", err);
-          toast.error("Não foi possível excluir a meta.");
+          toast.error(toActionableErrorMessage(err, "Não foi possível excluir a meta."));
           throw err;
         }
       },
@@ -206,10 +215,17 @@ export const MetasPage = () => {
   );
 
   if (loading) {
+    return <PageLoadingState title="Carregando metas" description="Estamos buscando suas metas cadastradas." />;
+  }
+
+  if (loadError) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
-      </div>
+      <PageErrorState
+        title="Não foi possível abrir a página de metas"
+        description={loadError}
+        onAction={() => fetchMetas(true)}
+        actionLabel="Tentar novamente"
+      />
     );
   }
 
@@ -318,11 +334,11 @@ export const MetasPage = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <Target className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 dark:text-gray-400">Nenhuma meta definida ainda.</p>
-            <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Adicione uma meta acima para começar a monitorar seus gastos.</p>
-          </div>
+          <PageEmptyState
+            compact
+            title="Nenhuma meta cadastrada"
+            description="Crie uma meta por categoria para acompanhar limites e evitar estouro de orçamento."
+          />
         )}
       </section>
 

@@ -10,6 +10,8 @@ import { formatCurrency, formatCurrencyInput, parseCurrency, getMesFaturaCartao 
 import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { toast } from "../components/ui/Toaster";
+import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
+import { toActionableErrorMessage } from "../utils/feedbackMessages";
 
 import type { CartaoCredito, CartaoCreditoForm, TransacaoCartao, ContaBancaria, MeuGasto, Gasto } from "../types";
 
@@ -99,6 +101,7 @@ export const CartoesCreditoPage = () => {
   const [gastosCompartilhados, setGastosCompartilhados] = useState<Gasto[]>([]);
   const [contas, setContas] = useState<ContaBancaria[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   
   const [cartaoSelecionado, setCartaoSelecionado] = useState<CartaoCredito | null>(null);
@@ -178,7 +181,12 @@ export const CartoesCreditoPage = () => {
   useEffect(() => {
     if (user) {
       setLoading(true);
-      Promise.all([fetchCartoes(), fetchTransacoes(), fetchContas(), fetchMeusGastos(), fetchGastosCompartilhados(), fetchPagamentosFatura()]).finally(() => setLoading(false));
+      setLoadError(null);
+      Promise.all([fetchCartoes(), fetchTransacoes(), fetchContas(), fetchMeusGastos(), fetchGastosCompartilhados(), fetchPagamentosFatura()])
+        .catch((err) => {
+          setLoadError(toActionableErrorMessage(err, "Não foi possível carregar dados dos cartões."));
+        })
+        .finally(() => setLoading(false));
     }
   }, [user, fetchCartoes, fetchTransacoes, fetchContas, fetchMeusGastos, fetchGastosCompartilhados, fetchPagamentosFatura]);
   const {
@@ -421,6 +429,8 @@ export const CartoesCreditoPage = () => {
       await fetchCartoes();
       resetFormCartao();
       toast.success(editandoCartao ? "Cartão atualizado com sucesso!" : "Cartão adicionado com sucesso!");
+    } catch (err) {
+      toast.error(toActionableErrorMessage(err, "Não foi possível salvar o cartão."));
     } finally { setSaving(false); }
   };
 
@@ -440,8 +450,16 @@ export const CartoesCreditoPage = () => {
       show: true, titulo: "Excluir Cartão", mensagem: `Excluir "${nome}"? Transações serão removidas.`,
       onConfirm: async () => {
         if (!supabase) return;
-        await supabase.from("transacoes_cartao").delete().eq("cartao_id", id);
-        await supabase.from("cartoes_credito").delete().eq("id", id);
+        const { error: transErr } = await supabase.from("transacoes_cartao").delete().eq("cartao_id", id);
+        if (transErr) {
+          toast.error(toActionableErrorMessage(transErr, "Não foi possível excluir as transações do cartão."));
+          throw transErr;
+        }
+        const { error: cardErr } = await supabase.from("cartoes_credito").delete().eq("id", id);
+        if (cardErr) {
+          toast.error(toActionableErrorMessage(cardErr, "Não foi possível excluir o cartão."));
+          throw cardErr;
+        }
         await fetchCartoes();
         await fetchTransacoes();
         if (cartaoSelecionado?.id === id) setCartaoSelecionado(null);
@@ -460,7 +478,11 @@ export const CartoesCreditoPage = () => {
       show: true, titulo: "Excluir Transação", mensagem: "Excluir esta transação?",
       onConfirm: async () => {
         if (!supabase) return;
-        await supabase.from("transacoes_cartao").delete().eq("id", id);
+        const { error } = await supabase.from("transacoes_cartao").delete().eq("id", id);
+        if (error) {
+          toast.error(toActionableErrorMessage(error, "Não foi possível excluir a transação."));
+          throw error;
+        }
         await fetchTransacoes();
       },
     });
@@ -504,6 +526,8 @@ export const CartoesCreditoPage = () => {
       setValorPagamento("");
       setContaPagamento("");
       toast.success("Pagamento da fatura registrado com sucesso!");
+    } catch (err) {
+      toast.error(toActionableErrorMessage(err, "Não foi possível registrar o pagamento da fatura."));
     } finally { setSaving(false); }
   };
 
@@ -545,6 +569,9 @@ export const CartoesCreditoPage = () => {
           ));
           await fetchContas();
           toast.success("Pagamento da fatura desfeito com sucesso!");
+        } catch (err) {
+          toast.error(toActionableErrorMessage(err, "Não foi possível desfazer o pagamento da fatura."));
+          throw err;
         } finally { setSaving(false); }
       },
     });
@@ -562,7 +589,24 @@ export const CartoesCreditoPage = () => {
   const percentUsado = consolidado.limiteTotal > 0 ? (consolidado.usado / consolidado.limiteTotal) * 100 : 0;
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
+    return <PageLoadingState title="Carregando cartões" description="Estamos buscando cartões, transações e faturas." />;
+  }
+
+  if (loadError) {
+    return (
+      <PageErrorState
+        title="Não foi possível carregar cartões"
+        description={loadError}
+        onAction={() => {
+          setLoading(true);
+          setLoadError(null);
+          Promise.all([fetchCartoes(), fetchTransacoes(), fetchContas(), fetchMeusGastos(), fetchGastosCompartilhados(), fetchPagamentosFatura()])
+            .catch((err) => setLoadError(toActionableErrorMessage(err, "Não foi possível carregar dados dos cartões.")))
+            .finally(() => setLoading(false));
+        }}
+        actionLabel="Tentar novamente"
+      />
+    );
   }
 
   return (
@@ -756,7 +800,11 @@ export const CartoesCreditoPage = () => {
                 </div>
               )}
               {getTodasTransacoesDoMes(cartaoSelecionado.id).length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-4">Nenhuma transação neste mês</p>
+                <PageEmptyState
+                  compact
+                  title="Nenhuma transação neste mês"
+                  description="Quando houver compras no período da fatura, elas aparecerão aqui."
+                />
               ) : (
                 <div className="space-y-1 max-h-64 overflow-y-auto">
                   {getTodasTransacoesDoMes(cartaoSelecionado.id).map((t: any) => (
