@@ -58,7 +58,9 @@ function reportMetric(metric: Metric) {
   }
   window.__WEB_VITALS__.push(payload);
 
-  console.info("[web-vitals]", payload);
+  if (import.meta.env.DEV) {
+    console.info("[web-vitals]", payload);
+  }
 
   const endpoint = import.meta.env.VITE_WEB_VITALS_ENDPOINT;
   if (!endpoint) return;
@@ -66,16 +68,24 @@ function reportMetric(metric: Metric) {
   const body = JSON.stringify(payload);
 
   if (navigator.sendBeacon) {
-    navigator.sendBeacon(endpoint, body);
+    const sent = navigator.sendBeacon(endpoint, body);
+    if (!sent && import.meta.env.DEV) {
+      console.warn("[web-vitals] sendBeacon bloqueado/recusado pelo cliente", { endpoint });
+    }
     return;
   }
 
-  void fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body,
-    keepalive: true,
-  });
+  // Sem fallback para fetch em produção para evitar ruído quando extensões bloqueiam requisições.
+  if (import.meta.env.DEV) {
+    void fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+      keepalive: true,
+    }).catch(() => {
+      // Ignora erro de rede em ambiente de desenvolvimento.
+    });
+  }
 }
 
 export function initWebVitals() {

@@ -722,14 +722,14 @@ export const DashboardPage = () => {
       {/* Gastos por Mês + Últimos Gastos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Gráfico de barras - Gastos por mês */}
-        <div className="md:col-span-2 bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="grafico-mensal">
+        <div className="md:col-span-2 bg-white dark:bg-gray-900 rounded-xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm min-w-0 overflow-hidden" data-tour="grafico-mensal">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Meus gastos por mês</span>
             <span className="text-xs text-gray-400">Últimos 6 meses</span>
           </div>
           {data.tendenciaMensal.length > 0 ? (
             <div className="h-44">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={data.tendenciaMensal}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
                   <XAxis dataKey="mes" stroke="#9CA3AF" fontSize={11} tickLine={false} axisLine={false} />
@@ -845,7 +845,7 @@ export const DashboardPage = () => {
               Meus Gastos (6 meses)
             </h2>
             <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <AreaChart data={data.tendenciaMensal}>
                   <defs>
                     <linearGradient id="colorMeus" x1="0" y1="0" x2="0" y2="1">
@@ -874,7 +874,7 @@ export const DashboardPage = () => {
               Compartilhados (6 meses)
             </h2>
             <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <AreaChart data={data.tendenciaMensal}>
                   <defs>
                     <linearGradient id="colorComp" x1="0" y1="0" x2="0" y2="1">
