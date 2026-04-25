@@ -256,7 +256,29 @@ A aplicação passou por uma refatoração completa para melhor organização e 
 # Opcional - Para usar Supabase
 VITE_SUPABASE_URL=https://seu-projeto.supabase.co
 VITE_SUPABASE_ANON_KEY=sua-chave-anonima
+
+# Opcional - Para coletar Core Web Vitals em um endpoint seu
+VITE_WEB_VITALS_ENDPOINT=https://seu-endpoint.com/web-vitals
 ```
+
+## ⚡ Performance em Produção
+
+### Metas mínimas de Core Web Vitals
+
+- **LCP <= 2500ms**
+- **INP <= 200ms**
+- **CLS <= 0.1**
+
+### Como medir neste projeto
+
+- O app registra **LCP**, **INP** e **CLS** automaticamente no cliente.
+- Os valores são exibidos no console com o prefixo `[web-vitals]`.
+- Se `VITE_WEB_VITALS_ENDPOINT` estiver configurado, os dados também são enviados via `sendBeacon/fetch`.
+
+### Lazy loading por rota
+
+- As rotas principais foram migradas para `React.lazy` + `Suspense` em `src/App.tsx`.
+- Isso reduz JS inicial sem separar React/Recharts em chunks manuais arriscados.
 
 ## 🧪 Testes E2E Visuais (Playwright)
 

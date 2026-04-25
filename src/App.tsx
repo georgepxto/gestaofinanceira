@@ -1,11 +1,8 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { lazy, Suspense, useState, useEffect, useCallback } from "react";
 import { Loader2, AlertCircle, ShieldAlert, LogOut } from "lucide-react";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { formatCurrency } from "./utils/calculations";
-import { Login } from "./components/Login";
-import { Layout } from "./components/layout";
-import { DashboardPage, EuPage, GastosPage, DividasPage, ConfiguracoesPage, PessoasPage, ContasBancariasPage, CartoesCreditoPage, MetasPage, AdminPage, LandingPage, ResetPasswordPage } from "./pages";
 import type { CartaoCredito, ContaBancaria } from "./types";
 import { Toaster } from "./components/ui/Toaster";
 import {
@@ -23,6 +20,30 @@ import { AppProvider, useAppContext } from "./context";
 import { ThemeProvider } from "./hooks/useTheme";
 import { useNotifications } from "./hooks/useNotifications";
 import "./index.css";
+
+const Login = lazy(() => import("./components/Login").then((m) => ({ default: m.Login })));
+const Layout = lazy(() => import("./components/layout").then((m) => ({ default: m.Layout })));
+
+const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
+const EuPage = lazy(() => import("./pages/EuPage").then((m) => ({ default: m.EuPage })));
+const GastosPage = lazy(() => import("./pages/GastosPage").then((m) => ({ default: m.GastosPage })));
+const DividasPage = lazy(() => import("./pages/DividasPage").then((m) => ({ default: m.DividasPage })));
+const ConfiguracoesPage = lazy(() => import("./pages/ConfiguracoesPage").then((m) => ({ default: m.ConfiguracoesPage })));
+const PessoasPage = lazy(() => import("./pages/PessoasPage").then((m) => ({ default: m.PessoasPage })));
+const ContasBancariasPage = lazy(() => import("./pages/ContasBancariasPage").then((m) => ({ default: m.ContasBancariasPage })));
+const CartoesCreditoPage = lazy(() => import("./pages/CartoesCreditoPage").then((m) => ({ default: m.CartoesCreditoPage })));
+const MetasPage = lazy(() => import("./pages/MetasPage").then((m) => ({ default: m.MetasPage })));
+const AdminPage = lazy(() => import("./pages/AdminPage").then((m) => ({ default: m.AdminPage })));
+const LandingPage = lazy(() => import("./pages/LandingPage").then((m) => ({ default: m.LandingPage })));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage").then((m) => ({ default: m.ResetPasswordPage })));
+
+function RouteLoader() {
+  return (
+    <div className="min-h-screen bg-gray-100 dark:bg-[#0B0F19] flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+    </div>
+  );
+}
 
 function AppContent() {
   const {
@@ -191,11 +212,13 @@ function AppContent() {
 
   if (!user) {
     return (
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login onLogin={handleLogin} onSignUp={handleSignUp} />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<RouteLoader />}>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login onLogin={handleLogin} onSignUp={handleSignUp} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     );
   }
 
@@ -236,32 +259,34 @@ function AppContent() {
 
   return (
     <>
-      <Routes>
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route
-          element={
-            <Layout
-              onLogout={handleLogout}
-              userName={user?.user_metadata?.nome}
-              userEmail={user?.email}
-            />
-          }
-        >
-          <Route path="/" element={
-            features.dashboard ? <DashboardPage /> : <Navigate to={features.meus_gastos ? "/eu" : "/configuracoes"} replace />
-          } />
-          {features.meus_gastos && <Route path="/eu" element={<EuPage />} />}
-          {features.gastos_compartilhados && <Route path="/gastos" element={<GastosPage />} />}
-          {features.saldo_devedor && <Route path="/dividas" element={<DividasPage />} />}
-          {features.pessoas && <Route path="/pessoas" element={<PessoasPage />} />}
-          {features.contas_bancarias && <Route path="/contas" element={<ContasBancariasPage />} />}
-          {features.cartoes_credito && <Route path="/cartoes" element={<CartoesCreditoPage />} />}
-          {features.configuracoes && <Route path="/configuracoes" element={<ConfiguracoesPage />} />}
-          {features.metas && <Route path="/metas" element={<MetasPage />} />}
-          {isAdmin && <Route path="/admin" element={<AdminPage />} />}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
+      <Suspense fallback={<RouteLoader />}>
+        <Routes>
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route
+            element={
+              <Layout
+                onLogout={handleLogout}
+                userName={user?.user_metadata?.nome}
+                userEmail={user?.email}
+              />
+            }
+          >
+            <Route path="/" element={
+              features.dashboard ? <DashboardPage /> : <Navigate to={features.meus_gastos ? "/eu" : "/configuracoes"} replace />
+            } />
+            {features.meus_gastos && <Route path="/eu" element={<EuPage />} />}
+            {features.gastos_compartilhados && <Route path="/gastos" element={<GastosPage />} />}
+            {features.saldo_devedor && <Route path="/dividas" element={<DividasPage />} />}
+            {features.pessoas && <Route path="/pessoas" element={<PessoasPage />} />}
+            {features.contas_bancarias && <Route path="/contas" element={<ContasBancariasPage />} />}
+            {features.cartoes_credito && <Route path="/cartoes" element={<CartoesCreditoPage />} />}
+            {features.configuracoes && <Route path="/configuracoes" element={<ConfiguracoesPage />} />}
+            {features.metas && <Route path="/metas" element={<MetasPage />} />}
+            {isAdmin && <Route path="/admin" element={<AdminPage />} />}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </Suspense>
 
       {/* Modals - rendered at app level */}
       <FormMeuGastoModal
