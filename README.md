@@ -275,6 +275,30 @@ VITE_WEB_VITALS_ENDPOINT=https://seu-endpoint.com/web-vitals
 - Os valores são exibidos no console com o prefixo `[web-vitals]`.
 - Se `VITE_WEB_VITALS_ENDPOINT` estiver configurado, os dados também são enviados via `sendBeacon/fetch`.
 
+### Coleta no Supabase (produção)
+
+1. Execute o SQL em `supabase_web_vitals.sql` no SQL Editor do Supabase.
+2. Faça deploy da Edge Function:
+
+```bash
+supabase functions deploy collect-web-vitals
+```
+
+3. Configure a variável de ambiente no frontend:
+
+```env
+VITE_WEB_VITALS_ENDPOINT=https://<seu-projeto>.supabase.co/functions/v1/collect-web-vitals
+```
+
+4. Após deploy, acompanhe no banco:
+
+```sql
+select metric, page_path, value, rating, status, collected_at
+from public.web_vitals_metrics
+order by collected_at desc
+limit 100;
+```
+
 ### Lazy loading por rota
 
 - As rotas principais foram migradas para `React.lazy` + `Suspense` em `src/App.tsx`.
