@@ -261,6 +261,19 @@ VITE_SUPABASE_ANON_KEY=sua-chave-anonima
 VITE_WEB_VITALS_ENDPOINT=https://seu-endpoint.com/web-vitals
 ```
 
+### Segredo da Edge Function de Push
+
+Para evitar chamadas públicas à função `send-push-notifications`, configure um segredo no Supabase:
+
+```bash
+supabase secrets set PUSH_CRON_SECRET="<seu-segredo-forte>"
+```
+
+Ao invocar a função (cron/manual), envie **um** dos headers abaixo:
+
+- `Authorization: Bearer <seu-segredo-forte>`
+- `x-cron-secret: <seu-segredo-forte>`
+
 ## ⚡ Performance em Produção
 
 ### Metas mínimas de Core Web Vitals

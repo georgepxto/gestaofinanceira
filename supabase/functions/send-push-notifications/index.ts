@@ -10,14 +10,29 @@ import webpush from "npm:web-push@3.6.7";
 const VAPID_PUBLIC_KEY = "BBPXQ3DOHvYqTYLCTvNzu1jb58E4k0t62I2rempta3JWlWFwCoQ4CWqKMy_Wk3-qa-_z0TONIeXDsoE4vRU9WL4";
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY") || "";
 const VAPID_EMAIL = "mailto:georgepxto@gmail.com"; // Pode trocar pelo seu email
+const PUSH_CRON_SECRET = Deno.env.get("PUSH_CRON_SECRET") || "";
 
 webpush.setVapidDetails(VAPID_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
 Deno.serve(async (req) => {
   try {
-    // Autenticação via service_role key
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (req.method !== "POST") {
+      return new Response("Method not allowed", { status: 405 });
+    }
+
+    // Exigir segredo de servidor para impedir chamadas públicas ao endpoint.
+    // Aceita tanto Authorization: Bearer <secret> quanto x-cron-secret.
+    if (!PUSH_CRON_SECRET) {
+      return new Response("PUSH_CRON_SECRET not configured", { status: 500 });
+    }
+
+    const authHeader = req.headers.get("Authorization") || "";
+    const bearerSecret = authHeader.startsWith("Bearer ")
+      ? authHeader.slice("Bearer ".length).trim()
+      : "";
+    const cronSecretHeader = (req.headers.get("x-cron-secret") || "").trim();
+
+    if (bearerSecret !== PUSH_CRON_SECRET && cronSecretHeader !== PUSH_CRON_SECRET) {
       return new Response("Unauthorized", { status: 401 });
     }
 
