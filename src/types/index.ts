@@ -67,6 +67,7 @@ export interface MeuGasto {
   pago: boolean;
   data_pagamento?: string;
   dividido_com?: string;
+  dividido_com_pessoas?: string[];
   minha_parte?: number;
   dia_vencimento?: number;
   ativo?: boolean;
@@ -85,6 +86,7 @@ export interface MeuGastoForm {
   categoria_gasto: string;
   data: string;
   dividido_com: string;
+  dividido_com_pessoas: string[];
   minha_parte: string;
   dia_vencimento: string;
   num_parcelas: string;

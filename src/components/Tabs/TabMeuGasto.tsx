@@ -23,6 +23,34 @@ import { SuspensaoModal } from "../modals/SuspensaoModal";
 import type { MeuGasto, CartaoCredito } from "../../types";
 import { formatCurrency, formatMonthYear, getMesFaturaCartao } from "../../utils/calculations";
 
+function getPessoasDivididas(gasto: MeuGasto): string[] {
+  if (Array.isArray(gasto.dividido_com_pessoas) && gasto.dividido_com_pessoas.length > 0) {
+    return gasto.dividido_com_pessoas;
+  }
+
+  if (!gasto.dividido_com) {
+    return [];
+  }
+
+  const valor = gasto.dividido_com.trim();
+  if (valor.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(valor);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((pessoa): pessoa is string => typeof pessoa === "string" && pessoa.trim().length > 0);
+      }
+    } catch {
+      // mantém fallback abaixo
+    }
+  }
+
+  return [gasto.dividido_com];
+}
+
+function formatarDivididoCom(gasto: MeuGasto): string {
+  return getPessoasDivididas(gasto).join(", ");
+}
+
 interface TabMeuGastoProps {
   mesVisualizacao: Date;
   navegarMes: (direcao: "anterior" | "proximo") => void;
@@ -285,7 +313,7 @@ export function TabMeuGasto({
                       </span>
                       {gasto.dividido_com && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800 font-medium">
-                          c/ {gasto.dividido_com}
+                          c/ {formatarDivididoCom(gasto)}
                         </span>
                       )}
                       {isSuspenso && (
@@ -498,7 +526,7 @@ export function TabMeuGasto({
                                   {!!gasto.dividido_com && (
                                     <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800 flex items-center gap-1">
                                       <Users className="w-3 h-3" />
-                                      {gasto.dividido_com}
+                                      {formatarDivididoCom(gasto)}
                                     </span>
                                   )}
                                   {gasto.categoria === "divida" && (

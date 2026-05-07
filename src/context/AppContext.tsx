@@ -274,6 +274,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const {
     saldosDevedores,
+    fetchSaldos,
     showFormDivida,
     setShowFormDivida,
     showPagamento,
@@ -360,6 +361,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     cartoes,
     cartoesLoading,
     onRefreshGastos: fetchGastos,
+    onRefreshSaldos: fetchSaldos,
   });
 
   // Combined states

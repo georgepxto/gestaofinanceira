@@ -44,6 +44,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
   error,
   cartoes = [],
   contas = [],
+  pessoas = [],
   onClose,
   onFormChange,
   onSubmit,
@@ -55,6 +56,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
   const [customParcelasInput, setCustomParcelasInput] = React.useState(
     formData.num_parcelas
   );
+  const ultimaMinhaParteAutomaticaRef = React.useRef<string>("");
 
   React.useEffect(() => {
     if (show) {
@@ -62,6 +64,31 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
       setCustomParcelasInput(formData.num_parcelas);
     }
   }, [show]);
+
+  React.useEffect(() => {
+    if (formData.categoria !== "dividido") return;
+
+    const pessoasSelecionadas = formData.dividido_com_pessoas || [];
+    if (pessoasSelecionadas.length === 0) return;
+
+    const valorTotal = parseCurrency(formData.valor);
+    if (valorTotal <= 0) return;
+
+    const totalParticipantes = pessoasSelecionadas.length + 1;
+    const minhaParteAutomatica = valorTotal / totalParticipantes;
+    const minhaParteFormatada = formatCurrency(minhaParteAutomatica).replace("R$\u00a0", "");
+
+    if (
+      formData.minha_parte.trim() === "" ||
+      formData.minha_parte === ultimaMinhaParteAutomaticaRef.current
+    ) {
+      ultimaMinhaParteAutomaticaRef.current = minhaParteFormatada;
+      onFormChange({
+        ...formData,
+        minha_parte: minhaParteFormatada,
+      });
+    }
+  }, [formData.categoria, formData.dividido_com_pessoas, formData.valor]);
 
   const handleCustomParcelasChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -213,25 +240,80 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
           {formData.categoria === "dividido" && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Dividido com
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  Dividido com (selecione uma ou mais pessoas)
                 </label>
-                <input
-                  type="text"
-                  value={formData.dividido_com}
-                  onChange={(e) =>
-                    onFormChange({
-                      ...formData,
-                      dividido_com: e.target.value,
-                    })
-                  }
-                  placeholder="Ex: João, Maria, etc."
-                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500 outline-none"
-                />
+                {pessoas && pessoas.length > 0 ? (
+                  <div className="space-y-3">
+                    {/* Pills com pessoas selecionadas */}
+                    {(formData.dividido_com_pessoas || []).length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {(formData.dividido_com_pessoas || []).map((pessoa) => (
+                          <div
+                            key={pessoa}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900 border border-emerald-300 dark:border-emerald-700 rounded-full text-emerald-900 dark:text-emerald-100 text-sm font-medium"
+                          >
+                            <span>{pessoa}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const pessoasSelecionadas = formData.dividido_com_pessoas || [];
+                                const novaSelecao = pessoasSelecionadas.filter((p) => p !== pessoa);
+                                onFormChange({
+                                  ...formData,
+                                  dividido_com_pessoas: novaSelecao,
+                                  dividido_com: novaSelecao.length > 0 ? novaSelecao[0] : "",
+                                });
+                              }}
+                              className="hover:opacity-70 transition-opacity ml-1"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Botões para adicionar pessoas */}
+                    <div className="grid grid-cols-2 gap-2">
+                      {pessoas.map((pessoa) => {
+                        const isSelected = (formData.dividido_com_pessoas || []).includes(pessoa);
+                        return (
+                          <button
+                            key={pessoa}
+                            type="button"
+                            onClick={() => {
+                              if (!isSelected) {
+                                const pessoasSelecionadas = formData.dividido_com_pessoas || [];
+                                const novaSelecao = [...pessoasSelecionadas, pessoa];
+                                onFormChange({
+                                  ...formData,
+                                  dividido_com_pessoas: novaSelecao,
+                                  dividido_com: novaSelecao.length > 0 ? novaSelecao[0] : "",
+                                });
+                              }
+                            }}
+                            className={`px-3 py-2 rounded-lg border transition-colors font-medium text-sm ${
+                              isSelected
+                                ? "bg-emerald-600 border-emerald-500 text-white opacity-50 cursor-default"
+                                : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            }`}
+                            disabled={isSelected}
+                          >
+                            {pessoa}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full px-3 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400">
+                    Nenhuma pessoa cadastrada
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  Minha Parte
+                  Sua parte
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -251,6 +333,9 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                     inputMode="numeric"
                   />
                 </div>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Preenchida automaticamente com a divisão igual entre você e as pessoas selecionadas. Você pode ajustar manualmente.
+                </p>
               </div>
             </>
           )}
