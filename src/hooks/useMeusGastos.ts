@@ -5,16 +5,12 @@ import {
   isSupabaseConfigured,
   gastosFunctions,
   meusGastosFunctions,
-  saldosFunctions,
 } from "../lib/supabase";
-import type { MeuGasto, MeuGastoForm, CartaoCredito, SaldoDevedor } from "../types";
+import type { MeuGasto, MeuGastoForm, CartaoCredito } from "../types";
 import { formatCurrency, parseCurrency } from "../utils/calculations";
 import { PARCELAS_MAX } from "../utils/constants";
 
-// Helper para gerar UUID simples
-function gerarId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-}
+// (helper gerarId removed - not needed)
 
 // Helper para preparar gasto para enviar ao Supabase (remove campos que não existem no DB)
 function prepararGastoParaSupabase(gasto: MeuGasto): Omit<MeuGasto, 'dividido_com_pessoas'> & { dividido_com?: string } {
@@ -68,41 +64,7 @@ async function criarLancamentoEmprestimoDoMes(
     conta_id: undefined,
   });
 }
-async function deletarSaldosDevedoresAssociados(gasto: MeuGasto) {
-  if (!isSupabaseConfigured || !supabase) return;
-  
-  try {
-    // Suporta múltiplas pessoas ou uma única (legacy)
-    const pessoasAssociadas = (gasto.dividido_com_pessoas && gasto.dividido_com_pessoas.length > 0)
-      ? gasto.dividido_com_pessoas
-      : (gasto.dividido_com ? [gasto.dividido_com] : []);
-
-    if (pessoasAssociadas.length === 0) return;
-
-    // Deletar saldos devedores para cada pessoa associada
-    for (const pessoa of pessoasAssociadas) {
-      const descricaoBase = gasto.descricao.replace(/\s*\(\d+\/\d+\)$/, "");
-      const { data: saldos } = await supabase
-        .from("saldos_devedores")
-        .select("id")
-        .eq("pessoa", pessoa)
-        .ilike("descricao", `%${descricaoBase}%`);
-      
-      if (saldos && saldos.length > 0) {
-        // Deletar os saldos devedores encontrados
-        for (const saldo of saldos) {
-          await supabase
-            .from("saldos_devedores")
-            .delete()
-            .eq("id", saldo.id);
-        }
-      }
-    }
-  } catch (err) {
-    console.error("Erro ao deletar saldo devedor:", err);
-    // Não lançar erro, apenas log
-  }
-}
+// Note: saldo devedor behavior removed - no associated deletion needed
 
 interface UseMeusGastosProps {
   user: { id: string } | null;
@@ -113,20 +75,20 @@ interface UseMeusGastosProps {
     mensagem: string;
     onConfirm: () => void;
   }) => void;
+  setModalFeedback: (modal: { show: boolean; titulo: string; mensagem: string; tipo: "sucesso" | "info" }) => void;
   cartoes: CartaoCredito[];
   cartoesLoading?: boolean;
   onRefreshGastos?: () => Promise<void>;
-  onRefreshSaldos?: () => Promise<void>;
 }
 
 export function useMeusGastos({
   user,
   mesVisualizacao,
   setModalConfirm,
+  setModalFeedback,
   cartoes,
   cartoesLoading = false,
   onRefreshGastos,
-  onRefreshSaldos,
 }: UseMeusGastosProps) {
   const [meusGastos, setMeusGastos] = useState<MeuGasto[]>([]);
   const [meusGastosLoaded, setMeusGastosLoaded] = useState<boolean>(false);
@@ -313,8 +275,12 @@ export function useMeusGastos({
             categoria_gasto: formMeuGasto.categoria_gasto || undefined,
           };
 
+          let created: any = null;
           if (isSupabaseConfigured && supabase) {
-            await meusGastosFunctions.create(prepararGastoParaSupabase(novoGasto));
+            created = await meusGastosFunctions.create(prepararGastoParaSupabase(novoGasto));
+            if (!created) {
+              setModalFeedback({ show: true, titulo: "Erro", mensagem: "Não foi possível salvar seu gasto. Tente novamente.", tipo: "info" });
+            }
           }
           setMeusGastos((prev) => [...prev, novoGasto]);
         }
@@ -350,8 +316,10 @@ export function useMeusGastos({
         };
 
         if (isSupabaseConfigured && supabase) {
-          await meusGastosFunctions.create(prepararGastoParaSupabase(novoGasto));
-          
+          const created = await meusGastosFunctions.create(prepararGastoParaSupabase(novoGasto));
+          if (!created) {
+            setModalFeedback({ show: true, titulo: "Erro", mensagem: "Não foi possível salvar seu gasto. Tente novamente.", tipo: "info" });
+          }
           // Se for débito e tiver conta selecionada, descontar do saldo
           if (formMeuGasto.tipo === "debito" && formMeuGasto.conta_id) {
             const { data: contaAtual } = await supabase
@@ -389,40 +357,23 @@ export function useMeusGastos({
           const valorPorPessoa = valorRestante / pessoasSelecionadas.length;
           const descricaoGasto = formMeuGasto.descricao;
 
-          // Criar um saldo devedor para cada pessoa
+          // Para cada pessoa selecionada, criar um lançamento em 'Empréstimos do Mês'
           for (const pessoa of pessoasSelecionadas) {
             // Para parcelas, incluir a informação
-            const descricaoParaSaldo = numParcelas > 1
+            const descricaoParaEmprestimo = numParcelas > 1
               ? `${descricaoGasto} (${numParcelas} parcelas)`
               : descricaoGasto;
 
             const valorTotalPorPessoa = valorPorPessoa;
 
-            const novoSaldo: Omit<SaldoDevedor, 'id' | 'created_at'> = {
-              pessoa,
-              descricao: descricaoParaSaldo,
-              valor_original: valorTotalPorPessoa,
-              valor_atual: valorTotalPorPessoa,
-              data_criacao: new Date().toISOString(),
-              historico: [],
-            };
-            await saldosFunctions.create({
-              id: gerarId(),
-              ...novoSaldo
-            } as SaldoDevedor);
-
             await criarLancamentoEmprestimoDoMes(
               pessoa,
-              descricaoParaSaldo,
+              descricaoParaEmprestimo,
               valorTotalPorPessoa,
               numParcelas,
               formMeuGasto.data,
               formMeuGasto.categoria_gasto || undefined
             );
-          }
-
-          if (onRefreshSaldos) {
-            await onRefreshSaldos();
           }
         }
       }
@@ -700,14 +651,7 @@ export function useMeusGastos({
           }
         }
 
-        // Atualizar saldo devedor se for gasto dividido
-        if (
-          editandoMeuGasto.categoria === "dividido" &&
-          editandoMeuGasto.dividido_com !== formMeuGasto.dividido_com
-        ) {
-          // Se mudou a pessoa, deletar o saldo devedor anterior
-          await deletarSaldosDevedoresAssociados(editandoMeuGasto);
-        }
+        // No longer managing saldos_devedores here (dead code removed)
 
         if (
           formMeuGasto.categoria === "dividido" &&
@@ -719,8 +663,7 @@ export function useMeusGastos({
             ? formMeuGasto.dividido_com_pessoas
             : (formMeuGasto.dividido_com ? [formMeuGasto.dividido_com] : []);
 
-          // Deletar saldos devedores anteriores (se houver)
-          await deletarSaldosDevedoresAssociados(editandoMeuGasto);
+          // Previously deleted prior saldos_devedores here; no longer needed
 
           // Criar novos saldos devedores para cada pessoa
           if (pessoasSelecionadas.length > 0) {
@@ -736,32 +679,17 @@ export function useMeusGastos({
 
               const valorTotalPorPessoa = valorPorPessoa;
 
-              const novoSaldo: Omit<SaldoDevedor, 'id' | 'created_at'> = {
-                pessoa,
-                descricao: descricaoParaSaldo,
-                valor_original: valorTotalPorPessoa,
-                valor_atual: valorTotalPorPessoa,
-                data_criacao: new Date().toISOString(),
-                historico: [],
-              };
-              await saldosFunctions.create({
-                id: gerarId(),
-                ...novoSaldo
-              } as SaldoDevedor);
-
-              await criarLancamentoEmprestimoDoMes(
-                pessoa,
-                descricaoParaSaldo,
-                valorTotalPorPessoa,
-                novoNumParcelas,
-                formMeuGasto.data,
-                formMeuGasto.categoria_gasto || undefined
-              );
+                await criarLancamentoEmprestimoDoMes(
+                  pessoa,
+                  descricaoParaSaldo,
+                  valorTotalPorPessoa,
+                  novoNumParcelas,
+                  formMeuGasto.data,
+                  formMeuGasto.categoria_gasto || undefined
+                );
             }
 
-            if (onRefreshSaldos) {
-              await onRefreshSaldos();
-            }
+            // no-op: no onRefreshSaldos callback anymore
           }
         }
 
@@ -833,9 +761,7 @@ export function useMeusGastos({
         try {
           for (const parcela of parcelasRelacionadas) {
             // Se for gasto dividido, deletar o saldo devedor associado (apenas na primeira parcela)
-            if (parcela.categoria === "dividido" && parcela === parcelasRelacionadas[0]) {
-              await deletarSaldosDevedoresAssociados(parcela);
-            }
+            // No saldo_devedor cleanup required for 'dividido' parcels anymore
 
             if (isSupabaseConfigured && supabase) {
               await meusGastosFunctions.delete(parcela.id);

@@ -274,7 +274,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const {
     saldosDevedores,
-    fetchSaldos,
     showFormDivida,
     setShowFormDivida,
     showPagamento,
@@ -358,10 +357,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     user,
     mesVisualizacao,
     setModalConfirm,
+    setModalFeedback,
     cartoes,
     cartoesLoading,
     onRefreshGastos: fetchGastos,
-    onRefreshSaldos: fetchSaldos,
   });
 
   // Combined states
@@ -532,3 +531,4 @@ export function useAppContext() {
   }
   return context;
 }
+
