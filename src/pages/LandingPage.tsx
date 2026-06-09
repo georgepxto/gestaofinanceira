@@ -1,506 +1,1183 @@
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "../hooks/useTheme";
+import type { LucideIcon } from "lucide-react";
 import {
-  Wallet,
-  Users,
-  CreditCard,
-  Target,
-  Building2,
-  ArrowRight,
-  Shield,
-  FileText,
-  TrendingUp,
-  PieChart,
-  CheckCircle2,
-  Star,
-  ChevronDown,
-  Bell,
-  Search,
-  MoreHorizontal,
+  Wallet, Users, CreditCard, Target, Building2,
+  ArrowRight, FileText, TrendingUp, PieChart,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Lenis from "lenis";
 
-/* ═══════════════════════════════════
-   SCROLL REVEAL
-   ═══════════════════════════════════ */
-function useReveal() {
+gsap.registerPlugin(ScrollTrigger);
+
+/* ═══════════════════════════════════════════════════════════════════════
+   🔀  TOGGLE — mude esta linha para trocar o layout da seção Features
+       "list"       → lista interativa com preview lateral  (editorial)
+       "horizontal" → scroll horizontal GSAP pinned         (imersivo)
+   ═══════════════════════════════════════════════════════════════════════ */
+type FeatureVariant = "list" | "horizontal";
+const FEATURES_VARIANT: FeatureVariant = "list";
+
+/* ─── Types ──────────────────────────────────────────────────────────── */
+interface Feature {
+  icon: LucideIcon;
+  title: string;
+  shortDesc: string;
+  longDesc: string;
+  screen: React.ReactNode;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MINI APP SCREENSHOTS
+   ═══════════════════════════════════════════════════════════════════════ */
+function ScreenCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden shadow-sm text-left w-full">
+      {children}
+    </div>
+  );
+}
+function ScreenHeader({
+  title, sub, badge,
+}: {
+  title: string; sub?: string; badge?: string;
+}) {
+  return (
+    <div className="px-4 py-3 bg-zinc-50 border-b border-zinc-100 flex items-center justify-between">
+      <div>
+        <p className="text-[11px] font-semibold text-zinc-800">{title}</p>
+        {sub && <p className="text-[9px] text-zinc-400 mt-0.5">{sub}</p>}
+      </div>
+      {badge && (
+        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+          {badge}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function ScreenGastosPessoais() {
+  const items = [
+    { emoji: "🍕", name: "iFood",    cat: "Alimentação", val: "R$ 45,90",  paid: true  },
+    { emoji: "🎵", name: "Spotify",  cat: "Assinaturas", val: "R$ 21,90",  paid: true  },
+    { emoji: "💪", name: "Academia", cat: "Saúde",       val: "R$ 99,00",  paid: false },
+    { emoji: "🏠", name: "Aluguel",  cat: "2 de 12",     val: "R$ 1.200",  paid: true  },
+  ];
+  return (
+    <ScreenCard>
+      <ScreenHeader title="Meus Gastos" sub="Março 2026 · 12 registros" badge="R$ 1.366,80" />
+      <div className="divide-y divide-zinc-50">
+        {items.map(t => (
+          <div key={t.name} className="flex items-center px-4 py-2.5 gap-3">
+            <span className="text-base">{t.emoji}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-medium text-zinc-800">{t.name}</p>
+              <p className="text-[9px] text-zinc-400">{t.cat}</p>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="text-[11px] font-semibold text-zinc-700">{t.val}</p>
+              <p className={`text-[9px] ${t.paid ? "text-emerald-600" : "text-amber-500"}`}>
+                {t.paid ? "● pago" : "○ pendente"}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </ScreenCard>
+  );
+}
+
+function ScreenCompartilhados() {
+  const people = [
+    { name: "Você",     initial: "V", paid: true,  share: "R$ 45,00" },
+    { name: "Ana Lima", initial: "A", paid: true,  share: "R$ 45,00" },
+    { name: "Carlos",   initial: "C", paid: false, share: "R$ 45,00" },
+  ];
+  return (
+    <ScreenCard>
+      <ScreenHeader title="Churrasco de março 🍖" sub="Total: R$ 135,00 · 3 pessoas" />
+      <div className="divide-y divide-zinc-50">
+        {people.map(p => (
+          <div key={p.name} className="flex items-center px-4 py-3 gap-3">
+            <div
+              className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                p.paid ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-500"
+              }`}
+            >
+              {p.initial}
+            </div>
+            <div className="flex-1">
+              <p className="text-[11px] font-medium text-zinc-800">{p.name}</p>
+              <p className={`text-[9px] ${p.paid ? "text-emerald-600" : "text-amber-500"}`}>
+                {p.paid ? "Já pagou" : "Aguardando pagamento"}
+              </p>
+            </div>
+            <span className="text-[11px] font-semibold text-zinc-700 shrink-0">{p.share}</span>
+          </div>
+        ))}
+      </div>
+      <div className="px-4 py-3 bg-amber-50 border-t border-amber-100">
+        <p className="text-[10px] text-amber-700 font-medium">Carlos deve R$ 45,00 · vence em 3 dias</p>
+      </div>
+    </ScreenCard>
+  );
+}
+
+function ScreenCartoes() {
+  return (
+    <ScreenCard>
+      <ScreenHeader title="Cartões de Crédito" sub="1 cartão ativo" />
+      <div className="p-4">
+        <div className="rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-700 p-4 text-white mb-4">
+          <p className="text-[9px] text-zinc-400 mb-1 font-medium tracking-wider">NUBANK · •••• 4521</p>
+          <p className="text-lg font-bold font-display">R$ 1.360,00</p>
+          <p className="text-[9px] text-zinc-400 mt-0.5">de R$ 2.000,00 usados · 68%</p>
+          <div className="mt-2.5 h-1 bg-zinc-600 rounded-full overflow-hidden">
+            <div className="h-full bg-amber-400 rounded-full" style={{ width: "68%" }} />
+          </div>
+        </div>
+        <div className="space-y-2">
+          {[
+            { name: "Netflix", val: "R$ 55,90",  date: "02/03" },
+            { name: "Amazon",  val: "R$ 129,00", date: "05/03" },
+            { name: "Uber",    val: "R$ 24,50",  date: "07/03" },
+          ].map(c => (
+            <div key={c.name} className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-medium text-zinc-800">{c.name}</p>
+                <p className="text-[9px] text-zinc-400">{c.date}</p>
+              </div>
+              <span className="text-[11px] font-semibold text-zinc-700">-{c.val}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </ScreenCard>
+  );
+}
+
+function ScreenMetas() {
+  const goals = [
+    { cat: "Alimentação", used: 380, total: 500, pct: 76, ok: true  },
+    { cat: "Delivery",    used: 145, total: 150, pct: 97, ok: false },
+    { cat: "Transporte",  used: 95,  total: 200, pct: 47, ok: true  },
+    { cat: "Lazer",       used: 230, total: 300, pct: 77, ok: true  },
+  ];
+  return (
+    <ScreenCard>
+      <ScreenHeader title="Metas do mês" sub="Março 2026 · 4 categorias" />
+      <div className="px-4 py-3 space-y-3.5">
+        {goals.map(g => (
+          <div key={g.cat}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-medium text-zinc-700">{g.cat}</span>
+              <span className={`text-[10px] font-medium ${g.ok ? "text-zinc-500" : "text-amber-600"}`}>
+                R$ {g.used} / R$ {g.total}
+              </span>
+            </div>
+            <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${
+                  g.ok ? "bg-emerald-500" : "bg-amber-500"
+                }`}
+                style={{ width: `${g.pct}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </ScreenCard>
+  );
+}
+
+function ScreenContas() {
+  const accounts = [
+    { bank: "Nubank",   initial: "Nu", balance: "R$ 1.240,00", color: "bg-purple-600" },
+    { bank: "Bradesco", initial: "Br", balance: "R$ 3.890,00", color: "bg-red-600"    },
+    { bank: "Inter",    initial: "In", balance: "R$ 560,00",   color: "bg-orange-500" },
+  ];
+  return (
+    <ScreenCard>
+      <ScreenHeader title="Contas Bancárias" badge="R$ 5.690,00 total" />
+      <div className="divide-y divide-zinc-50">
+        {accounts.map(a => (
+          <div key={a.bank} className="flex items-center px-4 py-3 gap-3">
+            <div
+              className={`w-8 h-8 rounded-lg ${a.color} flex items-center justify-center text-[10px] font-bold text-white shrink-0`}
+            >
+              {a.initial}
+            </div>
+            <div className="flex-1">
+              <p className="text-[11px] font-medium text-zinc-800">{a.bank}</p>
+              <p className="text-[9px] text-zinc-400">Conta corrente</p>
+            </div>
+            <span className="text-[11px] font-semibold text-zinc-700 shrink-0">{a.balance}</span>
+          </div>
+        ))}
+      </div>
+    </ScreenCard>
+  );
+}
+
+function ScreenRelatorios() {
+  const months = [
+    { m: "Out", v: 42 }, { m: "Nov", v: 58 }, { m: "Dez", v: 75 },
+    { m: "Jan", v: 61 }, { m: "Fev", v: 48 }, { m: "Mar", v: 68 },
+  ];
+  return (
+    <ScreenCard>
+      <ScreenHeader title="Relatório — Mar 2026" sub="Total: R$ 3.240,00" />
+      <div className="px-4 pt-3 pb-2">
+        <div className="flex items-end gap-1.5 h-16">
+          {months.map(({ m, v }) => (
+            <div key={m} className="flex-1 flex flex-col items-center gap-1">
+              <div
+                className="w-full bg-emerald-500/80 rounded-t-sm"
+                style={{ height: `${v}%` }}
+              />
+              <span className="text-[8px] text-zinc-400">{m}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="px-4 py-3 grid grid-cols-2 gap-1.5 border-t border-zinc-50">
+        {[
+          { name: "Alimentação", pct: 34, color: "bg-emerald-500" },
+          { name: "Moradia",     pct: 28, color: "bg-blue-400"    },
+          { name: "Transporte",  pct: 18, color: "bg-amber-400"   },
+          { name: "Outros",      pct: 20, color: "bg-zinc-300"    },
+        ].map(c => (
+          <div key={c.name} className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full ${c.color} shrink-0`} />
+            <span className="text-[9px] text-zinc-500">{c.name} {c.pct}%</span>
+          </div>
+        ))}
+      </div>
+    </ScreenCard>
+  );
+}
+
+/* ─── Features data ──────────────────────────────────────────────────── */
+const features: Feature[] = [
+  {
+    icon: Wallet,
+    title: "Gastos Pessoais",
+    shortDesc: "Cada centavo registrado.",
+    longDesc: "Registre despesas com categoria, data, parcelas e status de pagamento. Veja exatamente quanto foi para alimentação, transporte ou lazer — sem estimativas, sem surpresas no fechamento do mês.",
+    screen: <ScreenGastosPessoais />,
+  },
+  {
+    icon: Users,
+    title: "Gastos Compartilhados",
+    shortDesc: "Divida sem drama.",
+    longDesc: "Adicione quem dividiu a conta, quanto cada um deve e registre os pagamentos conforme acontecem. Nada de planilhas no Excel ou cobranças constrangedoras por mensagem.",
+    screen: <ScreenCompartilhados />,
+  },
+  {
+    icon: CreditCard,
+    title: "Cartões de Crédito",
+    shortDesc: "Sem surpresa na fatura.",
+    longDesc: "Acompanhe limite disponível, próximas faturas e compras parceladas em aberto. Saiba antes do fechamento exatamente o quanto vai cair — sem sustos no boleto.",
+    screen: <ScreenCartoes />,
+  },
+  {
+    icon: Target,
+    title: "Metas de Gasto",
+    shortDesc: "Planejamento que funciona.",
+    longDesc: "Defina um teto mensal por categoria e acompanhe o progresso em tempo real. Quando estiver perto de ultrapassar o limite em delivery ou lazer, o Hedge mostra antes.",
+    screen: <ScreenMetas />,
+  },
+  {
+    icon: Building2,
+    title: "Contas Bancárias",
+    shortDesc: "Saldo sempre à vista.",
+    longDesc: "Cadastre conta corrente, poupança e contas digitais. Veja o saldo total e o detalhe de cada banco em um único painel — sem precisar abrir cinco aplicativos diferentes.",
+    screen: <ScreenContas />,
+  },
+  {
+    icon: FileText,
+    title: "Relatórios em PDF",
+    shortDesc: "Mês fechado, tudo documentado.",
+    longDesc: "Exporte um relatório completo com totais por categoria, progresso das metas e comparativo com meses anteriores. Essencial para imposto de renda e revisão de hábitos financeiros.",
+    screen: <ScreenRelatorios />,
+  },
+];
+
+/* ─── Other data ─────────────────────────────────────────────────────── */
+const steps = [
+  {
+    num: "01",
+    title: "Cadastre-se em 30 segundos",
+    desc: "Email ou Google. Sem formulário longo, sem cartão de crédito. Crie sua conta e comece a usar na mesma hora.",
+  },
+  {
+    num: "02",
+    title: "Comece pelo que já aconteceu",
+    desc: "Adicione um gasto de hoje. O Hedge organiza por categoria automaticamente — e você começa a enxergar padrões em dias, não em meses.",
+  },
+  {
+    num: "03",
+    title: "Veja o que nunca enxergou",
+    desc: "Com alguns registros, o dashboard revela onde você gasta mais, quais categorias excedem o planejado e onde há espaço real para melhorar.",
+  },
+];
+
+const testimonials = [
+  {
+    name: "Lucas M.",
+    role: "Freelancer",
+    text: "Antes eu achava que estava economizando. Depois de uma semana usando, vi que gastava R$ 800 por mês em delivery sem perceber. Mudei completamente meu jeito de ver o dinheiro.",
+  },
+  {
+    name: "Ana C.",
+    role: "Estudante de medicina",
+    text: "Dividir apartamento com três pessoas era um caos de transferências. Agora todo mundo sabe exatamente o que deve e quando pagou.",
+  },
+  {
+    name: "Pedro R.",
+    role: "Empreendedor",
+    text: "Reduzi gastos supérfluos em 30% no primeiro mês. Não porque fui mais rígido — mas porque finalmente vi para onde o dinheiro estava indo.",
+  },
+  {
+    name: "Carla S.",
+    role: "Designer",
+    text: "O relatório PDF foi essencial na minha declaração de IR. Tudo categorizado, organizado, pronto para usar.",
+  },
+  {
+    name: "Marcos T.",
+    role: "Professor",
+    text: "Minha esposa e eu usamos para controlar as contas da casa juntos. A função de gastos compartilhados é exatamente o que precisávamos.",
+  },
+  {
+    name: "Julia F.",
+    role: "Analista financeira",
+    text: "Trabalho com finanças todo dia e mesmo assim não tinha controle dos meus gastos pessoais. É o único app que mantive por mais de duas semanas.",
+  },
+];
+
+const TICKER_ITEMS = [
+  "100% gratuito", "Sem anúncios", "Sem cartão de crédito",
+  "Para sempre", "Suas contas na régua", "Zero mensalidade",
+  "Seguro", "Sem letras pequenas",
+];
+
+/* ─── Scroll Reveal ──────────────────────────────────────────────────── */
+function Reveal({
+  children,
+  className = "",
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delay?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { el.style.opacity = "1"; el.style.transform = "translateY(0)"; obs.unobserve(el); } },
+      ([e]) => {
+        if (e.isIntersecting) {
+          el.style.opacity = "1";
+          el.style.transform = "translateY(0)";
+          obs.unobserve(el);
+        }
+      },
       { threshold: 0.08 }
     );
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
-  return ref;
-}
 
-function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
-  const ref = useReveal();
   return (
-    <div ref={ref} className={className} style={{ opacity: 0, transform: "translateY(36px)", transition: `all 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms` }}>
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: 0,
+        transform: "translateY(18px)",
+        transition: `opacity 0.65s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.65s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
+      }}
+    >
       {children}
     </div>
   );
 }
 
-/* ═══════════════════════════════════
-   ANIMATED COUNTER
-   ═══════════════════════════════════ */
-function Counter({ end, suffix = "" }: { end: number; suffix?: string }) {
-  const [val, setVal] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  useEffect(() => {
-    const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) {
-        let s = 0; const step = Math.ceil(end / 40);
-        const t = setInterval(() => { s += step; if (s >= end) { s = end; clearInterval(t); } setVal(s); }, 30);
-        obs.unobserve(e.target);
-      }
-    }, { threshold: 0.5 });
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, [end]);
-  return <span ref={ref}>{val.toLocaleString("pt-BR")}{suffix}</span>;
-}
+/* ═══════════════════════════════════════════════════════════════════════
+   FEATURES VARIANT A — lista interativa com preview lateral
+   ═══════════════════════════════════════════════════════════════════════ */
+function FeaturesListVariant({ onSignup }: { onSignup: () => void }) {
+  const [active, setActive] = useState(0);
+  const [fading, setFading] = useState(false);
 
-/* ═══════════════════════════════════
-   MINI CHART COMPONENTS (for feature cards)
-   ═══════════════════════════════════ */
-function MiniBarChart() {
-  const bars = [35, 55, 40, 70, 50, 80, 45, 65, 75, 55, 85, 60];
+  const switchTo = (i: number) => {
+    if (i === active) return;
+    setFading(true);
+    setTimeout(() => {
+      setActive(i);
+      setFading(false);
+    }, 160);
+  };
+
+  const f = features[active];
+  const ActiveIcon = f.icon;
+
   return (
-    <div className="flex items-end gap-[3px] h-12 mt-3">
-      {bars.map((h, i) => (
-        <div key={i} className="flex-1 rounded-sm bg-gradient-to-t from-blue-500 to-blue-300 transition-all duration-500 hover:from-blue-600 hover:to-blue-400"
-          style={{ height: `${h}%`, animationDelay: `${i * 60}ms` }} />
-      ))}
-    </div>
-  );
-}
+    <section id="features" className="h-screen flex flex-col justify-center px-6 bg-white pt-20 overflow-hidden">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <Reveal>
+          <div className="mb-5 max-w-2xl">
+            <h2
+              className="font-display font-bold leading-[1.05] tracking-tight mb-4 text-zinc-900 text-balance"
+              style={{ fontSize: "clamp(2.4rem, 5vw, 3.75rem)" }}
+            >
+              Tudo para organizar suas finanças.
+            </h2>
+            <p className="text-zinc-500 text-lg leading-relaxed max-w-xl">
+              Ferramentas que cobrem o ciclo completo do seu dinheiro — sem mensalidade, sem complicação.
+            </p>
+          </div>
+        </Reveal>
 
-function MiniDonut({ pct, color }: { pct: number; color: string }) {
-  const r = 18, c = 2 * Math.PI * r;
-  return (
-    <svg width="48" height="48" className="mt-2">
-      <circle cx="24" cy="24" r={r} fill="none" className="stroke-gray-200 dark:stroke-gray-800" strokeWidth="5" />
-      <circle cx="24" cy="24" r={r} fill="none" stroke={color} strokeWidth="5"
-        strokeDasharray={`${c * pct} ${c * (1 - pct)}`} strokeDashoffset={c * 0.25}
-        strokeLinecap="round" className="transition-all duration-700" />
-      <text x="24" y="28" textAnchor="middle" className="fill-gray-700 dark:fill-gray-300 text-[10px] font-bold">{Math.round(pct * 100)}%</text>
-    </svg>
-  );
-}
+        {/* Subtle CTA */}
+        <Reveal delay={60}>
+          <div className="mb-14">
+            <button
+              onClick={onSignup}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:text-emerald-600 transition-colors group"
+            >
+              Testar todas as funcionalidades gratuitamente
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
+        </Reveal>
 
-function MiniLineChart() {
-  return (
-    <svg viewBox="0 0 120 40" className="w-full h-10 mt-3">
-      <defs>
-        <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d="M0 35 L10 28 L20 30 L30 18 L40 22 L50 12 L60 15 L70 8 L80 14 L90 6 L100 10 L110 4 L120 2" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
-      <path d="M0 35 L10 28 L20 30 L30 18 L40 22 L50 12 L60 15 L70 8 L80 14 L90 6 L100 10 L110 4 L120 2 L120 40 L0 40 Z" fill="url(#lineGrad)" />
-    </svg>
-  );
-}
+        {/* Two-column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-20 items-start">
+          {/* Left: active feature preview (sticky) */}
+          <div className="lg:sticky lg:top-28 order-2 lg:order-1">
+            <div
+              style={{
+                opacity: fading ? 0 : 1,
+                transform: fading ? "translateY(8px)" : "translateY(0)",
+                transition: "opacity 160ms ease-out, transform 160ms ease-out",
+              }}
+            >
+              <div className="relative">
+                <div className="absolute inset-6 bg-emerald-100/60 rounded-2xl blur-2xl" />
+                <div className="relative rounded-2xl border border-zinc-200/80 overflow-hidden shadow-xl shadow-zinc-200/60">
+                  <div className="bg-zinc-50 border-b border-zinc-100 px-4 py-2.5 flex items-center gap-2">
+                    <ActiveIcon className="w-4 h-4 text-emerald-600" strokeWidth={1.5} />
+                    <span className="text-[11px] font-semibold text-zinc-700">{f.title}</span>
+                  </div>
+                  <div className="p-4 bg-white overflow-hidden" style={{ height: "292px" }}>{f.screen}</div>
+                </div>
+              </div>
 
-/* ═══════════════════════════════════
-   FEATURE DATA
-   ═══════════════════════════════════ */
-const features = [
-  { icon: Wallet, tag: "Pessoal", title: "Gastos Pessoais", desc: "Registre despesas com categorias, parcelas e status de pagamento.", gradient: "from-blue-500/15 to-blue-600/5", iconBg: "bg-blue-500", visual: "bars" as const },
-  { icon: Users, tag: "Compartilhado", title: "Gastos Compartilhados", desc: "Divida contas com amigos. Saiba quem pagou e quem deve.", gradient: "from-emerald-500/15 to-emerald-600/5", iconBg: "bg-emerald-500", visual: "line" as const },
-  { icon: CreditCard, tag: "Cartões", title: "Cartões de Crédito", desc: "Gerencie faturas, limites e transações de todos os seus cartões.", gradient: "from-violet-500/15 to-violet-600/5", iconBg: "bg-violet-500", visual: "donut" as const },
-  { icon: Target, tag: "Metas", title: "Metas de Gasto", desc: "Defina limites por categoria e acompanhe com barras visuais.", gradient: "from-amber-500/15 to-amber-600/5", iconBg: "bg-amber-500", visual: "progress" as const },
-  { icon: Building2, tag: "Bancário", title: "Contas Bancárias", desc: "Acompanhe saldos de todas as suas contas em um só lugar.", gradient: "from-cyan-500/15 to-cyan-600/5", iconBg: "bg-cyan-500", visual: "line" as const },
-  { icon: FileText, tag: "Relatórios", title: "Relatórios em PDF", desc: "Exporte relatórios detalhados com metas, categorias e totais.", gradient: "from-rose-500/15 to-rose-600/5", iconBg: "bg-rose-500", visual: "bars" as const },
-];
+              <div className="mt-7 pt-7 border-t border-zinc-100">
+                <p className="text-xs font-semibold tracking-[0.12em] text-emerald-600 mb-2 uppercase">
+                  {f.shortDesc}
+                </p>
+                <p className="text-zinc-500 leading-relaxed text-sm max-w-md">{f.longDesc}</p>
+              </div>
+            </div>
+          </div>
 
-const steps = [
-  { num: "01", icon: CheckCircle2, title: "Crie sua conta gratuitamente", desc: "Cadastre-se com email ou Google em poucos segundos. Sem cartão de crédito." },
-  { num: "02", icon: PieChart, title: "Registre seus gastos", desc: "Adicione despesas pessoais, compartilhadas e fixas de forma rápida e organizada." },
-  { num: "03", icon: TrendingUp, title: "Assuma o controle", desc: "Visualize dashboards, defina metas e exporte relatórios PDF detalhados." },
-];
-
-const testimonials = [
-  { name: "Lucas M.", role: "Freelancer", text: "Finalmente consigo ver para onde meu dinheiro vai. O dashboard é incrível.", stars: 5 },
-  { name: "Ana C.", role: "Estudante", text: "Dividir gastos com meus colegas ficou muito mais fácil. Recomendo!", stars: 5 },
-  { name: "Pedro R.", role: "Empreendedor", text: "As metas de gasto me ajudaram a economizar 30% no primeiro mês.", stars: 5 },
-];
-
-/* ═══════════════════════════════════
-   FEATURE CARD VISUAL
-   ═══════════════════════════════════ */
-function FeatureVisual({ type }: { type: "bars" | "line" | "donut" | "progress" }) {
-  if (type === "bars") return <MiniBarChart />;
-  if (type === "line") return <MiniLineChart />;
-  if (type === "donut") return (
-    <div className="flex gap-3 mt-2">
-      <MiniDonut pct={0.72} color="#8b5cf6" />
-      <div className="flex flex-col justify-center gap-1">
-        <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-violet-500" /><span className="text-[10px] text-gray-500 dark:text-gray-400">Usado 72%</span></div>
-        <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700" /><span className="text-[10px] text-gray-500 dark:text-gray-400">Disponível</span></div>
-      </div>
-    </div>
-  );
-  // progress
-  return (
-    <div className="mt-3 space-y-2">
-      {[{ label: "Alimentação", pct: 65, color: "bg-amber-400" }, { label: "Transporte", pct: 40, color: "bg-amber-300" }].map(b => (
-        <div key={b.label}>
-          <div className="flex justify-between text-[10px] text-gray-500 dark:text-gray-400 mb-0.5"><span>{b.label}</span><span>{b.pct}%</span></div>
-          <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden"><div className={`h-full ${b.color} rounded-full transition-all duration-700`} style={{ width: `${b.pct}%` }} /></div>
+          {/* Right: numbered list */}
+          <div className="order-1 lg:order-2 divide-y divide-zinc-100">
+            {features.map((feat, i) => {
+              const isActive = i === active;
+              const FeatIcon = feat.icon;
+              return (
+                <button
+                  key={feat.title}
+                  onMouseEnter={() => switchTo(i)}
+                  onClick={() => switchTo(i)}
+                  className={`w-full flex items-center justify-between py-5 text-left transition-all duration-150 group ${
+                    isActive ? "text-zinc-900" : "text-zinc-400 hover:text-zinc-700"
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <span
+                      className={`font-mono text-xs tabular-nums transition-colors shrink-0 ${
+                        isActive ? "text-emerald-600" : "text-zinc-300"
+                      }`}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <div
+                      className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                        isActive ? "bg-emerald-600" : "bg-zinc-100 group-hover:bg-zinc-200"
+                      }`}
+                    >
+                      <FeatIcon
+                        className={`w-4 h-4 ${isActive ? "text-white" : "text-zinc-500"}`}
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                    <span className="font-display text-base font-semibold tracking-tight">
+                      {feat.title}
+                    </span>
+                  </div>
+                  <ArrowRight
+                    className={`w-4 h-4 flex-shrink-0 transition-all duration-200 ${
+                      isActive ? "opacity-100 text-emerald-600" : "opacity-0 -translate-x-1"
+                    }`}
+                  />
+                </button>
+              );
+            })}
+          </div>
         </div>
-      ))}
-    </div>
+      </div>
+    </section>
   );
 }
 
-/* ═══════════════════════════════════
-   LANDING PAGE
-   ═══════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════
+   FEATURES VARIANT B — GSAP horizontal scroll pinned
+   ═══════════════════════════════════════════════════════════════════════ */
+function FeaturesHorizontalVariant() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const track = trackRef.current;
+    if (!container || !track) return;
+    const mm = gsap.matchMedia();
+    mm.add("(min-width: 1024px)", () => {
+      const panels = track.querySelectorAll<HTMLElement>(".h-panel");
+      const total = panels.length;
+      const ctx = gsap.context(() => {
+        gsap.to(track, {
+          x: () => -(track.scrollWidth - window.innerWidth),
+          ease: "none",
+          scrollTrigger: {
+            trigger: container,
+            pin: true,
+            scrub: 1.2,
+            invalidateOnRefresh: true,
+            end: () => `+=${track.scrollWidth - window.innerWidth}`,
+            onUpdate: (self) => setActiveIdx(Math.round(self.progress * (total - 1))),
+          },
+        });
+      }, container);
+      return () => ctx.revert();
+    });
+    return () => mm.revert();
+  }, []);
+
+  return (
+    <>
+      <section id="features" ref={containerRef} className="hidden lg:block overflow-hidden relative">
+        <div ref={trackRef} className="flex will-change-transform" style={{ height: "100vh" }}>
+          <div className="h-panel w-screen h-screen flex-shrink-0 flex items-center px-16 xl:px-24 bg-zinc-50">
+            <div className="max-w-2xl">
+              <h2
+                className="font-display font-bold leading-[1.05] tracking-tight mb-6 text-zinc-900 text-balance"
+                style={{ fontSize: "clamp(3rem, 6vw, 4.5rem)" }}
+              >
+                Tudo para organizar suas finanças.
+              </h2>
+              <p className="text-zinc-500 text-xl mb-8">Sem complicação. Sem mensalidade.</p>
+              <span className="text-sm text-zinc-400 flex items-center gap-2">
+                Scroll para explorar <ArrowRight className="w-4 h-4" />
+              </span>
+            </div>
+          </div>
+          {features.map((feat, i) => {
+            const Icon = feat.icon;
+            return (
+              <div
+                key={feat.title}
+                className="h-panel w-screen h-screen flex-shrink-0 flex items-center px-16 xl:px-24 border-l border-zinc-200 bg-white"
+              >
+                <div className="max-w-6xl mx-auto w-full grid grid-cols-2 gap-20 items-center">
+                  <div>
+                    <span
+                      className="font-display font-bold leading-none select-none text-zinc-100 block pointer-events-none"
+                      style={{ fontSize: "clamp(7rem, 14vw, 11rem)", marginBottom: "-1.5rem" }}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <h3
+                      className="font-display font-bold mb-4 relative z-10 text-zinc-900"
+                      style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}
+                    >
+                      {feat.title}
+                    </h3>
+                    <p className="text-zinc-500 text-lg leading-relaxed max-w-sm mb-8">{feat.longDesc}</p>
+                  </div>
+                  <div className="border border-zinc-200 rounded-2xl overflow-hidden shadow-xl shadow-zinc-200/60">
+                    <div className="bg-zinc-50 border-b border-zinc-100 px-4 py-2.5 flex items-center gap-2">
+                      <Icon className="w-4 h-4 text-emerald-600" strokeWidth={1.5} />
+                      <span className="text-xs font-semibold text-zinc-700">{feat.title}</span>
+                    </div>
+                    <div className="p-4 bg-white">{feat.screen}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+          {Array.from({ length: features.length + 1 }).map((_, i) => (
+            <div
+              key={i}
+              className={`rounded-full transition-all duration-300 ${
+                i === activeIdx ? "w-6 h-1.5 bg-emerald-600" : "w-1.5 h-1.5 bg-zinc-300"
+              }`}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Mobile fallback */}
+      <section id="features" className="lg:hidden py-20 px-6 bg-white">
+        <Reveal>
+          <h2 className="font-display text-4xl font-bold mb-12 text-zinc-900 text-balance">
+            Tudo para organizar suas finanças.
+          </h2>
+        </Reveal>
+        <div className="divide-y divide-zinc-100">
+          {features.map((feat, i) => {
+            const Icon = feat.icon;
+            return (
+              <Reveal key={feat.title} delay={i * 60}>
+                <div className="flex items-start gap-5 py-6">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <Icon className="w-5 h-5 text-white" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-lg font-semibold mb-1 text-zinc-900">{feat.title}</h3>
+                    <p className="text-zinc-500 text-sm leading-relaxed">{feat.longDesc}</p>
+                  </div>
+                </div>
+              </Reveal>
+            );
+          })}
+        </div>
+      </section>
+    </>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LANDING PAGE — light mode only
+   ═══════════════════════════════════════════════════════════════════════ */
+/* Número de seções h-screen (hero, dashboard, features, how, reviews, cta) */
+const SNAP_SECTION_COUNT = 6;
+
 export const LandingPage = () => {
   const navigate = useNavigate();
-  const { theme } = useTheme();
+  const [scrolled, setScrolled] = useState(false);
+  const lenisRef = useRef<Lenis | null>(null);
+
+  /* Lenis smooth scroll + GSAP ScrollTrigger */
+  useEffect(() => {
+    const lenis = new Lenis({ duration: 1.2 });
+    lenisRef.current = lenis;
+    const rafFn = (time: number) => lenis.raf(time * 1000);
+    gsap.ticker.add(rafFn);
+    gsap.ticker.lagSmoothing(0);
+    lenis.on("scroll", ScrollTrigger.update);
+
+    /* Intercepta anchor links para scroll suave via Lenis */
+    const onAnchorClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest("a[href^='#']") as HTMLAnchorElement | null;
+      if (!anchor) return;
+      const id = anchor.getAttribute("href")?.slice(1);
+      if (!id) return;
+      const el = document.getElementById(id);
+      if (!el) return;
+      e.preventDefault();
+      lenis.scrollTo(el, { duration: 0.9, easing: (t: number) => 1 - Math.pow(1 - t, 3) });
+    };
+    document.addEventListener("click", onAnchorClick);
+
+    return () => {
+      lenis.destroy();
+      lenisRef.current = null;
+      gsap.ticker.remove(rafFn);
+      document.removeEventListener("click", onAnchorClick);
+    };
+  }, []);
+
+  /* Navbar scroll state */
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", handler, { passive: true });
+    return () => window.removeEventListener("scroll", handler);
+  }, []);
+
+  /* Snap suave — usa lenis.scrollTo para não conflitar com o scroll virtual */
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    let isSnapping = false;
+
+    const onScroll = () => {
+      if (isSnapping) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const lenis = lenisRef.current;
+        if (!lenis) return;
+        const vh = window.innerHeight;
+        const scrollY = window.scrollY;
+
+        /* Não faz snap na área do footer */
+        if (scrollY >= SNAP_SECTION_COUNT * vh) return;
+
+        const idx = Math.min(Math.round(scrollY / vh), SNAP_SECTION_COUNT - 1);
+        const target = idx * vh;
+
+        /* Ignora se já está alinhado (dentro de 4% do vh) */
+        if (Math.abs(scrollY - target) < vh * 0.04) return;
+
+        isSnapping = true;
+        lenis.scrollTo(target, {
+          duration: 0.55,
+          easing: (t: number) => 1 - Math.pow(1 - t, 3),
+        });
+        /* Libera o flag depois da animação terminar */
+        setTimeout(() => { isSnapping = false; }, 600);
+      }, 150);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#FAFBFF] dark:bg-[#0B0F19] text-gray-800 dark:text-gray-100 overflow-x-hidden">
-      {/* ===== CSS ===== */}
+    <div className="min-h-screen bg-white text-zinc-900 overflow-x-hidden">
       <style>{`
-        @keyframes float { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        @keyframes pulse-glow { 0%,100% { opacity: 0.4; } 50% { opacity: 0.8; } }
-        .float-1 { animation: float 6s ease-in-out infinite; }
-        .float-2 { animation: float 8s ease-in-out infinite 1s; }
-        .float-3 { animation: float 7s ease-in-out infinite 2s; }
-        .shimmer-text { background-size: 200% auto; animation: shimmer 3s linear infinite; }
-        .glow-pulse { animation: pulse-glow 4s ease-in-out infinite; }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        .animate-marquee { animation: marquee 34s linear infinite; }
+        @media (prefers-reduced-motion: reduce) { .animate-marquee { animation: none; } }
       `}</style>
 
-      {/* ===== NAVBAR ===== */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 backdrop-blur-2xl border-b border-gray-200 dark:border-gray-800/50 dark:border-gray-800/50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      {/* ══════════════════════════════════════
+          FLOATING PILL NAVBAR
+          ══════════════════════════════════════ */}
+      <header className="fixed top-3 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
+        <nav
+          className={`pointer-events-auto w-full max-w-5xl h-14 flex items-center justify-between px-5 transition-all duration-300 ${
+            scrolled
+              ? "bg-white/90 backdrop-blur-md rounded-2xl shadow-sm shadow-zinc-200/60 border border-zinc-100/80"
+              : "bg-transparent"
+          }`}
+        >
           <div className="flex items-center gap-2.5">
-            <img src={theme === "dark" ? "/favicon-dark.png" : "/favicon-light.png"} alt="Hedge" className="w-7 h-7" />
-            <span className="text-lg font-bold tracking-tight text-gray-800 dark:text-gray-100">Hedge</span>
+            <img src="/favicon-light.png" alt="Hedge" className="w-7 h-7" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            <span className="font-display text-base font-bold tracking-tight text-zinc-900">Hedge</span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500 dark:text-gray-400">
-            <a href="#features" className="hover:text-gray-800 dark:hover:text-gray-100 dark:text-gray-100 transition-colors">Funcionalidades</a>
-            <a href="#how" className="hover:text-gray-800 dark:hover:text-gray-100 dark:text-gray-100 transition-colors">Como funciona</a>
-            <a href="#reviews" className="hover:text-gray-800 dark:hover:text-gray-100 dark:text-gray-100 transition-colors">Depoimentos</a>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-500">
+            <a href="#features" className="hover:text-zinc-900 transition-colors">Funcionalidades</a>
+            <a href="#how"      className="hover:text-zinc-900 transition-colors">Como funciona</a>
+            <a href="#reviews"  className="hover:text-zinc-900 transition-colors">Depoimentos</a>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/login")} className="px-5 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 dark:text-gray-100 transition-colors">
+            <button
+              onClick={() => navigate("/login")}
+              className="px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+            >
               Entrar
             </button>
-            <button onClick={() => navigate("/login?mode=signup")} className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 rounded-full transition-all shadow-lg shadow-gray-900/20 dark:shadow-white/10">
+            <button
+              onClick={() => navigate("/login?mode=signup")}
+              className="px-5 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors"
+            >
               Começar grátis
             </button>
           </div>
+        </nav>
+      </header>
+
+      {/* ══════════════════════════════════════
+          HERO — exatamente h-screen (inclui ticker + stats)
+          ══════════════════════════════════════ */}
+      <section className="h-screen flex flex-col relative overflow-x-hidden bg-white">
+        {/* HEDGE watermark */}
+        <div
+          className="absolute inset-0 flex items-center justify-center select-none pointer-events-none"
+          style={{
+            WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0) 100%)",
+            maskImage:        "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0) 100%)",
+            overflow: "hidden",
+          } as React.CSSProperties}
+          aria-hidden="true"
+        >
+          <span
+            className="font-display font-black whitespace-nowrap block"
+            style={{ fontSize: "clamp(7rem, 19vw, 18rem)", color: "rgba(0,0,0,0.07)", letterSpacing: "-0.02em" } as React.CSSProperties}
+          >
+            HEDGE
+          </span>
         </div>
-      </nav>
 
-      {/* ===== HERO ===== */}
-      <section className="relative pt-28 pb-8 md:pt-40 md:pb-16 px-6">
-        {/* Animated glows */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-to-b from-blue-100/70 via-violet-50/30 to-transparent rounded-full blur-3xl glow-pulse" />
-          <div className="absolute top-40 -left-60 w-[500px] h-[500px] bg-violet-100/40 rounded-full blur-3xl float-1" />
-          <div className="absolute top-60 -right-60 w-[500px] h-[500px] bg-emerald-100/30 rounded-full blur-3xl float-2" />
-          <div className="absolute top-20 left-1/4 w-[300px] h-[300px] bg-blue-200/20 rounded-full blur-2xl float-3" />
+        {/* Main content — expands to fill */}
+        <div className="flex-1 flex flex-col items-center justify-center px-6 pt-20 pb-4 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <Reveal>
+              <p className="text-xs font-semibold tracking-[0.2em] text-zinc-400 mb-8 uppercase">
+                Gratuito &middot; Seguro &middot; Sem anúncios
+              </p>
+            </Reveal>
+            <Reveal delay={70}>
+              <h1
+                className="font-display font-bold leading-[1.05] tracking-tight mb-6 text-zinc-900 text-balance"
+                style={{ fontSize: "clamp(2.8rem, 7vw, 5.5rem)" }}
+              >
+                Seu futuro financeiro<br />começa aqui
+              </h1>
+            </Reveal>
+            <Reveal delay={140}>
+              <p className="text-lg md:text-xl text-zinc-500 max-w-2xl mx-auto leading-relaxed mb-2">
+                Do registro diário ao relatório mensal. Controle gastos, divida despesas e construa
+                hábitos financeiros que funcionam —
+              </p>
+              <p className="text-lg md:text-xl font-semibold text-zinc-900 mb-10 inline-block relative">
+                tudo em um só lugar.
+                <span className="absolute -bottom-0.5 left-0 right-0 h-[2.5px] bg-emerald-500 rounded-full" />
+              </p>
+            </Reveal>
+            <Reveal delay={210}>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button
+                  onClick={() => navigate("/login?mode=signup")}
+                  className="group px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors flex items-center gap-2.5 text-base shadow-lg shadow-emerald-600/20"
+                >
+                  Começar gratuitamente
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+                <a href="#features" className="px-6 py-3.5 text-zinc-500 hover:text-zinc-700 font-medium transition-colors text-base">
+                  Ver funcionalidades
+                </a>
+              </div>
+            </Reveal>
+          </div>
         </div>
 
-        <div className="relative max-w-4xl mx-auto text-center">
-          <Reveal>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-xs font-semibold text-gray-600 dark:text-gray-400 mb-8 shadow-sm">
-              <Shield className="w-3.5 h-3.5 text-blue-500" />
-              Gratuito &bull; Seguro &bull; Sem anúncios
-            </div>
-          </Reveal>
-
-          <Reveal delay={80}>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-extrabold leading-[1.06] tracking-tight mb-6 text-gray-800 dark:text-gray-100">
-              Seu futuro financeiro
-              <br />
-              <span className="bg-gradient-to-r from-blue-600 via-violet-500 to-emerald-500 bg-clip-text text-transparent shimmer-text">
-                começa aqui
+        {/* Ticker — ancorado no rodapé do hero */}
+        <div className="flex-shrink-0 py-3.5 bg-emerald-600 overflow-hidden">
+          <div className="flex whitespace-nowrap animate-marquee">
+            {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+              <span key={i} className="inline-flex items-center gap-4 px-6 text-xs font-semibold text-white/90 uppercase tracking-[0.15em]">
+                {item}<span className="text-white/30">·</span>
               </span>
-            </h1>
-          </Reveal>
+            ))}
+          </div>
+        </div>
 
-          <Reveal delay={160}>
-            <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              Organize gastos pessoais e compartilhados, gerencie cartões, defina
-              metas e exporte relatórios — tudo em um só lugar.
-            </p>
-          </Reveal>
+        {/* Stats bar — imediatamente abaixo do ticker, ainda dentro do hero */}
+        <div className="flex-shrink-0 border-b border-zinc-200 bg-white">
+          <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4">
+            {[
+              { value: "100%", label: "Gratuito para sempre"  },
+              { value: "12+",  label: "Funcionalidades"       },
+              { value: "5min", label: "Para começar"          },
+              { value: "Zero", label: "Anúncios ou cobranças" },
+            ].map((s, i) => (
+              <div key={s.label} className={`text-center py-5 ${i > 0 ? "border-l border-zinc-200" : ""}`}>
+                <p className="font-display text-xl md:text-2xl font-bold text-zinc-900 mb-0.5">{s.value}</p>
+                <p className="text-xs text-zinc-500 font-medium">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          <Reveal delay={240}>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-              <button onClick={() => navigate("/login?mode=signup")}
-                className="group px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full transition-all shadow-xl shadow-blue-600/20 flex items-center gap-2.5 text-base">
-                Começar gratuitamente
+      {/* ══════════════════════════════════════
+          DASHBOARD SHOWCASE
+          ══════════════════════════════════════ */}
+      <section className="h-screen flex items-center px-6 py-12 bg-zinc-50 overflow-hidden">
+        <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-[1fr_1.7fr] gap-16 items-center">
+          {/* Left copy */}
+          <Reveal>
+            <div>
+              <p className="text-xs font-semibold tracking-[0.15em] text-emerald-600 mb-4 uppercase">
+                O produto
+              </p>
+              <h2
+                className="font-display font-bold leading-tight text-zinc-900 mb-6 text-balance"
+                style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}
+              >
+                Um dashboard que responde as perguntas certas.
+              </h2>
+              <p className="text-zinc-500 text-lg leading-relaxed mb-8 max-w-sm">
+                De onde vem, para onde vai, quanto sobrou. Todos os dados financeiros do seu mês, organizados da forma que fazem sentido.
+              </p>
+              <button
+                onClick={() => navigate("/login?mode=signup")}
+                className="group inline-flex items-center gap-2 px-6 py-3 bg-zinc-900 hover:bg-zinc-800 text-white font-semibold rounded-xl transition-colors text-sm"
+              >
+                Experimentar grátis
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </button>
-              <a href="#features" className="flex items-center gap-1.5 px-6 py-3.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 font-medium transition-colors text-base">
-                Explorar funcionalidades
-                <ChevronDown className="w-4 h-4 animate-bounce" />
-              </a>
             </div>
           </Reveal>
-        </div>
 
-        {/* ===== HERO MOCKUP ===== */}
-        <Reveal delay={350}>
-          <div className="relative max-w-5xl mx-auto">
-            <div className="rounded-[1.5rem] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800/80 shadow-2xl shadow-gray-300/40 overflow-hidden">
-              {/* Top bar */}
-              <div className="flex items-center justify-between px-5 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                <div className="flex items-center gap-3">
+          {/* Right: desktop browser mockup */}
+          <Reveal delay={120}>
+            <div className="relative">
+              <div className="absolute -inset-6 bg-emerald-100/40 rounded-3xl blur-3xl" />
+              <div className="relative rounded-2xl border border-zinc-200 shadow-2xl shadow-zinc-300/50 overflow-hidden bg-white">
+                {/* Browser chrome */}
+                <div className="flex items-center gap-2 px-4 py-3 bg-zinc-100 border-b border-zinc-200">
                   <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-400" />
-                    <div className="w-3 h-3 rounded-full bg-amber-400" />
-                    <div className="w-3 h-3 rounded-full bg-emerald-400" />
+                    {["bg-red-400/80", "bg-amber-400/80", "bg-emerald-400/80"].map((c, i) => (
+                      <div key={i} className={`w-2.5 h-2.5 rounded-full ${c}`} />
+                    ))}
                   </div>
-                  <div className="hidden sm:flex items-center gap-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 w-48">
-                    <Search className="w-3 h-3" />
+                  <div className="flex-1 mx-4 bg-white rounded-md h-6 flex items-center px-3 text-[11px] text-zinc-400 max-w-xs">
                     gethedge.vercel.app
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
-                  <MoreHorizontal className="w-4 h-4 text-gray-400 dark:text-gray-500 dark:text-gray-400" />
-                </div>
-              </div>
 
-              <div className="flex">
-                {/* Sidebar */}
-                <div className="hidden md:flex flex-col w-52 border-r border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 p-4 gap-2">
-                  <div className="flex items-center gap-2 mb-4">
-                    <img src={theme === "dark" ? "/favicon-dark.png" : "/favicon-light.png"} alt="Hedge Logo" className="w-5 h-5" />
-                    <span className="text-sm font-bold text-gray-800 dark:text-gray-100">Hedge</span>
-                  </div>
-                  {["Dashboard", "Meus Gastos", "Gastos", "Cartões", "Metas", "Contas"].map((item, i) => (
-                    <div key={item} className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${i === 0 ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400" : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"}`}>
-                      {[PieChart, Wallet, Users, CreditCard, Target, Building2][i] && (() => { const Icon = [PieChart, Wallet, Users, CreditCard, Target, Building2][i]; return <Icon className="w-3.5 h-3.5" />; })()}
-                      {item}
+                {/* App UI */}
+                <div className="flex" style={{ height: "450px" }}>
+                  {/* Sidebar */}
+                  <div className="w-44 border-r border-zinc-100 bg-zinc-50/80 p-3 flex flex-col gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 mb-4 px-2 pt-1">
+                      <div className="w-4 h-4 bg-emerald-600 rounded-sm" />
+                      <span className="font-display text-xs font-bold text-zinc-800">Hedge</span>
                     </div>
-                  ))}
-                </div>
-
-                {/* Main content */}
-                <div className="flex-1 p-5 md:p-6">
-                  {/* Greeting */}
-                  <div className="flex items-center justify-between mb-5">
-                    <div>
-                      <h3 className="text-base font-bold text-gray-800 dark:text-gray-100">Olá, Usuário! 👋</h3>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">Março 2026</p>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white dark:text-gray-100/90 text-xs font-bold">G</div>
-                  </div>
-
-                  {/* Cards */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
                     {[
-                      { label: "Saldo Total", value: "R$ 4.274", icon: Wallet, iconColor: "text-emerald-600" },
-                      { label: "A Receber", value: "R$ 2.031", icon: Users, iconColor: "text-blue-600" },
-                      { label: "Receitas Fixas", value: "R$ 5.350", icon: TrendingUp, iconColor: "text-green-600" },
-                      { label: "Gastos Fixos", value: "R$ 479", icon: CreditCard, iconColor: "text-amber-600" },
-                    ].map((c) => (
-                      <div key={c.label} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 md:p-4 shadow-sm">
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                          <c.icon className={`w-3.5 h-3.5 ${c.iconColor}`} />
-                          <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400">{c.label}</span>
-                        </div>
-                        <p className="text-sm md:text-base font-bold text-gray-800 dark:text-gray-100">{c.value}</p>
+                      { label: "Dashboard",   Icon: PieChart,   active: true  },
+                      { label: "Meus Gastos", Icon: Wallet,     active: false },
+                      { label: "Gastos",      Icon: Users,      active: false },
+                      { label: "Cartões",     Icon: CreditCard, active: false },
+                      { label: "Metas",       Icon: Target,     active: false },
+                      { label: "Contas",      Icon: Building2,  active: false },
+                    ].map(({ label, Icon, active }) => (
+                      <div
+                        key={label}
+                        className={`flex items-center gap-2 px-2 py-2 rounded-lg text-[11px] font-medium ${
+                          active ? "bg-emerald-50 text-emerald-700" : "text-zinc-400"
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5 shrink-0" />
+                        {label}
                       </div>
                     ))}
                   </div>
 
-                  {/* Chart + Recent transactions */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Gastos por mês</span>
-                        <span className="text-[10px] text-gray-400 dark:text-gray-500 dark:text-gray-400">Últimos 12 meses</span>
+                  {/* Dashboard content */}
+                  <div className="flex-1 p-5 bg-white overflow-hidden">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="font-display text-sm font-bold text-zinc-900">Olá, Usuário! 👋</p>
+                        <p className="text-[10px] text-zinc-400 mt-0.5">Março 2026</p>
                       </div>
-                      <div className="flex items-end gap-1.5 h-28">
-                        {[35, 55, 42, 68, 52, 75, 48, 62, 80, 58, 72, 90].map((h, i) => (
-                          <div key={i} className="flex-1 rounded-t-md bg-gradient-to-t from-blue-500 to-blue-300 hover:from-blue-600 hover:to-blue-400 transition-all cursor-pointer relative group"
-                            style={{ height: `${h}%` }}>
-                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-white dark:bg-gray-900 text-white dark:text-gray-100/90 text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                              R$ {Math.round(h * 45)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex justify-between mt-2">
-                        {["Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez", "Jan", "Fev"].map(m => (
-                          <span key={m} className="text-[8px] text-gray-400 dark:text-gray-500 dark:text-gray-400 flex-1 text-center">{m}</span>
-                        ))}
+                      <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center text-white text-[10px] font-bold">
+                        U
                       </div>
                     </div>
-                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 p-4">
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3 block">Últimos gastos</span>
+
+                    {/* Metric cards */}
+                    <div className="grid grid-cols-4 gap-2 mb-4">
                       {[
-                        { name: "Supermercado", val: "-R$ 234", cat: "🛒" },
-                        { name: "Uber", val: "-R$ 28", cat: "🚗" },
-                        { name: "Netflix", val: "-R$ 45", cat: "🎬" },
-                        { name: "Salário", val: "+R$ 5.200", cat: "💰", positive: true },
-                      ].map((t) => (
-                        <div key={t.name} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">{t.cat}</span>
-                            <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">{t.name}</span>
+                        { label: "Saldo Total",    val: "R$ 4.274", Icon: Wallet,     color: "text-emerald-600" },
+                        { label: "A Receber",      val: "R$ 2.031", Icon: Users,      color: "text-blue-500"    },
+                        { label: "Receitas Fixas", val: "R$ 5.350", Icon: TrendingUp, color: "text-green-600"   },
+                        { label: "Gastos Fixos",   val: "R$ 479",   Icon: CreditCard, color: "text-amber-500"   },
+                      ].map((c) => (
+                        <div key={c.label} className="bg-zinc-50 border border-zinc-100 rounded-xl p-3">
+                          <div className="flex items-center gap-1 mb-1.5">
+                            <c.Icon className={`w-3 h-3 ${c.color}`} />
+                            <span className="text-[9px] text-zinc-500 font-medium leading-tight">{c.label}</span>
                           </div>
-                          <span className={`text-xs font-semibold ${"positive" in t ? "text-emerald-600" : "text-gray-600 dark:text-gray-400"}`}>{t.val}</span>
+                          <p className="text-sm font-bold text-zinc-900">{c.val}</p>
                         </div>
                       ))}
                     </div>
+
+                    {/* Chart + Transactions */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="col-span-2 bg-zinc-50 border border-zinc-100 rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-semibold text-zinc-700">Gastos por mês</span>
+                          <span className="text-[9px] text-zinc-400">12 meses</span>
+                        </div>
+                        <div className="flex items-end gap-1 h-[88px]">
+                          {[35, 48, 42, 65, 52, 72, 48, 61, 78, 56, 70, 88].map((h, i) => (
+                            <div
+                              key={i}
+                              className="flex-1 rounded-t bg-emerald-500/70"
+                              style={{ height: `${h}%` }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-3">
+                        <p className="text-[10px] font-semibold text-zinc-700 mb-2">Últimos gastos</p>
+                        {[
+                          { e: "🛒", n: "Mercado", v: "-R$ 234", pos: false },
+                          { e: "🚗", n: "Uber",    v: "-R$ 28",  pos: false },
+                          { e: "💰", n: "Salário", v: "+R$5.2k", pos: true  },
+                        ].map((t) => (
+                          <div key={t.n} className="flex items-center justify-between py-1.5 border-b border-zinc-100 last:border-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs">{t.e}</span>
+                              <span className="text-[10px] text-zinc-700 font-medium">{t.n}</span>
+                            </div>
+                            <span className={`text-[10px] font-semibold ${t.pos ? "text-emerald-600" : "text-zinc-500"}`}>
+                              {t.v}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </Reveal>
+          </Reveal>
+        </div>
       </section>
 
-      {/* ===== STATS ===== */}
-      <Reveal>
-        <section className="py-14 px-6">
-          <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {[
-              { value: 100, suffix: "%", label: "Gratuito para sempre" },
-              { value: 12, suffix: "+", label: "Funcionalidades" },
-              { value: 5, suffix: "min", label: "Para começar" },
-              { value: 0, suffix: "", label: "Anúncios", display: "Zero" },
-            ].map((s) => (
-              <div key={s.label} className="p-5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm">
-                <p className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-gray-100 mb-1">
-                  {s.display || <Counter end={s.value} suffix={s.suffix} />}
+      {/* ══════════════════════════════════════
+          FEATURES
+          ══════════════════════════════════════ */}
+      {FEATURES_VARIANT === "list"
+        ? <FeaturesListVariant onSignup={() => navigate("/login?mode=signup")} />
+        : <FeaturesHorizontalVariant />}
+
+      {/* ══════════════════════════════════════
+          COMO FUNCIONA — dark green, assimétrico
+          ══════════════════════════════════════ */}
+      <section id="how" className="h-screen flex items-center px-6 py-16 overflow-hidden" style={{ backgroundColor: "#052e16" }}>
+        <div className="max-w-5xl mx-auto w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-16 lg:gap-24 items-start">
+            {/* Left sticky title */}
+            <Reveal>
+              <div className="lg:sticky" style={{ top: "30vh" }}>
+                <h2
+                  className="font-display font-bold text-white leading-tight mb-6 text-balance"
+                  style={{ fontSize: "clamp(2.5rem, 5vw, 3.75rem)" }}
+                >
+                  Comece em<br />três passos.
+                </h2>
+                <p className="text-emerald-100/50 text-lg leading-relaxed max-w-xs">
+                  Minutos para configurar. Meses para transformar como você lida com dinheiro.
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 font-medium">{s.label}</p>
+                <div className="mt-10">
+                  <button
+                    onClick={() => navigate("/login?mode=signup")}
+                    className="group inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-colors text-sm"
+                  >
+                    Começar agora
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                </div>
               </div>
-            ))}
-          </div>
-        </section>
-      </Reveal>
+            </Reveal>
 
-      {/* ===== FEATURES ===== */}
-      <section id="features" className="py-20 md:py-28 px-6">
-        <div className="max-w-6xl mx-auto">
-          <Reveal>
-            <div className="text-center mb-14">
-              <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/20 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 dark:border-blue-800/30 text-xs font-semibold text-blue-600 mb-5">
-                Funcionalidades
-              </span>
-              <h2 className="text-3xl md:text-[2.75rem] font-extrabold text-gray-800 dark:text-gray-100 mb-4 leading-tight">
-                Tudo para organizar<br />suas finanças
-              </h2>
-              <p className="text-gray-500 dark:text-gray-400 max-w-lg mx-auto font-medium">
-                Ferramentas poderosas e intuitivas — sem complicação, sem mensalidade.
-              </p>
-            </div>
-          </Reveal>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((f, i) => (
-              <Reveal key={f.title} delay={i * 70}>
-                <div className={`group relative h-full p-6 rounded-[1.5rem] bg-gradient-to-br ${f.gradient} border border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-xl hover:shadow-gray-200/60 dark:hover:shadow-2xl dark:hover:shadow-black/80 hover:-translate-y-1 dark:hover:bg-white/[0.02] transition-all duration-300 cursor-default overflow-hidden`}>
-                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 backdrop-blur-sm">
-                    {f.tag}
-                  </span>
-                  <div className={`w-10 h-10 rounded-xl ${f.iconBg} flex items-center justify-center mb-3 shadow-md`}>
-                    <f.icon className="w-[18px] h-[18px] text-white" />
+            {/* Right: step rows */}
+            <div>
+              {steps.map((s, i) => (
+                <Reveal key={s.num} delay={i * 80}>
+                  <div className={`py-10 ${i < steps.length - 1 ? "border-b border-white/[0.08]" : ""}`}>
+                    <div className="flex items-start gap-6">
+                      <span className="font-mono text-xs font-bold text-emerald-500/50 mt-1.5 shrink-0 w-8 tabular-nums">
+                        {s.num}
+                      </span>
+                      <div>
+                        <h3
+                          className="font-display font-bold text-white mb-3 leading-tight"
+                          style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)" }}
+                        >
+                          {s.title}
+                        </h3>
+                        <p className="text-emerald-100/50 text-base leading-relaxed max-w-md">{s.desc}</p>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 mb-1.5">{f.title}</h3>
-                  <p className="text-[0.85rem] text-gray-500 dark:text-gray-400 leading-relaxed">{f.desc}</p>
-                  <FeatureVisual type={f.visual} />
-                </div>
-              </Reveal>
-            ))}
+                </Reveal>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ===== COMO FUNCIONA ===== */}
-      <section id="how" className="py-20 md:py-28 px-6 bg-white dark:bg-gray-900">
-        <div className="max-w-5xl mx-auto">
+      {/* ══════════════════════════════════════
+          DEPOIMENTOS — zinc-50, layout variado
+          ══════════════════════════════════════ */}
+      <section id="reviews" className="h-screen flex items-center px-6 py-12 bg-zinc-50 overflow-hidden">
+        <div className="max-w-6xl mx-auto w-full">
+          {/* Header */}
           <Reveal>
-            <div className="text-center mb-14">
-              <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 dark:border-emerald-800/30 text-xs font-semibold text-emerald-600 mb-5">
-                Como funciona
-              </span>
-              <h2 className="text-3xl md:text-[2.75rem] font-extrabold text-gray-800 dark:text-gray-100 mb-4 leading-tight">
-                Três passos para o<br />controle total
+            <div className="flex flex-col md:flex-row md:items-end gap-4 mb-8">
+              <h2
+                className="font-display font-bold leading-tight text-zinc-900 text-balance flex-1"
+                style={{ fontSize: "clamp(1.8rem, 3.2vw, 2.6rem)" }}
+              >
+                Resultados que você vê.<br />Confiança que você sente.
               </h2>
-              <p className="text-gray-500 dark:text-gray-400 max-w-lg mx-auto font-medium">
-                Comece a organizar suas finanças em minutos.
+              <p className="text-zinc-500 text-base leading-relaxed max-w-xs md:mb-1 shrink-0">
+                O que muda quando você para de achar e começa a ver os números.
               </p>
             </div>
           </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            {steps.map((s, i) => (
-              <Reveal key={s.num} delay={i * 100}>
-                <div className="relative bg-[#FAFBFF] dark:bg-[#0B0F19] rounded-[1.5rem] p-7 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-lg transition-all duration-300 group">
-                  <span className="text-6xl font-black bg-gradient-to-b from-gray-200 to-gray-100 bg-clip-text text-transparent absolute top-4 right-5 select-none group-hover:from-blue-200 group-hover:to-blue-100 transition-all duration-300">
-                    {s.num}
-                  </span>
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-5 shadow-lg shadow-blue-500/20">
-                    <s.icon className="w-5 h-5 text-white dark:text-gray-100/90" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">{s.title}</h3>
-                  <p className="text-[0.9rem] text-gray-500 dark:text-gray-400 leading-relaxed">{s.desc}</p>
-                  {i < steps.length - 1 && (
-                    <div className="hidden md:block absolute top-1/2 -right-4 md:-right-5 w-8 md:w-10 border-t-2 border-dashed border-gray-200 dark:border-gray-800 z-10" />
-                  )}
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ===== DEPOIMENTOS ===== */}
-      <section id="reviews" className="py-20 md:py-28 px-6">
-        <div className="max-w-5xl mx-auto">
+          {/* Featured testimonial — dark card */}
           <Reveal>
-            <div className="text-center mb-14">
-              <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30 dark:border-amber-800/30 text-xs font-semibold text-amber-600 mb-5">
-                <Star className="w-3 h-3 mr-1 fill-amber-500 text-amber-500" />
-                Depoimentos
-              </span>
-              <h2 className="text-3xl md:text-[2.75rem] font-extrabold text-gray-800 dark:text-gray-100 mb-4 leading-tight">
-                O que nossos usuários<br />estão dizendo
-              </h2>
+            <div className="relative mb-5 p-7 md:p-9 rounded-2xl bg-zinc-900 text-white overflow-hidden">
+              {/* Hedge logo mark — subtle watermark */}
+              <div className="absolute right-8 bottom-8 opacity-[0.06] pointer-events-none select-none">
+                <img
+                  src="/favicon-dark.png"
+                  alt=""
+                  className="w-28 h-28 object-contain"
+                  style={{ filter: "brightness(10)" }}
+                />
+              </div>
+              <svg className="w-7 h-7 text-emerald-500/40 mb-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.731-9.57 8.983-10.609l.998 2.151c-2.433.917-3.998 3.638-3.998 5.849h4.001v10h-9.984z" />
+              </svg>
+              <p
+                className="font-display font-semibold text-white leading-relaxed mb-6 relative z-10 text-balance"
+                style={{ fontSize: "clamp(1.05rem, 2vw, 1.35rem)" }}
+              >
+                "{testimonials[0].text}"
+              </p>
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-sm">
+                  {testimonials[0].name.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-semibold text-white text-sm">{testimonials[0].name}</p>
+                  <p className="text-zinc-400 text-xs">{testimonials[0].role}</p>
+                </div>
+              </div>
             </div>
           </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {testimonials.map((t, i) => (
-              <Reveal key={t.name} delay={i * 100}>
-                <div className="p-6 rounded-[1.5rem] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-lg transition-all duration-300">
-                  {/* Stars */}
-                  <div className="flex gap-0.5 mb-4">
-                    {Array.from({ length: t.stars }).map((_, j) => (
-                      <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-5 italic">"{t.text}"</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white dark:text-gray-100/90 text-xs font-bold">
+          {/* Grid of 3 additional testimonials */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {testimonials.slice(1, 4).map((t, i) => (
+              <Reveal key={t.name} delay={i * 55}>
+                <div className="p-5 rounded-2xl bg-white border border-zinc-200 h-full flex flex-col">
+                  <svg className="w-4 h-4 text-emerald-300 mb-3 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.731-9.57 8.983-10.609l.998 2.151c-2.433.917-3.998 3.638-3.998 5.849h4.001v10h-9.984z" />
+                  </svg>
+                  <p className="text-sm text-zinc-600 leading-relaxed mb-4 flex-1">"{t.text}"</p>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-600 text-xs font-semibold shrink-0">
                       {t.name.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{t.name}</p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400">{t.role}</p>
+                      <p className="text-sm font-semibold text-zinc-900">{t.name}</p>
+                      <p className="text-xs text-zinc-400">{t.role}</p>
                     </div>
                   </div>
                 </div>
@@ -510,44 +1187,80 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* ===== CTA FINAL ===== */}
-      <section className="py-20 md:py-28 px-6">
+      {/* ══════════════════════════════════════
+          CTA FINAL — emerald, full viewport
+          ══════════════════════════════════════ */}
+      <section className="h-screen flex items-center justify-center px-6 py-16 bg-emerald-600 relative overflow-hidden">
+        {/* Hedge logo — fills full section, ultra-discrete */}
+        <div
+          className="absolute inset-0 flex items-center justify-center select-none pointer-events-none overflow-hidden"
+          aria-hidden="true"
+        >
+          <img
+            src="/favicon-dark.png"
+            alt=""
+            className="w-full h-full object-contain"
+            style={{
+              opacity: 0.06,
+              filter: "brightness(10)",
+              padding: "6%",
+            }}
+          />
+        </div>
+        {/* Subtle dot grid */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+            backgroundSize: "32px 32px",
+          }}
+        />
+
         <Reveal>
-          <div className="relative max-w-4xl mx-auto">
-            <div className="absolute inset-0 -z-10">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-blue-100/50 rounded-full blur-[100px]" />
+          <div className="relative z-10 max-w-4xl mx-auto text-center">
+            <h2
+              className="font-display font-bold text-white leading-[1.05] mb-6 text-balance"
+              style={{ fontSize: "clamp(2.6rem, 7vw, 5.5rem)" }}
+            >
+              O controle financeiro<br />que você sempre quis.
+            </h2>
+            <p className="text-emerald-100/70 text-xl mb-12 max-w-lg mx-auto leading-relaxed">
+              Sem mensalidade. Sem cartão de crédito. Sem letras pequenas. Só você e o seu dinheiro.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+              <button
+                onClick={() => navigate("/login?mode=signup")}
+                className="group px-10 py-4 bg-white text-emerald-700 font-bold text-lg rounded-xl hover:bg-zinc-50 transition-colors shadow-2xl shadow-emerald-900/25 flex items-center gap-3"
+              >
+                Criar minha conta agora
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+              <button
+                onClick={() => navigate("/login")}
+                className="px-8 py-4 border border-white/30 text-white font-medium rounded-xl hover:bg-white/10 transition-colors text-base"
+              >
+                Já tenho conta
+              </button>
             </div>
-            <div className="text-center p-10 md:p-16 rounded-[2rem] bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 shadow-2xl shadow-gray-900/30 relative overflow-hidden">
-              {/* Subtle grid pattern */}
-              <div className="absolute inset-0 opacity-[0.04]"
-                style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-              <div className="relative">
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-5 leading-tight">
-                  Pronto para assumir o<br />controle financeiro?
-                </h2>
-                <p className="text-gray-400 dark:text-gray-500 dark:text-gray-400 mb-8 max-w-md mx-auto text-base">
-                  Crie sua conta gratuitamente e comece a organizar suas finanças hoje.
-                </p>
-                <button onClick={() => navigate("/login?mode=signup")}
-                  className="group px-8 py-4 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-all shadow-lg flex items-center gap-2.5 mx-auto text-base">
-                  Criar conta grátis
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                </button>
-              </div>
-            </div>
+            <p className="text-emerald-200/40 text-sm">
+              Sem cartão de crédito &middot; Sem período de teste &middot; Gratuito para sempre
+            </p>
           </div>
         </Reveal>
       </section>
 
-      {/* ===== FOOTER ===== */}
-      <footer className="py-10 px-6 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+      {/* ══════════════════════════════════════
+          FOOTER
+          ══════════════════════════════════════ */}
+      <footer className="py-8 px-6 border-t border-zinc-200 bg-white">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <img src={theme === "dark" ? "/favicon-dark.png" : "/favicon-light.png"} alt="Hedge" className="w-5 h-5" />
-            <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">Hedge</span>
-            <span className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 ml-1">© {new Date().getFullYear()}</span>
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 bg-emerald-600 rounded-sm" />
+            <span className="font-display text-sm font-semibold text-zinc-900">Hedge</span>
+            <span className="text-xs text-zinc-400 ml-1">© {new Date().getFullYear()}</span>
           </div>
-          <p className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 font-medium">Suas contas na régua.</p>
+          <p className="text-xs text-zinc-400">Suas contas na régua.</p>
         </div>
       </footer>
     </div>
