@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Users, Plus, Trash2, Loader2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { useAppContext } from "../context";
+import { useTheme } from "../hooks/useTheme";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageEmptyState } from "../components/ui/AsyncState";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
@@ -89,6 +90,15 @@ export const PessoasPage = () => {
     navegarMes,
     irParaHoje,
   } = useAppContext();
+
+  const { theme } = useTheme();
+  const tooltipStyle = useMemo(() => theme === "dark"
+    ? { backgroundColor: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 4px 24px -4px rgba(0,0,0,0.5)", fontSize: "12px", color: "#f3f4f6" }
+    : { backgroundColor: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "10px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", fontSize: "12px" },
+    [theme]
+  );
+  const tooltipItemStyle = useMemo(() => theme === "dark" ? { color: "#d1d5db" } : { color: "#374151" }, [theme]);
+  const tooltipLabelStyle = useMemo(() => theme === "dark" ? { color: "#9ca3af" } : { color: "#6b7280" }, [theme]);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -230,7 +240,7 @@ export const PessoasPage = () => {
               value={novaPessoa}
               onChange={(e) => setNovaPessoa(e.target.value)}
               placeholder="Nome do devedor"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               autoFocus
             />
@@ -345,9 +355,9 @@ export const PessoasPage = () => {
                             </Pie>
                             <Tooltip
                               formatter={(value) => formatCurrency(Number(value))}
-                              contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "8px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
-                              itemStyle={{ color: "#374151" }}
-                              labelStyle={{ color: "#6b7280" }}
+                              contentStyle={tooltipStyle}
+                              itemStyle={tooltipItemStyle}
+                              labelStyle={tooltipLabelStyle}
                             />
                             <Legend
                               formatter={(value) => <span className="text-gray-600 dark:text-gray-400 text-sm">{value}</span>}
@@ -405,9 +415,9 @@ export const PessoasPage = () => {
                   </Pie>
                   <Tooltip
                     formatter={(value) => formatCurrency(Number(value))}
-                    contentStyle={{ backgroundColor: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "8px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
-                    itemStyle={{ color: "#374151" }}
-                    labelStyle={{ color: "#6b7280" }}
+                    contentStyle={tooltipStyle}
+                    itemStyle={tooltipItemStyle}
+                    labelStyle={tooltipLabelStyle}
                   />
                   <Legend
                     formatter={(value) => <span className="text-gray-600 dark:text-gray-400 text-sm">{value}</span>}

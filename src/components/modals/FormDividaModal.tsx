@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { SaldoDevedorForm } from "../../types";
 import { formatCurrencyInput } from "../../utils/calculations";
+import { useFocusTrap } from "../../hooks";
 
 interface FormDividaModalProps {
   show: boolean;
@@ -32,19 +33,28 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
   onFormChange,
   onSubmit,
 }) => {
+  const dialogRef = useFocusTrap(onClose, show);
+
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-800">
+    <div className="fixed inset-0 bg-black/40 z-modal flex items-end sm:items-center justify-center p-4">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="form-divida-title"
+        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-800"
+      >
         {/* Header do Modal */}
         <div className="sticky top-0 bg-white dark:bg-gray-900 p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between z-10">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <h2 id="form-divida-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             <Clock className="w-5 h-5 text-orange-400" />
             Nova Cobrança em Aberto
           </h2>
           <button
             onClick={onClose}
+            aria-label="Fechar"
             className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -95,7 +105,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
                 onFormChange({ ...formData, descricao: e.target.value })
               }
               placeholder="Ex: Empréstimo de Janeiro, Dívida do carro..."
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             />
           </div>
 
@@ -119,7 +129,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
                   })
                 }
                 placeholder="0,00"
-                className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+                className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 inputMode="numeric"
               />
             </div>

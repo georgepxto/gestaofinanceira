@@ -8,6 +8,12 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // Isola o helper de preload do Vite para que não caia dentro de um
+          // vendor pesado e force seu carregamento em todas as páginas.
+          if (id.includes("vite/preload-helper")) {
+            return "preload-helper";
+          }
+
           if (id.includes("node_modules/@supabase/supabase-js")) {
             return "supabase-vendor";
           }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Loader2, Trash2, AlertTriangle, CheckCircle, Info, ShieldAlert, X } from "lucide-react";
 import type { ModalConfirm } from "../../types/extended";
 import { toast } from "../ui/Toaster";
+import { useFocusTrap } from "../../hooks";
 
 interface ConfirmModalProps {
   modal: ModalConfirm;
@@ -31,6 +32,7 @@ export function ConfirmModal({
   onClose,
 }: ConfirmModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const dialogRef = useFocusTrap(onClose, modal.show);
 
   if (!modal.show) return null;
 
@@ -56,14 +58,20 @@ export function ConfirmModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[999] flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-sm shadow-2xl relative overflow-hidden flex flex-col border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 duration-200">
-        
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-modal-top flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-modal-title"
+        className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-sm shadow-2xl relative overflow-hidden flex flex-col border border-gray-100 dark:border-gray-800 animate-in zoom-in-95 duration-200"
+      >
         {/* Helper visual para reforçar a cor no topo */}
         <div className={`h-2 w-full ${colors.bg}`}></div>
 
         <button
           onClick={onClose}
+          aria-label="Fechar"
           className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           disabled={isLoading}
         >
@@ -75,7 +83,7 @@ export function ConfirmModal({
             <IconComponent className="w-6 h-6" />
           </div>
           <div className="flex-1 mt-1">
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white leading-tight">
+            <h2 id="confirm-modal-title" className="text-xl font-bold text-gray-800 dark:text-white leading-tight">
               {modal.titulo}
             </h2>
             <p className="mt-2 text-[15px] leading-relaxed text-gray-600 dark:text-gray-400">
