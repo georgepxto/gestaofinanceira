@@ -1,6 +1,7 @@
 import React from "react";
 import { X, Loader2, Banknote } from "lucide-react";
 import { formatCurrencyInput } from "../../utils/calculations";
+import { useFocusTrap } from "../../hooks";
 
 interface PagamentoModalProps {
   show: boolean;
@@ -31,18 +32,27 @@ export const PagamentoModal: React.FC<PagamentoModalProps> = ({
   onTudo,
   onSubmit,
 }) => {
+  const dialogRef = useFocusTrap(onClose, show && !!dividaId);
+
   if (!show || !dividaId) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-md border border-gray-200 dark:border-gray-800">
+    <div className="fixed inset-0 bg-black/40 z-modal flex items-end sm:items-center justify-center p-4">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pagamento-modal-title"
+        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-md border border-gray-200 dark:border-gray-800"
+      >
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+          <h2 id="pagamento-modal-title" className="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <Banknote className="w-5 h-5 text-emerald-600" />
             Registrar Pagamento
           </h2>
           <button
             onClick={onClose}
+            aria-label="Fechar"
             className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -61,7 +71,7 @@ export const PagamentoModal: React.FC<PagamentoModalProps> = ({
                 onValorChange(formatCurrencyInput(e.target.value))
               }
               placeholder="0,00"
-              className="w-full pl-10 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500 outline-none"
+              className="w-full pl-10 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-green-500 outline-none"
               inputMode="numeric"
             />
           </div>
@@ -81,7 +91,7 @@ export const PagamentoModal: React.FC<PagamentoModalProps> = ({
             value={obsPagamento}
             onChange={(e) => onObsChange(e.target.value)}
             placeholder="Observação (opcional)"
-            className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500 outline-none"
+            className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-green-500 outline-none"
           />
           {error && <div className="text-red-600 text-sm">{error}</div>}
           <div className="flex gap-2">

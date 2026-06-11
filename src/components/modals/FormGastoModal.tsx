@@ -12,6 +12,7 @@ import {
   PARCELAS_MAX,
 } from "../../utils/constants";
 import { CATEGORIAS } from "../../utils/categories";
+import { useFocusTrap } from "../../hooks";
 
 interface FormGastoModalProps {
   show: boolean;
@@ -46,6 +47,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
   const [customParcelasInput, setCustomParcelasInput] = React.useState(
     String(formData.num_parcelas)
   );
+  const dialogRef = useFocusTrap(onClose, show);
 
   React.useEffect(() => {
     if (show) {
@@ -105,15 +107,22 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-800">
+    <div className="fixed inset-0 bg-black/40 z-modal flex items-end sm:items-center justify-center p-4">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="form-gasto-title"
+        className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-800"
+      >
         {/* Header do Modal */}
         <div className="sticky top-0 bg-white dark:bg-gray-900 p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between z-10">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          <h2 id="form-gasto-title" className="text-lg font-semibold text-gray-800 dark:text-gray-100">
             {isEditing ? "Editar Lançamento" : "Novo Lançamento"}
           </h2>
           <button
             onClick={onClose}
+            aria-label="Fechar"
             className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -133,8 +142,8 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                 onClick={() => onFormChange({ ...formData, tipo: "credito" })}
                 className={`p-3 rounded-lg border-2 flex items-center justify-center gap-2 transition-all ${
                   formData.tipo === "credito"
-                    ? "border-purple-500 bg-purple-900/50 text-purple-300"
-                    : "border-gray-200 dark:border-gray-800 hover:border-gray-500 text-gray-500 dark:text-gray-400"
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300"
+                    : "border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600 text-gray-500 dark:text-gray-400"
                 }`}
               >
                 <CreditCard className="w-5 h-5" />
@@ -145,8 +154,8 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                 onClick={() => onFormChange({ ...formData, tipo: "debito" })}
                 className={`p-3 rounded-lg border-2 flex items-center justify-center gap-2 transition-all ${
                   formData.tipo === "debito"
-                    ? "border-green-500 bg-emerald-50 text-emerald-700"
-                    : "border-gray-200 dark:border-gray-800 hover:border-gray-500 text-gray-500 dark:text-gray-400"
+                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
+                    : "border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600 text-gray-500 dark:text-gray-400"
                 }`}
               >
                 <Wallet className="w-5 h-5" />
@@ -215,7 +224,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               value={formData.descricao}
               onChange={handleInputChange}
               placeholder="Ex: iPhone 15, Supermercado..."
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               required
             />
           </div>
@@ -291,7 +300,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                 value={formData.valor_total}
                 onChange={handleInputChange}
                 placeholder="0,00"
-                className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+                className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 inputMode="numeric"
                 required
               />
@@ -306,6 +315,9 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
             </div>
             <button
               type="button"
+              role="switch"
+              aria-checked={formData.recorrente}
+              aria-label="Gasto Fixo Mensal"
               onClick={() => onFormChange({ ...formData, recorrente: !formData.recorrente })}
               className={`relative w-11 h-6 rounded-full transition-colors ${
                 formData.recorrente ? "bg-teal-500" : "bg-gray-500"
@@ -352,7 +364,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                     )}`}
                 </option>
               ))}
-              <option value="custom">Personalizado (ate 48x)</option>
+              <option value="custom">Personalizado (até 48x)</option>
             </select>
             {!formData.recorrente && customParcelasMode && (
               <div className="mt-2">

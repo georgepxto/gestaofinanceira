@@ -23,7 +23,7 @@ export function Toaster() {
   }, []);
 
   return (
-    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-toast flex flex-col gap-3 pointer-events-none" role="region" aria-label="Notificações" aria-live="polite">
       {toasts.map((t) => (
         <div
           key={t.id}
@@ -41,6 +41,7 @@ export function Toaster() {
           <p className="text-[15px] font-medium flex-1">{t.message}</p>
           <button
             onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
+            aria-label="Fechar notificação"
             className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors bg-transparent border-0 outline-none cursor-pointer p-1"
           >
              <X className="w-4 h-4" />

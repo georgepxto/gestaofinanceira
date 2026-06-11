@@ -3,7 +3,6 @@ import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { TabGastos } from "../components/Tabs";
-import { generateGastosPDF } from "../utils/pdfGenerator";
 import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 
@@ -148,8 +147,8 @@ export const GastosPage = () => {
     dataTour: "gastos-help-button",
   });
 
-  const handleExportPDF = () => {
-    // Construir mapa de pagamentos parciais por pessoa
+  const handleExportPDF = async () => {
+    const { generateGastosPDF } = await import("../utils/pdfGenerator");
     const pagamentosPorPessoa: Record<string, import("../types/extended").PagamentoParcial[]> = {};
     pessoas.forEach(pessoa => {
       const pagamentos = getPagamentosParciais(pessoa);

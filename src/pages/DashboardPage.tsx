@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useLocation } from "react-router-dom";
@@ -17,6 +17,7 @@ import {
   Target,
 } from "lucide-react";
 import { useAppContext } from "../context";
+import { useTheme } from "../hooks/useTheme";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
@@ -253,7 +254,16 @@ const DASHBOARD_TUTORIAL_STEPS: DashboardTutorialStep[] = [
 
 export const DashboardPage = () => {
   const { user } = useAppContext();
+  const { theme } = useTheme();
   const location = useLocation();
+
+  const tooltipStyle = useMemo(() => theme === "dark"
+    ? { backgroundColor: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 4px 24px -4px rgba(0,0,0,0.5)", fontSize: "12px", color: "#f3f4f6" }
+    : { backgroundColor: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "10px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", fontSize: "12px" },
+    [theme]
+  );
+  const tooltipLabelStyle = useMemo(() => theme === "dark" ? { color: "#f9fafb", fontWeight: 600 } : { color: "#111827", fontWeight: 600 }, [theme]);
+  const tooltipItemStyle = useMemo(() => theme === "dark" ? { color: "#d1d5db" } : { color: "#111827" }, [theme]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -636,7 +646,7 @@ export const DashboardPage = () => {
       {/* Header com saudação + seletor de mês */}
       <div className="flex items-center justify-between flex-wrap gap-4" data-tour="dashboard-header">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'} 👋</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'}</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm">Visão geral das suas finanças</p>
         </div>
         
@@ -644,6 +654,7 @@ export const DashboardPage = () => {
         <div className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-xl p-2 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="month-selector">
           <button
             onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))}
+            aria-label="Mês anterior"
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             <ChevronLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -653,6 +664,7 @@ export const DashboardPage = () => {
           </span>
           <button
             onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))}
+            aria-label="Próximo mês"
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             <ChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -747,8 +759,8 @@ export const DashboardPage = () => {
                   <XAxis dataKey="mes" stroke="#9CA3AF" fontSize={11} tickLine={false} axisLine={false} />
                   <YAxis stroke="#9CA3AF" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', fontSize: '12px' }}
-                    labelStyle={{ color: '#111827', fontWeight: 600 }}
+                    contentStyle={tooltipStyle}
+                    labelStyle={tooltipLabelStyle}
                     formatter={(value: unknown) => [formatCurrency(Number(value) || 0), 'Meus Gastos']}
                   />
                   <Bar dataKey="meusGastos" radius={[6, 6, 0, 0]} fill="#3B82F6" />
@@ -873,8 +885,9 @@ export const DashboardPage = () => {
                   <XAxis dataKey="mes" stroke="#6B7280" fontSize={11} />
                   <YAxis stroke="#6B7280" fontSize={10} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
-                    labelStyle={{ color: '#111827' }}
+                    contentStyle={tooltipStyle}
+                    labelStyle={tooltipLabelStyle}
+                    itemStyle={tooltipItemStyle}
                     formatter={(value: unknown) => [formatCurrency(Number(value) || 0), 'Meus Gastos']}
                   />
                   <Area type="monotone" dataKey="meusGastos" stroke="#3B82F6" fillOpacity={1} fill="url(#colorMeus)" strokeWidth={2} dot={{ r: 3, fill: '#3B82F6' }} />
@@ -902,8 +915,9 @@ export const DashboardPage = () => {
                   <XAxis dataKey="mes" stroke="#6B7280" fontSize={11} />
                   <YAxis stroke="#6B7280" fontSize={10} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
-                    labelStyle={{ color: '#111827' }}
+                    contentStyle={tooltipStyle}
+                    labelStyle={tooltipLabelStyle}
+                    itemStyle={tooltipItemStyle}
                     formatter={(value: unknown) => [formatCurrency(Number(value) || 0), 'Compartilhados']}
                   />
                   <Area type="monotone" dataKey="compartilhados" stroke="#10B981" fillOpacity={1} fill="url(#colorComp)" strokeWidth={2} dot={{ r: 3, fill: '#10B981' }} />
@@ -941,21 +955,19 @@ export const DashboardPage = () => {
                   <div className="relative h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ${
-                        estourou ? 'bg-gradient-to-r from-red-500 to-red-400' : 
-                        quaseEstourando ? 'bg-gradient-to-r from-amber-500 to-amber-400' : 
-                        'bg-gradient-to-r from-emerald-500 to-emerald-400'
+                        estourou ? 'bg-red-500' : quaseEstourando ? 'bg-amber-500' : 'bg-emerald-500'
                       }`}
                       style={{ width: `${Math.min(porcentagem, 100)}%` }}
                     />
                   </div>
                   <div className="flex justify-between">
-                    <span className={`text-xs ${estourou ? 'text-red-600 font-bold' : quaseEstourando ? 'text-amber-600' : 'text-gray-500'}`}>
-                      {estourou ? `⚠️ Estourou ${(porcentagem - 100).toFixed(0)}%` : 
-                       quaseEstourando ? `⚡ ${porcentagem.toFixed(0)}% usado` :
+                    <span className={`text-xs ${estourou ? 'text-red-600 font-semibold' : quaseEstourando ? 'text-amber-600' : 'text-gray-500'}`}>
+                      {estourou ? `Limite excedido em ${(porcentagem - 100).toFixed(0)}%` :
+                       quaseEstourando ? `${porcentagem.toFixed(0)}% usado` :
                        `${porcentagem.toFixed(0)}% usado`}
                     </span>
-                    <span className={`text-xs ${estourou ? 'text-red-600' : 'text-gray-500'}`}>
-                      {estourou ? `+${formatCurrency(meta.gastoAtual - meta.limite)} excedido` : 
+                    <span className={`text-xs ${estourou ? 'text-red-600' : 'text-gray-500 dark:text-gray-400'}`}>
+                      {estourou ? `+${formatCurrency(meta.gastoAtual - meta.limite)} acima` :
                        `${formatCurrency(meta.limite - meta.gastoAtual)} restante`}
                     </span>
                   </div>
@@ -1088,15 +1100,10 @@ export const DashboardPage = () => {
                 fontSize={12}
                 tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
               />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#FFFFFF', 
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-                }}
-                labelStyle={{ color: '#111827' }}
-                itemStyle={{ color: '#111827' }}
+              <Tooltip
+                contentStyle={tooltipStyle}
+                labelStyle={tooltipLabelStyle}
+                itemStyle={tooltipItemStyle}
                 formatter={(value) => [formatCurrency(value as number), 'Saldo']}
               />
               <Line 
@@ -1146,13 +1153,13 @@ export const DashboardPage = () => {
 
             {/* Cards com valores */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 !border-l-blue-500">
-                <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">Gastos Fixos</p>
+              <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 border border-blue-100 dark:border-blue-900/30">
+                <p className="text-blue-600 dark:text-blue-400 text-sm mb-1 font-medium">Gastos Fixos</p>
                 <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.gastosFixosMes)}</p>
                 <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Contas recorrentes</p>
               </div>
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 !border-l-indigo-400">
-                <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">Gastos Variáveis</p>
+              <div className="bg-indigo-50 dark:bg-indigo-950/20 rounded-lg p-4 border border-indigo-100 dark:border-indigo-900/30">
+                <p className="text-indigo-600 dark:text-indigo-400 text-sm mb-1 font-medium">Gastos Variáveis</p>
                 <p className="text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(data.gastosVariaveisMes)}</p>
                 <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Gastos pessoais</p>
               </div>
@@ -1185,15 +1192,10 @@ export const DashboardPage = () => {
                   fontSize={11}
                   width={80}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#FFFFFF', 
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-                  }}
-                  labelStyle={{ color: '#111827' }}
-                  itemStyle={{ color: '#111827' }}
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
                   formatter={(value) => [formatCurrency(value as number), 'Valor']}
                 />
                 <Bar dataKey="valor" radius={[0, 4, 4, 0]}>
@@ -1231,15 +1233,10 @@ export const DashboardPage = () => {
                   fontSize={11}
                   width={80}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#FFFFFF', 
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-                  }}
-                  labelStyle={{ color: '#111827' }}
-                  itemStyle={{ color: '#111827' }}
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
                   formatter={(value) => [formatCurrency(value as number), 'Valor']}
                 />
                 <Bar dataKey="valor" radius={[0, 4, 4, 0]}>
@@ -1277,15 +1274,10 @@ export const DashboardPage = () => {
                   fontSize={11}
                   width={90}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#FFFFFF', 
-                    border: '1px solid #E5E7EB',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-                  }}
-                  labelStyle={{ color: '#111827' }}
-                  itemStyle={{ color: '#111827' }}
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
                   formatter={(value) => [formatCurrency(value as number), 'Valor']}
                 />
                 <Bar dataKey="valor" radius={[0, 4, 4, 0]}>

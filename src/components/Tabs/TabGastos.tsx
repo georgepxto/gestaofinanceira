@@ -156,12 +156,14 @@ export function TabGastos({
           return (
             <div
               key={resumo.pessoa}
-              className={`bg-white dark:bg-gray-900 border-l-4 ${CORES_CARDS[index % CORES_CARDS.length]} rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden`}
+              className="bg-white dark:bg-gray-900 rounded-xl p-3 sm:p-4 shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0 overflow-hidden">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
-                    <User className="w-4 h-4 flex-shrink-0" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1.5">
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${CORES_CARDS[index % CORES_CARDS.length]}`}>
+                      {resumo.pessoa.charAt(0).toUpperCase()}
+                    </span>
                     <span className="truncate">{resumo.pessoa}</span>
                     {estaFechado && mesFechadoData && mesFechadoData.valorDevedor > 0 && (
                       <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900">

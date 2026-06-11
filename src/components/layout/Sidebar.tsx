@@ -76,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         onClick={() => setIsOpen(false)}
         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
           isActive
-            ? "bg-emerald-50 dark:bg-blue-950/30 text-emerald-700 dark:text-blue-400 font-semibold border-l-4 border-emerald-600 dark:border-blue-500"
+            ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 font-semibold ring-1 ring-blue-100 dark:ring-blue-900/40"
             : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-100"
         }`}
       >
@@ -93,6 +93,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         <div className="flex items-center">
           <button
             onClick={() => setIsOpen(true)}
+            aria-label="Abrir menu de navegação"
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           >
             <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
@@ -157,14 +158,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
           {/* Close button (mobile) */}
           <button
             onClick={() => setIsOpen(false)}
+            aria-label="Fechar menu de navegação"
             className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors ml-auto"
           >
             <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           </button>
-          
+
           {/* Collapse button (desktop) */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
+            aria-label={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
             className="hidden md:flex p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors ml-auto"
           >
             {isCollapsed ? (

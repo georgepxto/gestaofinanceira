@@ -4,7 +4,6 @@ import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { TabMeuGasto } from "../components/Tabs";
-import { generateMeusGastosPDF } from "../utils/pdfGenerator";
 import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { supabase } from "../lib/supabase";
@@ -160,7 +159,7 @@ export const EuPage = () => {
   const handleExportPDF = async () => {
     setExportingPDF(true);
     try {
-      // Buscar metas do Supabase
+      const { generateMeusGastosPDF } = await import("../utils/pdfGenerator");
       let metas: MetaGasto[] = [];
       if (supabase) {
         const { data } = await supabase.from("metas_gasto").select("*").order("categoria");
