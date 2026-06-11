@@ -1139,50 +1139,6 @@ export const LandingPage = () => {
     };
   }, []);
 
-  /* Snap suave — usa lenis.scrollTo para não conflitar com o scroll virtual.
-     Ancorado nos tops reais das seções [data-snap]; não dispara em reduced motion */
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let timer: ReturnType<typeof setTimeout>;
-    let isSnapping = false;
-
-    const onScroll = () => {
-      if (isSnapping) return;
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        const lenis = lenisRef.current;
-        if (!lenis) return;
-        const vh = window.innerHeight;
-        const scrollY = window.scrollY;
-
-        let target: number | null = null;
-        let best = Infinity;
-        document.querySelectorAll<HTMLElement>("[data-snap]").forEach((el) => {
-          const top = el.getBoundingClientRect().top + scrollY;
-          const d = Math.abs(scrollY - top);
-          if (d < best) { best = d; target = top; }
-        });
-        if (target === null) return;
-
-        /* Ignora se já está alinhado (4% do vh) ou longe demais (footer, rail pinada) */
-        if (best < vh * 0.04 || best > vh * 0.45) return;
-
-        isSnapping = true;
-        lenis.scrollTo(target, {
-          duration: 0.55,
-          easing: (t: number) => 1 - Math.pow(1 - t, 3),
-        });
-        /* Libera o flag depois da animação terminar */
-        setTimeout(() => { isSnapping = false; }, 600);
-      }, 150);
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      clearTimeout(timer);
-    };
-  }, []);
 
   /* Lenis suave no container do dashboard showcase — rAF só corre quando visível */
   useEffect(() => {
@@ -1811,7 +1767,7 @@ export const LandingPage = () => {
       <footer className="py-8 px-6 border-t border-zinc-200 bg-white">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 bg-emerald-600 rounded-sm" />
+            <img src="/favicon-light.png" alt="Hedge" className="w-5 h-5" />
             <span className="font-display text-sm font-semibold text-zinc-900">Hedge</span>
             <span className="text-xs text-zinc-500 ml-1">© {new Date().getFullYear()}</span>
           </div>
