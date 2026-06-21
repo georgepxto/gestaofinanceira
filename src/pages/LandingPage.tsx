@@ -354,6 +354,15 @@ const features: Feature[] = [
 ];
 
 /* ─── Other data ─────────────────────────────────────────────────────── */
+const SECTION_TRACK = [
+  { id: "hero", dark: false },
+  { id: "produto", dark: false },
+  { id: "features", dark: false },
+  { id: "how", dark: true },
+  { id: "reviews", dark: false },
+  { id: "cta", dark: true },
+] as const;
+
 const steps = [
   {
     num: "01",
@@ -505,7 +514,7 @@ function FeaturesListVariant({ onSignup }: { onSignup: () => void }) {
   const ActiveIcon = f.icon;
 
   return (
-    <section id="features" data-cursor="#0d9488" className="h-screen flex flex-col justify-center px-6 bg-white pt-20 overflow-hidden">
+    <section id="features" data-cursor="#0d9488" className="min-h-[calc(100vh+5rem)] lg:h-[calc(100vh+5rem)] flex flex-col justify-center px-6 bg-white pt-20 overflow-hidden">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <Reveal>
@@ -1057,6 +1066,7 @@ export const LandingPage = () => {
   const lenisRef       = useRef<Lenis | null>(null);
   const ctaSectionRef  = useRef<HTMLElement>(null);
   const [ctaVisible, setCtaVisible] = useState(false);
+  const [activeSectionIdx, setActiveSectionIdx] = useState(0);
 
   /* Tilt 3D do mockup — inclina alguns graus seguindo o mouse na seção #produto */
   useEffect(() => {
@@ -1168,10 +1178,55 @@ export const LandingPage = () => {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
+  /* Trilha de progresso vertical — acompanha todas as seções da landing */
+  useEffect(() => {
+    const trackIds = SECTION_TRACK.map((s) => s.id);
+    const els = trackIds.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+    if (!els.length) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const idx = els.indexOf(entry.target as HTMLElement);
+          if (idx !== -1) setActiveSectionIdx(idx);
+        });
+      },
+      { threshold: 0.5 }
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, []);
+
 
   return (
     <div className="landing-root min-h-screen bg-white text-zinc-900 overflow-x-hidden" style={{ colorScheme: "light" }}>
       <CursorDot />
+
+      {/* Trilha de progresso vertical — acompanha todas as seções */}
+      <div
+        className="fixed right-5 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col items-center gap-3 pointer-events-none"
+        aria-hidden="true"
+      >
+        {(() => {
+          const start = Math.max(0, activeSectionIdx - 1);
+          const end = Math.min(SECTION_TRACK.length - 1, activeSectionIdx + 2);
+          const isDarkActive = SECTION_TRACK[activeSectionIdx]?.dark;
+          return SECTION_TRACK.slice(start, end + 1).map((s, offset) => {
+            const i = start + offset;
+            const active = i === activeSectionIdx;
+            return (
+              <span
+                key={s.id}
+                className={`block rounded-full transition-all duration-300 ${
+                  active
+                    ? isDarkActive ? "w-1.5 h-6 bg-white" : "w-1.5 h-6 bg-emerald-600"
+                    : isDarkActive ? "w-1.5 h-1.5 bg-white/30" : "w-1.5 h-1.5 bg-zinc-300"
+                }`}
+              />
+            );
+          });
+        })()}
+      </div>
       <style>{`
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         .animate-marquee { animation: marquee 34s linear infinite; }
@@ -1223,7 +1278,7 @@ export const LandingPage = () => {
       {/* ══════════════════════════════════════
           HERO — exatamente h-screen (inclui ticker + stats)
           ══════════════════════════════════════ */}
-      <section data-snap data-cursor="#10b981" className="h-screen flex flex-col relative overflow-x-hidden bg-white">
+      <section id="hero" data-snap data-cursor="#10b981" className="h-screen flex flex-col relative overflow-x-hidden bg-white">
         <TraceReveal ghostColor="#18181b" ghostOpacity={0.045} litColor="#059669" />
 
         {/* Main content — expands to fill */}
@@ -1318,7 +1373,7 @@ export const LandingPage = () => {
       {/* ══════════════════════════════════════
           DASHBOARD SHOWCASE
           ══════════════════════════════════════ */}
-      <section id="produto" data-snap data-cursor="#18181b" className="min-h-screen lg:h-screen flex items-center px-6 py-16 lg:py-12 bg-zinc-50 lg:overflow-hidden">
+      <section id="produto" data-snap data-cursor="#18181b" className="min-h-screen lg:h-screen flex items-center px-6 py-16 lg:py-12 bg-white lg:overflow-hidden">
         <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-[1fr_1.7fr] gap-16 items-center">
           {/* Left copy */}
           <Reveal>
@@ -1521,20 +1576,36 @@ export const LandingPage = () => {
       {/* ══════════════════════════════════════
           COMO FUNCIONA — dark green, assimétrico
           ══════════════════════════════════════ */}
-      <section id="how" data-snap data-cursor="#6ee7b7" className="min-h-screen lg:h-screen flex items-center px-6 py-16 lg:overflow-hidden" style={{ backgroundColor: "#052e16" }}>
-        <div className="max-w-5xl mx-auto w-full">
+      <section id="how" data-snap data-cursor="#6ee7b7" className="relative min-h-[calc(100vh+7rem)] lg:h-[calc(100vh+7rem)] flex items-center px-6 py-16 overflow-hidden rounded-t-[2.5rem] sm:rounded-t-[3.5rem]" style={{ backgroundColor: "#052e16" }}>
+        <div
+          className="absolute inset-0 pointer-events-none select-none"
+          style={{
+            background: "radial-gradient(circle at 8% 15%, rgba(52,211,153,0.16), transparent 55%)",
+          }}
+        />
+
+        <div className="relative z-10 max-w-5xl mx-auto w-full">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-16 lg:gap-24 items-start">
             {/* Left sticky title */}
             <Reveal>
               <div className="lg:sticky" style={{ top: "30vh" }}>
-                <h2
-                  className="font-display font-bold text-white leading-tight mb-6 text-balance"
-                  style={{ fontSize: "clamp(2.5rem, 5vw, 3.75rem)" }}
-                >
-                  Comece em<br />três passos.
+                <h2 className="leading-[1.05] mb-6 text-balance">
+                  <span className="block font-mono text-xs font-bold uppercase tracking-[0.25em] text-emerald-400 mb-3">
+                    [ leva minutos ]
+                  </span>
+                  <span className="font-display font-bold text-white" style={{ fontSize: "clamp(2.75rem, 6vw, 4.5rem)" }}>
+                    Comece em
+                  </span>
+                  <br />
+                  <span
+                    className="font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-emerald-500"
+                    style={{ fontSize: "clamp(2.75rem, 6vw, 4.5rem)" }}
+                  >
+                    três passos.
+                  </span>
                 </h2>
                 <p className="text-emerald-100/50 text-lg leading-relaxed max-w-xs">
-                  Minutos para configurar. Meses para transformar como você lida com dinheiro.
+                  <span className="text-white font-semibold">Em minutos você começa.</span> Em pouco tempo, seu dinheiro faz mais sentido.
                 </p>
                 <div className="mt-10">
                   <button
@@ -1579,7 +1650,12 @@ export const LandingPage = () => {
       {/* ══════════════════════════════════════
           DEPOIMENTOS — zinc-50, layout variado
           ══════════════════════════════════════ */}
-      <section id="reviews" data-snap data-cursor="#059669" className="min-h-screen lg:h-screen flex items-center px-6 py-16 lg:py-12 bg-zinc-50 lg:overflow-hidden">
+      <section
+        id="reviews"
+        data-snap
+        data-cursor="#059669"
+        className="relative z-10 bg-zinc-50 overflow-hidden rounded-t-[2.5rem] sm:rounded-t-[3.5rem] rounded-b-[2.5rem] sm:rounded-b-[3.5rem] -mt-10 sm:-mt-14 -mb-10 sm:-mb-14 px-6 py-16 lg:py-20"
+      >
         <div className="max-w-6xl mx-auto w-full">
           {/* Header */}
           <Reveal>
@@ -1656,13 +1732,9 @@ export const LandingPage = () => {
             ))}
           </div>
         </div>
-      </section>
 
-      {/* ══════════════════════════════════════
-          CONFIANÇA — faixa curta de segurança e privacidade
-          ══════════════════════════════════════ */}
-      <section data-cursor="#18181b" className="bg-white border-y border-zinc-200 px-6 py-14">
-        <div className="max-w-5xl mx-auto">
+        {/* ─── Confiança — faixa curta de segurança e privacidade ─── */}
+        <div className="max-w-5xl mx-auto w-full mt-14 lg:mt-20 pt-14 border-t border-zinc-200">
           <Reveal>
             <p className="text-center text-zinc-900 font-display font-bold text-xl md:text-2xl mb-10 text-balance">
               Seus dados financeiros são seus. Ponto.
@@ -1691,7 +1763,7 @@ export const LandingPage = () => {
       {/* ══════════════════════════════════════
           CTA FINAL — Textura + Dark
           ══════════════════════════════════════ */}
-      <section ref={ctaSectionRef} data-snap data-cursor="#34d399" className="min-h-screen lg:h-screen flex items-center justify-center px-6 py-20 lg:py-16 bg-zinc-950 relative overflow-hidden">
+      <section id="cta" ref={ctaSectionRef} data-snap data-cursor="#34d399" className="min-h-screen lg:h-screen flex items-center justify-center px-6 py-20 lg:py-16 bg-zinc-950 relative overflow-hidden">
         {/* Dot grid emerald */}
         <div className="absolute inset-0 opacity-[0.09] pointer-events-none select-none" style={{
           backgroundImage: "radial-gradient(circle, #10b981 1px, transparent 1px)",
