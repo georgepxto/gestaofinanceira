@@ -8,6 +8,7 @@ import {
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import { CursorDot } from "../components/CursorDot";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -890,101 +891,7 @@ const traceSpans = (color: string, opacity: number, withCategory = false) =>
     </span>
   ));
 
-/* ══════════════════════════════════════
-   CURSOR — a bolinha substitui o cursor nativo na landing.
-   Cada seção define sua cor via data-cursor; interativos a ampliam.
-   ══════════════════════════════════════ */
-const CursorDot = () => {
-  const dotRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (window.matchMedia("(hover: none)").matches) return;
-    const dot = dotRef.current;
-    if (!dot) return;
-
-    const xTo = gsap.quickTo(dot, "x", { duration: 0.18, ease: "power3.out" });
-    const yTo = gsap.quickTo(dot, "y", { duration: 0.18, ease: "power3.out" });
-    let color = "#10b981";
-    let pressed = false;
-    let hoverScale = 1;
-
-    const applyScale = () => {
-      gsap.to(dot, { scale: pressed ? 0.7 : hoverScale, duration: 0.22, ease: "power3.out", overwrite: "auto" });
-    };
-
-    /* Sobe a árvore até achar um background opaco e devolve branco ou
-       quase-preto conforme a luminância — a bolinha nunca some sobre botões */
-    const contrastFor = (el: HTMLElement | null): string | null => {
-      let node = el;
-      while (node) {
-        const m = getComputedStyle(node).backgroundColor.match(/[\d.]+/g);
-        if (m && m.length >= 3 && (m.length < 4 || parseFloat(m[3]) > 0.1)) {
-          const lum = 0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2];
-          return lum < 140 ? "#ffffff" : "#18181b";
-        }
-        node = node.parentElement;
-      }
-      return null;
-    };
-
-    let lastInteractive: HTMLElement | null = null;
-    let interactiveColor: string | null = null;
-
-    const onMove = (e: PointerEvent) => {
-      xTo(e.clientX);
-      yTo(e.clientY);
-      dot.style.opacity = "1";
-      const t = e.target as HTMLElement | null;
-      if (!t) return;
-      const interactive = t.closest<HTMLElement>("a, button");
-      if (interactive !== lastInteractive) {
-        lastInteractive = interactive;
-        interactiveColor = interactive ? contrastFor(interactive) : null;
-      }
-      const next = interactiveColor
-        ?? t.closest<HTMLElement>("[data-cursor]")?.dataset.cursor
-        ?? "#10b981";
-      if (next !== color) {
-        color = next;
-        dot.style.backgroundColor = color;
-      }
-      const nextScale = interactive ? 2.4 : 1;
-      if (nextScale !== hoverScale) {
-        hoverScale = nextScale;
-        applyScale();
-      }
-    };
-    const onLeave = () => { dot.style.opacity = "0"; };
-    const onDown = () => { pressed = true; applyScale(); };
-    const onUp = () => { pressed = false; applyScale(); };
-
-    document.addEventListener("pointermove", onMove);
-    document.addEventListener("pointerdown", onDown);
-    document.addEventListener("pointerup", onUp);
-    document.documentElement.addEventListener("pointerleave", onLeave);
-    return () => {
-      document.removeEventListener("pointermove", onMove);
-      document.removeEventListener("pointerdown", onDown);
-      document.removeEventListener("pointerup", onUp);
-      document.documentElement.removeEventListener("pointerleave", onLeave);
-      gsap.killTweensOf(dot);
-    };
-  }, []);
-
-  return (
-    <div
-      ref={dotRef}
-      className="fixed top-0 left-0 w-3 h-3 -ml-1.5 -mt-1.5 rounded-full pointer-events-none z-[100]"
-      aria-hidden="true"
-      style={{
-        opacity: 0,
-        backgroundColor: "#10b981",
-        transition: "opacity 0.25s, background-color 0.35s",
-        boxShadow: "0 0 20px 6px rgba(16,185,129,0.14)",
-      } as React.CSSProperties}
-    />
-  );
-};
+/* CursorDot foi extraído para src/components/CursorDot.tsx (reuso no login) */
 
 /* Pistas reveladas — o cursor é a lanterna que revela os rastros.
    Reutilizado no hero (fundo branco) e no CTA final (fundo escuro, invertido) */
@@ -1253,7 +1160,9 @@ export const LandingPage = () => {
         .animate-marquee { animation: marquee 34s linear infinite; }
         @keyframes feed-slide-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .feed-new { animation: feed-slide-in 0.3s ease-out forwards; }
-        @media (prefers-reduced-motion: reduce) { .animate-marquee { animation: none; } .feed-new { animation: none; } }
+        @keyframes pista-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+        .pista-underline-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: pista-draw 0.7s 1.3s cubic-bezier(0.65,0,0.35,1) forwards; }
+        @media (prefers-reduced-motion: reduce) { .animate-marquee { animation: none; } .feed-new { animation: none; } .pista-underline-draw { animation: none; stroke-dashoffset: 0; } }
         @media (hover: hover) and (pointer: fine) { .landing-root, .landing-root * { cursor: none !important; } }
       `}</style>
 
@@ -1342,6 +1251,8 @@ export const LandingPage = () => {
                       strokeWidth="1.6"
                       strokeLinecap="round"
                       fill="none"
+                      pathLength={1}
+                      className="pista-underline-draw"
                     />
                   </svg>
                   <span style={{ position: "relative", zIndex: 1 }}>pistas</span>
