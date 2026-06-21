@@ -355,12 +355,12 @@ const features: Feature[] = [
 
 /* ─── Other data ─────────────────────────────────────────────────────── */
 const SECTION_TRACK = [
-  { id: "hero", dark: false },
-  { id: "produto", dark: false },
-  { id: "features", dark: false },
-  { id: "how", dark: true },
-  { id: "reviews", dark: false },
-  { id: "cta", dark: true },
+  { id: "hero", tone: "light" },
+  { id: "produto", tone: "light" },
+  { id: "features", tone: "light" },
+  { id: "how", tone: "green" },
+  { id: "reviews", tone: "light" },
+  { id: "cta", tone: "dark" },
 ] as const;
 
 const steps = [
@@ -460,7 +460,7 @@ function Reveal({
     if (fromLoad) {
       const tween = gsap.to(el, {
         opacity: 1, y: 0, scale: 1,
-        duration: 1.0, ease: "power3.out",
+        duration: 1.2, ease: "power3.out",
         delay: delay / 1000,
       });
       return () => { tween.kill(); };
@@ -469,13 +469,16 @@ function Reveal({
     const section = el.closest("section") as HTMLElement | null;
     const trigger = section ?? el;
 
+    /* Dispara no mesmo ponto que atualiza a trilha vertical: ~10% da seção
+       visível ("top 90%"). Daí em diante a animação toca sozinha, sem
+       depender da velocidade do scroll — fica visível mesmo em scroll rápido */
     const tween = gsap.to(el, {
       opacity: 1, y: 0, scale: 1,
-      duration: 0.95, ease: "power3.out",
+      duration: 0.9, ease: "power2.out",
       delay: delay / 1000,
       scrollTrigger: {
         trigger,
-        start: "top 85%",
+        start: "top 90%",
         toggleActions: "play none none none",
         once: true,
       },
@@ -1067,6 +1070,7 @@ export const LandingPage = () => {
   const ctaSectionRef  = useRef<HTMLElement>(null);
   const [ctaVisible, setCtaVisible] = useState(false);
   const [activeSectionIdx, setActiveSectionIdx] = useState(0);
+  const sectionTone = SECTION_TRACK[activeSectionIdx]?.tone ?? "light";
 
   /* Tilt 3D do mockup — inclina alguns graus seguindo o mouse na seção #produto */
   useEffect(() => {
@@ -1178,23 +1182,43 @@ export const LandingPage = () => {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  /* Trilha de progresso vertical — acompanha todas as seções da landing */
+  /* Trilha de progresso vertical + cor da navbar — acompanha a seção que está
+     de fato visível a ~10% do topo. Usa a posição real (getBoundingClientRect)
+     em vez de IntersectionObserver porque "reviews" se sobrepõe (z-10) a "how"
+     e "cta" por design — duas seções podem estar "intersecting" ao mesmo tempo
+     ali, e quem está por cima visualmente precisa ganhar a prioridade */
   useEffect(() => {
     const trackIds = SECTION_TRACK.map((s) => s.id);
-    const els = trackIds.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
-    if (!els.length) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const idx = els.indexOf(entry.target as HTMLElement);
-          if (idx !== -1) setActiveSectionIdx(idx);
-        });
-      },
-      { threshold: 0.5 }
-    );
-    els.forEach((el) => obs.observe(el));
-    return () => obs.disconnect();
+    const reviewsIdx = trackIds.indexOf("reviews");
+    let rafId = 0;
+
+    const compute = () => {
+      const refY = window.innerHeight * 0.1;
+      const matches: number[] = [];
+      trackIds.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        if (refY >= r.top && refY < r.bottom) matches.push(i);
+      });
+      if (!matches.length) return;
+      const chosen = matches.includes(reviewsIdx) ? reviewsIdx : matches[matches.length - 1];
+      setActiveSectionIdx(chosen);
+    };
+
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => { compute(); rafId = 0; });
+    };
+
+    compute();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, []);
 
 
@@ -1208,11 +1232,8 @@ export const LandingPage = () => {
         aria-hidden="true"
       >
         {(() => {
-          const start = Math.max(0, activeSectionIdx - 1);
-          const end = Math.min(SECTION_TRACK.length - 1, activeSectionIdx + 2);
-          const isDarkActive = SECTION_TRACK[activeSectionIdx]?.dark;
-          return SECTION_TRACK.slice(start, end + 1).map((s, offset) => {
-            const i = start + offset;
+          const isDarkActive = SECTION_TRACK[activeSectionIdx]?.tone !== "light";
+          return SECTION_TRACK.map((s, i) => {
             const active = i === activeSectionIdx;
             return (
               <span
@@ -1241,26 +1262,38 @@ export const LandingPage = () => {
           ══════════════════════════════════════ */}
       <header className="fixed top-3 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
         <nav
-          className={`pointer-events-auto w-full max-w-5xl h-14 flex items-center justify-between px-5 transition-all duration-300 ${
+          className={`pointer-events-auto w-full max-w-5xl h-14 flex items-center justify-between px-5 rounded-2xl transition-all duration-300 ${
             scrolled
-              ? "bg-white/90 backdrop-blur-md rounded-2xl shadow-sm shadow-zinc-200/60 border border-zinc-100/80"
+              ? sectionTone === "dark"
+                ? "bg-zinc-900/40 backdrop-blur-sm shadow-sm shadow-black/30 border border-white/10 hover:bg-zinc-900/90 hover:backdrop-blur-md hover:border-white/15"
+                : sectionTone === "green"
+                ? "bg-emerald-950/40 backdrop-blur-sm shadow-sm shadow-black/20 border border-emerald-400/15 hover:bg-emerald-950/85 hover:backdrop-blur-md hover:border-emerald-400/25"
+                : "bg-white/40 backdrop-blur-sm shadow-sm shadow-zinc-200/30 border border-zinc-100/40 hover:bg-white/90 hover:backdrop-blur-md hover:shadow-zinc-200/60 hover:border-zinc-100/80"
               : "bg-transparent"
           }`}
         >
-          <div className="flex items-center gap-2.5">
+          <a href="#hero" className="flex items-center gap-2.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
             <img src="/favicon-light.png" alt="Hedge" className="w-7 h-7" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-            <span className="font-display text-base font-bold tracking-tight text-zinc-900">Hedge</span>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-600">
-            <a href="#features" className="hover:text-zinc-900 transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">Funcionalidades</a>
-            <a href="#how"      className="hover:text-zinc-900 transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">Como funciona</a>
-            <a href="#reviews"  className="hover:text-zinc-900 transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">Depoimentos</a>
+            <span className={`font-display text-base font-bold tracking-tight transition-colors duration-300 ${sectionTone === "light" ? "text-zinc-900" : "text-white"}`}>Hedge</span>
+          </a>
+          <div className={`hidden md:flex items-center gap-8 text-sm font-medium transition-colors duration-300 ${
+            sectionTone === "dark" ? "text-zinc-300" : sectionTone === "green" ? "text-emerald-100/70" : "text-zinc-600"
+          }`}>
+            <a href="#features" className={`transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${sectionTone === "light" ? "hover:text-zinc-900" : sectionTone === "green" ? "hover:text-emerald-300" : "hover:text-white"}`}>Funcionalidades</a>
+            <a href="#how"      className={`transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${sectionTone === "light" ? "hover:text-zinc-900" : sectionTone === "green" ? "hover:text-emerald-300" : "hover:text-white"}`}>Como funciona</a>
+            <a href="#reviews"  className={`transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${sectionTone === "light" ? "hover:text-zinc-900" : sectionTone === "green" ? "hover:text-emerald-300" : "hover:text-white"}`}>Depoimentos</a>
           </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => navigate("/login")}
-              className="px-4 py-2.5 min-h-[44px] text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
+              className={`px-4 py-2.5 min-h-[44px] text-sm font-medium transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                sectionTone === "light"
+                  ? "text-zinc-600 hover:text-zinc-900 focus-visible:ring-zinc-400"
+                  : sectionTone === "green"
+                  ? "text-emerald-100/70 hover:text-emerald-300 focus-visible:ring-emerald-400/50"
+                  : "text-zinc-300 hover:text-white focus-visible:ring-white/50"
+              }`}
             >
               Entrar
             </button>
