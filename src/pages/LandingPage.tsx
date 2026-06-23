@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Wallet, Users, CreditCard, Target, Building2,
   ArrowRight, FileText, TrendingUp, Lock, ShieldCheck, EyeOff,
+  Menu, X,
 } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -878,13 +879,23 @@ const HERO_TRACES = [
 ];
 
 /* Camada fantasma mostra só o gasto; a camada revelada mostra o gasto + a
-   categoria que a Hedge atribuiu — a lanterna não só acha a pista, ela a lê */
+   categoria que a Hedge atribuiu — a lanterna não só acha a pista, ela a lê.
+   Em touch (sem mouse para revelar), os spans "embaralham" sozinhos via CSS:
+   cada um deriva de --r um padrão de drift levemente diferente (trace-drift-N) */
 const traceSpans = (color: string, opacity: number, withCategory = false) =>
-  HERO_TRACES.map((d) => (
+  HERO_TRACES.map((d, i) => (
     <span
       key={d.t}
-      className="absolute font-mono text-xs whitespace-nowrap"
-      style={{ left: `${d.x}%`, top: `${d.y}%`, color, opacity, transform: `rotate(${d.r}deg)` } as React.CSSProperties}
+      className={`absolute font-mono text-xs whitespace-nowrap trace-drift-${i % 4}`}
+      style={{
+        left: `${d.x}%`,
+        top: `${d.y}%`,
+        color,
+        opacity,
+        "--r": `${d.r}deg`,
+        animationDuration: `${8 + (i % 5) * 1.7}s`,
+        animationDelay: `${-((i % 7) * 1.6)}s`,
+      } as React.CSSProperties}
     >
       {d.t}
       {withCategory && <span style={{ opacity: 0.65 } as React.CSSProperties}>{" → "}{d.c}</span>}
@@ -927,34 +938,17 @@ const TraceReveal = ({ ghostColor, ghostOpacity, litColor }: TraceRevealProps) =
     };
     const onLeave = () => { lit.style.opacity = "0"; };
 
-    /* Listeners no host (a section) porque a camada em si é pointer-events-none */
+    /* Listeners no host (a section) porque a camada em si é pointer-events-none.
+       Em touch não há mouse para revelar — os spans fantasma embaralham via CSS
+       (.trace-drift-N, ver <style> global) e a camada "lit" some de fato. */
     const host = root.parentElement ?? root;
     host.addEventListener("pointermove", onMove);
     host.addEventListener("pointerleave", onLeave);
-
-    /* Touch: a lanterna varre sozinha, devagar */
-    const touch = window.matchMedia("(hover: none)").matches;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let sweepId = 0;
-    if (touch && !reduced) {
-      const t0 = performance.now();
-      const sweep = (now: number) => {
-        const t = (now - t0) / 1000;
-        const r = root.getBoundingClientRect();
-        setMask(
-          r.width * (0.5 + 0.4 * Math.sin(t * 0.35)),
-          r.height * (0.5 + 0.32 * Math.sin(t * 0.23 + 1.7)),
-        );
-        sweepId = requestAnimationFrame(sweep);
-      };
-      sweepId = requestAnimationFrame(sweep);
-    }
 
     return () => {
       host.removeEventListener("pointermove", onMove);
       host.removeEventListener("pointerleave", onLeave);
       cancelAnimationFrame(rafId);
-      cancelAnimationFrame(sweepId);
     };
   }, []);
 
@@ -971,6 +965,7 @@ const TraceReveal = ({ ghostColor, ghostOpacity, litColor }: TraceRevealProps) =
 export const LandingPage = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dashScrollRef  = useRef<HTMLDivElement>(null);
   const dashTiltRef    = useRef<HTMLDivElement>(null);
   const lenisRef       = useRef<Lenis | null>(null);
@@ -1082,9 +1077,12 @@ export const LandingPage = () => {
     return () => { lenis.destroy(); cancelAnimationFrame(rafId); obs.disconnect(); };
   }, []);
 
-  /* Navbar scroll state */
+  /* Navbar scroll state — fecha o dropdown mobile ao rolar */
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 40);
+    const handler = () => {
+      setScrolled(window.scrollY > 40);
+      setMobileMenuOpen(false);
+    };
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
   }, []);
@@ -1162,7 +1160,27 @@ export const LandingPage = () => {
         .feed-new { animation: feed-slide-in 0.3s ease-out forwards; }
         @keyframes pista-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
         .pista-underline-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: pista-draw 0.7s 1.3s cubic-bezier(0.65,0,0.35,1) forwards; }
-        @media (prefers-reduced-motion: reduce) { .animate-marquee { animation: none; } .feed-new { animation: none; } .pista-underline-draw { animation: none; stroke-dashoffset: 0; } }
+
+        /* Pistas "embaralhadas" — só em touch (sem mouse pra revelar com a lanterna).
+           Cada variante desloca em uma direção/distância diferente; a rotação
+           original do span (--r) é preservada dentro do próprio keyframe. */
+        @keyframes trace-drift-0 { 0% { transform: translate(0,0) rotate(var(--r)); } 50% { transform: translate(7px,-9px) rotate(var(--r)); } 100% { transform: translate(-6px,6px) rotate(var(--r)); } }
+        @keyframes trace-drift-1 { 0% { transform: translate(0,0) rotate(var(--r)); } 50% { transform: translate(-8px,7px) rotate(var(--r)); } 100% { transform: translate(6px,-7px) rotate(var(--r)); } }
+        @keyframes trace-drift-2 { 0% { transform: translate(0,0) rotate(var(--r)); } 50% { transform: translate(9px,5px) rotate(var(--r)); } 100% { transform: translate(-7px,-5px) rotate(var(--r)); } }
+        @keyframes trace-drift-3 { 0% { transform: translate(0,0) rotate(var(--r)); } 50% { transform: translate(-5px,-8px) rotate(var(--r)); } 100% { transform: translate(8px,8px) rotate(var(--r)); } }
+        @media (hover: none) {
+          .trace-drift-0 { animation-name: trace-drift-0; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
+          .trace-drift-1 { animation-name: trace-drift-1; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
+          .trace-drift-2 { animation-name: trace-drift-2; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
+          .trace-drift-3 { animation-name: trace-drift-3; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .animate-marquee { animation: none; }
+          .feed-new { animation: none; }
+          .pista-underline-draw { animation: none; stroke-dashoffset: 0; }
+          .trace-drift-0, .trace-drift-1, .trace-drift-2, .trace-drift-3 { animation: none; transform: rotate(var(--r)); }
+        }
         @media (hover: hover) and (pointer: fine) { .landing-root, .landing-root * { cursor: none !important; } }
       `}</style>
 
@@ -1192,11 +1210,11 @@ export const LandingPage = () => {
             <a href="#how"      className={`transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${sectionTone === "light" ? "hover:text-zinc-900" : sectionTone === "green" ? "hover:text-emerald-300" : "hover:text-white"}`}>Como funciona</a>
             <a href="#reviews"  className={`transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${sectionTone === "light" ? "hover:text-zinc-900" : sectionTone === "green" ? "hover:text-emerald-300" : "hover:text-white"}`}>Depoimentos</a>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => navigate("/login")}
-              className={`px-4 py-2.5 min-h-[44px] text-sm font-medium transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+              className={`hidden md:inline-flex px-4 py-2.5 min-h-[44px] text-sm font-medium transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                 sectionTone === "light"
                   ? "text-zinc-600 hover:text-zinc-900 focus-visible:ring-zinc-400"
                   : sectionTone === "green"
@@ -1209,18 +1227,49 @@ export const LandingPage = () => {
             <button
               type="button"
               onClick={() => navigate("/login?mode=signup")}
-              className="px-5 py-2.5 min-h-[44px] text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+              className="px-4 sm:px-5 py-2.5 min-h-[44px] text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
             >
               Começar grátis
             </button>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+              aria-expanded={mobileMenuOpen}
+              className={`md:hidden flex items-center justify-center w-10 h-10 -mr-1 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                sectionTone === "light"
+                  ? "text-zinc-700 hover:bg-zinc-900/5 focus-visible:ring-zinc-400"
+                  : sectionTone === "green"
+                  ? "text-emerald-100 hover:bg-white/10 focus-visible:ring-emerald-400/50"
+                  : "text-zinc-200 hover:bg-white/10 focus-visible:ring-white/50"
+              }`}
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </nav>
+
+        {/* Dropdown mobile — só os links de navegação que ficam ocultos no pill acima */}
+        {mobileMenuOpen && (
+          <div className="md:hidden absolute top-[4.25rem] inset-x-4 pointer-events-auto bg-white rounded-2xl shadow-xl shadow-zinc-900/10 border border-zinc-100 overflow-hidden">
+            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block px-5 py-3.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 border-b border-zinc-100">Funcionalidades</a>
+            <a href="#how" onClick={() => setMobileMenuOpen(false)} className="block px-5 py-3.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 border-b border-zinc-100">Como funciona</a>
+            <a href="#reviews" onClick={() => setMobileMenuOpen(false)} className="block px-5 py-3.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 border-b border-zinc-100">Depoimentos</a>
+            <button
+              type="button"
+              onClick={() => { setMobileMenuOpen(false); navigate("/login"); }}
+              className="block w-full text-left px-5 py-3.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+            >
+              Entrar
+            </button>
+          </div>
+        )}
       </header>
 
       {/* ══════════════════════════════════════
           HERO — exatamente h-screen (inclui ticker + stats)
           ══════════════════════════════════════ */}
-      <section id="hero" data-snap data-cursor="#10b981" className="h-screen flex flex-col relative overflow-x-hidden bg-white">
+      <section id="hero" data-snap data-cursor="#10b981" className="min-h-screen lg:h-screen flex flex-col relative overflow-x-hidden bg-white">
         <TraceReveal ghostColor="#18181b" ghostOpacity={0.045} litColor="#059669" />
 
         {/* Main content — expands to fill */}
@@ -1305,7 +1354,10 @@ export const LandingPage = () => {
               { value: "5min", label: "Para começar"          },
               { value: "Zero", label: "Anúncios ou cobranças" },
             ].map((s, i) => (
-              <div key={s.label} className={`text-center py-5 ${i > 0 ? "border-l border-zinc-200" : ""}`}>
+              <div
+                key={s.label}
+                className={`text-center py-5 ${i > 0 ? "md:border-l md:border-zinc-200" : ""} ${i % 2 === 1 ? "border-l border-zinc-200" : ""} ${i >= 2 ? "border-t border-zinc-200 md:border-t-0" : ""}`}
+              >
                 <p className="font-display text-xl md:text-2xl font-bold text-zinc-900 mb-0.5">{s.value}</p>
                 <p className="text-xs text-zinc-600 font-medium">{s.label}</p>
               </div>
@@ -1339,6 +1391,35 @@ export const LandingPage = () => {
                 Experimentar grátis
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </button>
+            </div>
+          </Reveal>
+
+          {/* Mini-preview estática para mobile/tablet — sem scroll/tilt, só pra
+              a seção não ficar vazia onde o mockup completo está oculto */}
+          <Reveal delay={120} className="lg:hidden">
+            <div className="relative rounded-2xl border border-zinc-200 shadow-xl shadow-zinc-200/60 overflow-hidden bg-zinc-50">
+              <div className="px-5 py-3.5 border-b border-zinc-200 bg-white">
+                <p className="text-sm font-bold text-zinc-900 font-display">Olá, usuário 👋</p>
+                <p className="text-[10px] text-zinc-500 mt-0.5">Visão geral das suas finanças</p>
+              </div>
+              <div className="p-4 grid grid-cols-2 gap-2">
+                {[
+                  { label: "Saldo Total",    val: "R$4.720,15",  color: "text-emerald-600", Icon: Wallet     },
+                  { label: "A Receber",      val: "R$340,00",    color: "text-blue-500",    Icon: Users      },
+                  { label: "Receitas Fixas", val: "R$5.200,00",  color: "text-emerald-600", Icon: TrendingUp },
+                  { label: "Gastos Fixos",   val: "R$850,00",    color: "text-amber-500",   Icon: CreditCard },
+                ].map(c => (
+                  <div key={c.label} className="bg-white border border-zinc-200 rounded-xl p-3 shadow-sm">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <c.Icon className={`w-3.5 h-3.5 ${c.color}`} />
+                      <span className="text-[10px] text-zinc-500 leading-tight">{c.label}</span>
+                    </div>
+                    <p className={`text-sm font-bold ${c.color}`}>{c.val}</p>
+                  </div>
+                ))}
+              </div>
+              {/* Fade-out — sugere que tem mais dashboard abaixo */}
+              <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-zinc-50 to-transparent pointer-events-none" />
             </div>
           </Reveal>
 
@@ -1754,7 +1835,7 @@ export const LandingPage = () => {
           </h2>
 
           <div className="mb-1">
-            <span className="text-5xl font-display font-bold text-emerald-400">
+            <span className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-emerald-400">
               R$ <AnimatedCounter target={1247390} active={ctaVisible} />
             </span>
           </div>

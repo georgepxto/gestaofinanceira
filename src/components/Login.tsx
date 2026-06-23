@@ -90,11 +90,17 @@ function LoginGhostTrace() {
   return (
     <div ref={rootRef} className="absolute inset-0 pointer-events-none select-none" aria-hidden="true">
       <div className="absolute inset-0">
-        {GHOST_TRACES.map((g) => (
+        {GHOST_TRACES.map((g, i) => (
           <span
             key={g.t}
-            className="absolute font-mono text-xs whitespace-nowrap text-zinc-900/[0.06]"
-            style={{ left: `${g.x}%`, top: `${g.y}%`, transform: `rotate(${g.r}deg)` }}
+            className={`absolute font-mono text-xs whitespace-nowrap text-zinc-900/[0.06] trace-drift-${i % 4}`}
+            style={{
+              left: `${g.x}%`,
+              top: `${g.y}%`,
+              "--r": `${g.r}deg`,
+              animationDuration: `${8 + (i % 5) * 1.7}s`,
+              animationDelay: `${-((i % 7) * 1.6)}s`,
+            } as React.CSSProperties}
           >
             {g.t}
           </span>
@@ -271,9 +277,23 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
         .pista-underline-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: pista-draw 0.7s 1.3s cubic-bezier(0.65,0,0.35,1) forwards; }
         @keyframes reveal-in { from { opacity: 0; transform: translateY(28px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .reveal-up { opacity: 0; animation: reveal-in 1.2s cubic-bezier(0.22,1,0.36,1) forwards; }
+
+        /* Pistas "embaralhadas" — só em touch (sem mouse pra revelar com a lanterna) */
+        @keyframes trace-drift-0 { 0% { transform: translate(0,0) rotate(var(--r)); } 50% { transform: translate(7px,-9px) rotate(var(--r)); } 100% { transform: translate(-6px,6px) rotate(var(--r)); } }
+        @keyframes trace-drift-1 { 0% { transform: translate(0,0) rotate(var(--r)); } 50% { transform: translate(-8px,7px) rotate(var(--r)); } 100% { transform: translate(6px,-7px) rotate(var(--r)); } }
+        @keyframes trace-drift-2 { 0% { transform: translate(0,0) rotate(var(--r)); } 50% { transform: translate(9px,5px) rotate(var(--r)); } 100% { transform: translate(-7px,-5px) rotate(var(--r)); } }
+        @keyframes trace-drift-3 { 0% { transform: translate(0,0) rotate(var(--r)); } 50% { transform: translate(-5px,-8px) rotate(var(--r)); } 100% { transform: translate(8px,8px) rotate(var(--r)); } }
+        @media (hover: none) {
+          .trace-drift-0 { animation-name: trace-drift-0; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
+          .trace-drift-1 { animation-name: trace-drift-1; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
+          .trace-drift-2 { animation-name: trace-drift-2; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
+          .trace-drift-3 { animation-name: trace-drift-3; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .pista-underline-draw { animation: none; stroke-dashoffset: 0; }
           .reveal-up { animation: none; opacity: 1; transform: none; }
+          .trace-drift-0, .trace-drift-1, .trace-drift-2, .trace-drift-3 { animation: none; transform: rotate(var(--r)); }
         }
         @media (hover: hover) and (pointer: fine) { .login-root, .login-root * { cursor: none !important; } }
       `}</style>
@@ -343,7 +363,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
       {/* ══════════════════════════════════════
           PAINEL DO FORMULÁRIO — cartão em vidro sobre os focos de luz
           ══════════════════════════════════════ */}
-      <div className="relative z-10 flex-1 flex items-center justify-center p-6 lg:p-12">
+      <div className="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
         <div className="w-full max-w-sm">
           <button
             onClick={() => navigate("/")}
@@ -353,7 +373,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
             Voltar
           </button>
 
-          <div className="reveal-up bg-white/70 backdrop-blur-xl border border-white/60 shadow-xl shadow-emerald-900/5 rounded-3xl p-7 lg:p-9" style={{ animationDelay: "80ms" }}>
+          <div className="reveal-up bg-white/70 backdrop-blur-xl border border-white/60 shadow-xl shadow-emerald-900/5 rounded-3xl p-5 sm:p-7 lg:p-9" style={{ animationDelay: "80ms" }}>
             {/* Logo — só aparece sem o painel de marca (mobile/tablet) */}
             <div className="text-center mb-7 lg:hidden">
               <div className="inline-flex items-center justify-center w-9 h-9 mb-3">
@@ -414,7 +434,8 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                   <button
                     type="button"
                     onClick={() => setShowEmailForm(true)}
-                    className="w-full text-center text-sm text-zinc-500 hover:text-zinc-800 transition-colors mt-5"
+                    className="reveal-up w-full text-center text-sm text-zinc-500 hover:text-zinc-800 transition-colors mt-5"
+                    style={{ animationDelay: "220ms" }}
                   >
                     Continuar com email
                   </button>
@@ -571,7 +592,12 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                 <p className="text-zinc-500 text-sm">
                   {viewMode === "login" ? "Não tem uma conta?" : "Já tem uma conta?"}
                   <button
-                    onClick={() => switchView(viewMode === "login" ? "signup" : "login")}
+                    onClick={() =>
+                      switchView(
+                        viewMode === "login" ? "signup" : "login",
+                        viewMode === "login"
+                      )
+                    }
                     className="ml-2 text-emerald-600 hover:text-emerald-700 font-semibold"
                   >
                     {viewMode === "login" ? "Cadastre-se" : "Fazer login"}
