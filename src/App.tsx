@@ -1,10 +1,11 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { lazy, Suspense, useState, useEffect, useCallback } from "react";
-import { Loader2, AlertCircle, ShieldAlert, LogOut } from "lucide-react";
+import { AlertCircle, ShieldAlert, LogOut } from "lucide-react";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { formatCurrency } from "./utils/calculations";
 import type { CartaoCredito, ContaBancaria } from "./types";
 import { Toaster } from "./components/ui/Toaster";
+import { AppShellSkeleton, AuthSplashSkeleton } from "./components/layout/AppShellSkeleton";
 import {
   FormGastoModal,
   FormDividaModal,
@@ -19,9 +20,10 @@ import {
 import { AppProvider, useAppContext } from "./context";
 import { ThemeProvider } from "./hooks/useTheme";
 import { useNotifications } from "./hooks/useNotifications";
+import { Login } from "./components/Login";
+import { LandingPage } from "./pages/LandingPage";
 import "./index.css";
 
-const Login = lazy(() => import("./components/Login").then((m) => ({ default: m.Login })));
 const Layout = lazy(() => import("./components/layout").then((m) => ({ default: m.Layout })));
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
@@ -34,16 +36,7 @@ const ContasBancariasPage = lazy(() => import("./pages/ContasBancariasPage").the
 const CartoesCreditoPage = lazy(() => import("./pages/CartoesCreditoPage").then((m) => ({ default: m.CartoesCreditoPage })));
 const MetasPage = lazy(() => import("./pages/MetasPage").then((m) => ({ default: m.MetasPage })));
 const AdminPage = lazy(() => import("./pages/AdminPage").then((m) => ({ default: m.AdminPage })));
-const LandingPage = lazy(() => import("./pages/LandingPage").then((m) => ({ default: m.LandingPage })));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage").then((m) => ({ default: m.ResetPasswordPage })));
-
-function RouteLoader() {
-  return (
-    <div className="min-h-screen bg-gray-100 dark:bg-[#0B0F19] flex items-center justify-center">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-    </div>
-  );
-}
 
 function AppContent() {
   const {
@@ -187,11 +180,7 @@ function AppContent() {
 
   // Loading de autenticação
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    );
+    return <AuthSplashSkeleton />;
   }
 
   if (!isSupabaseConfigured) {
@@ -212,23 +201,17 @@ function AppContent() {
 
   if (!user) {
     return (
-      <Suspense fallback={<RouteLoader />}>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login onLogin={handleLogin} onSignUp={handleSignUp} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login onLogin={handleLogin} onSignUp={handleSignUp} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     );
   }
 
   // Loading de features/role
   if (featuresLoading) {
-    return (
-      <div className="min-h-screen bg-gray-100 dark:bg-[#0B0F19] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    );
+    return <AppShellSkeleton />;
   }
 
   // Conta desativada pelo admin
@@ -259,7 +242,7 @@ function AppContent() {
 
   return (
     <>
-      <Suspense fallback={<RouteLoader />}>
+      <Suspense fallback={<AppShellSkeleton />}>
         <Routes>
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route

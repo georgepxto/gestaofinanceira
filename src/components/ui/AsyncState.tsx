@@ -1,4 +1,5 @@
-import { AlertCircle, CheckCircle2, Inbox, Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, CheckCircle2, Inbox, RefreshCw } from "lucide-react";
+import { Skeleton } from "./Skeleton";
 
 interface BaseProps {
   title: string;
@@ -50,14 +51,34 @@ function StateCard({ icon, title, description, colorClass, compact, actionLabel,
 }
 
 export function PageLoadingState({ title = "Carregando...", description = "Estamos buscando os dados da página.", compact }: Partial<BaseProps>) {
-  return (
-    <Container compact={compact}>
-      <div className="text-center px-4">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
-        <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">{title}</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{description}</p>
+  if (compact) {
+    return (
+      <div className="py-2 space-y-2" role="status" aria-label={title}>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-14 w-full rounded-xl" />
+        ))}
       </div>
-    </Container>
+    );
+  }
+
+  return (
+    <div className="px-1 py-2 space-y-6" role="status" aria-label={title}>
+      <div className="space-y-2">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 rounded-xl" />
+        ))}
+      </div>
+      <div className="space-y-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-14 rounded-xl" />
+        ))}
+      </div>
+      <span className="sr-only">{title} — {description}</span>
+    </div>
   );
 }
 
