@@ -78,6 +78,17 @@ async function attachScreenshot(page: Page, name: string, testInfo: TestInfo) {
   await appendStep(testInfo, `Checkpoint ${name} confirmado | URL atual: ${page.url()}`);
 }
 
+/**
+ * Confirma que a pílula ativa do segmented control (sub-navegação das abas-mãe
+ * Orçamento/Na Rua/Carteira) corresponde à visão esperada.
+ */
+async function expectActiveTab(page: Page, label: string) {
+  await expect(page.getByRole("tab", { name: label })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+}
+
 async function navigateAllEnabledPages(page: Page, testInfo: TestInfo) {
   const links = page.locator("aside nav a[href]");
   const count = await links.count();
@@ -88,6 +99,22 @@ async function navigateAllEnabledPages(page: Page, testInfo: TestInfo) {
     if (!href) continue;
     if (!href.startsWith("/")) continue;
     if (!hrefs.includes(href)) hrefs.push(href);
+  }
+
+  // Além das abas-mãe da sidebar, percorre explicitamente as sub-rotas para
+  // manter a cobertura de cada visão fundida (redireciona se a flag estiver off,
+  // nunca cai no /login).
+  const subRoutes = [
+    "/orcamento/gastos",
+    "/orcamento/metas",
+    "/a-receber/mes",
+    "/a-receber/aberto",
+    "/a-receber/pessoas",
+    "/carteira/contas",
+    "/carteira/cartoes",
+  ];
+  for (const sub of subRoutes) {
+    if (!hrefs.includes(sub)) hrefs.push(sub);
   }
 
   for (const path of hrefs) {
@@ -109,8 +136,9 @@ async function navigateAllEnabledPages(page: Page, testInfo: TestInfo) {
 
 async function runMetasCrud(page: Page, testInfo: TestInfo) {
   await appendChecklist(testInfo, "Metas", ["Salvar", "Atualizar", "Excluir"]);
-  await page.goto("/metas");
+  await page.goto("/orcamento/metas");
   await expect(page.getByRole("heading", { name: "Metas de Gasto" })).toBeVisible();
+  await expectActiveTab(page, "Metas");
 
   const categoriaSelect = page.locator("section[data-tour='metas-form'] select");
   const limiteInput = page.getByPlaceholder("0,00");
@@ -142,7 +170,7 @@ async function runMetasCrud(page: Page, testInfo: TestInfo) {
 
 async function ensureContaForPayment(page: Page, testInfo: TestInfo) {
   await appendChecklist(testInfo, "Contas (pre-cartao)", ["Nova Conta (somente se nenhuma conta existir)"]);
-  await page.goto("/contas");
+  await page.goto("/carteira/contas");
   await expect(page.getByRole("heading", { name: "Contas Bancárias" })).toBeVisible();
 
   const noAccountText = page.getByText("Nenhuma conta");
@@ -174,8 +202,9 @@ async function runCartoesFullFlow(page: Page, testInfo: TestInfo) {
 
   await ensureContaForPayment(page, testInfo);
 
-  await page.goto("/cartoes");
+  await page.goto("/carteira/cartoes");
   await expect(page.getByRole("heading", { name: "Cartões de Crédito" })).toBeVisible();
+  await expectActiveTab(page, "Cartões");
 
   await page.getByText("Novo cartão").click();
   await expect(page.getByRole("heading", { name: /Novo cartão de crédito/i })).toBeVisible();
@@ -251,7 +280,7 @@ async function runContasBancariasFullFlow(page: Page, testInfo: TestInfo) {
   const receitasSection = page.locator("section[data-tour='contas-section-receitas']");
 
   try {
-    await page.goto("/contas");
+    await page.goto("/carteira/contas");
     await expect(page.getByRole("heading", { name: "Contas Bancárias" })).toBeVisible();
     await attachScreenshot(page, "50-contas-overview", testInfo);
 
@@ -314,7 +343,7 @@ async function runContasBancariasFullFlow(page: Page, testInfo: TestInfo) {
     await expect(editarReceitaModal).toBeHidden({ timeout: 10000 });
     await attachScreenshot(page, "55-receita-editada", testInfo);
   } finally {
-    await page.goto("/contas");
+    await page.goto("/carteira/contas");
 
     const receitaRowCleanup = receitasSection.locator("div", { hasText: receitaDesc }).first();
     if (await receitaRowCleanup.isVisible().catch(() => false)) {
@@ -351,8 +380,9 @@ async function runDevedoresFullFlow(page: Page, testInfo: TestInfo) {
   const getCard = () => listaDevedores.locator("div", { hasText: devedorName }).first();
 
   try {
-    await page.goto("/pessoas");
+    await page.goto("/a-receber/pessoas");
     await expect(page.locator("main h1", { hasText: "Devedores" })).toBeVisible();
+    await expectActiveTab(page, "Por pessoa");
     await attachScreenshot(page, "60-devedores-overview", testInfo);
 
     await page.getByRole("button", { name: "Próximo mês" }).click();
@@ -378,7 +408,7 @@ async function runDevedoresFullFlow(page: Page, testInfo: TestInfo) {
 
     await getCard().click();
   } finally {
-    await page.goto("/pessoas");
+    await page.goto("/a-receber/pessoas");
     const devedorCardCleanup = getCard();
 
     if (await devedorCardCleanup.isVisible().catch(() => false)) {
@@ -408,8 +438,9 @@ async function runDividasEmAbertoFullFlow(page: Page, testInfo: TestInfo) {
   const getDividaItem = () => listaDividas.locator("li", { hasText: descricaoDivida }).first();
 
   try {
-    await page.goto("/dividas");
+    await page.goto("/a-receber/aberto");
     await expect(page.locator("main h1", { hasText: "Dívidas em Aberto" })).toBeVisible();
+    await expectActiveTab(page, "Em aberto");
     await attachScreenshot(page, "70-dividas-overview", testInfo);
 
     await page.getByRole("button", { name: /^Pagos$/ }).click();
@@ -456,7 +487,7 @@ async function runDividasEmAbertoFullFlow(page: Page, testInfo: TestInfo) {
     await expect(getDividaItem()).toBeVisible();
     await attachScreenshot(page, "73-divida-pagamento-registrado", testInfo);
   } finally {
-    await page.goto("/dividas");
+    await page.goto("/a-receber/aberto");
     const dividaCleanup = getDividaItem();
 
     if (await dividaCleanup.isVisible().catch(() => false)) {
@@ -505,8 +536,9 @@ async function runEmprestimosMesFullFlow(page: Page, testInfo: TestInfo) {
   };
 
   try {
-    await page.goto("/gastos");
+    await page.goto("/a-receber/mes");
     await expect(page.getByRole("heading", { name: "Empréstimos do Mês" })).toBeVisible();
+    await expectActiveTab(page, "Por mês");
     await attachScreenshot(page, "80-gastos-overview", testInfo);
 
     await page.getByRole("button", { name: "Próximo mês" }).click();
@@ -576,7 +608,7 @@ async function runEmprestimosMesFullFlow(page: Page, testInfo: TestInfo) {
       }
     }
   } finally {
-    await page.goto("/gastos");
+    await page.goto("/a-receber/mes");
     const item = getItem();
     if (await item.isVisible().catch(() => false)) {
       await item.getByLabel("Excluir").click();
@@ -621,8 +653,9 @@ async function runMeusGastosFullFlow(page: Page, testInfo: TestInfo) {
   };
 
   try {
-    await page.goto("/eu");
+    await page.goto("/orcamento/gastos");
     await expect(page.locator("main h1", { hasText: "Meus Gastos" })).toBeVisible();
+    await expectActiveTab(page, "Lançamentos");
     await attachScreenshot(page, "90-meus-gastos-overview", testInfo);
 
     await page.getByRole("button", { name: "Próximo mês" }).click();
@@ -660,7 +693,7 @@ async function runMeusGastosFullFlow(page: Page, testInfo: TestInfo) {
     await itemEditado.locator("button").first().click();
     await attachScreenshot(page, "94-meus-gastos-marcado-pago", testInfo);
   } finally {
-    await page.goto("/eu");
+    await page.goto("/orcamento/gastos");
     await resetMeusGastosFilters();
 
     const cleanupItemEditado = getItem(descricaoEditada);
