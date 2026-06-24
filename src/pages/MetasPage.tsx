@@ -5,7 +5,6 @@ import { useAppContext } from "../context";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
 import { formatCurrency } from "../utils/calculations";
-import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { CATEGORIAS } from "../utils/categories";
 import { toast } from "../components/ui/Toaster";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
@@ -230,26 +229,17 @@ export const MetasPage = () => {
   }
 
   return (
-    <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
-      {/* Page Header */}
-      <div className="flex items-center gap-3" data-tour="metas-header">
-        <Target className="w-6 h-6 text-purple-600" />
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Metas de Gasto</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Defina tetos mensais por categoria</p>
-        </div>
-      </div>
-
+    <div className="space-y-6">
       {/* Adicionar nova meta */}
-      <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="metas-form">
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+      <section className="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="metas-form">
+        <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">
           {metaEmEdicao ? "Editar Meta" : "Nova Meta"}
         </h2>
         <div className="flex flex-col sm:flex-row gap-3">
           <select
             value={novaMeta.categoria}
             onChange={(e) => setNovaMeta({ ...novaMeta, categoria: e.target.value })}
-            className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none appearance-none"
+            className="flex-1 px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none appearance-none"
           >
             <option value="" disabled>Selecione uma categoria</option>
             {categoriasDisponiveis.map((cat) => (
@@ -257,20 +247,20 @@ export const MetasPage = () => {
               ))}
           </select>
           <div className="relative w-full sm:w-44">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm">R$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 text-sm">R$</span>
             <input
               type="number"
               value={novaMeta.limite}
               onChange={(e) => setNovaMeta({ ...novaMeta, limite: e.target.value })}
               placeholder="0,00"
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+              className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             />
           </div>
           <button
             onClick={handleSaveMeta}
             data-tour="metas-btn-salvar"
             disabled={savingMeta || !novaMeta.categoria.trim() || !novaMeta.limite}
-            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
+            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
           >
             {savingMeta ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -285,40 +275,40 @@ export const MetasPage = () => {
           {metaEmEdicao && (
             <button
               onClick={handleCancelarEdicao}
-              className="px-4 py-3 border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="px-4 py-3 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
             >
               Cancelar
             </button>
           )}
         </div>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
           Selecione a categoria e defina o limite mensal. As barras de progresso aparecerão no Dashboard.
         </p>
       </section>
 
       {/* Lista de metas */}
-      <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm" data-tour="metas-lista">
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Suas Metas</h2>
+      <section className="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="metas-lista">
+        <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Suas Metas</h2>
         {metas.length > 0 ? (
           <div className="space-y-3">
             {metas.map((meta) => (
-              <div key={meta.id} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-100 dark:border-gray-800 hover:border-gray-300 dark:border-gray-700 transition-colors">
+              <div key={meta.id} className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:border-zinc-700 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Target className="w-4 h-4 text-purple-600" />
+                  <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-950/40 rounded-xl flex items-center justify-center">
+                    <Target className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-800 dark:text-gray-100 capitalize">{meta.categoria}</span>
-                    <p className="text-gray-400 dark:text-gray-500 text-xs">Limite: {formatCurrency(meta.limite)} / mês</p>
+                    <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 capitalize">{meta.categoria}</span>
+                    <p className="text-zinc-400 dark:text-zinc-500 text-xs">Limite: <span className="font-mono tabular-nums">{formatCurrency(meta.limite)}</span> / mês</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => handleEditarMeta(meta)}
-                    className="p-1.5 hover:bg-blue-50 rounded-lg transition-colors group"
+                    className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors group"
                     title="Editar meta"
                   >
-                    <Edit2 className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-blue-500 transition-colors" />
+                    <Edit2 className="w-4 h-4 text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-200 transition-colors" />
                   </button>
 
                   <button
@@ -327,7 +317,7 @@ export const MetasPage = () => {
                     className="p-1.5 hover:bg-red-50 rounded-lg transition-colors group"
                     title="Remover meta"
                   >
-                    <X className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-red-500 transition-colors" />
+                    <X className="w-4 h-4 text-zinc-400 dark:text-zinc-500 group-hover:text-red-500 transition-colors" />
                   </button>
                 </div>
               </div>

@@ -27,6 +27,7 @@ import "./index.css";
 const Layout = lazy(() => import("./components/layout").then((m) => ({ default: m.Layout })));
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
+const OrcamentoPage = lazy(() => import("./pages/OrcamentoPage").then((m) => ({ default: m.OrcamentoPage })));
 const EuPage = lazy(() => import("./pages/EuPage").then((m) => ({ default: m.EuPage })));
 const GastosPage = lazy(() => import("./pages/GastosPage").then((m) => ({ default: m.GastosPage })));
 const DividasPage = lazy(() => import("./pages/DividasPage").then((m) => ({ default: m.DividasPage })));
@@ -256,9 +257,17 @@ function AppContent() {
             }
           >
             <Route path="/" element={
-              features.dashboard ? <DashboardPage /> : <Navigate to={features.meus_gastos ? "/eu" : "/configuracoes"} replace />
+              features.dashboard ? <DashboardPage /> : <Navigate to={features.meus_gastos ? "/orcamento/gastos" : "/configuracoes"} replace />
             } />
-            {features.meus_gastos && <Route path="/eu" element={<EuPage />} />}
+            {/* Orçamento — Meus Gastos + Metas */}
+            {(features.meus_gastos || features.metas) && (
+              <Route path="/orcamento" element={<OrcamentoPage />}>
+                {features.meus_gastos && <Route path="gastos" element={<EuPage />} />}
+                {features.metas && <Route path="metas" element={<MetasPage />} />}
+                <Route index element={<Navigate to={features.meus_gastos ? "gastos" : "metas"} replace />} />
+                <Route path="*" element={<Navigate to={features.meus_gastos ? "gastos" : "metas"} replace />} />
+              </Route>
+            )}
             {features.gastos_compartilhados && <Route path="/gastos" element={<GastosPage />} />}
             {features.saldo_devedor && <Route path="/dividas" element={<DividasPage />} />}
             {features.pessoas && <Route path="/pessoas" element={<PessoasPage />} />}
@@ -272,10 +281,11 @@ function AppContent() {
               </Route>
             )}
             {/* Redirects das rotas antigas */}
+            <Route path="/eu" element={<Navigate to="/orcamento/gastos" replace />} />
+            <Route path="/metas" element={<Navigate to="/orcamento/metas" replace />} />
             <Route path="/contas" element={<Navigate to="/carteira/contas" replace />} />
             <Route path="/cartoes" element={<Navigate to="/carteira/cartoes" replace />} />
             {features.configuracoes && <Route path="/configuracoes" element={<ConfiguracoesPage />} />}
-            {features.metas && <Route path="/metas" element={<MetasPage />} />}
             {isAdmin && <Route path="/admin" element={<AdminPage />} />}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

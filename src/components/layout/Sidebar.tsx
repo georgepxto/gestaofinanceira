@@ -37,12 +37,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   // Uma aba-mãe pode reunir várias features: aparece se ao menos uma estiver ativa.
   const allNavItems = [
     { path: "/", label: "Dashboard", icon: LayoutDashboard, features: ["dashboard"] as const },
-    { path: "/eu", label: "Meus Gastos", icon: User, features: ["meus_gastos"] as const },
+    { path: "/orcamento", label: "Orçamento", icon: Target, features: ["meus_gastos", "metas"] as const },
     { path: "/gastos", label: "Empréstimos do Mês", icon: CreditCard, features: ["gastos_compartilhados"] as const },
     { path: "/dividas", label: "Dívidas em Aberto", icon: TrendingDown, features: ["saldo_devedor"] as const },
     { path: "/pessoas", label: "Devedores", icon: Users, features: ["pessoas"] as const },
     { path: "/carteira", label: "Carteira", icon: Wallet, features: ["contas_bancarias", "cartoes_credito"] as const },
-    { path: "/metas", label: "Metas de Gasto", icon: Target, features: ["metas"] as const },
   ];
 
   // Filtrar itens baseados nas features habilitadas (admin vê tudo)
