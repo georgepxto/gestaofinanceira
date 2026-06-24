@@ -6,7 +6,6 @@ import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
 import { formatCurrency, formatCurrencyInput, parseCurrency, formatMonthYear } from "../utils/calculations";
-import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { CATEGORIAS_RECEITA, TIPOS_RECEITA, CATEGORIA_RECEITA_PADRAO } from "../utils/receitas";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { toast } from "../components/ui/Toaster";
@@ -411,68 +410,59 @@ export const ContasBancariasPage = () => {
   }
 
   return (
-    <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
-      {/* Header */}
-      <div className="flex items-center gap-3" data-tour="contas-header">
-        <Building2 className="w-7 h-7 text-blue-600" />
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Contas Bancárias</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Gerencie suas contas e receitas</p>
-        </div>
-      </div>
-
+    <div className="space-y-6">
       {/* Seletor de Mês */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-800" data-tour="contas-mes">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm p-4 border border-zinc-200 dark:border-zinc-800" data-tour="contas-mes">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navegarMes("anterior")}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
             aria-label="Mês anterior"
           >
-            <ChevronLeft className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            <ChevronLeft className="w-6 h-6 text-zinc-500 dark:text-zinc-400" />
           </button>
           <div className="text-center">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 capitalize">
+            <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 capitalize">
               {formatMonthYear(mesVisualizacao)}
             </h2>
             <button
               onClick={irParaHoje}
-              className="text-sm text-blue-600 hover:text-blue-700 mt-1"
+              className="text-sm text-emerald-600 hover:text-emerald-700 mt-1"
             >
               Ir para hoje
             </button>
           </div>
           <button
             onClick={() => navegarMes("proximo")}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
             aria-label="Próximo mês"
           >
-            <ChevronRight className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            <ChevronRight className="w-6 h-6 text-zinc-500 dark:text-zinc-400" />
           </button>
         </div>
       </div>
 
       {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" data-tour="contas-cards">
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-2"><Building2 className="w-4 h-4" /><span className="text-sm">Contas</span></div>
-          <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{contas.length}</p>
+        <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500 mb-2"><Building2 className="w-4 h-4" /><span className="text-sm text-zinc-500 dark:text-zinc-400">Contas</span></div>
+          <p className="font-mono tabular-nums text-2xl font-bold text-zinc-900 dark:text-zinc-100">{contas.length}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center gap-2 text-emerald-600 mb-2"><TrendingUp className="w-4 h-4" /><span className="text-sm">Receitas do Mês</span></div>
-          <p className="text-2xl font-bold text-emerald-600">{formatCurrency(totalReceitasMes)}</p>
+        <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500 mb-2"><TrendingUp className="w-4 h-4" /><span className="text-sm text-zinc-500 dark:text-zinc-400">Receitas do Mês</span></div>
+          <p className="font-mono tabular-nums text-2xl font-bold text-emerald-600">{formatCurrency(totalReceitasMes)}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <div className="flex items-center gap-2 text-blue-600 mb-2"><DollarSign className="w-4 h-4" /><span className="text-sm">Saldo Total</span></div>
-          <p className="text-2xl font-bold text-blue-600">{formatCurrency(saldoTotal)}</p>
+        <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500 mb-2"><DollarSign className="w-4 h-4" /><span className="text-sm text-zinc-500 dark:text-zinc-400">Saldo Total</span></div>
+          <p className="font-mono tabular-nums text-2xl font-bold text-emerald-600">{formatCurrency(saldoTotal)}</p>
         </div>
       </div>
 
       {/* Seção Contas */}
-      <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4" data-tour="contas-section-contas">
+      <section className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-4" data-tour="contas-section-contas">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Minhas Contas</h2>
-          <button onClick={() => { resetFormConta(); setShowModalConta(true); }} data-tour="contas-btn-nova-conta" className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-sm">
+          <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Minhas Contas</h2>
+          <button onClick={() => { resetFormConta(); setShowModalConta(true); }} data-tour="contas-btn-nova-conta" className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-sm">
             <Plus className="w-4 h-4" /> Nova Conta
           </button>
         </div>
@@ -481,19 +471,19 @@ export const ContasBancariasPage = () => {
         ) : (
           <div className="space-y-2">
             {contas.map(c => (
-              <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg gap-2 border border-gray-100 dark:border-gray-800">
+              <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg gap-2 border border-zinc-100 dark:border-zinc-800">
                 <div className="min-w-0">
-                  <p className="text-gray-800 dark:text-gray-100 font-medium truncate">{c.nome}</p>
-                  {c.banco && <p className="text-gray-500 dark:text-gray-400 text-sm">{c.banco}</p>}
+                  <p className="text-zinc-800 dark:text-zinc-100 font-medium truncate">{c.nome}</p>
+                  {c.banco && <p className="text-zinc-500 dark:text-zinc-400 text-sm">{c.banco}</p>}
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
                   <div className="text-left sm:text-right">
-                    <p className="text-blue-600 font-semibold">{formatCurrency(calcularSaldoConta(c))}</p>
-                    <p className="text-gray-400 dark:text-gray-500 text-xs">Inicial: {formatCurrency(c.saldo_inicial)}</p>
+                    <p className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100 font-semibold">{formatCurrency(calcularSaldoConta(c))}</p>
+                    <p className="text-zinc-400 dark:text-zinc-500 text-xs">Inicial: <span className="font-mono tabular-nums">{formatCurrency(c.saldo_inicial)}</span></p>
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => handleEditConta(c)} className="p-1.5 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><Edit2 className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
-                    <button onClick={() => handleDeleteConta(c.id, c.nome)} className="p-1.5 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><Trash2 className="w-4 h-4 text-gray-400 dark:text-gray-500 hover:text-red-500" /></button>
+                    <button onClick={() => handleEditConta(c)} className="p-1.5 transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded"><Edit2 className="w-4 h-4 text-zinc-400 dark:text-zinc-500" /></button>
+                    <button onClick={() => handleDeleteConta(c.id, c.nome)} className="p-1.5 transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded"><Trash2 className="w-4 h-4 text-zinc-400 dark:text-zinc-500 hover:text-red-500" /></button>
                   </div>
                 </div>
               </div>
@@ -503,9 +493,9 @@ export const ContasBancariasPage = () => {
       </section>
 
       {/* Seção Receitas Fixas/Recorrentes */}
-      <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4" data-tour="contas-section-receitas">
+      <section className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-4" data-tour="contas-section-receitas">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Receitas Programadas</h2>
+          <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Receitas Programadas</h2>
           <button onClick={() => { resetFormReceita(); setShowModalReceita(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-sm">
             <Plus className="w-4 h-4" /> Nova Receita
           </button>
@@ -517,18 +507,18 @@ export const ContasBancariasPage = () => {
           ) : (
             <div className="space-y-2">
               {receitasProgramadas.map(r => (
-                <div key={r.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg gap-2 border border-gray-100 dark:border-gray-800">
+                <div key={r.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg gap-2 border border-zinc-100 dark:border-zinc-800">
                   <div className="min-w-0">
-                    <p className="text-gray-800 dark:text-gray-100 font-medium truncate">{r.descricao}</p>
-                    <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
+                    <p className="text-zinc-800 dark:text-zinc-100 font-medium truncate">{r.descricao}</p>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm">
                       {r.categoria} • Dia {r.dia_recebimento} • {r.tipo === "fixo" ? "Fixo" : `${r.num_meses}x`}
                     </p>
                   </div>
                   <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
                     <p className="text-emerald-600 font-semibold">{formatCurrency(r.valor)}</p>
                     <div className="flex gap-1">
-                      <button onClick={() => handleEditReceita(r)} className="p-1.5 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><Edit2 className="w-4 h-4 text-gray-400 dark:text-gray-500" /></button>
-                      <button onClick={() => handleDeleteReceita(r.id, r.descricao)} className="p-1.5 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><Trash2 className="w-4 h-4 text-gray-400 dark:text-gray-500 hover:text-red-500" /></button>
+                      <button onClick={() => handleEditReceita(r)} className="p-1.5 transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded"><Edit2 className="w-4 h-4 text-zinc-400 dark:text-zinc-500" /></button>
+                      <button onClick={() => handleDeleteReceita(r.id, r.descricao)} className="p-1.5 transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded"><Trash2 className="w-4 h-4 text-zinc-400 dark:text-zinc-500 hover:text-red-500" /></button>
                     </div>
                   </div>
                 </div>
@@ -539,8 +529,8 @@ export const ContasBancariasPage = () => {
       </section>
 
       {/* Seção Histórico de Transações (Receitas recebidas no mês) */}
-      <section className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4" data-tour="contas-section-historico">
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Receitas do Mês</h2>
+      <section className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-4" data-tour="contas-section-historico">
+        <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Receitas do Mês</h2>
         {receitasFiltradas.length === 0 ? (
           <PageEmptyState compact title="Sem receitas neste mês" description="Se houver entradas no período, elas aparecerão aqui automaticamente." />
         ) : (
@@ -550,8 +540,8 @@ export const ContasBancariasPage = () => {
               return (
                 <div key={r.id} className="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/30 rounded-lg">
                   <div>
-                    <p className="text-gray-800 dark:text-gray-100 font-medium">{r.descricao}</p>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    <p className="text-zinc-800 dark:text-zinc-100 font-medium">{r.descricao}</p>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-sm">
                       {r.tipo === "avulso" ? "Avulso" : r.tipo === "fixo" ? "Fixo" : "Recorrente"} • {contaNome} • {r.categoria}
                     </p>
                   </div>
@@ -570,21 +560,21 @@ export const ContasBancariasPage = () => {
       {/* Modal Nova/Editar Conta */}
       {showModalConta && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-xl w-full max-w-md p-5 border border-gray-200 dark:border-gray-800 shadow-xl">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-md p-5 border border-zinc-200 dark:border-zinc-800 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{editandoConta ? "Editar Conta" : "Nova Conta Bancária"}</h3>
-              <button onClick={resetFormConta} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
+              <h3 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">{editandoConta ? "Editar Conta" : "Nova Conta Bancária"}</h3>
+              <button onClick={resetFormConta} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded"><X className="w-5 h-5 text-zinc-400 dark:text-zinc-500" /></button>
             </div>
             <form onSubmit={handleSubmitConta} className="space-y-4">
-              <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Nome da conta</label><input type="text" value={formConta.nome} onChange={e => setFormConta({...formConta, nome: e.target.value})} placeholder="Ex: Conta Corrente, Poupança..." className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100" required /></div>
-              <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Banco (opcional)</label><input type="text" value={formConta.banco} onChange={e => setFormConta({...formConta, banco: e.target.value})} placeholder="Ex: Nubank, Inter..." className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100" /></div>
-              <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Saldo inicial</label><input type="text" value={formConta.saldo_inicial} onChange={e => setFormConta({...formConta, saldo_inicial: formatCurrencyInput(e.target.value)})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100" /></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Nome da conta</label><input type="text" value={formConta.nome} onChange={e => setFormConta({...formConta, nome: e.target.value})} placeholder="Ex: Conta Corrente, Poupança..." className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100" required /></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Banco (opcional)</label><input type="text" value={formConta.banco} onChange={e => setFormConta({...formConta, banco: e.target.value})} placeholder="Ex: Nubank, Inter..." className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100" /></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Saldo inicial</label><input type="text" value={formConta.saldo_inicial} onChange={e => setFormConta({...formConta, saldo_inicial: formatCurrencyInput(e.target.value)})} className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100" /></div>
               {editandoConta && (
-                <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Saldo Atual</label><input type="text" value={formConta.saldo_atual} onChange={e => setFormConta({...formConta, saldo_atual: formatCurrencyInput(e.target.value)})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100" /><p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Edite para corrigir manualmente o saldo</p></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Saldo Atual</label><input type="text" value={formConta.saldo_atual} onChange={e => setFormConta({...formConta, saldo_atual: formatCurrencyInput(e.target.value)})} className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100" /><p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Edite para corrigir manualmente o saldo</p></div>
               )}
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={resetFormConta} className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg">Cancelar</button>
-                <button type="submit" disabled={saving} className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}{editandoConta ? "Salvar" : "Criar"}</button>
+                <button type="button" onClick={resetFormConta} className="flex-1 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
+                <button type="submit" disabled={saving} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}{editandoConta ? "Salvar" : "Criar"}</button>
               </div>
             </form>
           </div>
@@ -594,29 +584,29 @@ export const ContasBancariasPage = () => {
       {/* Modal Nova/Editar Receita */}
       {showModalReceita && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-xl w-full max-w-md p-5 border border-gray-200 dark:border-gray-800 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-md p-5 border border-zinc-200 dark:border-zinc-800 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{editandoReceita ? "Editar Receita" : "Nova Receita"}</h3>
-              <button onClick={resetFormReceita} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"><X className="w-5 h-5 text-gray-400 dark:text-gray-500" /></button>
+              <h3 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">{editandoReceita ? "Editar Receita" : "Nova Receita"}</h3>
+              <button onClick={resetFormReceita} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded"><X className="w-5 h-5 text-zinc-400 dark:text-zinc-500" /></button>
             </div>
             <form onSubmit={handleSubmitReceita} className="space-y-4">
-              <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Descrição</label><input type="text" value={formReceita.descricao} onChange={e => setFormReceita({...formReceita, descricao: e.target.value})} placeholder="Ex: Salário, Freelance..." className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100" required /></div>
-              <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Valor</label><input type="text" value={formReceita.valor} onChange={e => setFormReceita({...formReceita, valor: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100" required /></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Descrição</label><input type="text" value={formReceita.descricao} onChange={e => setFormReceita({...formReceita, descricao: e.target.value})} placeholder="Ex: Salário, Freelance..." className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100" required /></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Valor</label><input type="text" value={formReceita.valor} onChange={e => setFormReceita({...formReceita, valor: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100" required /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Categoria</label><select value={formReceita.categoria} onChange={e => setFormReceita({...formReceita, categoria: e.target.value})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100">{CATEGORIAS_RECEITA.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
-                <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Tipo</label><select value={formReceita.tipo} onChange={e => setFormReceita({...formReceita, tipo: e.target.value as any})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100">{TIPOS_RECEITA.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Categoria</label><select value={formReceita.categoria} onChange={e => setFormReceita({...formReceita, categoria: e.target.value})} className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100">{CATEGORIAS_RECEITA.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Tipo</label><select value={formReceita.tipo} onChange={e => setFormReceita({...formReceita, tipo: e.target.value as any})} className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100">{TIPOS_RECEITA.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
               </div>
               {formReceita.tipo !== "avulso" && (
-                <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Dia do recebimento (1-31)</label><input type="number" min="1" max="31" value={formReceita.dia_recebimento} onChange={e => setFormReceita({...formReceita, dia_recebimento: e.target.value})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100" /></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Dia do recebimento (1-31)</label><input type="number" min="1" max="31" value={formReceita.dia_recebimento} onChange={e => setFormReceita({...formReceita, dia_recebimento: e.target.value})} className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100" /></div>
               )}
               {formReceita.tipo === "recorrente" && (
-                <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Quantos meses?</label><input type="number" min="1" max="60" value={formReceita.num_meses} onChange={e => setFormReceita({...formReceita, num_meses: e.target.value})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100" /></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Quantos meses?</label><input type="number" min="1" max="60" value={formReceita.num_meses} onChange={e => setFormReceita({...formReceita, num_meses: e.target.value})} className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100" /></div>
               )}
               {contas.length > 0 && (
-                <div><label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Conta (opcional)</label><select value={formReceita.conta_id} onChange={e => setFormReceita({...formReceita, conta_id: e.target.value})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-800 dark:text-gray-100"><option value="">Sem conta vinculada</option>{contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Conta (opcional)</label><select value={formReceita.conta_id} onChange={e => setFormReceita({...formReceita, conta_id: e.target.value})} className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100"><option value="">Sem conta vinculada</option>{contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>
               )}
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={resetFormReceita} className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg">Cancelar</button>
+                <button type="button" onClick={resetFormReceita} className="flex-1 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
                 <button type="submit" disabled={saving} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}{editandoReceita ? "Salvar" : "Criar"}</button>
               </div>
             </form>

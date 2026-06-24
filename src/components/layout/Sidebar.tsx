@@ -11,7 +11,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
-  Building2,
   Wallet,
   LayoutDashboard,
   Target,
@@ -34,22 +33,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   const { helpButton } = useTutorialHelpContext();
   const { isAdmin, features } = useAppContext();
 
-  // Construir itens do menu baseados nas features do usuário
+  // Construir itens do menu baseados nas features do usuário.
+  // Uma aba-mãe pode reunir várias features: aparece se ao menos uma estiver ativa.
   const allNavItems = [
-    { path: "/", label: "Dashboard", icon: LayoutDashboard, feature: "dashboard" as const },
-    { path: "/eu", label: "Meus Gastos", icon: User, feature: "meus_gastos" as const },
-    { path: "/gastos", label: "Empréstimos do Mês", icon: CreditCard, feature: "gastos_compartilhados" as const },
-    { path: "/dividas", label: "Dívidas em Aberto", icon: TrendingDown, feature: "saldo_devedor" as const },
-    { path: "/pessoas", label: "Devedores", icon: Users, feature: "pessoas" as const },
-    { path: "/contas", label: "Contas Bancárias", icon: Building2, feature: "contas_bancarias" as const },
-    { path: "/cartoes", label: "Cartões de Crédito", icon: Wallet, feature: "cartoes_credito" as const },
-    { path: "/metas", label: "Metas de Gasto", icon: Target, feature: "metas" as const },
+    { path: "/", label: "Dashboard", icon: LayoutDashboard, features: ["dashboard"] as const },
+    { path: "/eu", label: "Meus Gastos", icon: User, features: ["meus_gastos"] as const },
+    { path: "/gastos", label: "Empréstimos do Mês", icon: CreditCard, features: ["gastos_compartilhados"] as const },
+    { path: "/dividas", label: "Dívidas em Aberto", icon: TrendingDown, features: ["saldo_devedor"] as const },
+    { path: "/pessoas", label: "Devedores", icon: Users, features: ["pessoas"] as const },
+    { path: "/carteira", label: "Carteira", icon: Wallet, features: ["contas_bancarias", "cartoes_credito"] as const },
+    { path: "/metas", label: "Metas de Gasto", icon: Target, features: ["metas"] as const },
   ];
 
   // Filtrar itens baseados nas features habilitadas (admin vê tudo)
   const navItems = isAdmin
     ? allNavItems
-    : allNavItems.filter((item) => features[item.feature]);
+    : allNavItems.filter((item) => item.features.some((f) => features[f]));
 
   const bottomNavItems = [
     ...(features.configuracoes || isAdmin
@@ -69,15 +68,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
     label: string;
     icon: React.ComponentType<{ className?: string }>;
   }) => {
-    const isActive = location.pathname === path;
+    const isActive =
+      path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
     return (
       <NavLink
         to={path}
         onClick={() => setIsOpen(false)}
-        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
           isActive
-            ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 font-semibold ring-1 ring-blue-100 dark:ring-blue-900/40"
-            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-100"
+            ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-semibold ring-1 ring-emerald-100 dark:ring-emerald-900/40"
+            : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100"
         }`}
       >
         <Icon className="w-5 h-5 flex-shrink-0" />
@@ -89,18 +89,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   return (
     <>
       {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 z-40 flex items-center justify-between px-4 shadow-sm">
+      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 z-40 flex items-center justify-between px-4 shadow-sm">
         <div className="flex items-center">
           <button
             onClick={() => setIsOpen(true)}
             aria-label="Abrir menu de navegação"
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
           >
-            <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            <Menu className="w-6 h-6 text-zinc-700 dark:text-zinc-300" />
           </button>
           <img src="/favicon-light.png" alt="Hedge" className="w-4 h-4 ml-3 dark:hidden" />
           <img src="/favicon-dark.png" alt="Hedge" className="w-4 h-4 ml-3 hidden dark:block" />
-          <h1 className="ml-2 text-lg font-bold text-gray-800 dark:text-gray-100">
+          <h1 className="ml-2 font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             Hedge
           </h1>
         </div>
@@ -111,7 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
               data-tour={helpButton.dataTour}
               title={helpButton.title}
               aria-label={helpButton.ariaLabel}
-              className="flex w-8 h-8 rounded-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 text-gray-500 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-400 dark:hover:border-blue-500 items-center justify-center shadow-sm transition-colors"
+              className="flex w-8 h-8 rounded-full border border-zinc-300 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 text-zinc-500 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-400 dark:hover:border-emerald-500 items-center justify-center shadow-sm transition-colors"
             >
               ?
             </button>
@@ -131,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-50 shadow-sm flex flex-col
+          fixed top-0 left-0 h-full bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 z-50 shadow-sm flex flex-col
           transition-all duration-300 ease-in-out
           
           /* Mobile: drawer */
@@ -144,36 +144,36 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         `}
       >
         {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-200 dark:border-zinc-800">
           <div className="flex items-center gap-2">
             <img src="/favicon-light.png" alt="Hedge" className="w-5 h-5 dark:hidden flex-shrink-0" />
             <img src="/favicon-dark.png" alt="Hedge" className="w-5 h-5 hidden dark:block flex-shrink-0" />
             {!isCollapsed && (
-              <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+              <h2 className="font-display text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
                 Hedge
               </h2>
             )}
           </div>
-          
+
           {/* Close button (mobile) */}
           <button
             onClick={() => setIsOpen(false)}
             aria-label="Fechar menu de navegação"
-            className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors ml-auto"
+            className="md:hidden p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors ml-auto"
           >
-            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <X className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
           </button>
 
           {/* Collapse button (desktop) */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             aria-label={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
-            className="hidden md:flex p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors ml-auto"
+            className="hidden md:flex p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors ml-auto"
           >
             {isCollapsed ? (
-              <ChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <ChevronRight className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
             ) : (
-              <ChevronLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <ChevronLeft className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
             )}
           </button>
         </div>
@@ -187,20 +187,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
           </nav>
 
           {/* Bottom Section */}
-          <div className="shrink-0 p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 space-y-3">
+          <div className="shrink-0 p-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 space-y-3">
             {bottomNavItems.map((item) => (
               <NavItem key={item.path} {...item} />
             ))}
-            
+
             {/* User Info */}
             {!isCollapsed && (
               <div className="flex items-center gap-3 px-2 py-2">
-                <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-blue-950/30 flex items-center justify-center">
-                  <User className="w-5 h-5 text-emerald-600 dark:text-blue-400" />
+                <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center">
+                  <User className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-800 dark:text-gray-100 font-medium truncate">{userName || "Usuário"}</p>
-                  <p className="text-xs text-emerald-600 dark:text-blue-400 truncate">{userEmail || ""}</p>
+                  <p className="text-zinc-900 dark:text-zinc-100 font-medium truncate">{userName || "Usuário"}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{userEmail || ""}</p>
                 </div>
               </div>
             )}

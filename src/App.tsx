@@ -32,6 +32,7 @@ const GastosPage = lazy(() => import("./pages/GastosPage").then((m) => ({ defaul
 const DividasPage = lazy(() => import("./pages/DividasPage").then((m) => ({ default: m.DividasPage })));
 const ConfiguracoesPage = lazy(() => import("./pages/ConfiguracoesPage").then((m) => ({ default: m.ConfiguracoesPage })));
 const PessoasPage = lazy(() => import("./pages/PessoasPage").then((m) => ({ default: m.PessoasPage })));
+const CarteiraPage = lazy(() => import("./pages/CarteiraPage").then((m) => ({ default: m.CarteiraPage })));
 const ContasBancariasPage = lazy(() => import("./pages/ContasBancariasPage").then((m) => ({ default: m.ContasBancariasPage })));
 const CartoesCreditoPage = lazy(() => import("./pages/CartoesCreditoPage").then((m) => ({ default: m.CartoesCreditoPage })));
 const MetasPage = lazy(() => import("./pages/MetasPage").then((m) => ({ default: m.MetasPage })));
@@ -185,13 +186,13 @@ function AppContent() {
 
   if (!isSupabaseConfigured) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-white mb-2">
+          <h1 className="font-display text-xl font-bold tracking-tight text-white mb-2">
             Configuração Necessária
           </h1>
-          <p className="text-gray-400">
+          <p className="text-zinc-400">
             Configure as variáveis de ambiente do Supabase no arquivo .env.local
           </p>
         </div>
@@ -217,15 +218,15 @@ function AppContent() {
   // Conta desativada pelo admin
   if (!isActive) {
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-[#0B0F19] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-zinc-100 dark:bg-[#0B0F19] flex items-center justify-center p-4">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 bg-red-100 dark:bg-red-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <ShieldAlert className="w-8 h-8 text-red-500" />
           </div>
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+          <h1 className="font-display text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">
             Conta Desativada
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mb-6">
+          <p className="text-zinc-500 dark:text-zinc-400 mb-6">
             Sua conta foi desativada pelo administrador. Entre em contato com o suporte para mais informações.
           </p>
           <button
@@ -261,8 +262,18 @@ function AppContent() {
             {features.gastos_compartilhados && <Route path="/gastos" element={<GastosPage />} />}
             {features.saldo_devedor && <Route path="/dividas" element={<DividasPage />} />}
             {features.pessoas && <Route path="/pessoas" element={<PessoasPage />} />}
-            {features.contas_bancarias && <Route path="/contas" element={<ContasBancariasPage />} />}
-            {features.cartoes_credito && <Route path="/cartoes" element={<CartoesCreditoPage />} />}
+            {/* Carteira — Contas Bancárias + Cartões de Crédito */}
+            {(features.contas_bancarias || features.cartoes_credito) && (
+              <Route path="/carteira" element={<CarteiraPage />}>
+                {features.contas_bancarias && <Route path="contas" element={<ContasBancariasPage />} />}
+                {features.cartoes_credito && <Route path="cartoes" element={<CartoesCreditoPage />} />}
+                <Route index element={<Navigate to={features.contas_bancarias ? "contas" : "cartoes"} replace />} />
+                <Route path="*" element={<Navigate to={features.contas_bancarias ? "contas" : "cartoes"} replace />} />
+              </Route>
+            )}
+            {/* Redirects das rotas antigas */}
+            <Route path="/contas" element={<Navigate to="/carteira/contas" replace />} />
+            <Route path="/cartoes" element={<Navigate to="/carteira/cartoes" replace />} />
             {features.configuracoes && <Route path="/configuracoes" element={<ConfiguracoesPage />} />}
             {features.metas && <Route path="/metas" element={<MetasPage />} />}
             {isAdmin && <Route path="/admin" element={<AdminPage />} />}
