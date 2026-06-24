@@ -4,6 +4,7 @@ import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { TabMeuGasto } from "../components/Tabs";
+import { OrcamentoMetasResumo } from "../components/OrcamentoMetasResumo";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { supabase } from "../lib/supabase";
 import type { MetaGasto } from "../types";
@@ -228,6 +229,9 @@ export const EuPage = () => {
               </button>
             </div>
       </div>
+
+      {/* Faixa orçado vs. gasto — assinatura da aba Orçamento */}
+      <OrcamentoMetasResumo meusGastosDoMes={meusGastosDoMes} />
 
       {/* Content */}
       <TabMeuGasto
