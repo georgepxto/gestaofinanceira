@@ -1,9 +1,8 @@
-import { Plus, CreditCard, FileText } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { TabGastos } from "../components/Tabs";
-import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 
 interface GastosTutorialStep {
@@ -172,38 +171,31 @@ export const GastosPage = () => {
   };
 
   return (
-    <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
-      {/* Page Header */}
-      <div className="flex items-center justify-between" data-tour="gastos-header">
-        <div className="flex items-center gap-3">
-          <CreditCard className="w-7 h-7 text-blue-600" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Empréstimos do Mês</h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Valores a receber organizados por devedor</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2" data-tour="gastos-actions">
-          {features.exportar_pdf && (
-            <button
-              onClick={handleExportPDF}
-              disabled={parcelasAtivas.length === 0}
-              data-tour="gastos-btn-pdf"
-              className="border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Exportar PDF"
-            >
-              <FileText className="w-5 h-5" />
-              <span className="hidden sm:inline">PDF</span>
-            </button>
-          )}
-          <button
-            onClick={() => setShowForm(true)}
-            data-tour="gastos-btn-novo"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-lg"
-          >
-            <Plus className="w-5 h-5" />
-            <span className="hidden sm:inline">Novo Empréstimo</span>
-          </button>
-        </div>
+    <div className="space-y-6">
+      {/* Barra de ações da visão Por mês */}
+      <div className="flex justify-end">
+            <div className="flex items-center gap-2" data-tour="gastos-actions">
+              {features.exportar_pdf && (
+                <button
+                  onClick={handleExportPDF}
+                  disabled={parcelasAtivas.length === 0}
+                  data-tour="gastos-btn-pdf"
+                  className="border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 px-3 py-2.5 rounded-xl flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  title="Exportar PDF"
+                >
+                  <FileText className="w-5 h-5" />
+                  <span className="hidden sm:inline">PDF</span>
+                </button>
+              )}
+              <button
+                onClick={() => setShowForm(true)}
+                data-tour="gastos-btn-novo"
+                className="bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 rounded-xl flex items-center gap-2 font-semibold transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="hidden sm:inline">Novo Empréstimo</span>
+              </button>
+            </div>
       </div>
 
       {/* Content */}

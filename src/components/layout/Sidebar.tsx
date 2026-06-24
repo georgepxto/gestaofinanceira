@@ -4,9 +4,7 @@ import {
   Menu,
   X,
   User,
-  Users,
-  CreditCard,
-  TrendingDown,
+  Banknote,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -38,9 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   const allNavItems = [
     { path: "/", label: "Dashboard", icon: LayoutDashboard, features: ["dashboard"] as const },
     { path: "/orcamento", label: "Orçamento", icon: Target, features: ["meus_gastos", "metas"] as const },
-    { path: "/gastos", label: "Empréstimos do Mês", icon: CreditCard, features: ["gastos_compartilhados"] as const },
-    { path: "/dividas", label: "Dívidas em Aberto", icon: TrendingDown, features: ["saldo_devedor"] as const },
-    { path: "/pessoas", label: "Devedores", icon: Users, features: ["pessoas"] as const },
+    { path: "/a-receber", label: "Na Rua", icon: Banknote, features: ["gastos_compartilhados", "saldo_devedor", "pessoas"] as const },
     { path: "/carteira", label: "Carteira", icon: Wallet, features: ["contas_bancarias", "cartoes_credito"] as const },
   ];
 

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Users, Plus, Trash2, Loader2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Loader2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { useAppContext } from "../context";
 import { useTheme } from "../hooks/useTheme";
@@ -7,7 +7,6 @@ import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageEmptyState } from "../components/ui/AsyncState";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { formatCurrency, formatMonthYear } from "../utils/calculations";
-import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 
 const COLORS = ["#10B981", "#F59E0B"]; // emerald, amber
@@ -179,20 +178,13 @@ export const PessoasPage = () => {
   };
 
   return (
-    <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
-      {/* Page Header */}
-      <div className="flex items-center justify-between" data-tour="devedores-header">
-        <div className="flex items-center gap-3">
-          <Users className="w-7 h-7 text-blue-600" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Devedores</h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Gerencie pessoas com valores em aberto com você</p>
-          </div>
-        </div>
+    <div className="space-y-6">
+      {/* Barra de ações da visão Por pessoa */}
+      <div className="flex justify-end">
         <button
           onClick={() => setShowAddForm(true)}
           data-tour="devedores-btn-novo"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+          className="bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 rounded-xl flex items-center gap-2 font-semibold transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
         >
           <Plus className="w-5 h-5" />
           <span className="hidden sm:inline">Novo Devedor</span>
@@ -200,47 +192,47 @@ export const PessoasPage = () => {
       </div>
 
       {/* Seletor de Mês */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-4 border border-gray-200 dark:border-gray-800" data-tour="devedores-mes">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm p-4 border border-zinc-200 dark:border-zinc-800" data-tour="devedores-mes">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navegarMes("anterior")}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
             aria-label="Mês anterior"
           >
-            <ChevronLeft className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            <ChevronLeft className="w-6 h-6 text-zinc-500 dark:text-zinc-400" />
           </button>
           <div className="text-center">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 capitalize">
+            <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 capitalize">
               {formatMonthYear(mesVisualizacao)}
             </h2>
             <button
               onClick={irParaHoje}
-              className="text-sm text-blue-600 hover:text-blue-700 mt-1"
+              className="text-sm text-emerald-600 hover:text-emerald-700 mt-1"
             >
               Ir para hoje
             </button>
           </div>
           <button
             onClick={() => navegarMes("proximo")}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
             aria-label="Próximo mês"
           >
-            <ChevronRight className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            <ChevronRight className="w-6 h-6 text-zinc-500 dark:text-zinc-400" />
           </button>
         </div>
       </div>
 
       {/* Add Person Form */}
       {showAddForm && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Adicionar Devedor</h3>
+        <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <h3 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Adicionar Devedor</h3>
           <div className="space-y-3">
             <input
               type="text"
               value={novaPessoa}
               onChange={(e) => setNovaPessoa(e.target.value)}
               placeholder="Nome do devedor"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               autoFocus
             />
@@ -248,14 +240,14 @@ export const PessoasPage = () => {
               <button
                 onClick={handleAdd}
                 disabled={adding || !novaPessoa.trim()}
-                className="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 {adding ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
                 Adicionar
               </button>
               <button
                 onClick={() => { setShowAddForm(false); setNovaPessoa(""); }}
-                className="px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg transition-colors"
+                className="px-4 py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400 rounded-lg transition-colors"
               >
                 Cancelar
               </button>
@@ -267,7 +259,7 @@ export const PessoasPage = () => {
       {/* People List with Charts */}
       <div className="space-y-3" data-tour="devedores-lista">
         {pessoas.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 shadow-sm">
             <PageEmptyState
               compact
               title="Nenhum devedor cadastrado"
@@ -286,22 +278,22 @@ export const PessoasPage = () => {
             return (
               <div
                 key={pessoa}
-                className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm"
+                className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm"
               >
                 {/* Header clicável */}
                 <div
                   onClick={() => toggleExpand(pessoa)}
-                  className="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                  className="w-full p-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3" data-tour="devedores-item-acoes">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center">
-                      <span className="text-blue-600 dark:text-blue-400 font-bold text-xl">
+                    <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center">
+                      <span className="font-display text-emerald-600 dark:text-emerald-400 font-bold text-xl">
                         {pessoa.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="text-left">
-                      <h3 className="text-gray-900 dark:text-gray-100 font-semibold text-lg">{pessoa}</h3>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm">
+                      <h3 className="text-zinc-900 dark:text-zinc-100 font-semibold text-lg">{pessoa}</h3>
+                      <p className="text-zinc-500 dark:text-zinc-400 text-sm">
                         {formatCurrency(stats.gastosMesAtual + stats.totalDividas)} total
                       </p>
                     </div>
@@ -310,29 +302,29 @@ export const PessoasPage = () => {
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDelete(pessoa); }}
                       disabled={pessoas.length <= 1}
-                      className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      className="p-2 text-zinc-400 dark:text-zinc-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
                     {isExpanded ? (
-                      <ChevronUp className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                      <ChevronUp className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
                     ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                      <ChevronDown className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
                     )}
                   </div>
                 </div>
 
                 {/* Conteúdo expandido com gráfico */}
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-800">
+                  <div className="px-4 pb-4 border-t border-zinc-100 dark:border-zinc-800">
                     <div className="grid grid-cols-2 gap-3 mt-4 mb-4">
-                      <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
-                        <p className="text-blue-600 dark:text-blue-400 text-xs mb-1">Gastos do Mês</p>
-                        <p className="text-gray-900 dark:text-gray-100 font-semibold">{formatCurrency(stats.gastosMesAtual)}</p>
+                      <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-3 border border-zinc-200 dark:border-zinc-800">
+                        <p className="text-zinc-500 dark:text-zinc-400 text-xs mb-1">Gastos do Mês</p>
+                        <p className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100 font-semibold">{formatCurrency(stats.gastosMesAtual)}</p>
                       </div>
-                      <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-3">
-                        <p className="text-orange-600 dark:text-orange-400 text-xs mb-1">Dívidas Pendentes</p>
-                        <p className="text-gray-900 dark:text-gray-100 font-semibold">{formatCurrency(stats.totalDividas)}</p>
+                      <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl p-3 border border-amber-200/70 dark:border-amber-900/40">
+                        <p className="text-amber-600 dark:text-amber-400 text-xs mb-1">Dívidas Pendentes</p>
+                        <p className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100 font-semibold">{formatCurrency(stats.totalDividas)}</p>
                       </div>
                     </div>
 
@@ -360,7 +352,7 @@ export const PessoasPage = () => {
                               labelStyle={tooltipLabelStyle}
                             />
                             <Legend
-                              formatter={(value) => <span className="text-gray-600 dark:text-gray-400 text-sm">{value}</span>}
+                              formatter={(value) => <span className="text-zinc-600 dark:text-zinc-400 text-sm">{value}</span>}
                             />
                           </PieChart>
                         </ResponsiveContainer>
@@ -382,17 +374,17 @@ export const PessoasPage = () => {
 
       {/* Gráfico Total */}
       {pessoas.length > 0 && (totalGastosMes > 0 || totalDividasGeral > 0) && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm p-4" data-tour="devedores-resumo-total">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 text-center">Resumo Total</h3>
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-4" data-tour="devedores-resumo-total">
+          <h3 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4 text-center">Resumo Total</h3>
           
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 text-center">
-              <p className="text-blue-600 dark:text-blue-400 text-xs mb-1">Total Gastos do Mês</p>
-              <p className="text-gray-900 dark:text-gray-100 font-bold text-lg">{formatCurrency(totalGastosMes)}</p>
+            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-3 text-center border border-zinc-200 dark:border-zinc-800">
+              <p className="text-zinc-500 dark:text-zinc-400 text-xs mb-1">Total Gastos do Mês</p>
+              <p className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100 font-bold text-lg">{formatCurrency(totalGastosMes)}</p>
             </div>
-            <div className="bg-orange-50 dark:bg-orange-950/30 rounded-lg p-3 text-center">
-              <p className="text-orange-600 dark:text-orange-400 text-xs mb-1">Total Dívidas</p>
-              <p className="text-gray-900 dark:text-gray-100 font-bold text-lg">{formatCurrency(totalDividasGeral)}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl p-3 text-center border border-amber-200/70 dark:border-amber-900/40">
+              <p className="text-amber-600 dark:text-amber-400 text-xs mb-1">Total Dívidas</p>
+              <p className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100 font-bold text-lg">{formatCurrency(totalDividasGeral)}</p>
             </div>
           </div>
 
@@ -420,16 +412,16 @@ export const PessoasPage = () => {
                     labelStyle={tooltipLabelStyle}
                   />
                   <Legend
-                    formatter={(value) => <span className="text-gray-600 dark:text-gray-400 text-sm">{value}</span>}
+                    formatter={(value) => <span className="text-zinc-600 dark:text-zinc-400 text-sm">{value}</span>}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           )}
 
-          <div className="text-center mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Total Geral</p>
-            <p className="text-gray-900 dark:text-gray-100 font-bold text-2xl">
+          <div className="text-center mt-4 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+            <p className="text-zinc-500 dark:text-zinc-400 text-sm">Total Geral</p>
+            <p className="text-zinc-900 dark:text-zinc-100 font-bold text-2xl">
               {formatCurrency(totalGastosMes + totalDividasGeral)}
             </p>
           </div>

@@ -29,6 +29,7 @@ const Layout = lazy(() => import("./components/layout").then((m) => ({ default: 
 const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
 const OrcamentoPage = lazy(() => import("./pages/OrcamentoPage").then((m) => ({ default: m.OrcamentoPage })));
 const EuPage = lazy(() => import("./pages/EuPage").then((m) => ({ default: m.EuPage })));
+const NaRuaPage = lazy(() => import("./pages/NaRuaPage").then((m) => ({ default: m.NaRuaPage })));
 const GastosPage = lazy(() => import("./pages/GastosPage").then((m) => ({ default: m.GastosPage })));
 const DividasPage = lazy(() => import("./pages/DividasPage").then((m) => ({ default: m.DividasPage })));
 const ConfiguracoesPage = lazy(() => import("./pages/ConfiguracoesPage").then((m) => ({ default: m.ConfiguracoesPage })));
@@ -268,9 +269,16 @@ function AppContent() {
                 <Route path="*" element={<Navigate to={features.meus_gastos ? "gastos" : "metas"} replace />} />
               </Route>
             )}
-            {features.gastos_compartilhados && <Route path="/gastos" element={<GastosPage />} />}
-            {features.saldo_devedor && <Route path="/dividas" element={<DividasPage />} />}
-            {features.pessoas && <Route path="/pessoas" element={<PessoasPage />} />}
+            {/* Na Rua — Empréstimos do Mês + Dívidas em Aberto + Devedores */}
+            {(features.gastos_compartilhados || features.saldo_devedor || features.pessoas) && (
+              <Route path="/a-receber" element={<NaRuaPage />}>
+                {features.gastos_compartilhados && <Route path="mes" element={<GastosPage />} />}
+                {features.saldo_devedor && <Route path="aberto" element={<DividasPage />} />}
+                {features.pessoas && <Route path="pessoas" element={<PessoasPage />} />}
+                <Route index element={<Navigate to={features.gastos_compartilhados ? "mes" : features.saldo_devedor ? "aberto" : "pessoas"} replace />} />
+                <Route path="*" element={<Navigate to={features.gastos_compartilhados ? "mes" : features.saldo_devedor ? "aberto" : "pessoas"} replace />} />
+              </Route>
+            )}
             {/* Carteira — Contas Bancárias + Cartões de Crédito */}
             {(features.contas_bancarias || features.cartoes_credito) && (
               <Route path="/carteira" element={<CarteiraPage />}>
@@ -283,6 +291,9 @@ function AppContent() {
             {/* Redirects das rotas antigas */}
             <Route path="/eu" element={<Navigate to="/orcamento/gastos" replace />} />
             <Route path="/metas" element={<Navigate to="/orcamento/metas" replace />} />
+            <Route path="/gastos" element={<Navigate to="/a-receber/mes" replace />} />
+            <Route path="/dividas" element={<Navigate to="/a-receber/aberto" replace />} />
+            <Route path="/pessoas" element={<Navigate to="/a-receber/pessoas" replace />} />
             <Route path="/contas" element={<Navigate to="/carteira/contas" replace />} />
             <Route path="/cartoes" element={<Navigate to="/carteira/cartoes" replace />} />
             {features.configuracoes && <Route path="/configuracoes" element={<ConfiguracoesPage />} />}

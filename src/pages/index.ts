@@ -4,6 +4,7 @@ export { EuPage } from "./EuPage";
 export { GastosPage } from "./GastosPage";
 export { DividasPage } from "./DividasPage";
 export { ConfiguracoesPage } from "./ConfiguracoesPage";
+export { NaRuaPage } from "./NaRuaPage";
 export { PessoasPage } from "./PessoasPage";
 export { CarteiraPage } from "./CarteiraPage";
 export { ContasBancariasPage } from "./ContasBancariasPage";
