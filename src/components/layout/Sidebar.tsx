@@ -195,14 +195,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-zinc-900 dark:text-zinc-100 font-medium truncate">{userName || "Usuário"}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{userEmail || ""}</p>
+                  <p className="font-mono text-xs text-zinc-500 dark:text-zinc-400 truncate">{userEmail || ""}</p>
                 </div>
               </div>
             )}
-            
+
             <button
               onClick={onLogout}
-              className={`flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 border border-red-200 dark:border-red-900 transition-colors ${
+              className={`flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 border border-zinc-200 dark:border-zinc-800 transition-colors ${
                 isCollapsed ? "justify-center" : ""
               }`}
             >

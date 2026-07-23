@@ -25,6 +25,52 @@ interface LoginProps {
 
 type ViewMode = "login" | "signup" | "forgot";
 
+/* ── Google Identity Services (GIS) ─────────────────────────────────────
+   Com o client ID configurado, o login Google usa signInWithIdToken: o
+   popup mostra o nome do app (sem "to continue to …supabase.co") e não há
+   redirect de página. Sem client ID, cai no fluxo OAuth padrão do Supabase. */
+const GOOGLE_CLIENT_ID: string | undefined = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential: string }) => void;
+            ux_mode?: "popup" | "redirect";
+          }) => void;
+          renderButton: (
+            el: HTMLElement,
+            options: Record<string, unknown>
+          ) => void;
+        };
+      };
+    };
+  }
+}
+
+let gisScriptPromise: Promise<void> | null = null;
+function loadGisScript(): Promise<void> {
+  if (window.google?.accounts?.id) return Promise.resolve();
+  if (!gisScriptPromise) {
+    gisScriptPromise = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = "https://accounts.google.com/gsi/client";
+      s.async = true;
+      s.defer = true;
+      s.onload = () => resolve();
+      s.onerror = () => {
+        gisScriptPromise = null;
+        reject(new Error("Falha ao carregar Google Identity Services"));
+      };
+      document.head.appendChild(s);
+    });
+  }
+  return gisScriptPromise;
+}
+
 /* Mesmas pistas de gasto fantasma do hero da landing — aqui reveladas pelo
    cursor agindo como lanterna, igual ao efeito original */
 const GHOST_TRACES = [
@@ -141,6 +187,10 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
     searchParams.get("mode") === "signup"
   );
 
+  const gisContainerRef = useRef<HTMLDivElement>(null);
+  const [gisReady, setGisReady] = useState(false);
+
+  // Fallback: fluxo OAuth com redirect (usado quando GIS não está disponível)
   const handleGoogleLogin = async () => {
     if (!supabase) {
       setError("Serviço indisponível");
@@ -166,6 +216,89 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
       setLoading(false);
     }
   };
+
+  /* Callback do GIS vive num ref para o initialize (executado uma vez)
+     sempre enxergar o viewMode/estado atuais */
+  const credentialHandlerRef = useRef<(token: string) => void>(() => {});
+  credentialHandlerRef.current = async (token: string) => {
+    if (!supabase) {
+      setError("Serviço indisponível");
+      return;
+    }
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
+    // Mesmo contrato do fluxo OAuth: useAuth lê oauth_mode no onAuthStateChange
+    localStorage.setItem("oauth_mode", viewMode);
+    try {
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: "google",
+        token,
+      });
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+      // Sucesso: useAuth troca a tela via onAuthStateChange. Se o login for
+      // bloqueado (conta Google inexistente em modo login), o useAuth grava
+      // auth_error no localStorage sem reload — vigiar por alguns segundos.
+      const started = Date.now();
+      const timer = window.setInterval(() => {
+        const authError = localStorage.getItem("auth_error");
+        if (authError) {
+          localStorage.removeItem("auth_error");
+          setError(authError);
+          setLoading(false);
+          window.clearInterval(timer);
+        } else if (Date.now() - started > 10000) {
+          window.clearInterval(timer);
+        }
+      }, 400);
+    } catch {
+      setError("Erro ao conectar com Google");
+      setLoading(false);
+    }
+  };
+
+  // Carregar e inicializar o GIS uma única vez
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || !supabase) return;
+    let cancelled = false;
+    loadGisScript()
+      .then(() => {
+        if (cancelled || !window.google) return;
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          ux_mode: "popup",
+          callback: (response) => credentialHandlerRef.current(response.credential),
+        });
+        setGisReady(true);
+      })
+      .catch(() => {
+        // Sem GIS o botão custom segue com o fluxo OAuth de redirect
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Renderizar o botão oficial (invisível, sobreposto ao botão custom)
+  useEffect(() => {
+    const el = gisContainerRef.current;
+    if (!gisReady || !el || !window.google) return;
+    el.innerHTML = "";
+    window.google.accounts.id.renderButton(el, {
+      type: "standard",
+      theme: "outline",
+      size: "large",
+      text: "continue_with",
+      width: Math.max(
+        200,
+        Math.min(400, Math.floor(el.parentElement?.offsetWidth ?? 400))
+      ),
+    });
+  }, [gisReady, viewMode, loading]);
 
   // Ler erro de OAuth redirect (ex: conta Google não cadastrada)
   React.useEffect(() => {
@@ -408,21 +541,39 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
             {/* Google — primeiro, como atalho rápido */}
             {viewMode !== "forgot" && (
               <>
-                <button
-                  type="button"
-                  onClick={handleGoogleLogin}
-                  disabled={loading}
-                  className="reveal-up w-full py-3 bg-white border border-zinc-200 text-zinc-700 font-medium rounded-xl hover:bg-zinc-50 hover:border-zinc-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                  style={{ animationDelay: "220ms" }}
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                  </svg>
-                  Continuar com Google
-                </button>
+                <div className="reveal-up relative" style={{ animationDelay: "220ms" }}>
+                  <button
+                    type="button"
+                    onClick={gisReady ? undefined : handleGoogleLogin}
+                    disabled={loading}
+                    tabIndex={gisReady ? -1 : 0}
+                    aria-hidden={gisReady || undefined}
+                    className="w-full py-3 bg-white border border-zinc-200 text-zinc-700 font-medium rounded-xl hover:bg-zinc-50 hover:border-zinc-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    </svg>
+                    Continuar com Google
+                  </button>
+                  {/* Botão oficial do Google, invisível por cima do custom:
+                      o clique real cai no iframe do GIS (abre popup no domínio
+                      do app), mantendo o visual do botão desenhado acima */}
+                  {gisReady && !loading && (
+                    <div
+                      className="absolute inset-0 overflow-hidden rounded-xl"
+                      style={{ opacity: 0.001 }}
+                    >
+                      <div
+                        ref={gisContainerRef}
+                        className="w-full h-full flex items-center justify-center"
+                        style={{ transform: "scaleY(1.25)" }}
+                      />
+                    </div>
+                  )}
+                </div>
 
                 {showEmailForm ? (
                   <div className="flex items-center gap-3 my-5">

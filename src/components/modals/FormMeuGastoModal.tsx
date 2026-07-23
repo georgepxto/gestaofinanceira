@@ -122,31 +122,36 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-modal flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-modal flex items-end sm:items-center justify-center">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="form-meu-gasto-title"
-        className="bg-white dark:bg-gray-900 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto border-t sm:border border-gray-200 dark:border-gray-800"
+        className="bg-white dark:bg-zinc-900 w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto border-t sm:border border-zinc-200 dark:border-zinc-800"
       >
-        <div className="sticky top-0 bg-white dark:bg-gray-900 p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between z-10">
-          <h2 id="form-meu-gasto-title" className="text-lg font-bold text-gray-900 dark:text-gray-100">
-            {isEditing ? "Editar Gasto Pessoal" : "Novo Gasto Pessoal"}
-          </h2>
+        <div className="sticky top-0 bg-white dark:bg-zinc-900 p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between z-10">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400">
+              Meus Gastos
+            </p>
+            <h2 id="form-meu-gasto-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100">
+              {isEditing ? "Editar gasto" : "Novo gasto"}
+            </h2>
+          </div>
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-4 space-y-4">
           {/* Categoria */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+            <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
               Tipo de Gasto
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -160,8 +165,8 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 }
                 className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
                   formData.categoria === "pessoal"
-                    ? "bg-blue-600 border-blue-500 text-gray-900 dark:text-gray-100"
-                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
+                    ? "bg-emerald-600 border-emerald-600 text-white"
+                    : "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
                 }`}
               >
                 <User className="w-5 h-5" />
@@ -177,8 +182,8 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 }
                 className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
                   formData.categoria === "dividido"
-                    ? "bg-pink-600 border-pink-500 text-gray-900 dark:text-gray-100"
-                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
+                    ? "bg-emerald-600 border-emerald-600 text-white"
+                    : "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
                 }`}
               >
                 <Users className="w-5 h-5" />
@@ -194,8 +199,8 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 }
                 className={`p-3 rounded-lg border transition-colors flex flex-col items-center gap-1 ${
                   formData.categoria === "fixo"
-                    ? "bg-amber-600 border-amber-500 text-gray-900 dark:text-gray-100"
-                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
+                    ? "bg-emerald-600 border-emerald-600 text-white"
+                    : "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
                 }`}
               >
                 <Repeat className="w-5 h-5" />
@@ -206,7 +211,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
 
           {/* Descrição */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
               Descrição
             </label>
             <input
@@ -216,17 +221,17 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 onFormChange({ ...formData, descricao: e.target.value })
               }
               placeholder="Ex: Netflix, Almoço, etc."
-              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 outline-none"
             />
           </div>
 
           {/* Valor */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
               Valor Total
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-400">
                 R$
               </span>
               <input
@@ -239,7 +244,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                   })
                 }
                 placeholder="0,00"
-                className="w-full pl-10 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full pl-10 pr-3 py-2.5 font-mono tabular-nums bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 outline-none"
                 inputMode="numeric"
               />
             </div>
@@ -249,7 +254,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
           {formData.categoria === "dividido" && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
                   Dividido com (selecione uma ou mais pessoas)
                 </label>
                 {pessoas && pessoas.length > 0 ? (
@@ -260,7 +265,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                         {(formData.dividido_com_pessoas || []).map((pessoa) => (
                           <div
                             key={pessoa}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900 border border-emerald-300 dark:border-emerald-700 rounded-full text-emerald-900 dark:text-emerald-100 text-sm font-medium"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-600 border border-emerald-600 rounded-full text-white text-sm font-medium"
                           >
                             <span>{pessoa}</span>
                             <button
@@ -303,8 +308,8 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                             }}
                             className={`px-3 py-2 rounded-lg border transition-colors font-medium text-sm ${
                               isSelected
-                                ? "bg-emerald-600 border-emerald-500 text-white opacity-50 cursor-default"
-                                : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                ? "bg-emerald-600 border-emerald-600 text-white opacity-50 cursor-default"
+                                : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                             }`}
                             disabled={isSelected}
                           >
@@ -315,17 +320,17 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full px-3 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-600 dark:text-gray-400">
+                  <div className="w-full px-3 py-2.5 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-600 dark:text-zinc-400">
                     Nenhuma pessoa cadastrada
                   </div>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
                   Sua parte
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-400">
                     R$
                   </span>
                   <input
@@ -338,11 +343,11 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                       })
                     }
                     placeholder="0,00"
-                    className="w-full pl-10 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
+                    className="w-full pl-10 pr-3 py-2.5 font-mono tabular-nums bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 outline-none"
                     inputMode="numeric"
                   />
                 </div>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                   Preenchida automaticamente com a divisão igual entre você e as pessoas selecionadas. Você pode ajustar manualmente.
                 </p>
               </div>
@@ -352,7 +357,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
           {/* Campo para Fixo */}
           {formData.categoria === "fixo" && (
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
                 Dia do Vencimento (1-31)
               </label>
               <input
@@ -367,14 +372,14 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                   })
                 }
                 placeholder="Ex: 10"
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full px-3 py-2.5 font-mono tabular-nums bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
           )}
 
           {/* Categoria de Gasto */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+            <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
               Categoria do Gasto
             </label>
             <select
@@ -382,7 +387,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
               onChange={(e) =>
                 onFormChange({ ...formData, categoria_gasto: e.target.value })
               }
-              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 outline-none"
             >
               <option value="">Selecione uma categoria</option>
               {CATEGORIAS.map((cat) => (
@@ -396,7 +401,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
           {/* Data (não para fixo) */}
           {formData.categoria !== "fixo" && (
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
                 Data
               </label>
               <input
@@ -405,14 +410,14 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 onChange={(e) =>
                   onFormChange({ ...formData, data: e.target.value })
                 }
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full px-3 py-2.5 font-mono tabular-nums bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
           )}
 
           {/* Tipo (Crédito/Débito) */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+            <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
               Forma de Pagamento
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -427,8 +432,8 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 }
                 className={`p-3 rounded-lg border transition-colors flex items-center justify-center gap-2 ${
                   formData.tipo === "debito"
-                    ? "bg-green-600 border-green-500 text-gray-900 dark:text-gray-100"
-                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
+                    ? "bg-emerald-600 border-emerald-600 text-white"
+                    : "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
                 }`}
               >
                 <Wallet className="w-5 h-5" />
@@ -439,8 +444,8 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 onClick={() => onFormChange({ ...formData, tipo: "credito" })}
                 className={`p-3 rounded-lg border transition-colors flex items-center justify-center gap-2 ${
                   formData.tipo === "credito"
-                    ? "bg-purple-600 border-purple-500 text-gray-900 dark:text-gray-100"
-                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-700"
+                    ? "bg-emerald-600 border-emerald-600 text-white"
+                    : "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
                 }`}
               >
                 <CreditCard className="w-5 h-5" />
@@ -452,7 +457,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
           {/* Cartão de Crédito - aparece para TODOS os gastos no crédito */}
           {formData.tipo === "credito" && cartoes.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
                 Cartão de Crédito
               </label>
               <select
@@ -460,7 +465,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 onChange={(e) =>
                   onFormChange({ ...formData, cartao_id: e.target.value })
                 }
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
+                className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 outline-none"
               >
                 <option value="">Selecione um cartão</option>
                 {cartoes.map((c) => (
@@ -475,7 +480,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
           {/* Conta Bancária - aparece para débito */}
           {formData.tipo === "debito" && contas.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
                 Conta Bancária (opcional)
               </label>
               <select
@@ -483,7 +488,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                 onChange={(e) =>
                   onFormChange({ ...formData, conta_id: e.target.value })
                 }
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-teal-500 outline-none"
+                className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 outline-none"
               >
                 <option value="">Selecione uma conta (opcional)</option>
                 {contas.map((c) => (
@@ -492,7 +497,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Se selecionada, o valor será descontado do saldo.</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Se selecionada, o valor será descontado do saldo.</p>
             </div>
           )}
 
@@ -500,7 +505,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
           {formData.tipo === "credito" && formData.categoria !== "fixo" && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
                   Número de Parcelas
                 </label>
                 <select
@@ -520,7 +525,7 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                       num_parcelas: e.target.value,
                     });
                   }}
-                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full px-3 py-2.5 font-mono tabular-nums bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
                   {PARCELAS_OPTIONS.map((num) => (
                     <option key={num} value={num}>
@@ -546,15 +551,15 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
                       value={customParcelasInput}
                       onChange={handleCustomParcelasChange}
                       onBlur={handleCustomParcelasBlur}
-                      className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none"
+                      className="w-full px-3 py-2.5 font-mono tabular-nums bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 outline-none"
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                       Informe entre 1x e {PARCELAS_MAX}x.
                     </p>
                   </div>
                 )}
                 {parseInt(formData.num_parcelas) > 1 && formData.valor && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
                     {formData.num_parcelas}x de{" "}
                     {formatCurrency(
                       parseCurrency(formData.valor) /
@@ -576,10 +581,10 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
           <button
             onClick={onSubmit}
             disabled={saving}
-            className={`w-full py-3 text-gray-900 dark:text-gray-100 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
+            className={`w-full py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
               saving
-                ? "bg-gray-200 dark:bg-gray-700 cursor-not-allowed"
-                : "bg-emerald-600 hover:bg-emerald-700"
+                ? "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 cursor-not-allowed"
+                : "bg-emerald-600 hover:bg-emerald-700 text-white"
             }`}
           >
             {saving ? (
