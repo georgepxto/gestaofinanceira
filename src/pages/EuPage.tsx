@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, User, FileText, Loader2, CheckCircle2 } from "lucide-react";
+import { Plus, FileText, Loader2, CheckCircle2 } from "lucide-react";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
@@ -7,6 +7,7 @@ import { TabMeuGasto } from "../components/Tabs";
 import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { supabase } from "../lib/supabase";
+import { formatMonthYear } from "../utils/calculations";
 import type { MetaGasto } from "../types";
 
 interface MeuGastoTutorialStep {
@@ -191,12 +192,12 @@ export const EuPage = () => {
     <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
       {/* Page Header */}
       <div className="flex items-center justify-between" data-tour="eu-header">
-        <div className="flex items-center gap-3">
-          <User className="w-7 h-7 text-emerald-600" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Meus Gastos</h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Despesas pessoais e gastos fixos</p>
-          </div>
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500">
+            Meus Gastos · {formatMonthYear(mesVisualizacao)}
+          </p>
+          <h1 className="font-display text-3xl font-bold text-zinc-900 dark:text-zinc-100">Meus Gastos</h1>
+          <p className="text-zinc-500 dark:text-zinc-400 text-sm">Despesas pessoais e gastos fixos</p>
         </div>
         <div className="flex items-center gap-2" data-tour="eu-actions">
           {features.exportar_pdf && (
@@ -204,7 +205,7 @@ export const EuPage = () => {
               onClick={handleExportPDF}
               disabled={exportingPDF || (meusGastosDoMes.length === 0 && gastosFixos.length === 0)}
               data-tour="eu-btn-pdf"
-              className="border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 px-3 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 px-3 py-2 rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Exportar PDF"
             >
               {exportingPDF ? (
@@ -219,7 +220,7 @@ export const EuPage = () => {
             <button
               onClick={handlePagarTodosCredito}
               data-tour="eu-btn-pagar-fatura"
-              className="bg-purple-100/80 text-purple-700 hover:bg-purple-200 dark:bg-purple-500/20 dark:text-purple-400 dark:hover:bg-purple-500/30 px-3 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500/20 px-3 py-2 rounded-lg flex items-center gap-2 transition-colors"
               title="Dar baixa em todas as despesas de crédito"
             >
               <CheckCircle2 className="w-5 h-5" />
@@ -229,7 +230,7 @@ export const EuPage = () => {
           <button
             onClick={() => setShowFormMeuGasto(true)}
             data-tour="eu-btn-novo"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-lg"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
           >
             <Plus className="w-5 h-5" />
             <span className="hidden sm:inline">Novo</span>
