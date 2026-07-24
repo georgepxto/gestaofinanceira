@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import {
   TrendingUp,
   TrendingDown,
@@ -68,15 +68,8 @@ interface DashboardData {
   metasGasto: (MetaGasto & { gastoAtual: number })[];
 }
 
-// Paleta única da marca: esmeralda (tons decrescentes) + zinc neutro
 const CORES_GRAFICO = [
-  "#059669", "#10B981", "#34D399", "#6EE7B7",
-  "#A7F3D0", "#D1FAE5", "#A1A1AA", "#D4D4D8"
-];
-
-// Tons para barras horizontais de categoria (ranking escuro → claro)
-const TONS_BARRA_CATEGORIA = [
-  "bg-emerald-600", "bg-emerald-500", "bg-emerald-400", "bg-emerald-300",
+  "#059669", "#10B981", "#34D399", "#6EE7B7", "#A7F3D0", "#D1FAE5", "#A1A1AA", "#D4D4D8"
 ];
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -109,14 +102,6 @@ const DASHBOARD_TUTORIAL_STEPS: DashboardTutorialStep[] = [
     placement: "below",
   },
   {
-    target: "[data-tour='saldo-livre']",
-    alvo: "Saldo livre",
-    titulo: "Saldo livre",
-    descricao:
-      "É o que sobra depois dos gastos fixos. Ajuda a entender quanto você realmente pode usar agora.",
-    placement: "below",
-  },
-  {
     target: "[data-tour='card-saldo-total']",
     alvo: "Saldo Total",
     titulo: "Saldo total disponível",
@@ -129,15 +114,38 @@ const DASHBOARD_TUTORIAL_STEPS: DashboardTutorialStep[] = [
     alvo: "A Receber",
     titulo: "Valores a receber neste mês",
     descricao:
-      "Mostra quanto outras pessoas precisam te pagar neste mês. É a soma dos gastos compartilhados do período.",
+      "Este cartão mostra quanto outras pessoas precisam te pagar neste mês. É a soma dos gastos compartilhados do período.",
+    placement: "below",
+  },
+  {
+    target: "[data-tour='card-receitas-fixas']",
+    alvo: "Receitas Fixas",
+    titulo: "Receitas fixas mensais",
+    descricao:
+      "Aqui entram as entradas recorrentes, como salários ou rendas fixas. Elas ajudam a projetar seu saldo futuro.",
+    placement: "below",
+  },
+  {
+    target: "[data-tour='card-gastos-fixos']",
+    alvo: "Gastos Fixos",
+    titulo: "Gastos fixos do mês",
+    descricao:
+      "São despesas recorrentes que acontecem todo mês, como aluguel, internet ou assinatura.",
     placement: "below",
   },
   {
     target: "[data-tour='fluxo-mensal']",
-    alvo: "Fluxo do mês",
-    titulo: "Fluxo do mês",
+    alvo: "Fluxo mensal",
+    titulo: "Fluxo mensal",
     descricao:
-      "Compara receitas fixas e gastos fixos e mostra a sobra mensal. Se ficar positivo, sobra dinheiro no mês.",
+      "Mostra a diferença entre receitas e gastos fixos. Se ficar positivo, sobra dinheiro no mês.",
+  },
+  {
+    target: "[data-tour='saldo-livre']",
+    alvo: "Saldo livre",
+    titulo: "Saldo livre",
+    descricao:
+      "É o que sobra depois dos gastos fixos. Ajuda a entender quanto você realmente pode usar.",
   },
   {
     target: "[data-tour='grafico-mensal']",
@@ -165,7 +173,14 @@ const DASHBOARD_TUTORIAL_STEPS: DashboardTutorialStep[] = [
     alvo: "Tendência de gastos",
     titulo: "Tendência de 6 meses",
     descricao:
-      "Esse gráfico mostra como seus gastos pessoais e os compartilhados evoluíram ao longo dos últimos 6 meses.",
+      "Esse gráfico mostra como seus gastos evoluíram ao longo dos últimos 6 meses.",
+  },
+  {
+    target: "[data-tour='trend-6meses-compartilhados']",
+    alvo: "Compartilhados 6 meses",
+    titulo: "Gastos compartilhados",
+    descricao:
+      "Mostra a tendência dos valores a receber de gastos compartilhados nos últimos 6 meses.",
   },
   {
     target: "[data-tour='metas-section']",
@@ -245,10 +260,6 @@ export const DashboardPage = () => {
   );
   const tooltipLabelStyle = useMemo(() => theme === "dark" ? { color: "#f9fafb", fontWeight: 600 } : { color: "#111827", fontWeight: 600 }, [theme]);
   const tooltipItemStyle = useMemo(() => theme === "dark" ? { color: "#d1d5db" } : { color: "#111827" }, [theme]);
-  // Eixos e grid dos gráficos: zinc neutro, adaptado ao tema
-  const gridStroke = theme === "dark" ? "rgba(255,255,255,0.06)" : "#F4F4F5";
-  const axisStroke = "#A1A1AA";
-  const FONT_MONO = "'Geist Mono', ui-monospace, monospace";
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -629,14 +640,12 @@ export const DashboardPage = () => {
   return (
     <div className={`${PAGE_CONTAINER_RELATIVE_CLASS} pb-20`}>
       {/* Header com saudação + seletor de mês */}
-      <div className="flex items-end justify-between flex-wrap gap-4" data-tour="dashboard-header">
+      <div className="flex items-center justify-between flex-wrap gap-4" data-tour="dashboard-header">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-1">
             Painel · <span className="capitalize">{format(mesVisualizacao, "MMMM", { locale: ptBR })}</span>
           </p>
-          <h1 className="font-display font-bold text-3xl tracking-tight text-zinc-900 dark:text-zinc-100">
-            Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'}
-          </h1>
+          <h1 className="font-display font-bold tracking-tight text-3xl text-zinc-900 dark:text-zinc-100">Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'}</h1>
         </div>
 
         {/* Seletor de Mês */}
@@ -648,7 +657,7 @@ export const DashboardPage = () => {
           >
             <ChevronLeft className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
           </button>
-          <span className="px-4 py-1 text-zinc-900 dark:text-zinc-100 font-medium min-w-[140px] text-center capitalize">
+          <span className="px-4 py-1 font-mono text-sm text-zinc-900 dark:text-zinc-100 font-medium min-w-[140px] text-center capitalize">
             {format(mesVisualizacao, "MMMM yyyy", { locale: ptBR })}
           </span>
           <button
@@ -662,91 +671,84 @@ export const DashboardPage = () => {
 
       </div>
 
-      {/* Card herói — saldo livre + fluxo do mês */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm grid grid-cols-1 lg:grid-cols-2">
-        {/* Esquerda: saldo livre + mini-stats */}
-        <div className="p-6 lg:p-8" data-tour="saldo-livre">
-          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-3">
-            Saldo livre · Disponível agora
-          </p>
-          <p className={`font-display font-extrabold text-5xl sm:text-6xl tracking-tighter ${data.saldoLivre >= 0 ? 'text-zinc-900 dark:text-zinc-100' : 'text-red-500'}`}>
-            <span className="inline-block scale-x-90 origin-left whitespace-nowrap">{formatCurrency(data.saldoLivre)}</span>
-          </p>
+      {/* Card Herói: Saldo livre + Fluxo do mês */}
+      {(() => {
+        const sobraMensal = data.receitasFixasMensais - data.gastosFixosMensais;
+        const maxFluxo = Math.max(data.receitasFixasMensais, data.gastosFixosMensais, 1);
+        return (
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm grid grid-cols-1 lg:grid-cols-2" data-tour="card-saldo-total">
+            {/* Esquerda: Saldo livre */}
+            <div className="p-6" data-tour="saldo-livre">
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-400">Saldo livre · Disponível agora</p>
+              <p className={`font-display font-extrabold tracking-tighter text-5xl sm:text-6xl mt-2 inline-block scale-x-90 origin-left ${data.saldoLivre >= 0 ? 'text-zinc-900 dark:text-zinc-100' : 'text-red-600 dark:text-red-400'}`}>
+                {formatCurrency(data.saldoLivre)}
+              </p>
+              {/* Mini-stats */}
+              <div className="mt-6 flex flex-wrap">
+                <div className="pr-5" data-tour="card-saldo-total-mini">
+                  <p className="text-zinc-400 text-xs">Saldo total</p>
+                  <p className="font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">{formatCurrency(data.saldoTotal)}</p>
+                </div>
+                <div className="px-5 border-l border-zinc-100 dark:border-zinc-800" data-tour="card-a-receber">
+                  <p className="text-zinc-400 text-xs">A receber</p>
+                  <p className="font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
+                </div>
+                <div className="pl-5 border-l border-zinc-100 dark:border-zinc-800">
+                  <p className="text-zinc-400 text-xs">Meus gastos</p>
+                  <p className="font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">{formatCurrency(data.totalGastosMesAtual)}</p>
+                </div>
+              </div>
+            </div>
 
-          {/* Mini-stats */}
-          <div className="mt-8 grid grid-cols-3 divide-x divide-zinc-100 dark:divide-zinc-800 border-t border-zinc-100 dark:border-zinc-800 pt-4">
-            <div className="pr-4" data-tour="card-saldo-total">
-              <p className="text-zinc-400 text-xs mb-1">Saldo total</p>
-              <p className="font-mono tabular-nums font-semibold text-sm text-zinc-800 dark:text-zinc-200">{formatCurrency(data.saldoTotal)}</p>
-            </div>
-            <div className="px-4" data-tour="card-a-receber">
-              <p className="text-zinc-400 text-xs mb-1">A receber</p>
-              <p className="font-mono tabular-nums font-semibold text-sm text-zinc-800 dark:text-zinc-200">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
-            </div>
-            <div className="pl-4">
-              <p className="text-zinc-400 text-xs mb-1">Meus gastos</p>
-              <p className="font-mono tabular-nums font-semibold text-sm text-zinc-800 dark:text-zinc-200">{formatCurrency(data.totalGastosMesAtual)}</p>
+            {/* Direita: Fluxo do mês */}
+            <div className="p-6 border-t lg:border-t-0 lg:border-l border-zinc-100 dark:border-zinc-800" data-tour="fluxo-mensal">
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-4">Fluxo do mês</p>
+              <div className="space-y-3">
+                <div data-tour="card-receitas-fixas">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-zinc-500 dark:text-zinc-400">Receitas fixas</span>
+                    <span className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100">{formatCurrency(data.receitasFixasMensais)}</span>
+                  </div>
+                  <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(data.receitasFixasMensais / maxFluxo) * 100}%` }} />
+                  </div>
+                </div>
+                <div data-tour="card-gastos-fixos">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-zinc-500 dark:text-zinc-400">Gastos fixos</span>
+                    <span className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100">{formatCurrency(data.gastosFixosMensais)}</span>
+                  </div>
+                  <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-zinc-300 dark:bg-zinc-600 rounded-full" style={{ width: `${(data.gastosFixosMensais / maxFluxo) * 100}%` }} />
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-between items-center mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                <span className="text-zinc-500 dark:text-zinc-400 text-sm">Sobra mensal</span>
+                <span className={`font-mono tabular-nums font-semibold ${sobraMensal >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {sobraMensal >= 0 ? '+' : ''}{formatCurrency(sobraMensal)}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Direita: fluxo do mês */}
-        <div className="p-6 lg:p-8 border-t lg:border-t-0 lg:border-l border-zinc-100 dark:border-zinc-800 flex flex-col" data-tour="fluxo-mensal">
-          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-4">
-            Fluxo do mês
-          </p>
-          {(() => {
-            const maxFluxo = Math.max(data.receitasFixasMensais, data.gastosFixosMensais, 1);
-            const sobra = data.receitasFixasMensais - data.gastosFixosMensais;
-            return (
-              <>
-                <div className="space-y-4 flex-1">
-                  <div data-tour="card-receitas-fixas">
-                    <div className="flex justify-between items-baseline mb-1.5">
-                      <span className="text-sm text-zinc-600 dark:text-zinc-400">Receitas fixas</span>
-                      <span className="font-mono tabular-nums text-sm font-semibold text-zinc-800 dark:text-zinc-200">{formatCurrency(data.receitasFixasMensais)}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                      <div className="h-full rounded-full bg-emerald-500" style={{ width: `${(data.receitasFixasMensais / maxFluxo) * 100}%` }} />
-                    </div>
-                  </div>
-                  <div data-tour="card-gastos-fixos">
-                    <div className="flex justify-between items-baseline mb-1.5">
-                      <span className="text-sm text-zinc-600 dark:text-zinc-400">Gastos fixos</span>
-                      <span className="font-mono tabular-nums text-sm font-semibold text-zinc-800 dark:text-zinc-200">{formatCurrency(data.gastosFixosMensais)}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                      <div className="h-full rounded-full bg-zinc-300 dark:bg-zinc-600" style={{ width: `${(data.gastosFixosMensais / maxFluxo) * 100}%` }} />
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-baseline justify-between">
-                  <span className="text-sm text-zinc-500 dark:text-zinc-400">Sobra mensal</span>
-                  <span className={`font-mono tabular-nums font-semibold ${sobra >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-500'}`}>
-                    {sobra >= 0 ? '+' : ''}{formatCurrency(sobra)}
-                  </span>
-                </div>
-              </>
-            );
-          })()}
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Gastos por Mês + Últimos Gastos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Gráfico de barras - Gastos por mês */}
         <div className="md:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm min-w-0 overflow-hidden" data-tour="grafico-mensal">
           <div className="flex items-center justify-between mb-4">
-            <span className="font-display font-bold tracking-tight text-sm text-zinc-900 dark:text-zinc-100">Por mês</span>
+            <span className="font-display font-bold text-zinc-900 dark:text-zinc-100">Por mês</span>
             <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-400">Últimos 6 meses</span>
           </div>
           {data.tendenciaMensal.length > 0 ? (
             <div className="h-44">
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={data.tendenciaMensal}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
-                  <XAxis dataKey="mes" stroke={axisStroke} fontSize={11} fontFamily={FONT_MONO} tickLine={false} axisLine={false} />
-                  <YAxis stroke={axisStroke} fontSize={10} fontFamily={FONT_MONO} tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F4F4F5" vertical={false} />
+                  <XAxis dataKey="mes" stroke="#A1A1AA" fontSize={11} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
+                  <YAxis stroke="#A1A1AA" fontSize={10} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
                   <Tooltip
                     contentStyle={tooltipStyle}
                     labelStyle={tooltipLabelStyle}
@@ -754,10 +756,7 @@ export const DashboardPage = () => {
                   />
                   <Bar dataKey="meusGastos" radius={[6, 6, 0, 0]}>
                     {data.tendenciaMensal.map((_, index) => (
-                      <Cell
-                        key={`cell-mes-${index}`}
-                        fill={index === data.tendenciaMensal.length - 1 ? "#047857" : "#059669"}
-                      />
+                      <Cell key={`cell-mes-${index}`} fill={index === data.tendenciaMensal.length - 1 ? "#047857" : "#059669"} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -772,34 +771,28 @@ export const DashboardPage = () => {
           )}
         </div>
 
-        {/* Últimos lançamentos (pessoais) */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col" data-tour="ultimos-gastos">
-          <span className="font-display font-bold tracking-tight text-sm text-zinc-900 dark:text-zinc-100 mb-4 block">Últimos lançamentos</span>
+        {/* Últimos gastos (pessoais) */}
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="ultimos-gastos">
+          <span className="font-display font-bold text-zinc-900 dark:text-zinc-100 mb-4 block">Últimos lançamentos</span>
           {data.top5MeusGastos.length > 0 ? (
-            <>
-              <div className="space-y-0 flex-1">
-                {data.top5MeusGastos.slice(0, 5).map((gasto, i) => (
-                  <div key={i} className="flex items-center justify-between py-2.5 border-b border-zinc-100 dark:border-zinc-800 last:border-0">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-600 flex-shrink-0" aria-hidden="true" />
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-zinc-800 dark:text-zinc-100 truncate">{gasto.descricao}</p>
-                        <p className="font-mono text-[11px] text-zinc-400 capitalize">{gasto.categoria}</p>
-                      </div>
+            <div className="space-y-0">
+              {data.top5MeusGastos.slice(0, 5).map((gasto, i) => (
+                <div key={i} className="flex items-center justify-between py-2.5 border-b border-zinc-100 dark:border-zinc-800 last:border-0">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                      gasto.categoria.toLowerCase().includes('fixo') ? 'bg-zinc-500' : 'bg-zinc-300'
+                    }`} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{gasto.descricao}</p>
+                      <p className="font-mono text-[11px] text-zinc-400 capitalize">{gasto.categoria}</p>
                     </div>
-                    <span className="font-mono tabular-nums text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex-shrink-0 ml-2">
-                      −{formatCurrency(gasto.valor)}
-                    </span>
                   </div>
-                ))}
-              </div>
-              <Link
-                to="/eu"
-                className="mt-3 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
-              >
-                Ver todos os gastos →
-              </Link>
-            </>
+                  <span className="font-mono tabular-nums text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex-shrink-0 ml-2">
+                    −{formatCurrency(gasto.valor)}
+                  </span>
+                </div>
+              ))}
+            </div>
           ) : (
             <PageEmptyState
               compact
@@ -811,7 +804,7 @@ export const DashboardPage = () => {
       </div>
 
       {/* Tendência de Gastos */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="trend-comparison">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="trend-comparison">
         <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
           <TrendingDown className="w-5 h-5 text-zinc-400" />
           Tendência de Gastos (vs mês anterior)
@@ -860,25 +853,23 @@ export const DashboardPage = () => {
           </div>
         </div>
       </div>
-      {/* Tendência · 6 meses (unificado: meus gastos + compartilhados) */}
+      {/* Tendência - 6 meses (unificado) */}
       {data.tendenciaMensal.length > 0 && (
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm min-w-0 overflow-hidden" data-tour="trend-6meses-meus">
-          <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
-            <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100">
-              Tendência · 6 meses
-            </h2>
-            <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-600" aria-hidden="true" />
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm min-w-0 overflow-hidden">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100">Tendência · 6 meses</h2>
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400" data-tour="trend-6meses-meus">
+                <span className="w-3 h-0.5 rounded-full bg-emerald-600" />
                 Meus gastos
               </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-500" aria-hidden="true" />
+              <span className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400" data-tour="trend-6meses-compartilhados">
+                <span className="w-3 border-t-2 border-dashed border-zinc-400" />
                 Compartilhados
               </span>
             </div>
           </div>
-          <div className="h-56">
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={data.tendenciaMensal}>
                 <defs>
@@ -887,120 +878,77 @@ export const DashboardPage = () => {
                     <stop offset="95%" stopColor="#059669" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-                <XAxis dataKey="mes" stroke={axisStroke} fontSize={11} fontFamily={FONT_MONO} />
-                <YAxis stroke={axisStroke} fontSize={10} fontFamily={FONT_MONO} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#F4F4F5" />
+                <XAxis dataKey="mes" stroke="#A1A1AA" fontSize={11} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
+                <YAxis stroke="#A1A1AA" fontSize={10} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
                 <Tooltip
                   contentStyle={tooltipStyle}
                   labelStyle={tooltipLabelStyle}
                   itemStyle={tooltipItemStyle}
-                  formatter={(value: unknown, name: unknown) => [
-                    formatCurrency(Number(value) || 0),
-                    name === 'meusGastos' ? 'Meus gastos' : 'Compartilhados',
-                  ]}
+                  formatter={(value: unknown, name: unknown) => [formatCurrency(Number(value) || 0), name === 'meusGastos' ? 'Meus gastos' : 'Compartilhados']}
                 />
-                <Area type="monotone" dataKey="compartilhados" stroke="#D4D4D8" strokeDasharray="5 4" fillOpacity={0} strokeWidth={2} dot={false} />
                 <Area type="monotone" dataKey="meusGastos" stroke="#059669" fillOpacity={1} fill="url(#colorMeus)" strokeWidth={2} dot={{ r: 3, fill: '#059669' }} />
+                <Area type="monotone" dataKey="compartilhados" stroke="#D4D4D8" strokeDasharray="5 4" fill="none" strokeWidth={2} dot={{ r: 3, fill: '#D4D4D8' }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
       )}
 
-      {/* Onde o dinheiro foi + Metas do mês */}
-      {(data.gastosPorCategoria.length > 0 || data.metasGasto.length > 0) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-          {/* Onde o dinheiro foi (categorias) */}
-          {data.gastosPorCategoria.length > 0 && (() => {
-            const totalCategorias = data.gastosPorCategoria.reduce((acc, c) => acc + c.valor, 0);
-            const maxCategoria = data.gastosPorCategoria[0]?.valor || 1;
-            return (
-              <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
-                  <TrendingDown className="w-5 h-5 text-zinc-400" />
-                  Onde o dinheiro foi
-                </h2>
-                <div className="space-y-3.5">
-                  {data.gastosPorCategoria.map((cat, index) => {
-                    const pct = totalCategorias > 0 ? (cat.valor / totalCategorias) * 100 : 0;
-                    const tom = TONS_BARRA_CATEGORIA[index] || "bg-zinc-300 dark:bg-zinc-600";
-                    return (
-                      <div key={cat.categoria}>
-                        <div className="flex justify-between items-baseline mb-1">
-                          <span className="text-sm text-zinc-700 dark:text-zinc-300 capitalize truncate">{cat.categoria}</span>
-                          <span className="font-mono tabular-nums text-xs text-zinc-500 dark:text-zinc-400 flex-shrink-0 ml-2">
-                            {formatCurrency(cat.valor)} · {pct.toFixed(0)}%
-                          </span>
-                        </div>
-                        <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${tom} transition-all duration-700`}
-                            style={{ width: `${(cat.valor / maxCategoria) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
+      {/* Metas de Gasto por Categoria */}
+      {data.metasGasto.length > 0 && (
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="metas-section">
+          <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
+            <Target className="w-5 h-5 text-zinc-400" />
+            Metas de Gasto
+          </h2>
+          <div className="space-y-4">
+            {data.metasGasto.map((meta) => {
+              const porcentagem = meta.limite > 0 ? (meta.gastoAtual / meta.limite) * 100 : 0;
+              const estourou = porcentagem > 100;
+              const quaseEstourando = porcentagem >= 80 && porcentagem <= 100;
 
-          {/* Metas de Gasto por Categoria */}
-          {data.metasGasto.length > 0 && (
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="metas-section">
-              <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
-                <Target className="w-5 h-5 text-zinc-400" />
-                Metas do mês
-              </h2>
-              <div className="space-y-4">
-                {data.metasGasto.map((meta) => {
-                  const porcentagem = meta.limite > 0 ? (meta.gastoAtual / meta.limite) * 100 : 0;
-                  const estourou = porcentagem > 100;
-                  const quaseEstourando = porcentagem >= 80 && porcentagem <= 100;
-
-                  return (
-                    <div key={meta.id} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 capitalize">{meta.categoria}</span>
-                        <div className="flex items-center gap-2">
-                          <span className={`font-mono tabular-nums text-sm font-bold ${estourou ? 'text-red-600' : quaseEstourando ? 'text-amber-600' : 'text-emerald-600'}`}>
-                            {formatCurrency(meta.gastoAtual)}
-                          </span>
-                          <span className="font-mono tabular-nums text-zinc-400 dark:text-zinc-500 text-xs">/ {formatCurrency(meta.limite)}</span>
-                        </div>
-                      </div>
-                      <div className="relative h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-700 ${
-                            estourou ? 'bg-red-500' : quaseEstourando ? 'bg-amber-500' : 'bg-emerald-500'
-                          }`}
-                          style={{ width: `${Math.min(porcentagem, 100)}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between">
-                        <span className={`font-mono tabular-nums text-xs ${estourou ? 'text-red-600 font-semibold' : quaseEstourando ? 'text-amber-600' : 'text-zinc-500'}`}>
-                          {estourou ? `Limite excedido em ${(porcentagem - 100).toFixed(0)}%` :
-                           `${porcentagem.toFixed(0)}% usado`}
-                        </span>
-                        <span className={`font-mono tabular-nums text-xs ${estourou ? 'text-red-600' : 'text-zinc-500 dark:text-zinc-400'}`}>
-                          {estourou ? `+${formatCurrency(meta.gastoAtual - meta.limite)} acima` :
-                           `${formatCurrency(meta.limite - meta.gastoAtual)} restante`}
-                        </span>
-                      </div>
+              return (
+                <div key={meta.id} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 capitalize">{meta.categoria}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-mono tabular-nums text-sm font-bold ${estourou ? 'text-red-600' : quaseEstourando ? 'text-amber-600' : 'text-emerald-600'}`}>
+                        {formatCurrency(meta.gastoAtual)}
+                      </span>
+                      <span className="font-mono tabular-nums text-zinc-400 dark:text-zinc-500 text-xs">/ {formatCurrency(meta.limite)}</span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                  </div>
+                  <div className="relative h-3 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${
+                        estourou ? 'bg-red-500' : quaseEstourando ? 'bg-amber-500' : 'bg-emerald-500'
+                      }`}
+                      style={{ width: `${Math.min(porcentagem, 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between">
+                    <span className={`text-xs ${estourou ? 'text-red-600 font-semibold' : quaseEstourando ? 'text-amber-600' : 'text-zinc-500'}`}>
+                      {estourou ? `Limite excedido em ${(porcentagem - 100).toFixed(0)}%` :
+                       quaseEstourando ? `${porcentagem.toFixed(0)}% usado` :
+                       `${porcentagem.toFixed(0)}% usado`}
+                    </span>
+                    <span className={`font-mono tabular-nums text-xs ${estourou ? 'text-red-600' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                      {estourou ? `+${formatCurrency(meta.gastoAtual - meta.limite)} acima` :
+                       `${formatCurrency(meta.limite - meta.gastoAtual)} restante`}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
       {/* Novas Métricas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Taxa de Quitação */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="taxa-quitacao">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="taxa-quitacao">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className="w-5 h-5 text-zinc-400" />
             <span className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">Taxa de Quitação</span>
@@ -1018,7 +966,7 @@ export const DashboardPage = () => {
         </div>
 
         {/* Média por Pessoa */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="media-por-pessoa">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="media-por-pessoa">
           <div className="flex items-center gap-2 mb-2">
             <Users className="w-5 h-5 text-zinc-400" />
             <span className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">Média por Pessoa</span>
@@ -1030,18 +978,18 @@ export const DashboardPage = () => {
         </div>
 
         {/* Economias do Mês */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="economias-mes">
+        <div className={`bg-white dark:bg-zinc-900 rounded-2xl p-4 border shadow-sm ${data.economiasMes >= 0 ? 'border-emerald-200 dark:border-emerald-900/40' : 'border-red-200 dark:border-red-900/40'}`} data-tour="economias-mes">
           <div className="flex items-center gap-2 mb-2">
             {data.economiasMes >= 0 ? (
               <TrendingUp className="w-5 h-5 text-emerald-600" />
             ) : (
-              <TrendingDown className="w-5 h-5 text-red-500" />
+              <TrendingDown className="w-5 h-5 text-red-600" />
             )}
             <span className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">
               {data.economiasMes >= 0 ? 'Economizando' : 'Gastando mais'}
             </span>
           </div>
-          <p className={`font-mono tabular-nums text-3xl font-bold ${data.economiasMes >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(Math.abs(data.economiasMes))}</p>
+          <p className={`font-mono tabular-nums text-3xl font-bold ${data.economiasMes >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatCurrency(Math.abs(data.economiasMes))}</p>
           <p className="text-zinc-400 dark:text-zinc-500 text-xs mt-1">
             {data.economiasMes >= 0 ? 'Sobra mensal' : 'Déficit mensal'}
           </p>
@@ -1052,7 +1000,7 @@ export const DashboardPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Top 5 Gastos do Mês */}
         {data.top5Gastos.length > 0 && (
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="top5-gastos">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="top5-gastos">
             <h3 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
               <Receipt className="w-5 h-5 text-zinc-400" />
               Top 5 Gastos do Mês
@@ -1061,12 +1009,12 @@ export const DashboardPage = () => {
               {data.top5Gastos.map((gasto, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-100 dark:border-zinc-800">
                   <div className="flex items-center gap-3">
-                    <span className="font-mono w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-xs font-bold flex items-center justify-center">
+                    <span className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-bold flex items-center justify-center">
                       {index + 1}
                     </span>
                     <div>
                       <p className="text-zinc-900 dark:text-zinc-100 text-sm font-medium truncate max-w-[140px]">{gasto.descricao}</p>
-                      <p className="font-mono text-[11px] text-zinc-400 dark:text-zinc-500">{gasto.pessoa}</p>
+                      <p className="text-zinc-400 dark:text-zinc-500 text-xs">{gasto.pessoa}</p>
                     </div>
                   </div>
                   <p className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100 font-semibold">{formatCurrency(gasto.valor)}</p>
@@ -1078,21 +1026,21 @@ export const DashboardPage = () => {
 
         {/* Parcelas Próximas do Fim */}
         {data.parcelasProximasFim.length > 0 && (
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="parcelas-acabando">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="parcelas-acabando">
             <h3 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-amber-500" />
               Parcelas Acabando
             </h3>
             <div className="space-y-3">
               {data.parcelasProximasFim.map((parcela, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-800 rounded-lg">
+                <div key={index} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg">
                   <div>
                     <p className="text-zinc-900 dark:text-zinc-100 text-sm font-medium truncate max-w-[180px]">{parcela.descricao}</p>
-                    <p className="font-mono text-[11px] text-zinc-400 dark:text-zinc-500">{parcela.pessoa}</p>
+                    <p className="text-zinc-400 dark:text-zinc-500 text-xs">{parcela.pessoa}</p>
                   </div>
                   <div className="text-right">
                     <p className="font-mono tabular-nums text-amber-600 font-bold text-lg">{parcela.parcelasRestantes}</p>
-                    <p className="text-zinc-400 dark:text-zinc-500 text-xs">
+                    <p className="text-amber-500 text-xs">
                       {parcela.parcelasRestantes === 1 ? 'parcela' : 'parcelas'}
                     </p>
                   </div>
@@ -1104,7 +1052,7 @@ export const DashboardPage = () => {
       </div>
 
       {/* Gráfico de Projeção Anual */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="projecao-saldo">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="projecao-saldo">
         <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-zinc-400" />
           Projeção de Saldo (12 meses)
@@ -1112,12 +1060,14 @@ export const DashboardPage = () => {
         <div className="h-64">
           <ResponsiveContainer width="100%" height={256}>
             <LineChart data={data.projecaoAnual}>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-              <XAxis dataKey="mes" stroke={axisStroke} fontSize={12} fontFamily={FONT_MONO} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F4F4F5" />
+              <XAxis dataKey="mes" stroke="#A1A1AA" fontSize={12} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
               <YAxis
-                stroke={axisStroke}
+                stroke="#A1A1AA"
                 fontSize={12}
-                fontFamily={FONT_MONO}
+                fontFamily="Geist Mono, monospace"
+                tickLine={false}
+                axisLine={false}
                 tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
               />
               <Tooltip
@@ -1141,7 +1091,7 @@ export const DashboardPage = () => {
 
       {/* Gastos Fixos vs Variáveis */}
       {(data.gastosFixosMes > 0 || data.gastosVariaveisMes > 0) && (
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="fixos-variaveis">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="fixos-variaveis">
           <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
             <Receipt className="w-5 h-5 text-zinc-400" />
             Gastos Fixos vs Variáveis (Meus Gastos)
@@ -1151,7 +1101,7 @@ export const DashboardPage = () => {
             <div className="h-8 rounded-lg overflow-hidden flex">
               {data.gastosFixosMes > 0 && (
                 <div
-                  className="bg-emerald-500 flex items-center justify-center"
+                  className="bg-emerald-600 flex items-center justify-center"
                   style={{ width: `${(data.gastosFixosMes / (data.gastosFixosMes + data.gastosVariaveisMes)) * 100}%` }}
                 >
                   <span className="font-mono tabular-nums text-xs font-medium text-white">
@@ -1178,7 +1128,7 @@ export const DashboardPage = () => {
                 <p className="font-mono tabular-nums text-xl font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(data.gastosFixosMes)}</p>
                 <p className="text-zinc-400 dark:text-zinc-500 text-xs mt-1">Contas recorrentes</p>
               </div>
-              <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 border border-zinc-100 dark:border-zinc-800">
+              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4 border border-zinc-100 dark:border-zinc-800">
                 <p className="text-zinc-600 dark:text-zinc-300 text-sm mb-1 font-medium">Gastos Variáveis</p>
                 <p className="font-mono tabular-nums text-xl font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(data.gastosVariaveisMes)}</p>
                 <p className="text-zinc-400 dark:text-zinc-500 text-xs mt-1">Gastos pessoais</p>
@@ -1188,9 +1138,52 @@ export const DashboardPage = () => {
         </div>
       )}
 
+      {/* Gráfico de Gastos por Categoria */}
+      {data.gastosPorCategoria.length > 0 && (
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
+            <TrendingDown className="w-5 h-5 text-zinc-400" />
+            Gastos por Categoria (30 dias)
+          </h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height={256}>
+              <BarChart data={data.gastosPorCategoria} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#F4F4F5" />
+                <XAxis
+                  type="number"
+                  stroke="#A1A1AA"
+                  fontSize={12}
+                  fontFamily="Geist Mono, monospace"
+                  tickFormatter={(value) => `R$${value}`}
+                />
+                <YAxis
+                  dataKey="categoria"
+                  type="category"
+                  stroke="#A1A1AA"
+                  fontSize={11}
+                  fontFamily="Geist Mono, monospace"
+                  width={80}
+                />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
+                  formatter={(value) => [formatCurrency(value as number), 'Valor']}
+                />
+                <Bar dataKey="valor" radius={[0, 4, 4, 0]}>
+                  {data.gastosPorCategoria.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={CORES_GRAFICO[index % CORES_GRAFICO.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       {/* Gráfico de Empréstimos por Pessoa */}
       {data.emprestadosPorPessoa.length > 0 && (
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
           <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
             <Users className="w-5 h-5 text-zinc-400" />
             Empréstimos por Pessoa
@@ -1198,19 +1191,20 @@ export const DashboardPage = () => {
           <div className="h-64">
             <ResponsiveContainer width="100%" height={256}>
               <BarChart data={data.emprestadosPorPessoa} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#F4F4F5" />
                 <XAxis
                   type="number"
-                  stroke={axisStroke}
+                  stroke="#A1A1AA"
                   fontSize={12}
-                  fontFamily={FONT_MONO}
+                  fontFamily="Geist Mono, monospace"
                   tickFormatter={(value) => `R$${value}`}
                 />
                 <YAxis
                   dataKey="pessoa"
                   type="category"
-                  stroke={axisStroke}
+                  stroke="#A1A1AA"
                   fontSize={11}
+                  fontFamily="Geist Mono, monospace"
                   width={80}
                 />
                 <Tooltip
@@ -1221,7 +1215,7 @@ export const DashboardPage = () => {
                 />
                 <Bar dataKey="valor" radius={[0, 4, 4, 0]}>
                   {data.emprestadosPorPessoa.map((_, index) => (
-                    <Cell key={`cell-pessoa-${index}`} fill={CORES_GRAFICO[index % CORES_GRAFICO.length]} />
+                    <Cell key={`cell-pessoa-${index}`} fill={CORES_GRAFICO[(index + 2) % CORES_GRAFICO.length]} />
                   ))}
                 </Bar>
               </BarChart>
@@ -1232,7 +1226,7 @@ export const DashboardPage = () => {
 
       {/* Gráfico de Empréstimos por Categoria */}
       {data.emprestadosPorCategoria.length > 0 && (
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
           <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
             <Receipt className="w-5 h-5 text-zinc-400" />
             Empréstimos por Categoria
@@ -1240,19 +1234,20 @@ export const DashboardPage = () => {
           <div className="h-64">
             <ResponsiveContainer width="100%" height={256}>
               <BarChart data={data.emprestadosPorCategoria} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#F4F4F5" />
                 <XAxis
                   type="number"
-                  stroke={axisStroke}
+                  stroke="#A1A1AA"
                   fontSize={12}
-                  fontFamily={FONT_MONO}
+                  fontFamily="Geist Mono, monospace"
                   tickFormatter={(value) => `R$${value}`}
                 />
                 <YAxis
                   dataKey="categoria"
                   type="category"
-                  stroke={axisStroke}
+                  stroke="#A1A1AA"
                   fontSize={11}
+                  fontFamily="Geist Mono, monospace"
                   width={90}
                 />
                 <Tooltip
@@ -1263,7 +1258,7 @@ export const DashboardPage = () => {
                 />
                 <Bar dataKey="valor" radius={[0, 4, 4, 0]}>
                   {data.emprestadosPorCategoria.map((_, index) => (
-                    <Cell key={`cell-cat-emp-${index}`} fill={CORES_GRAFICO[index % CORES_GRAFICO.length]} />
+                    <Cell key={`cell-cat-emp-${index}`} fill={CORES_GRAFICO[(index + 4) % CORES_GRAFICO.length]} />
                   ))}
                 </Bar>
               </BarChart>
