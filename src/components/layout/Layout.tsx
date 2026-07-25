@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { NotificationBell } from "./NotificationBell";
@@ -47,7 +47,12 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
           </header>
 
           <div className="max-w-6xl mx-auto">
-            <Outlet />
+            {/* Fronteira de suspense DENTRO do layout: ao carregar o chunk de
+                uma tela, só o conteúdo suspende — a sidebar permanece montada
+                e o indicador consegue viajar em vez de teleportar. */}
+            <Suspense fallback={null}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>
