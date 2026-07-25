@@ -17,6 +17,7 @@ import {
   Clock,
   CalendarDays,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import { useTutorialHelpContext } from "./TutorialHelpContext";
 import { useAppContext } from "../../context";
@@ -28,7 +29,7 @@ interface SidebarProps {
   userEmail?: string;
 }
 
-type NavIcon = React.ComponentType<{ className?: string; strokeWidth?: number }>;
+type NavIcon = LucideIcon;
 
 interface NavChild {
   path: string;
