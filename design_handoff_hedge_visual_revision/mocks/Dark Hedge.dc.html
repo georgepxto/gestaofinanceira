@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0A0A0B; -webkit-font-smoothing: antialiased; }
+    a { color: #34D399; text-decoration: none; }
+    a:hover { color: #6EE7B7; }
+    ::-webkit-scrollbar { width: 9px; }
+    ::-webkit-scrollbar-track { background: #0A0A0B; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+  </style>
+</helmet>
+<div style="min-height:100vh;background:#0A0A0B;color:#F4F4F5;font-family:'Switzer',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;position:relative;overflow:hidden;">
+
+  <div aria-hidden="true" style="position:absolute;top:-180px;left:-120px;width:620px;height:620px;border-radius:999px;background:radial-gradient(circle,rgba(16,185,129,0.07),transparent 70%);pointer-events:none;"></div>
+  <div aria-hidden="true" style="position:absolute;bottom:-220px;right:-140px;width:680px;height:680px;border-radius:999px;background:radial-gradient(circle,rgba(16,185,129,0.05),transparent 70%);pointer-events:none;"></div>
+
+  <div style="position:relative;max-width:1080px;margin:0 auto;padding:56px 32px 96px;">
+
+    <header style="margin-bottom:44px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:22px;">
+        <img src="assets/favicon-dark.png" alt="Hedge" style="width:26px;height:26px;display:block;object-fit:contain;">
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em;color:#FAFAFA;">Hedge</span>
+      </div>
+      <p style="margin:0 0 10px;font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;color:#34D399;">Versão dark · sistema completo</p>
+      <h1 style="margin:0;font-family:'Syne',sans-serif;font-weight:800;font-size:42px;line-height:1.05;letter-spacing:-0.025em;color:#FAFAFA;max-width:800px;">O mesmo Hedge, agora no
+        <span style="position:relative;display:inline-block;">escuro<svg aria-hidden="true" viewBox="0 0 100 8" preserveAspectRatio="none" style="position:absolute;left:0;bottom:-6px;width:100%;height:9px;overflow:visible;"><path d="M0,6 C12,4 22,7 35,5 C48,3 58,6 72,4 C82,3 92,5 100,2" stroke="#34D399" stroke-width="1.8" stroke-linecap="round" fill="none"></path></svg></span>.
+      </h1>
+      <p style="margin:24px 0 0;font-size:16px;line-height:1.6;color:#A1A1AA;max-width:680px;">O app já tem dark mode com base <code style="font-family:'Geist Mono',monospace;font-size:14px;color:#D4D4D8;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:5px;">#0A0A0B</code> e vidro fosco — mas as fases 1–6 garantiram só o light. Aqui está o dark definido para <strong style="color:#FAFAFA;font-weight:600;">cada classe de componente</strong> que as telas usam, mais os ajustes que faltam.</p>
+    </header>
+
+    <!-- ░░ SUPERFÍCIES ░░ -->
+    <section style="margin-bottom:44px;">
+      <p style="margin:0 0 4px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:#71717A;">01 · Superfícies</p>
+      <h2 style="margin:0 0 8px;font-family:'Syne',sans-serif;font-weight:700;font-size:24px;letter-spacing:-0.015em;color:#FAFAFA;">Três níveis, não mais</h2>
+      <p style="margin:0 0 22px;font-size:15px;color:#A1A1AA;max-width:640px;">A profundidade vem do vidro e da borda clara — não de sombras pesadas nem de mais tons de cinza.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+        <div style="background:#0A0A0B;border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:20px;">
+          <p style="margin:0 0 10px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#71717A;">Base</p>
+          <p style="margin:0 0 6px;font-family:'Geist Mono',monospace;font-size:15px;color:#FAFAFA;">#0A0A0B</p>
+          <p style="margin:0;font-size:13px;line-height:1.5;color:#A1A1AA;">Fundo da página. Preto-azulado, nunca preto puro.</p>
+        </div>
+        <div style="background:rgba(24,24,27,0.55);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:20px;box-shadow:inset 0 1px 0 0 rgba(255,255,255,0.04),0 4px 24px -4px rgba(0,0,0,0.25);">
+          <p style="margin:0 0 10px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#34D399;">Cartão · vidro</p>
+          <p style="margin:0 0 6px;font-family:'Geist Mono',monospace;font-size:15px;color:#FAFAFA;">zinc-900 @ 55%</p>
+          <p style="margin:0;font-size:13px;line-height:1.5;color:#A1A1AA;">Blur 14px + brilho interno no topo. É este cartão.</p>
+        </div>
+        <div style="background:rgba(24,24,27,0.7);backdrop-filter:blur(20px) saturate(1.3);-webkit-backdrop-filter:blur(20px) saturate(1.3);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:20px;">
+          <p style="margin:0 0 10px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#71717A;">Menu · vidro denso</p>
+          <p style="margin:0 0 6px;font-family:'Geist Mono',monospace;font-size:15px;color:#FAFAFA;">zinc-900 @ 70%</p>
+          <p style="margin:0;font-size:13px;line-height:1.5;color:#A1A1AA;">Blur 20px. Só a barra lateral usa este.</p>
+        </div>
+      </div>
+      <div style="margin-top:14px;background:rgba(180,83,9,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:14px;padding:16px 18px;">
+        <p style="margin:0;font-size:13px;line-height:1.6;color:#FCD34D;"><strong style="color:#FDE68A;">Regra dura:</strong> o vidro é aplicado pela regra global que casa <code style="font-family:'Geist Mono',monospace;font-size:12px;background:rgba(0,0,0,0.25);padding:1px 5px;border-radius:4px;">dark:bg-zinc-900</code>. Todo cartão precisa usar exatamente essa classe — escrever <code style="font-family:'Geist Mono',monospace;font-size:12px;background:rgba(0,0,0,0.25);padding:1px 5px;border-radius:4px;">dark:bg-zinc-900/50</code> ou um hex sai silenciosamente do sistema e fica opaco no meio dos outros.</p>
+      </div>
+    </section>
+
+    <!-- ░░ TEXTO ░░ -->
+    <section style="margin-bottom:44px;">
+      <p style="margin:0 0 4px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:#71717A;">02 · Texto</p>
+      <h2 style="margin:0 0 22px;font-family:'Syne',sans-serif;font-weight:700;font-size:24px;letter-spacing:-0.015em;color:#FAFAFA;">Quatro pesos de leitura</h2>
+      <div style="background:rgba(24,24,27,0.55);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1px solid rgba(255,255,255,0.06);border-radius:18px;padding:26px 28px;box-shadow:inset 0 1px 0 0 rgba(255,255,255,0.04);display:flex;flex-direction:column;gap:16px;">
+        <div style="display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:baseline;"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#71717A;">zinc-50</span><span style="font-size:17px;font-weight:600;color:#FAFAFA;">Título e valor em destaque</span></div>
+        <div style="height:1px;background:rgba(255,255,255,0.05);"></div>
+        <div style="display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:baseline;"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#71717A;">zinc-100</span><span style="font-size:15px;color:#F4F4F5;">Corpo de texto e rótulos de campo</span></div>
+        <div style="height:1px;background:rgba(255,255,255,0.05);"></div>
+        <div style="display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:baseline;"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#71717A;">zinc-400</span><span style="font-size:15px;color:#A1A1AA;">Secundário: descrições, categorias, datas</span></div>
+        <div style="height:1px;background:rgba(255,255,255,0.05);"></div>
+        <div style="display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:baseline;"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#71717A;">zinc-500</span><span style="font-size:15px;color:#71717A;">Terciário: eyebrows, ícones decorativos, placeholder</span></div>
+      </div>
+      <p style="margin:14px 0 0;font-size:14px;line-height:1.6;color:#A1A1AA;">No light o secundário é <code style="font-family:'Geist Mono',monospace;font-size:13px;color:#D4D4D8;background:rgba(255,255,255,0.05);padding:1px 5px;border-radius:4px;">zinc-500</code>; no dark ele sobe para <code style="font-family:'Geist Mono',monospace;font-size:13px;color:#D4D4D8;background:rgba(255,255,255,0.05);padding:1px 5px;border-radius:4px;">zinc-400</code>. Nunca use <code style="font-family:'Geist Mono',monospace;font-size:13px;color:#D4D4D8;background:rgba(255,255,255,0.05);padding:1px 5px;border-radius:4px;">zinc-600</code> para texto no dark — desaparece sobre o vidro.</p>
+    </section>
+
+    <!-- ░░ ACENTO ░░ -->
+    <section style="margin-bottom:44px;">
+      <p style="margin:0 0 4px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:#71717A;">03 · Acento e semânticos</p>
+      <h2 style="margin:0 0 8px;font-family:'Syne',sans-serif;font-weight:700;font-size:24px;letter-spacing:-0.015em;color:#FAFAFA;">Preenchimento fica, texto clareia</h2>
+      <p style="margin:0 0 22px;font-size:15px;color:#A1A1AA;max-width:660px;">A regra que resolve 90% do dark: <strong style="color:#FAFAFA;">fundo colorido mantém o tom 600</strong> (com texto branco), mas <strong style="color:#FAFAFA;">texto e ícone coloridos sobem para o 400</strong>.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div style="background:rgba(24,24,27,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:22px;">
+          <p style="margin:0 0 16px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#71717A;">Preenchimento · tom 600</p>
+          <div style="display:flex;flex-wrap:wrap;gap:9px;">
+            <span style="background:#059669;color:#fff;font-size:13px;font-weight:600;padding:8px 15px;border-radius:10px;">Botão primário</span>
+            <span style="background:#059669;color:#fff;font-size:13px;font-weight:600;padding:8px 15px;border-radius:10px;">Chip ativo</span>
+            <span style="background:#D97706;color:#fff;font-size:13px;font-weight:600;padding:8px 15px;border-radius:10px;">Alerta</span>
+            <span style="background:#DC2626;color:#fff;font-size:13px;font-weight:600;padding:8px 15px;border-radius:10px;">Perigo</span>
+          </div>
+        </div>
+        <div style="background:rgba(24,24,27,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:22px;">
+          <p style="margin:0 0 16px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#71717A;">Texto e ícone · tom 400</p>
+          <div style="display:flex;flex-direction:column;gap:11px;">
+            <span style="font-family:'Geist Mono',monospace;font-size:15px;font-weight:600;color:#34D399;">+R$ 2.310,00 &nbsp;<span style="font-size:12px;color:#71717A;">emerald-400</span></span>
+            <span style="font-family:'Geist Mono',monospace;font-size:15px;font-weight:600;color:#FBBF24;">R$ 145,00 &nbsp;<span style="font-size:12px;color:#71717A;">amber-400</span></span>
+            <span style="font-family:'Geist Mono',monospace;font-size:15px;font-weight:600;color:#F87171;">−R$ 132,00 &nbsp;<span style="font-size:12px;color:#71717A;">red-400</span></span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px;background:rgba(180,83,9,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:14px;padding:16px 18px;">
+        <p style="margin:0;font-size:13px;line-height:1.6;color:#FCD34D;"><strong style="color:#FDE68A;">Hoje está inconsistente:</strong> o app mistura <code style="font-family:'Geist Mono',monospace;font-size:12px;background:rgba(0,0,0,0.25);padding:1px 5px;border-radius:4px;">dark:text-emerald-400</code>, <code style="font-family:'Geist Mono',monospace;font-size:12px;background:rgba(0,0,0,0.25);padding:1px 5px;border-radius:4px;">emerald-500</code> (PageHeader) e casos sem variante dark nenhuma — onde o <code style="font-family:'Geist Mono',monospace;font-size:12px;background:rgba(0,0,0,0.25);padding:1px 5px;border-radius:4px;">emerald-600</code> do light fica escuro demais sobre o vidro.</p>
+      </div>
+    </section>
+
+    <!-- ░░ COMPONENTES ░░ -->
+    <section style="margin-bottom:44px;">
+      <p style="margin:0 0 4px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:#71717A;">04 · Componentes das telas</p>
+      <h2 style="margin:0 0 22px;font-family:'Syne',sans-serif;font-weight:700;font-size:24px;letter-spacing:-0.015em;color:#FAFAFA;">Como cada peça se comporta</h2>
+
+      <div style="display:grid;grid-template-columns:264px 1fr;gap:16px;align-items:start;">
+
+        <div style="background:rgba(24,24,27,0.7);backdrop-filter:blur(20px) saturate(1.3);-webkit-backdrop-filter:blur(20px) saturate(1.3);border:1px solid rgba(255,255,255,0.06);border-radius:18px;padding:14px;">
+          <p style="margin:0 0 12px;padding:0 8px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#71717A;">Menu lateral</p>
+          <div style="display:flex;flex-direction:column;gap:3px;">
+            <div style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;font-size:14px;font-weight:600;color:#6EE7B7;background:rgba(16,185,129,0.12);box-shadow:inset 2px 0 0 #10B981;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg>
+              Dashboard
+            </div>
+            <div style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;font-size:14px;font-weight:500;color:#A1A1AA;" style-hover="background:rgba(255,255,255,0.06);color:#FAFAFA;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              Orçamento
+            </div>
+            <div style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;font-size:14px;font-weight:500;color:#A1A1AA;" style-hover="background:rgba(255,255,255,0.06);color:#FAFAFA;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg>
+              Na Rua
+            </div>
+          </div>
+          <p style="margin:14px 0 0;padding:0 8px;font-size:12px;line-height:1.55;color:#71717A;">Ativo: fundo <code style="font-family:'Geist Mono',monospace;font-size:11px;color:#A1A1AA;">emerald/12%</code> + barra <code style="font-family:'Geist Mono',monospace;font-size:11px;color:#A1A1AA;">emerald-500</code>, texto <code style="font-family:'Geist Mono',monospace;font-size:11px;color:#A1A1AA;">emerald-300</code>. Hover: branco a 6%.</p>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <div style="background:rgba(24,24,27,0.55);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1px solid rgba(255,255,255,0.06);border-radius:18px;padding:26px 28px;box-shadow:inset 0 1px 0 0 rgba(255,255,255,0.04),0 4px 24px -4px rgba(0,0,0,0.25);">
+            <p style="margin:0 0 10px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:#A1A1AA;">Saldo livre · disponível agora</p>
+            <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;">
+              <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:48px;letter-spacing:-0.04em;color:#FAFAFA;line-height:1;display:inline-block;transform:scaleX(0.9);transform-origin:left center;white-space:nowrap;">R$ 3.800,00</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;color:#6EE7B7;background:rgba(16,185,129,0.14);padding:5px 10px;border-radius:999px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"></path><path d="M7 7h10v10"></path></svg>+8,4%
+              </span>
+            </div>
+            <div style="display:flex;gap:28px;margin-top:22px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.06);">
+              <div><p style="margin:0 0 4px;font-size:12px;color:#71717A;">Saldo total</p><p style="margin:0;font-family:'Geist Mono',monospace;font-size:18px;font-weight:600;color:#F4F4F5;">R$ 5.690,00</p></div>
+              <div><p style="margin:0 0 4px;font-size:12px;color:#71717A;">A receber</p><p style="margin:0;font-family:'Geist Mono',monospace;font-size:18px;font-weight:600;color:#F4F4F5;">R$ 340,00</p></div>
+              <div><p style="margin:0 0 4px;font-size:12px;color:#71717A;">Meus gastos</p><p style="margin:0;font-family:'Geist Mono',monospace;font-size:18px;font-weight:600;color:#F4F4F5;">R$ 1.366,80</p></div>
+            </div>
+          </div>
+
+          <div style="background:rgba(24,24,27,0.55);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1px solid rgba(255,255,255,0.06);border-radius:18px;padding:22px 26px;box-shadow:inset 0 1px 0 0 rgba(255,255,255,0.04);display:grid;grid-template-columns:repeat(4,1fr);">
+            <div style="padding-right:22px;"><p style="margin:0 0 6px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#71717A;">Crédito</p><p style="margin:0;font-family:'Geist Mono',monospace;font-size:21px;font-weight:600;color:#FAFAFA;">R$ 892,40</p></div>
+            <div style="padding:0 22px;border-left:1px solid rgba(255,255,255,0.06);"><p style="margin:0 0 6px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#71717A;">Débito</p><p style="margin:0;font-family:'Geist Mono',monospace;font-size:21px;font-weight:600;color:#FAFAFA;">R$ 474,40</p></div>
+            <div style="padding:0 22px;border-left:1px solid rgba(255,255,255,0.06);"><p style="margin:0 0 6px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#34D399;">Pago</p><p style="margin:0;font-family:'Geist Mono',monospace;font-size:21px;font-weight:600;color:#34D399;">R$ 611,20</p></div>
+            <div style="padding:0 0 0 22px;border-left:1px solid rgba(255,255,255,0.06);"><p style="margin:0 0 6px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#71717A;">Fixos</p><p style="margin:0;font-family:'Geist Mono',monospace;font-size:21px;font-weight:600;color:#FAFAFA;">R$ 1.890,00</p></div>
+          </div>
+
+          <div style="background:rgba(24,24,27,0.55);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1px solid rgba(255,255,255,0.06);border-radius:18px;padding:22px;box-shadow:inset 0 1px 0 0 rgba(255,255,255,0.04);">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+              <span style="background:#059669;color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:10px;">Todos</span>
+              <span style="background:rgba(255,255,255,0.06);color:#A1A1AA;font-size:13px;font-weight:500;padding:8px 14px;border-radius:10px;" style-hover="background:rgba(255,255,255,0.1);color:#FAFAFA;">Pessoal</span>
+              <span style="background:rgba(255,255,255,0.06);color:#A1A1AA;font-size:13px;font-weight:500;padding:8px 14px;border-radius:10px;" style-hover="background:rgba(255,255,255,0.1);color:#FAFAFA;">Dividido</span>
+              <span style="background:rgba(255,255,255,0.06);color:#A1A1AA;font-size:13px;font-weight:500;padding:8px 14px;border-radius:10px;" style-hover="background:rgba(255,255,255,0.1);color:#FAFAFA;">Fixo</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px;">
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid rgba(255,255,255,0.05);border-radius:13px;background:rgba(255,255,255,0.025);">
+                <span style="width:8px;height:8px;border-radius:999px;background:#10B981;flex-shrink:0;"></span>
+                <div style="flex:1;min-width:0;"><p style="margin:0;font-size:14px;font-weight:500;color:#F4F4F5;">Mercado</p><p style="margin:2px 0 0;font-family:'Geist Mono',monospace;font-size:11px;color:#71717A;">Alimentação</p></div>
+                <span style="font-family:'Geist Mono',monospace;font-size:10px;color:#A1A1AA;background:rgba(255,255,255,0.06);padding:3px 8px;border-radius:6px;">Débito</span>
+                <span style="font-family:'Geist Mono',monospace;font-size:14px;font-weight:600;color:#FAFAFA;">−R$ 312,80</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid rgba(245,158,11,0.2);border-radius:13px;background:rgba(245,158,11,0.06);">
+                <span style="width:8px;height:8px;border-radius:999px;background:#F59E0B;flex-shrink:0;"></span>
+                <div style="flex:1;min-width:0;"><p style="margin:0;font-size:14px;font-weight:500;color:#F4F4F5;">Empréstimo p/ Lucas</p><p style="margin:2px 0 0;font-family:'Geist Mono',monospace;font-size:11px;color:#71717A;">Dívida · em aberto</p></div>
+                <span style="font-family:'Geist Mono',monospace;font-size:10px;color:#FCD34D;background:rgba(245,158,11,0.15);padding:3px 8px;border-radius:6px;">Dívida</span>
+                <span style="font-family:'Geist Mono',monospace;font-size:14px;font-weight:600;color:#FAFAFA;">−R$ 200,00</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid rgba(255,255,255,0.05);border-radius:13px;background:rgba(255,255,255,0.025);">
+                <span style="width:22px;height:22px;border-radius:7px;background:rgba(16,185,129,0.16);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+                <div style="flex:1;min-width:0;"><p style="margin:0;font-size:14px;font-weight:500;color:#A1A1AA;text-decoration:line-through;">Uber</p><p style="margin:2px 0 0;font-family:'Geist Mono',monospace;font-size:11px;color:#A1A1AA;">Transporte · pago</p></div>
+                <span style="font-family:'Geist Mono',monospace;font-size:14px;font-weight:600;color:#A1A1AA;">−R$ 47,50</span>
+              </div>
+            </div>
+            <p style="margin:16px 0 0;font-size:12px;line-height:1.55;color:#71717A;">Linhas de lista no dark usam <strong style="color:#A1A1AA;">branco a 2,5%</strong> — não um zinc sólido. Estado (dívida/pago) vem de tinta translúcida, nunca de borda lateral colorida. No item pago, <strong style="color:#A1A1AA;">um só recurso de atenuação</strong>: texto em <code style="font-family:'Geist Mono',monospace;font-size:11px;color:#A1A1AA;">zinc-400</code> + tachado — sem <code style="font-family:'Geist Mono',monospace;font-size:11px;color:#A1A1AA;">opacity</code> por cima, que empilharia e derrubaria o contraste.</p>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div style="background:rgba(24,24,27,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.06);border-radius:18px;padding:22px;">
+              <p style="margin:0 0 16px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#71717A;">Barras e metas</p>
+              <div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:7px;"><span style="font-size:13px;color:#D4D4D8;">Alimentação</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#A1A1AA;">R$ 380 / 500</span></div><div style="height:8px;border-radius:999px;background:rgba(255,255,255,0.07);overflow:hidden;"><div style="height:100%;width:76%;background:#10B981;border-radius:999px;"></div></div></div>
+              <div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:7px;"><span style="font-size:13px;color:#D4D4D8;">Delivery</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#FBBF24;">R$ 145 / 150</span></div><div style="height:8px;border-radius:999px;background:rgba(255,255,255,0.07);overflow:hidden;"><div style="height:100%;width:97%;background:#F59E0B;border-radius:999px;"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;margin-bottom:7px;"><span style="font-size:13px;color:#D4D4D8;">Assinaturas</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#F87171;">R$ 132 / 120</span></div><div style="height:8px;border-radius:999px;background:rgba(248,113,113,0.15);overflow:hidden;"><div style="height:100%;width:100%;background:#EF4444;border-radius:999px;"></div></div></div>
+              <p style="margin:16px 0 0;font-size:12px;line-height:1.55;color:#71717A;">Trilho = branco a 7%. Preenchimento mantém o tom 500 do light.</p>
+            </div>
+
+            <div style="background:rgba(24,24,27,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.06);border-radius:18px;padding:22px;">
+              <p style="margin:0 0 16px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#71717A;">Gráficos</p>
+              <div style="position:relative;height:120px;">
+                <svg width="100%" height="120" viewBox="0 0 300 120" preserveAspectRatio="none" style="display:block;">
+                  <defs><linearGradient id="hgDarkArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10B981" stop-opacity="0.28"></stop><stop offset="100%" stop-color="#10B981" stop-opacity="0"></stop></linearGradient></defs>
+                  <line x1="0" y1="30" x2="300" y2="30" stroke="rgba(255,255,255,0.06)" stroke-width="1"></line>
+                  <line x1="0" y1="60" x2="300" y2="60" stroke="rgba(255,255,255,0.06)" stroke-width="1"></line>
+                  <line x1="0" y1="90" x2="300" y2="90" stroke="rgba(255,255,255,0.06)" stroke-width="1"></line>
+                  <path d="M0,80 L60,58 120,100 180,32 240,50 300,16 L300,120 L0,120 Z" fill="url(#hgDarkArea)"></path>
+                  <polyline points="0,80 60,58 120,100 180,32 240,50 300,16" fill="none" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></polyline>
+                  <polyline points="0,100 60,92 120,105 180,80 240,88 300,74" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2" stroke-dasharray="4 5" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
+                </svg>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:'Geist Mono',monospace;font-size:11px;color:#71717A;"><span>Jan</span><span>Fev</span><span>Mar</span><span>Abr</span><span>Mai</span><span>Jun</span></div>
+              <p style="margin:14px 0 0;font-size:12px;line-height:1.55;color:#71717A;">Linha sobe para <code style="font-family:'Geist Mono',monospace;font-size:11px;color:#A1A1AA;">emerald-400</code> e a grade vira branco a 6% — o <code style="font-family:'Geist Mono',monospace;font-size:11px;color:#A1A1AA;">#F4F4F5</code> do light fica ofuscante aqui.</p>
+            </div>
+          </div>
+
+          <div style="background:rgba(24,24,27,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.06);border-radius:18px;padding:22px;">
+            <p style="margin:0 0 16px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#71717A;">Formulário e modal</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:end;">
+              <div>
+                <label style="display:block;font-size:13px;font-weight:500;color:#D4D4D8;margin-bottom:7px;">Descrição</label>
+                <div style="padding:11px 13px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;color:#71717A;font-size:14px;">Ex: mercado, aluguel…</div>
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;font-weight:500;color:#D4D4D8;margin-bottom:7px;">Valor <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#34D399;">· com foco</span></label>
+                <div style="padding:11px 13px;background:rgba(255,255,255,0.055);border:1px solid #10B981;box-shadow:0 0 0 3px rgba(16,185,129,0.18);border-radius:10px;color:#FAFAFA;font-family:'Geist Mono',monospace;font-size:14px;">R$ 312,80</div>
+              </div>
+            </div>
+            <p style="margin:16px 0 0;font-size:12px;line-height:1.55;color:#71717A;">Campos no dark são <strong style="color:#A1A1AA;">branco a 4%</strong> com borda a 9% — e ficam <strong style="color:#A1A1AA;">sem</strong> vidro (a regra global já desliga blur em input/select/textarea, senão o texto digitado tremeluz). Modal: overlay <code style="font-family:'Geist Mono',monospace;font-size:11px;color:#A1A1AA;">#000/65</code> com blur, corpo no vidro denso de 70%.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ░░ AJUSTES ░░ -->
+    <section>
+      <p style="margin:0 0 4px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:#71717A;">05 · O que falta corrigir</p>
+      <h2 style="margin:0 0 8px;font-family:'Syne',sans-serif;font-weight:700;font-size:24px;letter-spacing:-0.015em;color:#FAFAFA;">Cinco pendências do dark</h2>
+      <p style="margin:0 0 22px;font-size:15px;color:#A1A1AA;max-width:660px;">Achados lendo o código atual — as fases 1–6 cuidaram do light, estas são específicas do escuro.</p>
+      <div style="display:flex;flex-direction:column;gap:11px;">
+        <div style="display:flex;gap:16px;background:rgba(24,24,27,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.06);border-left:3px solid #EF4444;border-radius:14px;padding:18px 20px;">
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:#F87171;flex-shrink:0;">01</span>
+          <div><p style="margin:0 0 4px;font-weight:600;font-size:15px;color:#FAFAFA;">Hover do dark quebrado em ~12 lugares</p><p style="margin:0;font-size:13.5px;line-height:1.55;color:#A1A1AA;">O padrão <code style="font-family:'Geist Mono',monospace;font-size:12px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-700</code> tem um <code style="font-family:'Geist Mono',monospace;font-size:12px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">dark:bg-zinc-700</code> sem <code style="font-family:'Geist Mono',monospace;font-size:12px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">hover:</code> — o estado normal já nasce claro e o hover não muda nada.</p></div>
+        </div>
+        <div style="display:flex;gap:16px;background:rgba(24,24,27,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.06);border-left:3px solid #F59E0B;border-radius:14px;padding:18px 20px;">
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:#FBBF24;flex-shrink:0;">02</span>
+          <div><p style="margin:0 0 4px;font-weight:600;font-size:15px;color:#FAFAFA;">Regra global deixa todo <code style="font-family:'Geist Mono',monospace;font-size:13px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">dark:bg-zinc-800</code> a 50%</p><p style="margin:0;font-size:13.5px;line-height:1.55;color:#A1A1AA;">A última regra do <code style="font-family:'Geist Mono',monospace;font-size:12px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">index.css</code> foi feita para o painel de notificações, mas atinge <em>toda</em> a aplicação: chips e badges que deviam ser sólidos ficam translúcidos sobre o vidro. Restrinja o seletor ao painel.</p></div>
+        </div>
+        <div style="display:flex;gap:16px;background:rgba(24,24,27,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.06);border-left:3px solid #F59E0B;border-radius:14px;padding:18px 20px;">
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:#FBBF24;flex-shrink:0;">03</span>
+          <div><p style="margin:0 0 4px;font-weight:600;font-size:15px;color:#FAFAFA;">Acentos sem variante dark</p><p style="margin:0;font-size:13.5px;line-height:1.55;color:#A1A1AA;">Vários <code style="font-family:'Geist Mono',monospace;font-size:12px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">text-emerald-600</code> / <code style="font-family:'Geist Mono',monospace;font-size:12px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">text-amber-600</code> não têm par <code style="font-family:'Geist Mono',monospace;font-size:12px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">dark:</code> e ficam escuros sobre o vidro. Aplique a regra do item 03: texto colorido → tom 400.</p></div>
+        </div>
+        <div style="display:flex;gap:16px;background:rgba(24,24,27,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.06);border-left:3px solid #F59E0B;border-radius:14px;padding:18px 20px;">
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:#FBBF24;flex-shrink:0;">04</span>
+          <div><p style="margin:0 0 4px;font-weight:600;font-size:15px;color:#FAFAFA;">Gráficos com hex de tema claro</p><p style="margin:0;font-size:13.5px;line-height:1.55;color:#A1A1AA;">O Recharts recebe grade <code style="font-family:'Geist Mono',monospace;font-size:12px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">#F4F4F5</code> e eixos <code style="font-family:'Geist Mono',monospace;font-size:12px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">#A1A1AA</code> fixos — no escuro a grade grita mais que os dados. Derive do tema.</p></div>
+        </div>
+        <div style="display:flex;gap:16px;background:rgba(24,24,27,0.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.06);border-left:3px solid rgba(255,255,255,0.2);border-radius:14px;padding:18px 20px;">
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:#A1A1AA;flex-shrink:0;">05</span>
+          <div><p style="margin:0 0 4px;font-weight:600;font-size:15px;color:#FAFAFA;">Base neutralizada — trocar no <code style="font-family:'Geist Mono',monospace;font-size:13px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">index.css</code></p><p style="margin:0;font-size:13.5px;line-height:1.55;color:#A1A1AA;">O app ainda tem a base azulada <code style="font-family:'Geist Mono',monospace;font-size:12px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">#0B0F19</code>, que dissonava dos cartões zinc (neutro). Decisão tomada: <strong style="color:#FAFAFA;">neutralizar para <code style="font-family:'Geist Mono',monospace;font-size:12px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">#0A0A0B</code></strong> — o dark passa a ser um preto neutro coerente com o zinc, e o esmeralda fica sendo a única cor da tela. Trocar nas <strong style="color:#FAFAFA;">duas</strong> regras: <code style="font-family:'Geist Mono',monospace;font-size:12px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">.dark body</code> e o <code style="font-family:'Geist Mono',monospace;font-size:12px;color:#D4D4D8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:4px;">scrollbar-track</code> do dark.</p></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #FAFAFA; -webkit-font-smoothing: antialiased; }
+    a { color: #059669; text-decoration: none; }
+    a:hover { color: #047857; }
+    ::-webkit-scrollbar { width: 9px; }
+    ::-webkit-scrollbar-thumb { background: #D4D4D8; border-radius: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</helmet>
+<div style="min-height:100vh;background:#FAFAFA;color:#18181B;font-family:'Switzer',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:56px 32px 96px;">
+  <div style="max-width:1000px;margin:0 auto;">
+
+    <!-- ░░░ HEADER ░░░ -->
+    <header style="margin-bottom:40px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:22px;">
+        <div style="width:26px;height:26px;border-radius:7px;background:#059669;display:flex;align-items:center;justify-content:center;">
+          <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#fff;line-height:1;">H</span>
+        </div>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.01em;">Hedge</span>
+      </div>
+      <p style="margin:0 0 10px;font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;color:#059669;">Revisão visual · auditoria completa</p>
+      <h1 style="margin:0;font-family:'Syne',sans-serif;font-weight:800;font-size:44px;line-height:1.04;letter-spacing:-0.025em;max-width:760px;">
+        Levar a identidade do Dashboard para
+        <span style="position:relative;display:inline-block;">cada canto<svg aria-hidden="true" viewBox="0 0 100 8" preserveAspectRatio="none" style="position:absolute;left:0;bottom:-6px;width:100%;height:9px;overflow:visible;"><path d="M0,6 C12,4 22,7 35,5 C48,3 58,6 72,4 C82,3 92,5 100,2" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" fill="none"></path></svg></span>
+        do app.
+      </h1>
+      <p style="margin:22px 0 0;font-size:16px;line-height:1.6;color:#52525B;max-width:660px;">
+        O shell, a navegação e o Dashboard já herdaram a linguagem da landing/login. Esta auditoria mapeia o que falta — superfície por superfície — separa o que é <strong style="color:#18181B;font-weight:600;">estética</strong>, o que é <strong style="color:#18181B;font-weight:600;">"cara de IA"</strong> e o que é <strong style="color:#18181B;font-weight:600;">organização</strong>, e fecha com um roteiro na ordem que faz mais sentido atacar.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;">
+        <span style="display:inline-flex;align-items:center;gap:7px;font-family:'Geist Mono',monospace;font-size:12px;color:#52525B;background:#fff;border:1px solid #E4E4E7;padding:7px 13px;border-radius:999px;"><span style="width:7px;height:7px;border-radius:999px;background:#059669;"></span>Escopo: desktop · light</span>
+        <span style="display:inline-flex;align-items:center;gap:7px;font-family:'Geist Mono',monospace;font-size:12px;color:#52525B;background:#fff;border:1px solid #E4E4E7;padding:7px 13px;border-radius:999px;">Manter landing + login intactos</span>
+        <span style="display:inline-flex;align-items:center;gap:7px;font-family:'Geist Mono',monospace;font-size:12px;color:#52525B;background:#fff;border:1px solid #E4E4E7;padding:7px 13px;border-radius:999px;">Base: React · Tailwind</span>
+      </div>
+    </header>
+
+    <!-- ░░░ PLACAR ░░░ -->
+    <section style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:44px;">
+      <div style="background:#fff;border:1px solid #E4E4E7;border-radius:16px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,0.04);">
+        <p style="margin:0 0 8px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#A1A1AA;">Superfícies</p>
+        <p style="margin:0;font-family:'Geist Mono',monospace;font-size:30px;font-weight:600;color:#18181B;">28</p>
+      </div>
+      <div style="background:#fff;border:1px solid #E4E4E7;border-radius:16px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,0.04);">
+        <p style="margin:0 0 8px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#059669;">No padrão</p>
+        <p style="margin:0;font-family:'Geist Mono',monospace;font-size:30px;font-weight:600;color:#047857;">9</p>
+      </div>
+      <div style="background:#fff;border:1px solid #E4E4E7;border-radius:16px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,0.04);">
+        <p style="margin:0 0 8px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#B45309;">Parciais</p>
+        <p style="margin:0;font-family:'Geist Mono',monospace;font-size:30px;font-weight:600;color:#B45309;">4</p>
+      </div>
+      <div style="background:#fff;border:1px solid #E4E4E7;border-radius:16px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,0.04);">
+        <p style="margin:0 0 8px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#A1A1AA;">Pendentes</p>
+        <p style="margin:0;font-family:'Geist Mono',monospace;font-size:30px;font-weight:600;color:#18181B;">15</p>
+      </div>
+    </section>
+
+    <!-- ░░░ JÁ NO PADRÃO ░░░ -->
+    <section style="background:#ECFDF5;border:1px solid #D1FAE5;border-radius:20px;padding:28px 30px;margin-bottom:44px;">
+      <h2 style="margin:0 0 6px;font-family:'Syne',sans-serif;font-weight:700;font-size:19px;letter-spacing:-0.01em;color:#065F46;display:flex;align-items:center;gap:9px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+        O que você já acertou
+      </h2>
+      <p style="margin:0 0 16px;font-size:14px;color:#047857;">Não mexer — servem de referência para o resto.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:#065F46;background:#fff;border:1px solid #A7F3D0;padding:6px 11px;border-radius:8px;">Menu lateral</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:#065F46;background:#fff;border:1px solid #A7F3D0;padding:6px 11px;border-radius:8px;">Reorganização em 4 abas-mãe</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:#065F46;background:#fff;border:1px solid #A7F3D0;padding:6px 11px;border-radius:8px;">PageHeader + risco "Pista"</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:#065F46;background:#fff;border:1px solid #A7F3D0;padding:6px 11px;border-radius:8px;">SegmentedTabs</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:#065F46;background:#fff;border:1px solid #A7F3D0;padding:6px 11px;border-radius:8px;">Dashboard</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:#065F46;background:#fff;border:1px solid #A7F3D0;padding:6px 11px;border-radius:8px;">Lançamentos (Meus Gastos)</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:#065F46;background:#fff;border:1px solid #A7F3D0;padding:6px 11px;border-radius:8px;">Metas</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:#065F46;background:#fff;border:1px solid #A7F3D0;padding:6px 11px;border-radius:8px;">Contas Bancárias</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:#065F46;background:#fff;border:1px solid #A7F3D0;padding:6px 11px;border-radius:8px;">Devedores</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:#065F46;background:#fff;border:1px solid #A7F3D0;padding:6px 11px;border-radius:8px;">Modal Novo gasto pessoal</span>
+      </div>
+      <p style="margin:16px 0 0;font-size:13px;line-height:1.55;color:#047857;">A troca de ~11 itens soltos por <strong>Dashboard · Orçamento · Na Rua · Carteira</strong> com sub-abas foi a melhor decisão de organização do projeto: some com a sensação de "lista infinita gerada" e dá um mapa mental claro. O "Na Rua" ainda tem um toque de gíria — mantenha se o público entende; os rótulos das sub-abas já resolvem a clareza.</p>
+    </section>
+
+    <!-- ░░░ MATRIZ ░░░ -->
+    <section style="margin-bottom:44px;">
+      <h2 style="margin:0 0 4px;font-family:'Syne',sans-serif;font-weight:700;font-size:24px;letter-spacing:-0.015em;">Matriz por superfície</h2>
+      <p style="margin:0 0 22px;font-size:15px;color:#71717A;">Status atual e o que ainda destoa da identidade.</p>
+
+      <!-- grupo -->
+      <p style="margin:0 0 10px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:#A1A1AA;">Fundações compartilhadas</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:26px;">
+        <div style="display:grid;grid-template-columns:200px 108px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:14px 18px;">
+          <span style="font-weight:600;font-size:14px;">Tokens · index.css</span>
+          <span style="justify-self:start;display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#B45309;background:#FEF3C7;padding:4px 9px;border-radius:999px;">Parcial</span>
+          <span style="font-size:13px;color:#52525B;line-height:1.5;">Fundo do body ainda <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">gray-100</code>; centenas de <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">gray-*</code> espalhados. Migrar tudo para <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">zinc-*</code>.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:200px 108px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:14px 18px;">
+          <span style="font-weight:600;font-size:14px;">Skeleton · Toaster · AsyncState</span>
+          <span style="justify-self:start;display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#B45309;background:#FEF3C7;padding:4px 9px;border-radius:999px;">Parcial</span>
+          <span style="font-size:13px;color:#52525B;line-height:1.5;">Primitivos usados em todas as telas, ainda em cinza. Corrigir uma vez → propaga para tudo.</span>
+        </div>
+      </div>
+
+      <p style="margin:0 0 10px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:#A1A1AA;">Na Rua · Carteira</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:26px;">
+        <div style="display:grid;grid-template-columns:200px 108px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:14px 18px;">
+          <span style="font-weight:600;font-size:14px;">Por mês · TabGastos</span>
+          <span style="justify-self:start;display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#71717A;background:#F4F4F5;padding:4px 9px;border-radius:999px;">Pendente</span>
+          <span style="font-size:13px;color:#52525B;line-height:1.5;">Total em azul, badges azul/roxo/teal, foco azul, cinza. Alinhar ao mock (esmeralda + mono + dot neutro).</span>
+        </div>
+        <div style="display:grid;grid-template-columns:200px 108px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:14px 18px;">
+          <span style="font-weight:600;font-size:14px;">Em aberto · TabDividas</span>
+          <span style="justify-self:start;display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#71717A;background:#F4F4F5;padding:4px 9px;border-radius:999px;">Pendente</span>
+          <span style="font-size:13px;color:#52525B;line-height:1.5;">Laranja em todo "pendente" + link azul + cinza. Mapear laranja→âmbar, quitado→esmeralda.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:200px 108px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:14px 18px;">
+          <span style="font-weight:600;font-size:14px;">Cartões de Crédito</span>
+          <span style="justify-self:start;display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#B45309;background:#FEF3C7;padding:4px 9px;border-radius:999px;">Parcial</span>
+          <span style="font-size:13px;color:#52525B;line-height:1.5;">Corpo já em zinc/esmeralda, mas <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">CORES_CARTAO</code> é arco-íris e o fallback padrão é azul <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">#3B82F6</code>.</span>
+        </div>
+      </div>
+
+      <p style="margin:0 0 10px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:#A1A1AA;">Modais</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:26px;">
+        <div style="display:grid;grid-template-columns:200px 108px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:14px 18px;">
+          <span style="font-weight:600;font-size:14px;">Confirmar (ConfirmModal)</span>
+          <span style="justify-self:start;display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#71717A;background:#F4F4F5;padding:4px 9px;border-radius:999px;">Pendente</span>
+          <span style="font-size:13px;color:#52525B;line-height:1.5;">Mapa de cores azul/índigo/roxo. É compartilhado por vários fluxos — reduzir a esmeralda + vermelho (perigo).</span>
+        </div>
+        <div style="display:grid;grid-template-columns:200px 108px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:14px 18px;">
+          <span style="font-weight:600;font-size:14px;">Novo empréstimo · Nova dívida</span>
+          <span style="justify-self:start;display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#71717A;background:#F4F4F5;padding:4px 9px;border-radius:999px;">Pendente</span>
+          <span style="font-size:13px;color:#52525B;line-height:1.5;">Segmentados arco-íris + foco azul/teal/laranja + <strong style="color:#B91C1C;">bug de contraste</strong> (texto escuro sobre chip colorido). Aplicar o padrão do modal já pronto.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:200px 108px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:14px 18px;">
+          <span style="font-weight:600;font-size:14px;">Pagamento · Parcial · Fechar mês · Observação · Feedback · Suspensão</span>
+          <span style="justify-self:start;display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#71717A;background:#F4F4F5;padding:4px 9px;border-radius:999px;">Pendente</span>
+          <span style="font-size:13px;color:#52525B;line-height:1.5;">Cinza + verde/laranja/amarelo cru. Passe sistemático: gray→zinc, foco esmeralda, valores em mono.</span>
+        </div>
+      </div>
+
+      <p style="margin:0 0 10px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:#A1A1AA;">Sistêmicos & utilitárias</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:grid;grid-template-columns:200px 108px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:14px 18px;">
+          <span style="font-weight:600;font-size:14px;">Sino de notificações</span>
+          <span style="justify-self:start;display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#71717A;background:#F4F4F5;padding:4px 9px;border-radius:999px;">Pendente</span>
+          <span style="font-size:13px;color:#52525B;line-height:1.5;">Ícones azuis + cinza. Fica no header de toda tela — visível o tempo todo.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:200px 108px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:14px 18px;">
+          <span style="font-weight:600;font-size:14px;">Tour guiado</span>
+          <span style="justify-self:start;display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#71717A;background:#F4F4F5;padding:4px 9px;border-radius:999px;">Pendente</span>
+          <span style="font-size:13px;color:#52525B;line-height:1.5;">Tooltip todo azul. Primeira coisa que o usuário novo vê — precisa ser esmeralda.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:200px 108px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:14px 18px;">
+          <span style="font-weight:600;font-size:14px;">Reset de senha</span>
+          <span style="justify-self:start;display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#B91C1C;background:#FEE2E2;padding:4px 9px;border-radius:999px;">Bug</span>
+          <span style="font-size:13px;color:#52525B;line-height:1.5;">Botão com <strong style="color:#B91C1C;">degradê azul→verde</strong> (trope de IA) — é irmão do login, deve ser esmeralda sólido.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:200px 108px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:14px 18px;">
+          <span style="font-weight:600;font-size:14px;">Configurações</span>
+          <span style="justify-self:start;display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#71717A;background:#F4F4F5;padding:4px 9px;border-radius:999px;">Pendente</span>
+          <span style="font-size:13px;color:#52525B;line-height:1.5;">Toggle e botão azuis, cinza, sem PageHeader/Pista. Não usa o cabeçalho padrão das outras abas.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:200px 108px 1fr;gap:16px;align-items:center;background:#fff;border:1px solid #E4E4E7;border-radius:12px;padding:14px 18px;">
+          <span style="font-weight:600;font-size:14px;">Painel Admin</span>
+          <span style="justify-self:start;display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#71717A;background:#F4F4F5;padding:4px 9px;border-radius:999px;">Pendente</span>
+          <span style="font-size:13px;color:#52525B;line-height:1.5;">Índigo/azul + <strong>emoji como ícone</strong> (🔵 ⚪ 🟢) + cinza. Interno, mas é o mais "AI slop" hoje.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ░░░ CARA DE IA ░░░ -->
+    <section style="margin-bottom:44px;">
+      <h2 style="margin:0 0 4px;font-family:'Syne',sans-serif;font-weight:700;font-size:24px;letter-spacing:-0.015em;">As 6 marcas de "cara de IA"</h2>
+      <p style="margin:0 0 22px;font-size:15px;color:#71717A;">Padrões que denunciam geração automática — some com eles e o app já ganha profissionalismo.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div style="background:#fff;border:1px solid #E4E4E7;border-radius:14px;padding:20px;">
+          <p style="margin:0 0 6px;font-family:'Geist Mono',monospace;font-size:11px;color:#059669;font-weight:600;">01</p>
+          <p style="margin:0 0 5px;font-weight:600;font-size:15px;">Cor diferente por tela</p>
+          <p style="margin:0;font-size:13px;line-height:1.5;color:#71717A;">Azul aqui, roxo ali, laranja acolá. Um só acento (esmeralda) + cor só quando significa estado.</p>
+        </div>
+        <div style="background:#fff;border:1px solid #E4E4E7;border-radius:14px;padding:20px;">
+          <p style="margin:0 0 6px;font-family:'Geist Mono',monospace;font-size:11px;color:#059669;font-weight:600;">02</p>
+          <p style="margin:0 0 5px;font-weight:600;font-size:15px;">Emoji como ícone</p>
+          <p style="margin:0;font-size:13px;line-height:1.5;color:#71717A;">🔵 ⚪ 🟢 ⏱ 📅 ✓ no Admin e nos Cartões. Trocar por Lucide monocromático ou dots coloridos.</p>
+        </div>
+        <div style="background:#fff;border:1px solid #E4E4E7;border-radius:14px;padding:20px;">
+          <p style="margin:0 0 6px;font-family:'Geist Mono',monospace;font-size:11px;color:#059669;font-weight:600;">03</p>
+          <p style="margin:0 0 5px;font-weight:600;font-size:15px;">Degradê azul→verde</p>
+          <p style="margin:0;font-size:13px;line-height:1.5;color:#71717A;">O botão do reset de senha. Degradê chamativo em botão é assinatura de template gerado.</p>
+        </div>
+        <div style="background:#fff;border:1px solid #E4E4E7;border-radius:14px;padding:20px;">
+          <p style="margin:0 0 6px;font-family:'Geist Mono',monospace;font-size:11px;color:#059669;font-weight:600;">04</p>
+          <p style="margin:0 0 5px;font-weight:600;font-size:15px;">Cinza frio genérico</p>
+          <p style="margin:0;font-size:13px;line-height:1.5;color:#71717A;"><code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">gray-*</code> do Tailwind em vez do <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">zinc</code> da marca. Sutil, mas onipresente.</p>
+        </div>
+        <div style="background:#fff;border:1px solid #E4E4E7;border-radius:14px;padding:20px;">
+          <p style="margin:0 0 6px;font-family:'Geist Mono',monospace;font-size:11px;color:#059669;font-weight:600;">05</p>
+          <p style="margin:0 0 5px;font-weight:600;font-size:15px;">Paredes de cards iguais</p>
+          <p style="margin:0;font-size:13px;line-height:1.5;color:#71717A;">Todo bloco com o mesmo peso. O Dashboard já resolveu com herói + faixa de resumo — repetir o gesto.</p>
+        </div>
+        <div style="background:#fff;border:1px solid #E4E4E7;border-radius:14px;padding:20px;">
+          <p style="margin:0 0 6px;font-family:'Geist Mono',monospace;font-size:11px;color:#059669;font-weight:600;">06</p>
+          <p style="margin:0 0 5px;font-weight:600;font-size:15px;">Peças que não conversam</p>
+          <p style="margin:0;font-size:13px;line-height:1.5;color:#71717A;">Raios (xl vs 2xl), sombras e <strong>cinco seletores de mês</strong> diferentes. Falta um sistema de componentes.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ░░░ LÓGICA / ORGANIZAÇÃO ░░░ -->
+    <section style="margin-bottom:44px;">
+      <h2 style="margin:0 0 4px;font-family:'Syne',sans-serif;font-weight:700;font-size:24px;letter-spacing:-0.015em;">Mudanças de organização</h2>
+      <p style="margin:0 0 22px;font-size:15px;color:#71717A;">Além da cor — como o app se estrutura. Isto é o que separa "bonito" de "profissional".</p>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;gap:16px;background:#fff;border:1px solid #E4E4E7;border-radius:14px;padding:20px 22px;">
+          <div style="flex-shrink:0;width:36px;height:36px;border-radius:10px;background:#ECFDF5;display:flex;align-items:center;justify-content:center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg></div>
+          <div>
+            <p style="margin:0 0 4px;font-weight:600;font-size:15px;">Um seletor de mês, não cinco</p>
+            <p style="margin:0;font-size:14px;line-height:1.55;color:#71717A;">Contas, Devedores, Por mês, Em aberto e Cartões cada um tem o seu — visuais e posições diferentes. O mês já é global (<code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">mesVisualizacao</code>). Suba um único seletor para a barra da aba-mãe: troca de sub-aba mantém o mês, e há um só controle no app.</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;background:#fff;border:1px solid #E4E4E7;border-radius:14px;padding:20px 22px;">
+          <div style="flex-shrink:0;width:36px;height:36px;border-radius:10px;background:#ECFDF5;display:flex;align-items:center;justify-content:center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"></rect><rect width="7" height="5" x="14" y="3" rx="1"></rect><rect width="7" height="9" x="14" y="12" rx="1"></rect><rect width="7" height="5" x="3" y="16" rx="1"></rect></svg></div>
+          <div>
+            <p style="margin:0 0 4px;font-weight:600;font-size:15px;">Componentes de resumo compartilhados</p>
+            <p style="margin:0;font-size:14px;line-height:1.55;color:#71717A;">Cada tela desenha seus próprios cards de KPI na mão. Extraia um <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">&lt;StatCard&gt;</code> / faixa de resumo (como a do Dashboard) e reuse — todos os números passam a ter o mesmo formato e mono.</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;background:#fff;border:1px solid #E4E4E7;border-radius:14px;padding:20px 22px;">
+          <div style="flex-shrink:0;width:36px;height:36px;border-radius:10px;background:#ECFDF5;display:flex;align-items:center;justify-content:center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></div>
+          <div>
+            <p style="margin:0 0 4px;font-weight:600;font-size:15px;">Slot fixo para a ação principal</p>
+            <p style="margin:0;font-size:14px;line-height:1.55;color:#71717A;">"Novo devedor", "Nova conta", "Novo gasto", "PDF" aparecem em lugares diferentes por tela. Dê ao <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">PageHeader</code> um slot <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">actions</code> — o CTA primário sempre no mesmo canto.</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;background:#fff;border:1px solid #E4E4E7;border-radius:14px;padding:20px 22px;">
+          <div style="flex-shrink:0;width:36px;height:36px;border-radius:10px;background:#ECFDF5;display:flex;align-items:center;justify-content:center;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></div>
+          <div>
+            <p style="margin:0 0 4px;font-weight:600;font-size:15px;">Cartões: cor é feature, não decoração</p>
+            <p style="margin:0;font-size:14px;line-height:1.55;color:#71717A;">Manter a cor escolhida por cartão (útil pra distinguir), mas trocar o fallback padrão azul por esmeralda e os cliques em <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">&lt;div onClick&gt;</code> por <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">&lt;button&gt;</code> (teclado + foco).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ░░░ ROTEIRO ░░░ -->
+    <section>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:8px;">
+        <h2 style="margin:0;font-family:'Syne',sans-serif;font-weight:800;font-size:28px;letter-spacing:-0.02em;">Roteiro priorizado</h2>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:#71717A;">do que rende mais primeiro → ao mais específico</span>
+      </div>
+      <p style="margin:0 0 26px;font-size:15px;color:#71717A;max-width:680px;">A ordem segue uma lógica: primeiro o que é <strong style="color:#18181B;">compartilhado</strong> (conserta uma vez, propaga), depois o que é <strong style="color:#18181B;">mais visto</strong>, por fim o <strong style="color:#18181B;">especializado</strong>. Trabalhamos uma fase de cada vez.</p>
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+
+        <!-- Fase 1 -->
+        <div style="background:#fff;border:1px solid #E4E4E7;border-left:3px solid #059669;border-radius:14px;padding:22px 24px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#059669;">01</span>
+            <h3 style="margin:0;font-family:'Syne',sans-serif;font-weight:700;font-size:18px;">Base compartilhada</h3>
+            <span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:11px;color:#047857;background:#ECFDF5;padding:4px 10px;border-radius:999px;">impacto máximo · esforço baixo</span>
+          </div>
+          <p style="margin:0 0 12px;font-size:14px;line-height:1.55;color:#52525B;">O maior salto com o menor esforço: mata o "cinza de IA" em todas as telas ainda não convertidas de uma vez.</p>
+          <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;">
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Migrar <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">gray-*</code> → <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">zinc-*</code> em todo o projeto; body <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">gray-100</code> → <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">zinc-50</code>.</li>
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Restilizar Skeleton, Toaster, AsyncState e o AppShellSkeleton para zinc.</li>
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Padronizar foco em <code style="font-family:'Geist Mono',monospace;font-size:12px;background:#F4F4F5;padding:1px 5px;border-radius:4px;">ring-emerald-500</code>.</li>
+          </ul>
+        </div>
+
+        <!-- Fase 2 -->
+        <div style="background:#fff;border:1px solid #E4E4E7;border-left:3px solid #059669;border-radius:14px;padding:22px 24px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#059669;">02</span>
+            <h3 style="margin:0;font-family:'Syne',sans-serif;font-weight:700;font-size:18px;">Modais</h3>
+            <span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:11px;color:#047857;background:#ECFDF5;padding:4px 10px;border-radius:999px;">maior fonte de arco-íris</span>
+          </div>
+          <p style="margin:0 0 12px;font-size:14px;line-height:1.55;color:#52525B;">Aparecem sobre qualquer tela e concentram o pior do arco-íris e o bug de contraste. Já existe um modal-referência pronto (Novo gasto pessoal).</p>
+          <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;">
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> ConfirmModal primeiro (compartilhado): mapa de cores → esmeralda + vermelho (perigo).</li>
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Novo empréstimo + Nova dívida: replicar o padrão do modal pronto e <strong>corrigir o contraste</strong> dos segmentados.</li>
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Pagamento, Parcial, Fechar mês, Observação, Feedback, Suspensão: passe sistemático.</li>
+          </ul>
+        </div>
+
+        <!-- Fase 3 -->
+        <div style="background:#fff;border:1px solid #E4E4E7;border-left:3px solid #10B981;border-radius:14px;padding:22px 24px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#10B981;">03</span>
+            <h3 style="margin:0;font-family:'Syne',sans-serif;font-weight:700;font-size:18px;">Corpos de tela ainda legados</h3>
+            <span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:11px;color:#047857;background:#ECFDF5;padding:4px 10px;border-radius:999px;">uso diário</span>
+          </div>
+          <p style="margin:0 0 12px;font-size:14px;line-height:1.55;color:#52525B;">As duas telas dentro de "Na Rua" que ainda não foram convertidas — já temos os mocks aprovados.</p>
+          <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;">
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Por mês (TabGastos): azul→esmeralda, badges neutros, dot de categoria, ações fantasma.</li>
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Em aberto (TabDividas): laranja→âmbar (em aberto), esmeralda (quitado), histórico em mono.</li>
+          </ul>
+        </div>
+
+        <!-- Fase 4 -->
+        <div style="background:#fff;border:1px solid #E4E4E7;border-left:3px solid #10B981;border-radius:14px;padding:22px 24px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#10B981;">04</span>
+            <h3 style="margin:0;font-family:'Syne',sans-serif;font-weight:700;font-size:18px;">Sistêmicos & onboarding</h3>
+            <span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:11px;color:#047857;background:#ECFDF5;padding:4px 10px;border-radius:999px;">alta visibilidade</span>
+          </div>
+          <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;">
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Tour guiado: tooltip azul → esmeralda (primeira impressão do usuário novo).</li>
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Sino de notificações: ícones e estados azuis → zinc/esmeralda.</li>
+          </ul>
+        </div>
+
+        <!-- Fase 5 -->
+        <div style="background:#fff;border:1px solid #E4E4E7;border-left:3px solid #A7F3D0;border-radius:14px;padding:22px 24px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#34D399;">05</span>
+            <h3 style="margin:0;font-family:'Syne',sans-serif;font-weight:700;font-size:18px;">Páginas utilitárias</h3>
+            <span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:11px;color:#B45309;background:#FEF3C7;padding:4px 10px;border-radius:999px;">1 bug embutido</span>
+          </div>
+          <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;">
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Reset de senha: remover o degradê azul→verde, botão esmeralda sólido (irmão do login).</li>
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Configurações: toggle/botão azul → esmeralda; adotar PageHeader/Pista como as outras abas.</li>
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Admin: índigo→zinc+esmeralda; trocar emoji por Lucide; é o mais "AI slop" hoje.</li>
+          </ul>
+        </div>
+
+        <!-- Fase 6 -->
+        <div style="background:#fff;border:1px solid #E4E4E7;border-left:3px solid #A7F3D0;border-radius:14px;padding:22px 24px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#34D399;">06</span>
+            <h3 style="margin:0;font-family:'Syne',sans-serif;font-weight:700;font-size:18px;">Sistematizar (o pulo profissional)</h3>
+            <span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:11px;color:#71717A;background:#F4F4F5;padding:4px 10px;border-radius:999px;">estrutural</span>
+          </div>
+          <p style="margin:0 0 12px;font-size:14px;line-height:1.55;color:#52525B;">Com tudo no padrão de cor, resolver a organização — é o que tira de vez a sensação de "montado por partes".</p>
+          <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;">
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Seletor de mês único na aba-mãe.</li>
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> StatCard / faixa de resumo compartilhados + slot de ação no PageHeader.</li>
+            <li style="display:flex;gap:9px;font-size:14px;color:#3F3F46;"><span style="color:#059669;flex-shrink:0;">→</span> Padronizar raios, sombras e cursor/foco nos cards clicáveis.</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div style="margin-top:28px;background:#18181B;border-radius:16px;padding:24px 28px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:260px;">
+          <p style="margin:0 0 4px;font-family:'Syne',sans-serif;font-weight:700;font-size:17px;color:#fff;">Sugestão de arranque</p>
+          <p style="margin:0;font-size:14px;line-height:1.55;color:#A1A1AA;">Fase 1 num único passe (find-replace guiado) + ConfirmModal. É o combo que faz o app inteiro "assentar" antes de irmos tela a tela.</p>
+        </div>
+        <span style="font-family:'Geist Mono',monospace;font-size:12px;color:#6EE7B7;background:rgba(16,185,129,0.14);padding:9px 15px;border-radius:999px;">me diga por qual fase começamos</span>
+      </div>
+    </section>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
