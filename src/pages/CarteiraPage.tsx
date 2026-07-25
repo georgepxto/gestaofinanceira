@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAppContext } from "../context";
 import { PageHeader, Pista } from "../components/ui/PageHeader";
-import { SegmentedTabs } from "../components/ui/SegmentedTabs";
 import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import type { UserFeatures } from "../types/admin";
 
@@ -71,11 +70,6 @@ export const CarteiraPage = () => {
           description={activeView?.description}
         />
       </div>
-
-      <SegmentedTabs
-        ariaLabel="Visões da carteira"
-        tabs={availableViews.map((v) => ({ to: v.to, label: v.label }))}
-      />
 
       <Outlet />
     </div>

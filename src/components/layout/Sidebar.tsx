@@ -3,26 +3,65 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   Menu,
   X,
-  User,
-  Coins,
   LogOut,
   ChevronLeft,
   ChevronRight,
   Settings,
-  Wallet,
   LayoutDashboard,
   Receipt,
   Shield,
+  Landmark,
+  CreditCard,
+  Target,
+  Users,
+  Clock,
+  CalendarDays,
 } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import { useTutorialHelpContext } from "./TutorialHelpContext";
 import { useAppContext } from "../../context";
+import type { UserFeatures } from "../../types/admin";
 
 interface SidebarProps {
   onLogout: () => void;
   userName?: string;
   userEmail?: string;
 }
+
+type NavIcon = React.ComponentType<{ className?: string; strokeWidth?: number }>;
+
+interface NavChild {
+  path: string;
+  label: string;
+  icon: NavIcon;
+  feature: keyof UserFeatures;
+}
+
+/** Grupos da navegação — os itens apontam para as sub-rotas reais que já existem. */
+const NAV_GROUPS: { label: string; items: NavChild[] }[] = [
+  {
+    label: "Carteira",
+    items: [
+      { path: "/carteira/contas", label: "Contas e receitas", icon: Landmark, feature: "contas_bancarias" },
+      { path: "/carteira/cartoes", label: "Cartões", icon: CreditCard, feature: "cartoes_credito" },
+    ],
+  },
+  {
+    label: "Gastos",
+    items: [
+      { path: "/gastos/lancamentos", label: "Lançamentos", icon: Receipt, feature: "meus_gastos" },
+      { path: "/gastos/metas", label: "Metas", icon: Target, feature: "metas" },
+    ],
+  },
+  {
+    label: "A receber",
+    items: [
+      { path: "/a-receber/pessoas", label: "Por pessoa", icon: Users, feature: "pessoas" },
+      { path: "/a-receber/aberto", label: "Em aberto", icon: Clock, feature: "saldo_devedor" },
+      { path: "/a-receber/mes", label: "Do mês", icon: CalendarDays, feature: "gastos_compartilhados" },
+    ],
+  },
+];
 
 export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,28 +70,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   const { helpButton } = useTutorialHelpContext();
   const { isAdmin, features } = useAppContext();
 
-  // Construir itens do menu baseados nas features do usuário.
-  // Uma aba-mãe pode reunir várias features: aparece se ao menos uma estiver ativa.
-  const allNavItems = [
-    { path: "/", label: "Dashboard", icon: LayoutDashboard, features: ["dashboard"] as const },
-    { path: "/carteira", label: "Carteira", icon: Wallet, features: ["contas_bancarias", "cartoes_credito"] as const },
-    { path: "/gastos", label: "Gastos", icon: Receipt, features: ["meus_gastos", "metas"] as const },
-    { path: "/a-receber", label: "A receber", icon: Coins, features: ["gastos_compartilhados", "saldo_devedor", "pessoas"] as const },
-  ];
+  // Admin vê tudo; usuário comum só vê os itens cujas features estão ativas.
+  const visibleGroups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: isAdmin ? group.items : group.items.filter((item) => features[item.feature]),
+  })).filter((group) => group.items.length > 0);
 
-  // Filtrar itens baseados nas features habilitadas (admin vê tudo)
-  const navItems = isAdmin
-    ? allNavItems
-    : allNavItems.filter((item) => item.features.some((f) => features[f]));
-
-  const bottomNavItems = [
-    ...(features.configuracoes || isAdmin
-      ? [{ path: "/configuracoes", label: "Configurações", icon: Settings }]
-      : []),
-    ...(isAdmin
-      ? [{ path: "/admin", label: "Admin", icon: Shield }]
-      : []),
-  ];
+  const showConfiguracoes = features.configuracoes || isAdmin;
 
   const NavItem = ({
     path,
@@ -61,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   }: {
     path: string;
     label: string;
-    icon: React.ComponentType<{ className?: string }>;
+    icon: NavIcon;
   }) => {
     const isActive =
       path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
@@ -69,17 +93,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
       <NavLink
         to={path}
         onClick={() => setIsOpen(false)}
-        className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+        title={isCollapsed ? label : undefined}
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm transition-colors ${
           isActive
-            ? "bg-emerald-50 font-semibold text-emerald-700 shadow-[inset_2px_0_0_#059669] dark:bg-emerald-950/30 dark:text-emerald-400"
-            : "font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100"
-        }`}
+            ? "bg-emerald-50 text-emerald-700 font-semibold shadow-[inset_2px_0_0_#059669] dark:bg-emerald-950/30 dark:text-emerald-400"
+            : "text-zinc-500 font-medium hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100"
+        } ${isCollapsed ? "md:justify-center" : ""}`}
       >
-        <Icon className="w-5 h-5 flex-shrink-0" />
-        {!isCollapsed && <span>{label}</span>}
+        <Icon className="w-5 h-5 flex-shrink-0" strokeWidth={1.75} />
+        <span className={isCollapsed ? "md:hidden" : ""}>{label}</span>
       </NavLink>
     );
   };
+
+  const GroupLabel = ({ children }: { children: React.ReactNode }) => (
+    <p
+      className={`font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 px-3 pt-4 pb-1 ${
+        isCollapsed ? "md:hidden" : ""
+      }`}
+    >
+      {children}
+    </p>
+  );
 
   return (
     <>
@@ -126,88 +161,103 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-white/[0.06] z-50 shadow-sm flex flex-col
+          fixed top-0 left-0 h-full bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-white/[0.06] z-50 flex flex-col
           transition-all duration-300 ease-in-out
-          
+
           /* Mobile: drawer */
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           w-72
-          
+
           /* Desktop: always visible */
           md:translate-x-0
           ${isCollapsed ? "md:w-20" : "md:w-64"}
         `}
       >
-        {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-100 dark:border-white/[0.05]">
-          <div className="flex items-center gap-2.5">
+        {/* Topo: logo + recolher */}
+        <div className="h-[68px] flex items-center justify-between px-5 border-b border-zinc-100 dark:border-white/[0.05] shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
             <img src="/favicon-light.png" alt="Hedge" className="w-7 h-7 dark:hidden flex-shrink-0 object-contain" />
             <img src="/favicon-dark.png" alt="Hedge" className="w-7 h-7 hidden dark:block flex-shrink-0 object-contain" />
-            {!isCollapsed && (
-              <h2 className="font-display text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                Hedge
-              </h2>
-            )}
+            <h2
+              className={`font-display font-bold text-[19px] tracking-tight text-zinc-900 dark:text-zinc-50 ${
+                isCollapsed ? "md:hidden" : ""
+              }`}
+            >
+              Hedge
+            </h2>
           </div>
 
-          {/* Close button (mobile) */}
+          {/* Fechar (mobile) */}
           <button
             onClick={() => setIsOpen(false)}
             aria-label="Fechar menu de navegação"
-            className="md:hidden p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors ml-auto"
+            className="md:hidden w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
           >
-            <X className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+            <X className="w-5 h-5" />
           </button>
 
-          {/* Collapse button (desktop) */}
+          {/* Recolher (desktop) */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             aria-label={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
-            className="hidden md:flex p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors ml-auto"
+            className={`hidden md:flex w-8 h-8 rounded-lg items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors ${
+              isCollapsed ? "ml-0" : ""
+            }`}
           >
-            {isCollapsed ? (
-              <ChevronRight className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
-            ) : (
-              <ChevronLeft className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
-            )}
+            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 flex flex-col">
-          {/* Navigation */}
-          <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1">
-            {navItems.map((item) => (
-              <NavItem key={item.path} {...item} />
-            ))}
-          </nav>
+        {/* Navegação */}
+        <nav className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-0.5">
+          {(isAdmin || features.dashboard) && (
+            <NavItem path="/" label="Dashboard" icon={LayoutDashboard} />
+          )}
+          {visibleGroups.map((group) => (
+            <div key={group.label} className="flex flex-col gap-0.5">
+              <GroupLabel>{group.label}</GroupLabel>
+              {group.items.map((item) => (
+                <NavItem key={item.path} path={item.path} label={item.label} icon={item.icon} />
+              ))}
+            </div>
+          ))}
+        </nav>
 
-          {/* Bottom Section */}
-          <div className="shrink-0 p-4 border-t border-zinc-200 dark:border-white/[0.06] bg-zinc-50 dark:bg-white/[0.03] space-y-3">
-            {bottomNavItems.map((item) => (
-              <NavItem key={item.path} {...item} />
-            ))}
+        {/* Rodapé */}
+        <div className="shrink-0 p-3 border-t border-zinc-100 dark:border-white/[0.05] bg-[#FCFCFC] dark:bg-white/[0.03] flex flex-col gap-0.5">
+          {isAdmin && <NavItem path="/admin" label="Admin" icon={Shield} />}
+          {showConfiguracoes && (
+            <NavItem path="/configuracoes" label="Configurações" icon={Settings} />
+          )}
 
-            {/* User Info */}
-            {!isCollapsed && (
-              <div className="flex items-center gap-3 px-2 py-2">
-                <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center">
-                  <User className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-zinc-900 dark:text-zinc-100 font-medium truncate">{userName || "Usuário"}</p>
-                  <p className="font-mono text-xs text-zinc-500 dark:text-zinc-400 truncate">{userEmail || ""}</p>
-                </div>
-              </div>
-            )}
-
+          {/* Cartão do usuário (logout embutido) */}
+          <div
+            className={`flex items-center gap-3 p-2.5 mt-1.5 bg-white dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.06] rounded-xl ${
+              isCollapsed ? "md:justify-center md:p-2" : ""
+            }`}
+          >
+            <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
+              <span className="font-display font-bold text-emerald-700 dark:text-emerald-400">
+                {(userName || userEmail || "U").charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className={`flex-1 min-w-0 ${isCollapsed ? "md:hidden" : ""}`}>
+              <p className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                {userName || "Usuário"}
+              </p>
+              <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                {userEmail || ""}
+              </p>
+            </div>
             <button
               onClick={onLogout}
-              className={`flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 border border-zinc-200 dark:border-white/[0.06] transition-colors ${
-                isCollapsed ? "justify-center" : ""
+              aria-label="Sair da conta"
+              title="Sair"
+              className={`w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors flex-shrink-0 ${
+                isCollapsed ? "md:hidden" : ""
               }`}
             >
-              <LogOut className="w-4 h-4 flex-shrink-0" />
-              {!isCollapsed && <span className="font-medium">Sair</span>}
+              <LogOut className="w-[17px] h-[17px]" />
             </button>
           </div>
         </div>
