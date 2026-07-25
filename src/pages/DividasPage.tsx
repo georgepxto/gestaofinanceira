@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { Pista } from "../components/ui/PageHeader";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
@@ -123,15 +124,26 @@ export const DividasPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Barra de ações da visão Em aberto */}
-      <div className="flex justify-end">
+      {/* HEADER_PAGINA */}
+      <div className="flex items-end justify-between flex-wrap gap-5 mb-6" data-tour="dividas-header">
+        <div>
+          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-1">
+            Cobranças
+          </p>
+          <h1 className="font-display font-bold text-[34px] leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50">
+            Dívidas em <Pista>aberto</Pista>
+          </h1>
+          <p className="text-[15px] text-zinc-500 dark:text-zinc-400 mt-1">
+            Tudo que ainda precisam te pagar, com o progresso de cada cobrança.
+          </p>
+        </div>
         <button
           onClick={() => setShowFormDivida(true)}
           data-tour="dividas-btn-novo"
-          className="bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 rounded-xl flex items-center gap-2 font-semibold transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+          className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-[0_4px_12px_-3px_rgba(5,150,105,0.5)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
         >
-          <Plus className="w-5 h-5" />
-          <span className="hidden sm:inline">Nova Cobrança</span>
+          <Plus className="w-[18px] h-[18px]" />
+          Nova cobrança
         </button>
       </div>
 
