@@ -1,10 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
-import { Target, Plus, X, Loader2, Edit2 } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Plus, X, Loader2, Edit2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { format } from "date-fns";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
+import { Pista } from "../components/ui/PageHeader";
 import { useAppContext } from "../context";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
-import { formatCurrency } from "../utils/calculations";
+import { formatCurrency, formatMonthYear } from "../utils/calculations";
 import { CATEGORIAS } from "../utils/categories";
 import { toast } from "../components/ui/Toaster";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
@@ -36,7 +39,7 @@ const METAS_TUTORIAL_STEPS: MetasTutorialStep[] = [
     alvo: "Formulário de meta",
     titulo: "Criar nova meta",
     descricao:
-      "Selecione a categoria, informe o limite mensal e salve para começar a monitorar no dashboard.",
+      "Selecione a categoria, informe o limite mensal e salve para começar a monitorar o consumo.",
   },
   {
     target: "[data-tour='metas-btn-salvar']",
@@ -50,7 +53,7 @@ const METAS_TUTORIAL_STEPS: MetasTutorialStep[] = [
     alvo: "Lista de metas",
     titulo: "Metas cadastradas",
     descricao:
-      "Aqui ficam todas as metas já criadas, com limite mensal e opção de remoção.",
+      "Aqui ficam todas as metas já criadas, ordenadas por risco de estouro, com o consumo do mês em cada barra.",
   },
   {
     target: "[data-tour='metas-item-remover']",
@@ -68,8 +71,13 @@ const METAS_TUTORIAL_STEPS: MetasTutorialStep[] = [
   },
 ];
 
+interface LinhaConsumo extends MetaGasto {
+  gasto: number;
+  pct: number;
+}
+
 export const MetasPage = () => {
-  const { user, setModalConfirm } = useAppContext();
+  const { user, setModalConfirm, meusGastosDoMes, mesVisualizacao, navegarMes, irParaHoje } = useAppContext();
 
   const [metas, setMetas] = useState<MetaGasto[]>([]);
   const [novaMeta, setNovaMeta] = useState({ categoria: "", limite: "" });
@@ -213,6 +221,35 @@ export const MetasPage = () => {
       )
   );
 
+  // Consumo por meta — o mesmo cruzamento meta×gastos do resumo do orçamento,
+  // só leitura: soma os gastos pessoais do mês por categoria da meta.
+  const linhas = useMemo<LinhaConsumo[]>(() => {
+    return metas
+      .map((meta) => {
+        const gasto = meusGastosDoMes
+          .filter(
+            (g) =>
+              (g.categoria_gasto || g.categoria || "").toLowerCase() ===
+              meta.categoria.toLowerCase()
+          )
+          .reduce((soma, g) => soma + g.valor, 0);
+        const pct = meta.limite > 0 ? (gasto / meta.limite) * 100 : 0;
+        return { ...meta, gasto, pct };
+      })
+      .sort((a, b) => b.pct - a.pct); // ordenadas por risco de estouro
+  }, [metas, meusGastosDoMes]);
+
+  const totalGasto = linhas.reduce((soma, l) => soma + l.gasto, 0);
+  const totalLimite = linhas.reduce((soma, l) => soma + l.limite, 0);
+  const pctTotal = totalLimite > 0 ? (totalGasto / totalLimite) * 100 : 0;
+  const disponivel = totalLimite - totalGasto;
+  const estouradas = linhas.filter((l) => l.pct > 100);
+  const quaseNoLimite = linhas.filter((l) => l.pct >= 80 && l.pct <= 100);
+  const noControle = linhas.filter((l) => l.pct < 80);
+  const emRisco = [...estouradas, ...quaseNoLimite];
+
+  const isMesCorrente = format(mesVisualizacao, "yyyy-MM") === format(new Date(), "yyyy-MM");
+
   if (loading) {
     return <PageLoadingState title="Carregando metas" description="Estamos buscando suas metas cadastradas." />;
   }
@@ -230,110 +267,256 @@ export const MetasPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Adicionar nova meta */}
-      <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="metas-form">
-        <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">
-          {metaEmEdicao ? "Editar Meta" : "Nova Meta"}
-        </h2>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <select
-            value={novaMeta.categoria}
-            onChange={(e) => setNovaMeta({ ...novaMeta, categoria: e.target.value })}
-            className="flex-1 px-4 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none appearance-none"
-          >
-            <option value="" disabled>Selecione uma categoria</option>
-            {categoriasDisponiveis.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-          </select>
-          <div className="relative w-full sm:w-44">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 text-sm">R$</span>
-            <input
-              type="number"
-              value={novaMeta.limite}
-              onChange={(e) => setNovaMeta({ ...novaMeta, limite: e.target.value })}
-              placeholder="0,00"
-              className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-            />
-          </div>
+      {/* HEADER_PAGINA */}
+      <div className="flex items-end justify-between flex-wrap gap-5 mb-6" data-tour="metas-header">
+        <div>
+          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-1">
+            Gastos
+          </p>
+          <h1 className="font-display font-bold text-[34px] leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50">
+            Metas de <Pista>gasto</Pista>
+          </h1>
+          <p className="text-[15px] text-zinc-500 dark:text-zinc-400 mt-1">
+            Seus limites por categoria — e quanto de cada um você já usou.
+          </p>
+        </div>
+        {/* MES_PILL */}
+        <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm">
           <button
-            onClick={handleSaveMeta}
-            data-tour="metas-btn-salvar"
-            disabled={savingMeta || !novaMeta.categoria.trim() || !novaMeta.limite}
-            className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
+            onClick={() => navegarMes("anterior")}
+            aria-label="Mês anterior"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
           >
-            {savingMeta ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : metaEmEdicao ? (
-              <Edit2 className="w-4 h-4" />
-            ) : (
-              <Plus className="w-4 h-4" />
-            )}
-            {metaEmEdicao ? "Atualizar" : "Salvar"}
+            <ChevronLeft className="w-[18px] h-[18px]" />
           </button>
-
-          {metaEmEdicao && (
+          <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
+            {formatMonthYear(mesVisualizacao)}
+          </span>
+          {!isMesCorrente && (
             <button
-              onClick={handleCancelarEdicao}
-              className="px-4 py-3 border border-zinc-300 dark:border-white/[0.09] text-zinc-600 dark:text-zinc-300 rounded-lg hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors"
+              onClick={irParaHoje}
+              className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
             >
-              Cancelar
+              hoje
             </button>
           )}
+          <button
+            onClick={() => navegarMes("proximo")}
+            aria-label="Próximo mês"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+          >
+            <ChevronRight className="w-[18px] h-[18px]" />
+          </button>
         </div>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-          Selecione a categoria e defina o limite mensal. As barras de progresso aparecerão no Dashboard.
-        </p>
-      </section>
+      </div>
 
-      {/* Lista de metas */}
-      <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="metas-lista">
-        <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Suas Metas</h2>
-        {metas.length > 0 ? (
-          <div className="space-y-3">
-            {metas.map((meta) => (
-              <div key={meta.id} className="flex items-center justify-between gap-3 bg-zinc-50 dark:bg-white/[0.04] rounded-lg p-4 border border-zinc-100 hover:border-zinc-300 dark:border-white/[0.06] dark:hover:border-white/[0.14] transition-colors">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 flex-shrink-0 bg-emerald-100 dark:bg-emerald-950/40 rounded-xl flex items-center justify-center">
-                    <Target className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 capitalize">{meta.categoria}</span>
-                    <p className="text-zinc-500 dark:text-zinc-400 text-xs">Limite: <span className="font-mono tabular-nums">{formatCurrency(meta.limite)}</span> / mês</p>
-                  </div>
-                </div>
-                {/* Ação em item de lista: ícone fantasma — cor só no hover. */}
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <button
-                    onClick={() => handleEditarMeta(meta)}
-                    className="p-1.5 rounded-lg text-zinc-500 hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400 transition-colors"
-                    title="Editar meta"
-                    aria-label={`Editar meta de ${meta.categoria}`}
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
+      {/* Card herói: Orçado vs. gasto */}
+      {linhas.length > 0 && (
+        <section className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 md:p-7">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400 mb-2">
+            Orçado vs. gasto · <span className="normal-case">{formatMonthYear(mesVisualizacao)}</span>
+          </p>
+          <div className="flex items-end justify-between gap-5 flex-wrap mb-4">
+            <p className="whitespace-nowrap">
+              <span className="font-display font-extrabold tracking-tighter tabular-nums text-[44px] leading-none text-zinc-900 dark:text-zinc-50">
+                {formatCurrency(totalGasto)}
+              </span>
+              <span className="font-mono tabular-nums text-[19px] text-zinc-500 dark:text-zinc-400"> / {formatCurrency(totalLimite)}</span>
+            </p>
+            <div className="text-right">
+              <p className={`font-mono tabular-nums text-[22px] font-semibold whitespace-nowrap ${disponivel >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                {formatCurrency(disponivel)}
+              </p>
+              <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+                {disponivel >= 0 ? "disponível" : "acima do orçado"} · {pctTotal.toFixed(0)}% usado
+              </p>
+            </div>
+          </div>
+          <div className={`h-2.5 rounded-full overflow-hidden ${pctTotal > 100 ? "bg-red-50 dark:bg-red-950/30" : "bg-zinc-100 dark:bg-white/[0.04]"}`}>
+            <div
+              className={`h-full rounded-full transition-all duration-700 ${pctTotal > 100 ? "bg-red-500" : pctTotal >= 80 ? "bg-amber-500" : "bg-emerald-500"}`}
+              style={{ width: `${Math.min(pctTotal, 100)}%` }}
+            />
+          </div>
+          <div className="flex items-center gap-5 flex-wrap mt-4">
+            <span className="flex items-center gap-1.5 font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+              <span className="w-2 h-2 rounded-full bg-red-500" />
+              {estouradas.length} estourada{estouradas.length === 1 ? "" : "s"}
+            </span>
+            <span className="flex items-center gap-1.5 font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
+              {quaseNoLimite.length} quase no limite
+            </span>
+            <span className="flex items-center gap-1.5 font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              {noControle.length} no controle
+            </span>
+          </div>
+        </section>
+      )}
 
-                  <button
-                    onClick={() => handleDeleteMeta(meta)}
-                    data-tour="metas-item-remover"
-                    className="p-1.5 rounded-lg text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"
-                    title="Remover meta"
-                    aria-label={`Remover meta de ${meta.categoria}`}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+      {/* Grid: Suas metas + coluna direita */}
+      <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(330px,1fr))]">
+        {/* Card Suas metas */}
+        <section className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 min-w-0" data-tour="metas-lista">
+          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Suas metas</h2>
+          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-4">ordenadas por risco de estouro</p>
+          {linhas.length > 0 ? (
+            <div className="space-y-4">
+              {linhas.map((linha) => {
+                const estourou = linha.pct > 100;
+                const quase = linha.pct >= 80 && linha.pct <= 100;
+                const corGasto = estourou
+                  ? "text-red-600 dark:text-red-400"
+                  : quase
+                  ? "text-amber-700 dark:text-amber-400"
+                  : "text-zinc-900 dark:text-zinc-100";
+                return (
+                  <div key={linha.id}>
+                    <div className="flex items-center justify-between gap-3 mb-1.5">
+                      <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 capitalize truncate">{linha.categoria}</span>
+                      <span className="flex items-center gap-1 flex-shrink-0">
+                        <span className="font-mono tabular-nums text-[13px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                          <span className={corGasto}>{formatCurrency(linha.gasto)}</span> / {formatCurrency(linha.limite)}
+                        </span>
+                        <button
+                          onClick={() => handleEditarMeta(linha)}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+                          title="Editar meta"
+                          aria-label={`Editar meta de ${linha.categoria}`}
+                        >
+                          <Edit2 className="w-[15px] h-[15px]" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMeta(linha)}
+                          data-tour="metas-item-remover"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"
+                          title="Remover meta"
+                          aria-label={`Remover meta de ${linha.categoria}`}
+                        >
+                          <X className="w-[15px] h-[15px]" />
+                        </button>
+                      </span>
+                    </div>
+                    <div className={`h-2 rounded-full overflow-hidden ${estourou ? "bg-red-50 dark:bg-red-950/30" : "bg-zinc-100 dark:bg-white/[0.04]"}`}>
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ${estourou ? "bg-red-500" : quase ? "bg-amber-500" : "bg-emerald-500"}`}
+                        style={{ width: `${Math.min(linha.pct, 100)}%` }}
+                      />
+                    </div>
+                    <p className={`font-mono text-[11px] mt-1 ${estourou ? "text-red-600 dark:text-red-400" : "text-zinc-500 dark:text-zinc-400"}`}>
+                      {linha.pct.toFixed(0)}% · {estourou
+                        ? `estourou ${formatCurrency(linha.gasto - linha.limite)}`
+                        : `restam ${formatCurrency(linha.limite - linha.gasto)}`}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <PageEmptyState
+              compact
+              title="Nenhuma meta cadastrada"
+              description="Crie uma meta por categoria para acompanhar limites e evitar estouro de orçamento."
+            />
+          )}
+        </section>
+
+        {/* Coluna direita */}
+        <div className="space-y-5 min-w-0">
+          {/* Card Nova meta */}
+          <section className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5" data-tour="metas-form">
+            <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">
+              {metaEmEdicao ? "Editar meta" : "Nova meta"}
+            </h2>
+            <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-4">
+              {categoriasDisponiveis.length} categoria{categoriasDisponiveis.length === 1 ? "" : "s"} ainda sem limite
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Categoria</label>
+                <select
+                  value={novaMeta.categoria}
+                  onChange={(e) => setNovaMeta({ ...novaMeta, categoria: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none"
+                >
+                  <option value="" disabled>Selecione uma categoria</option>
+                  {categoriasDisponiveis.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Limite mensal</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm text-zinc-500 dark:text-zinc-400">R$</span>
+                  <input
+                    type="number"
+                    value={novaMeta.limite}
+                    onChange={(e) => setNovaMeta({ ...novaMeta, limite: e.target.value })}
+                    placeholder="0,00"
+                    className="w-full pl-10 pr-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm font-mono tabular-nums text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
+                  />
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <PageEmptyState
-            compact
-            title="Nenhuma meta cadastrada"
-            description="Crie uma meta por categoria para acompanhar limites e evitar estouro de orçamento."
-          />
-        )}
-      </section>
+              <button
+                onClick={handleSaveMeta}
+                data-tour="metas-btn-salvar"
+                disabled={savingMeta || !novaMeta.categoria.trim() || !novaMeta.limite}
+                className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-200 disabled:text-zinc-400 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-500 disabled:cursor-not-allowed disabled:shadow-none text-white rounded-xl text-sm font-semibold shadow-[0_4px_12px_-3px_rgba(5,150,105,0.5)] transition-colors"
+              >
+                {savingMeta ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : metaEmEdicao ? (
+                  <Edit2 className="w-4 h-4" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
+                {metaEmEdicao ? "Atualizar meta" : "Salvar meta"}
+              </button>
+              {metaEmEdicao && (
+                <button
+                  onClick={handleCancelarEdicao}
+                  className="w-full inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors"
+                >
+                  Cancelar
+                </button>
+              )}
+            </div>
+          </section>
+
+          {/* Card de atenção — só quando há metas em risco */}
+          {emRisco.length > 0 && (
+            <section className="bg-[#FFFBF4] dark:bg-amber-950/20 border border-[#FDE8C8] dark:border-amber-900/40 rounded-2xl p-5">
+              <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-amber-700 dark:text-amber-400 mb-2">
+                Atenção
+              </p>
+              <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                {emRisco.length === 1 ? (
+                  <>A categoria <strong className="capitalize">{emRisco[0].categoria}</strong> está {emRisco[0].pct > 100 ? "com o limite estourado" : "perto do limite"}.</>
+                ) : (
+                  <>
+                    As categorias{" "}
+                    {emRisco.map((l, i) => (
+                      <span key={l.id}>
+                        <strong className="capitalize">{l.categoria}</strong>
+                        {i < emRisco.length - 2 ? ", " : i === emRisco.length - 2 ? " e " : ""}
+                      </span>
+                    ))}{" "}
+                    estão perto do limite ou estouradas.
+                  </>
+                )}
+              </p>
+              <Link
+                to="/gastos/lancamentos"
+                className="inline-block text-sm text-amber-700 dark:text-amber-400 font-semibold mt-3 hover:text-amber-800"
+              >
+                Ver lançamentos dessas categorias →
+              </Link>
+            </section>
+          )}
+        </div>
+      </div>
 
       <GuidedTourOverlay
         show={showTutorial}

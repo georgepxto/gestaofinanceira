@@ -1,67 +1,13 @@
-import type { ReactNode } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { useAppContext } from "../context";
-import { PageHeader, Pista } from "../components/ui/PageHeader";
+import { Outlet } from "react-router-dom";
 import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
-import type { UserFeatures } from "../types/admin";
 
 /**
- * Aba-mãe "Gastos" — o que gasto vs. quanto quero gastar.
- * Reúne os Lançamentos pessoais e as Metas por categoria sob um cabeçalho
- * único, alternando por sub-rotas reais (/gastos/lancamentos, /gastos/metas).
- *
- * Só apresentação/navegação: o cabeçalho assume a identidade da visão ativa
- * (PageHeader + Pista preservados) e o corpo de cada visão vem pelo <Outlet/>.
+ * Aba-mãe "Gastos" — shell de rotas: a navegação entre visões vive na sidebar
+ * e cada página-filha renderiza o próprio HEADER_PAGINA (com os anchors de
+ * tour preservados). Aqui fica só o container.
  */
-interface OrcamentoView {
-  to: string;
-  label: string;
-  feature: keyof UserFeatures;
-  /** Anchor do tour da sub-visão (mantém os passos atuais funcionando). */
-  tourHeaderId: string;
-  eyebrow: ReactNode;
-  title: ReactNode;
-  description: ReactNode;
-}
-
-// Visões cujo cabeçalho ainda é renderizado aqui — quando a página-filha passa
-// a renderizar o próprio HEADER_PAGINA (com data-tour), a entrada sai da lista.
-const VIEWS: OrcamentoView[] = [
-  {
-    to: "/gastos/metas",
-    label: "Metas",
-    feature: "metas",
-    tourHeaderId: "metas-header",
-    eyebrow: "Orçamento",
-    title: (
-      <>
-        Metas de <Pista>gasto</Pista>
-      </>
-    ),
-    description: "Defina tetos mensais por categoria",
-  },
-];
-
-export const OrcamentoPage = () => {
-  const { features, isAdmin } = useAppContext();
-  const location = useLocation();
-
-  const availableViews = VIEWS.filter((v) => isAdmin || features[v.feature]);
-  const activeView = availableViews.find((v) => location.pathname.startsWith(v.to));
-
-  return (
-    <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
-      {activeView && (
-        <div data-tour={activeView.tourHeaderId}>
-          <PageHeader
-            eyebrow={activeView.eyebrow}
-            title={activeView.title}
-            description={activeView.description}
-          />
-        </div>
-      )}
-
-      <Outlet />
-    </div>
-  );
-};
+export const OrcamentoPage = () => (
+  <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
+    <Outlet />
+  </div>
+);
