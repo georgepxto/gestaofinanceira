@@ -27,20 +27,9 @@ interface NaRuaView {
   description: ReactNode;
 }
 
+// Visões cujo cabeçalho ainda é renderizado aqui — quando a página-filha passa
+// a renderizar o próprio HEADER_PAGINA (com data-tour), a entrada sai da lista.
 const VIEWS: NaRuaView[] = [
-  {
-    to: "/a-receber/pessoas",
-    label: "Por pessoa",
-    feature: "pessoas",
-    tourHeaderId: "devedores-header",
-    eyebrow: "A receber",
-    title: (
-      <>
-        <Pista>Devedores</Pista>
-      </>
-    ),
-    description: "Gerencie pessoas com valores em aberto com você",
-  },
   {
     to: "/a-receber/aberto",
     label: "Em aberto",
@@ -74,18 +63,19 @@ export const NaRuaPage = () => {
   const location = useLocation();
 
   const availableViews = VIEWS.filter((v) => isAdmin || features[v.feature]);
-  const activeView =
-    availableViews.find((v) => location.pathname.startsWith(v.to)) ?? availableViews[0];
+  const activeView = availableViews.find((v) => location.pathname.startsWith(v.to));
 
   return (
     <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
-      <div data-tour={activeView?.tourHeaderId}>
-        <PageHeader
-          eyebrow={activeView?.eyebrow}
-          title={activeView?.title}
-          description={activeView?.description}
-        />
-      </div>
+      {activeView && (
+        <div data-tour={activeView.tourHeaderId}>
+          <PageHeader
+            eyebrow={activeView.eyebrow}
+            title={activeView.title}
+            description={activeView.description}
+          />
+        </div>
+      )}
 
       <Outlet />
     </div>
