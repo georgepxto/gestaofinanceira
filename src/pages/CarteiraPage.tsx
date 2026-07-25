@@ -24,20 +24,9 @@ interface CarteiraView {
   description: ReactNode;
 }
 
+// Visões cujo cabeçalho ainda é renderizado aqui — quando a página-filha passa
+// a renderizar o próprio HEADER_PAGINA (com data-tour), a entrada sai da lista.
 const VIEWS: CarteiraView[] = [
-  {
-    to: "/carteira/contas",
-    label: "Contas e receitas",
-    feature: "contas_bancarias",
-    tourHeaderId: "contas-header",
-    eyebrow: "Saldo",
-    title: (
-      <>
-        Contas <Pista>bancárias</Pista>
-      </>
-    ),
-    description: "Gerencie suas contas e receitas",
-  },
   {
     to: "/carteira/cartoes",
     label: "Cartões",
@@ -58,18 +47,19 @@ export const CarteiraPage = () => {
   const location = useLocation();
 
   const availableViews = VIEWS.filter((v) => isAdmin || features[v.feature]);
-  const activeView =
-    availableViews.find((v) => location.pathname.startsWith(v.to)) ?? availableViews[0];
+  const activeView = availableViews.find((v) => location.pathname.startsWith(v.to));
 
   return (
     <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
-      <div data-tour={activeView?.tourHeaderId}>
-        <PageHeader
-          eyebrow={activeView?.eyebrow}
-          title={activeView?.title}
-          description={activeView?.description}
-        />
-      </div>
+      {activeView && (
+        <div data-tour={activeView.tourHeaderId}>
+          <PageHeader
+            eyebrow={activeView.eyebrow}
+            title={activeView.title}
+            description={activeView.description}
+          />
+        </div>
+      )}
 
       <Outlet />
     </div>
