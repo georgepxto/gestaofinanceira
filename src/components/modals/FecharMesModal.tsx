@@ -42,13 +42,13 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
   const valorParaDebito = Math.max(0, restanteReal - valorPago);
 
   return (
-    <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-modal flex items-end sm:items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-modal flex items-center justify-center p-6">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="fechar-mes-modal-title"
-        className="bg-white dark:bg-zinc-900 rounded-t-2xl sm:rounded-2xl w-full max-w-md border border-zinc-200 dark:border-zinc-800"
+        className="bg-white dark:bg-zinc-900 rounded-[22px] w-full max-w-[460px] shadow-sm border border-zinc-200 dark:border-zinc-800"
       >
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <h2 id="fechar-mes-modal-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -111,7 +111,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
                   onValorChange(formatCurrencyInput(e.target.value))
                 }
                 placeholder="0,00"
-                className="w-full pl-10 pr-3 py-3 font-mono tabular-nums bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full pl-10 pr-3 py-3 font-mono tabular-nums bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
                 inputMode="numeric"
               />
             </div>

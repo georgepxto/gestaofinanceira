@@ -32,7 +32,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
   return (
     <div className="fixed inset-0 z-modal flex items-center justify-center p-4 sm:p-0">
       <div
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${
+        className={`fixed inset-0 bg-black/45 backdrop-blur-sm transition-opacity duration-200 ${
           isVisible ? "opacity-100" : "opacity-0"
         }`}
         onClick={onClose}
@@ -43,7 +43,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="feedback-modal-title"
-        className={`relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden border border-zinc-100 dark:border-zinc-800 transition-all duration-200 ${
+        className={`relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[22px] shadow-xl overflow-hidden border border-zinc-100 dark:border-zinc-800 transition-all duration-200 ${
           isVisible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-4 sm:translate-y-8"
         }`}
       >

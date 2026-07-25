@@ -107,16 +107,16 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-modal flex items-end sm:items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-modal flex items-center justify-center p-6">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="form-gasto-title"
-        className="bg-white dark:bg-zinc-900 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-zinc-200 dark:border-zinc-800"
+        className="bg-white dark:bg-zinc-900 rounded-[22px] w-full max-w-[460px] max-h-[88vh] overflow-y-auto shadow-sm border border-zinc-200 dark:border-zinc-800"
       >
         {/* Header do Modal */}
-        <div className="sticky top-0 bg-white dark:bg-zinc-900 p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between z-10">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">
               Lançamentos

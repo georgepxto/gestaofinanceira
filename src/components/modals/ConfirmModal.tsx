@@ -55,13 +55,13 @@ export function ConfirmModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-modal-top flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-modal-top flex items-center justify-center p-6 animate-in fade-in duration-200">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-modal-title"
-        className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-sm shadow-2xl relative overflow-hidden flex flex-col border border-zinc-100 dark:border-zinc-800 animate-in zoom-in-95 duration-200"
+        className="bg-white dark:bg-zinc-900 rounded-[22px] w-full max-w-sm shadow-2xl relative overflow-hidden flex flex-col border border-zinc-100 dark:border-zinc-800 animate-in zoom-in-95 duration-200"
       >
         {/* Helper visual para reforçar a cor no topo */}
         <div className={`h-2 w-full ${colors.bg}`}></div>

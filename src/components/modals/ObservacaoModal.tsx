@@ -28,13 +28,13 @@ export const ObservacaoModal: React.FC<ObservacaoModalProps> = ({
   if (!show || !pessoa) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-modal flex items-end sm:items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-modal flex items-center justify-center p-6">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="obs-modal-title"
-        className="bg-white dark:bg-zinc-900 rounded-t-2xl sm:rounded-2xl w-full max-w-md border border-zinc-200 dark:border-zinc-800"
+        className="bg-white dark:bg-zinc-900 rounded-[22px] w-full max-w-[460px] shadow-sm border border-zinc-200 dark:border-zinc-800"
       >
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <h2 id="obs-modal-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -69,7 +69,7 @@ export const ObservacaoModal: React.FC<ObservacaoModalProps> = ({
               onChange={(e) => onTextChange(e.target.value)}
               placeholder="Ex: Pagou R$ 1.000 em 15/12, falta R$ 500..."
               rows={4}
-              className="w-full px-3 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
+              className="w-full px-3 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] resize-none"
             />
           </div>
 

@@ -53,13 +53,13 @@ export function SuspensaoModal({ show, onClose, onConfirm, mesRef, nomeGasto }: 
   const minDateLimit = format(addMonths(mesRef, 1), "yyyy-MM");
 
   return (
-    <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-modal flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-modal flex items-center justify-center p-6">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="suspensao-modal-title"
-        className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+        className="bg-white dark:bg-zinc-900 rounded-[22px] w-full max-w-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden"
       >
         <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800">
           <h2 id="suspensao-modal-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100">
