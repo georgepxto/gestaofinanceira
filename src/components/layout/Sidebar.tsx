@@ -76,10 +76,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   const showConfiguracoes = features.configuracoes || isAdmin;
 
   // ── Indicador deslizante ─────────────────────────────────────────────
-  // Em vez de um traço estático por item, um único traço absoluto por área
-  // (nav e rodapé) desliza até o item ativo via transição de `top`.
+  // Um único traço absoluto por área (nav e rodapé) viaja até o item ativo
+  // em duas fases: primeiro ESTICA cobrindo o trajeto, depois ASSENTA no
+  // destino — o movimento fica orgânico em vez de um teleporte de `top`.
   const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
-  const [indicador, setIndicador] = useState<{ area: "nav" | "rodape"; top: number } | null>(null);
+  const [indicador, setIndicador] = useState<{ area: "nav" | "rodape"; top: number; height: number } | null>(null);
+  const indicadorAlvoRef = useRef<{ area: "nav" | "rodape"; top: number } | null>(null);
+  const assentarTimeoutRef = useRef<number | undefined>(undefined);
 
   const isPathActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
@@ -96,22 +99,42 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   useLayoutEffect(() => {
     const activePath = [...navPaths, ...rodapePaths].find(isPathActive);
     const el = activePath ? itemRefs.current[activePath] : null;
+    window.clearTimeout(assentarTimeoutRef.current);
     if (!activePath || !el) {
       setIndicador(null);
+      indicadorAlvoRef.current = null;
       return;
     }
-    setIndicador({
-      area: rodapePaths.includes(activePath) ? "rodape" : "nav",
-      top: el.offsetTop + el.offsetHeight / 2 - 8,
-    });
+
+    const area: "nav" | "rodape" = rodapePaths.includes(activePath) ? "rodape" : "nav";
+    const alvoTop = el.offsetTop + el.offsetHeight / 2 - 8;
+    const anterior = indicadorAlvoRef.current;
+    indicadorAlvoRef.current = { area, top: alvoTop };
+
+    if (anterior && anterior.area === area && Math.abs(anterior.top - alvoTop) > 1) {
+      // Fase 1: estica do ponto atual até o destino…
+      setIndicador({
+        area,
+        top: Math.min(anterior.top, alvoTop),
+        height: Math.abs(anterior.top - alvoTop) + 16,
+      });
+      // Fase 2: …e assenta, recolhendo no item de chegada.
+      assentarTimeoutRef.current = window.setTimeout(() => {
+        setIndicador({ area, top: alvoTop, height: 16 });
+      }, 170);
+    } else {
+      setIndicador({ area, top: alvoTop, height: 16 });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, isCollapsed, isAdmin, showConfiguracoes, visibleGroups.length]);
+
+  useLayoutEffect(() => () => window.clearTimeout(assentarTimeoutRef.current), []);
 
   const Indicador = ({ area }: { area: "nav" | "rodape" }) =>
     indicador?.area === area ? (
       <span
-        className="absolute left-0 w-[3px] h-4 rounded-full bg-emerald-500 transition-[top] duration-300 ease-out"
-        style={{ top: indicador.top }}
+        className="absolute left-0 w-[3px] rounded-full bg-emerald-500 transition-all duration-300 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] will-change-[top,height]"
+        style={{ top: indicador.top, height: indicador.height }}
         aria-hidden="true"
       />
     ) : null;
