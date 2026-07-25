@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Menu,
@@ -75,27 +75,63 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
 
   const showConfiguracoes = features.configuracoes || isAdmin;
 
+  // ── Indicador deslizante ─────────────────────────────────────────────
+  // Em vez de um traço estático por item, um único traço absoluto por área
+  // (nav e rodapé) desliza até o item ativo via transição de `top`.
+  const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const [indicador, setIndicador] = useState<{ area: "nav" | "rodape"; top: number } | null>(null);
+
+  const isPathActive = (path: string) =>
+    path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+
+  const navPaths = [
+    ...(isAdmin || features.dashboard ? ["/"] : []),
+    ...visibleGroups.flatMap((g) => g.items.map((i) => i.path)),
+  ];
+  const rodapePaths = [
+    ...(isAdmin ? ["/admin"] : []),
+    ...(showConfiguracoes ? ["/configuracoes"] : []),
+  ];
+
+  useLayoutEffect(() => {
+    const activePath = [...navPaths, ...rodapePaths].find(isPathActive);
+    const el = activePath ? itemRefs.current[activePath] : null;
+    if (!activePath || !el) {
+      setIndicador(null);
+      return;
+    }
+    setIndicador({
+      area: rodapePaths.includes(activePath) ? "rodape" : "nav",
+      top: el.offsetTop + el.offsetHeight / 2 - 8,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, isCollapsed, isAdmin, showConfiguracoes, visibleGroups.length]);
+
+  const Indicador = ({ area }: { area: "nav" | "rodape" }) =>
+    indicador?.area === area ? (
+      <span
+        className="absolute left-0 w-[3px] h-4 rounded-full bg-emerald-500 transition-[top] duration-300 ease-out"
+        style={{ top: indicador.top }}
+        aria-hidden="true"
+      />
+    ) : null;
+
   const NavItem = ({ path, label }: { path: string; label: string }) => {
-    const isActive =
-      path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+    const isActive = isPathActive(path);
     return (
       <NavLink
         to={path}
+        ref={(el) => {
+          itemRefs.current[path] = el;
+        }}
         onClick={() => setIsOpen(false)}
         title={isCollapsed ? label : undefined}
-        className={`relative flex items-center gap-3 px-3 py-2 rounded-[10px] text-sm transition-colors ${
+        className={`flex items-center gap-3 px-3 py-2 rounded-[10px] text-sm transition-colors duration-300 ${
           isActive
             ? "text-zinc-900 font-semibold dark:text-zinc-50"
             : "text-zinc-500 font-medium hover:text-zinc-900 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-white/[0.04]"
         } ${isCollapsed ? "md:justify-center" : ""}`}
       >
-        {/* Seleção discreta: texto escuro + traço esmeralda fino à esquerda. */}
-        {isActive && (
-          <span
-            className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] rounded-full bg-emerald-500"
-            aria-hidden="true"
-          />
-        )}
         {/* Recolhida, o item vira a inicial (não há mais ícone por tela). */}
         <span className={`font-mono text-xs font-semibold hidden ${isCollapsed ? "md:inline" : ""}`} aria-hidden="true">
           {label.charAt(0).toUpperCase()}
@@ -209,7 +245,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         </div>
 
         {/* Navegação */}
-        <nav className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-0.5">
+        <nav className="relative flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-0.5">
+          <Indicador area="nav" />
           {(isAdmin || features.dashboard) && (
             <NavItem path="/" label="Dashboard" />
           )}
@@ -224,7 +261,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         </nav>
 
         {/* Rodapé */}
-        <div className="shrink-0 p-3 border-t border-zinc-100 dark:border-white/[0.05] bg-[#FCFCFC] dark:bg-white/[0.03] flex flex-col gap-0.5">
+        <div className="relative shrink-0 p-3 border-t border-zinc-100 dark:border-white/[0.05] bg-[#FCFCFC] dark:bg-white/[0.03] flex flex-col gap-0.5">
+          <Indicador area="rodape" />
           {isAdmin && <NavItem path="/admin" label="Admin" />}
           {showConfiguracoes && (
             <NavItem path="/configuracoes" label="Configurações" />
