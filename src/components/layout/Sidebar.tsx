@@ -83,12 +83,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         to={path}
         onClick={() => setIsOpen(false)}
         title={isCollapsed ? label : undefined}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm transition-colors ${
+        className={`relative flex items-center gap-3 px-3 py-2 rounded-[10px] text-sm transition-colors ${
           isActive
-            ? "bg-emerald-50 text-emerald-700 font-semibold shadow-[inset_2px_0_0_#059669] dark:bg-emerald-950/30 dark:text-emerald-400"
-            : "text-zinc-500 font-medium hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100"
+            ? "text-zinc-900 font-semibold dark:text-zinc-50"
+            : "text-zinc-500 font-medium hover:text-zinc-900 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-white/[0.04]"
         } ${isCollapsed ? "md:justify-center" : ""}`}
       >
+        {/* Seleção discreta: texto escuro + traço esmeralda fino à esquerda. */}
+        {isActive && (
+          <span
+            className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] rounded-full bg-emerald-500"
+            aria-hidden="true"
+          />
+        )}
         {/* Recolhida, o item vira a inicial (não há mais ícone por tela). */}
         <span className={`font-mono text-xs font-semibold hidden ${isCollapsed ? "md:inline" : ""}`} aria-hidden="true">
           {label.charAt(0).toUpperCase()}
