@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Settings, User, Trash2, Loader2, AlertTriangle, Check, Sun, Moon } from "lucide-react";
+import { User, Trash2, Loader2, AlertTriangle, Check, Sun, Moon } from "lucide-react";
 import { useAppContext } from "../context";
 import { supabase } from "../lib/supabase";
 import { useTheme } from "../hooks/useTheme";
+import { PageHeader, Pista } from "../components/ui/PageHeader";
 import { PAGE_CONTAINER_CLASS } from "../utils/layout";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
 
@@ -180,33 +181,42 @@ export const ConfiguracoesPage = () => {
   return (
     <div className={PAGE_CONTAINER_CLASS}>
       {/* Page Header */}
-      <div className="flex items-center gap-3">
-        <Settings className="w-7 h-7 text-gray-600 dark:text-gray-400" />
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Configurações</h1>
-      </div>
+      <PageHeader
+        eyebrow="Conta"
+        title={
+          <>
+            Suas <Pista>configurações</Pista>
+          </>
+        }
+        description="Aparência, perfil e gerenciamento da conta"
+      />
 
       {/* Seção Aparência */}
-      <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm">
+      <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           {theme === "dark" ? (
-            <Moon className="w-5 h-5 text-blue-500" />
+            <Moon className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
           ) : (
-            <Sun className="w-5 h-5 text-amber-500" />
+            <Sun className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
           )}
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Aparência</h2>
+          <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Aparência</h2>
         </div>
 
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-100">Tema</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">Tema</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               {theme === "dark" ? "Modo escuro ativado" : "Modo claro ativado"}
             </p>
           </div>
           <button
             onClick={toggleTheme}
-            className="relative inline-flex items-center h-8 w-16 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-            style={{ backgroundColor: theme === "dark" ? "#3B82F6" : "#D1D5DB" }}
+            role="switch"
+            aria-checked={theme === "dark"}
+            aria-label="Alternar tema"
+            className={`relative inline-flex items-center h-8 w-16 rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 ${
+              theme === "dark" ? "bg-emerald-600" : "bg-zinc-300 dark:bg-zinc-600"
+            }`}
           >
             <span
               className={`inline-flex items-center justify-center w-6 h-6 rounded-full bg-white shadow-md transform transition-transform duration-300 ${
@@ -214,7 +224,7 @@ export const ConfiguracoesPage = () => {
               }`}
             >
               {theme === "dark" ? (
-                <Moon className="w-3.5 h-3.5 text-blue-600" />
+                <Moon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               ) : (
                 <Sun className="w-3.5 h-3.5 text-amber-500" />
               )}
@@ -224,29 +234,29 @@ export const ConfiguracoesPage = () => {
       </section>
 
       {/* Seção Perfil */}
-      <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm">
+      <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
-          <User className="w-5 h-5 text-blue-500" />
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Perfil</h2>
+          <User className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
+          <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Perfil</h2>
         </div>
 
         {/* Email (somente leitura) */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+          <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
             Email
           </label>
           <input
             type="email"
             value={user?.email || ""}
             disabled
-            className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-400 cursor-not-allowed"
+            className="w-full px-4 py-3 bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-lg text-zinc-500 dark:text-zinc-400 cursor-not-allowed"
           />
-          <p className="text-xs text-gray-400 mt-1">O email não pode ser alterado.</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">O email não pode ser alterado.</p>
         </div>
 
         {/* Nome */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+          <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
             Nome de exibição
           </label>
           <div className="space-y-3">
@@ -255,12 +265,12 @@ export const ConfiguracoesPage = () => {
               value={novoNome}
               onChange={(e) => setNovoNome(e.target.value)}
               placeholder="Seu nome"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-4 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 outline-none"
             />
             <button
               onClick={handleAlterarNome}
               disabled={savingNome || novoNome === user?.user_metadata?.nome}
-              className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {savingNome ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -274,33 +284,33 @@ export const ConfiguracoesPage = () => {
       </section>
 
       {/* Seção Zona de Perigo */}
-      <section className="bg-white dark:bg-gray-900 rounded-xl p-6 border border-red-200 dark:border-red-900 shadow-sm">
+      <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-red-200 dark:border-red-900/50 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <AlertTriangle className="w-5 h-5 text-red-500" />
-          <h2 className="text-lg font-semibold text-red-600 dark:text-red-400">Zona de Perigo</h2>
+          <h2 className="font-display text-lg font-bold tracking-tight text-red-600 dark:text-red-400">Zona de Perigo</h2>
         </div>
 
         <div className="space-y-6">
           
           {/* Resetar Conta */}
           <div className="border-b border-red-100 dark:border-red-900/40 pb-6">
-            <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">Resetar Conta (Zerar tudo)</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <h3 className="font-display text-md font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-1">Resetar Conta (Zerar tudo)</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
               Apagar permanentemente todos os seus dados (gastos, cartões, receitas), mantendo apenas o seu login.
             </p>
 
             {!showResetConfirm ? (
               <button
                 onClick={() => setShowResetConfirm(true)}
-                className="px-4 py-2.5 bg-orange-50 dark:bg-orange-950/30 hover:bg-orange-100 dark:hover:bg-orange-950/50 border border-orange-300 dark:border-orange-800 text-orange-600 dark:text-orange-400 rounded-lg transition-colors flex items-center gap-2"
+                className="px-4 py-2.5 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/50 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400 rounded-lg transition-colors flex items-center gap-2"
               >
                 <Trash2 className="w-5 h-5" />
                 Zerar meus dados
               </button>
             ) : (
               <div className="space-y-4">
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  Para limpar todos os dados, digite <strong className="text-orange-600 dark:text-orange-400">RESETAR</strong>:
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                  Para limpar todos os dados, digite <strong className="font-mono text-amber-700 dark:text-amber-400">RESETAR</strong>:
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
@@ -308,20 +318,20 @@ export const ConfiguracoesPage = () => {
                     value={resetConfirmText}
                     onChange={(e) => setResetConfirmText(e.target.value.toUpperCase())}
                     placeholder="RESETAR"
-                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-orange-300 dark:border-orange-800 rounded-lg text-gray-800 dark:text-gray-100 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    className="flex-1 px-4 py-3 font-mono bg-zinc-50 dark:bg-white/[0.04] border border-amber-300 dark:border-amber-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 outline-none focus:ring-2 focus:ring-amber-500"
                   />
                   <div className="flex gap-2">
                     <button
                       onClick={handleResetConta}
                       disabled={resetingAccount || resetConfirmText !== "RESETAR"}
-                      className="flex-1 sm:flex-none px-6 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 sm:flex-none px-6 py-3 bg-amber-600 hover:bg-amber-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
                     >
                       {resetingAccount ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
                       Confirmar
                     </button>
                     <button
                       onClick={() => { setShowResetConfirm(false); setResetConfirmText(""); }}
-                      className="px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg transition-colors flex items-center justify-center"
+                      className="px-4 py-3 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.08] text-zinc-600 dark:text-zinc-300 rounded-lg transition-colors flex items-center justify-center"
                     >
                       Cancelar
                     </button>
@@ -333,9 +343,9 @@ export const ConfiguracoesPage = () => {
 
           {/* Excluir Conta */}
           <div>
-            <h3 className="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">Excluir Conta Permanentemente</h3>
+            <h3 className="font-display text-md font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-1">Excluir Conta Permanentemente</h3>
             <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg p-4 mb-4 mt-3">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
+              <p className="text-sm text-zinc-700 dark:text-zinc-300">
                 <strong className="text-red-600 dark:text-red-400">Atenção:</strong> Excluir sua conta é uma ação permanente e irreversível. Todos os seus dados e o seu login serão apagados.
               </p>
             </div>
@@ -350,8 +360,8 @@ export const ConfiguracoesPage = () => {
               </button>
             ) : (
               <div className="space-y-4">
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  Digite <strong className="text-red-600 dark:text-red-400">EXCLUIR</strong> para confirmar:
+                <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                  Digite <strong className="font-mono text-red-600 dark:text-red-400">EXCLUIR</strong> para confirmar:
                 </p>
                 <div className="flex gap-3">
                   <input
@@ -359,12 +369,12 @@ export const ConfiguracoesPage = () => {
                     value={deleteConfirmText}
                     onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
                     placeholder="EXCLUIR"
-                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-red-300 dark:border-red-800 rounded-lg text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                    className="flex-1 px-4 py-3 font-mono bg-zinc-50 dark:bg-white/[0.04] border border-red-300 dark:border-red-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:ring-2 focus:ring-red-500 outline-none"
                   />
                   <button
                     onClick={handleExcluirConta}
                     disabled={deletingAccount || deleteConfirmText !== "EXCLUIR"}
-                    className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+                    className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
                   >
                     {deletingAccount ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -378,7 +388,7 @@ export const ConfiguracoesPage = () => {
                       setShowDeleteConfirm(false);
                       setDeleteConfirmText("");
                     }}
-                    className="px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg transition-colors"
+                    className="px-4 py-3 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.08] text-zinc-600 dark:text-zinc-300 rounded-lg transition-colors"
                   >
                     Cancelar
                   </button>

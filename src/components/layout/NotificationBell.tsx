@@ -22,7 +22,7 @@ const AlertIcon = ({ alerta }: { alerta: Alerta }) => {
   if (alerta.titulo.includes("receita") || alerta.titulo.includes("gastou"))
     return <DollarSign className={`${baseClass} text-amber-600`} />;
   if (alerta.titulo.includes("parcela"))
-    return <PartyPopper className={`${baseClass} text-blue-600`} />;
+    return <PartyPopper className={`${baseClass} text-emerald-600`} />;
   if (alerta.titulo.includes("Meta"))
     return <ShieldAlert className={`${baseClass} text-red-600`} />;
   if (alerta.titulo.includes("superam"))
@@ -32,7 +32,7 @@ const AlertIcon = ({ alerta }: { alerta: Alerta }) => {
     return <AlertTriangle className={`${baseClass} text-red-500`} />;
   if (alerta.tipo === "warning")
     return <AlertCircle className={`${baseClass} text-amber-500`} />;
-  return <Info className={`${baseClass} text-blue-500`} />;
+  return <Info className={`${baseClass} text-emerald-600`} />;
 };
 
 export const NotificationBell = () => {
@@ -101,15 +101,15 @@ export const NotificationBell = () => {
     <div className="relative" ref={panelRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className="relative p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
         aria-label="Notificações"
       >
         <Bell
-          className={`w-5 h-5 ${totalCount > 0 ? "text-gray-700 dark:text-gray-300" : "text-gray-400 dark:text-gray-500"}`}
+          className={`w-5 h-5 ${totalCount > 0 ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500"}`}
         />
         {totalCount > 0 && (
           <span
-            className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold rounded-full px-1 ${
+            className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center font-mono tabular-nums text-[10px] font-bold rounded-full px-1 ${
               dangerCount > 0
                 ? "bg-red-500 text-white"
                 : "bg-amber-500 text-white"
@@ -121,42 +121,42 @@ export const NotificationBell = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
-            <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-              <Bell className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-white/[0.04]">
+            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
+              <Bell className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
               Notificações
               {totalCount > 0 && (
-                <span className="text-xs text-gray-400 dark:text-gray-500">({totalCount})</span>
+                <span className="font-mono tabular-nums text-xs text-zinc-400 dark:text-zinc-500">({totalCount})</span>
               )}
             </h3>
             <div className="flex items-center gap-2">
               {totalCount > 0 && (
                 <button
                   onClick={handleDismissAll}
-                  className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-400 transition-colors"
+                  className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
                 >
                   Limpar tudo
                 </button>
               )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                className="p-1 hover:bg-zinc-200 dark:hover:bg-white/[0.08] rounded transition-colors"
               >
-                <X className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                <X className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
               </button>
             </div>
           </div>
 
           <div className="max-h-80 overflow-y-auto">
             {loading ? (
-              <div className="p-6 text-center text-gray-400 dark:text-gray-500 text-sm">
+              <div className="p-6 text-center text-zinc-400 dark:text-zinc-500 text-sm">
                 Carregando...
               </div>
             ) : alertasVisiveis.length === 0 ? (
               <div className="p-6 text-center">
-                <Bell className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-gray-400 dark:text-gray-500 text-sm">
+                <Bell className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+                <p className="text-zinc-400 dark:text-zinc-500 text-sm">
                   Nenhuma notificação no momento
                 </p>
               </div>
@@ -164,7 +164,7 @@ export const NotificationBell = () => {
               alertasVisiveis.map((alerta, i) => (
                 <div
                   key={i}
-                  className={`px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-start gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                  className={`px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 flex items-start gap-3 hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors ${
                     alerta.tipo === "danger"
                       ? "bg-red-50/50 dark:bg-red-950/20"
                       : alerta.tipo === "warning"
@@ -182,20 +182,20 @@ export const NotificationBell = () => {
                           ? "text-red-700 dark:text-red-400"
                           : alerta.tipo === "warning"
                             ? "text-amber-700 dark:text-amber-400"
-                            : "text-blue-700 dark:text-blue-400"
+                            : "text-emerald-700 dark:text-emerald-400"
                       }`}
                     >
                       {alerta.titulo}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                       {alerta.mensagem}
                     </p>
                   </div>
                   <button
                     onClick={() => handleDismiss(alerta)}
-                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors flex-shrink-0"
+                    className="p-1 hover:bg-zinc-200 dark:hover:bg-white/[0.08] rounded transition-colors flex-shrink-0"
                   >
-                    <X className="w-3 h-3 text-gray-400 dark:text-gray-500" />
+                    <X className="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
                   </button>
                 </div>
               ))

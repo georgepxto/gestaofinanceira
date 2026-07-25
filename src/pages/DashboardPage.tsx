@@ -17,6 +17,7 @@ import { useAppContext } from "../context";
 import { useTheme } from "../hooks/useTheme";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
+import { Pista } from "../components/ui/PageHeader";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
 import { formatCurrency, isGastoAtivoNoMes } from "../utils/calculations";
@@ -253,13 +254,19 @@ export const DashboardPage = () => {
   const { theme } = useTheme();
   const location = useLocation();
 
-  const tooltipStyle = useMemo(() => theme === "dark"
-    ? { backgroundColor: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 4px 24px -4px rgba(0,0,0,0.5)", fontSize: "12px", color: "#f3f4f6" }
-    : { backgroundColor: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "10px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", fontSize: "12px" },
-    [theme]
+  // Recharts não lê classes do Tailwind — os neutros da marca entram como hex,
+  // trocados pelo tema para a grade não gritar mais que os dados no dark.
+  const isDark = theme === "dark";
+  const chartGrid = isDark ? "rgba(255,255,255,0.07)" : "#F4F4F5";
+  const chartAxis = isDark ? "#71717A" : "#A1A1AA";
+
+  const tooltipStyle = useMemo(() => isDark
+    ? { backgroundColor: "#18181B", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 4px 24px -4px rgba(0,0,0,0.5)", fontSize: "12px", color: "#FAFAFA" }
+    : { backgroundColor: "#FFFFFF", border: "1px solid #E4E4E7", borderRadius: "10px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", fontSize: "12px" },
+    [isDark]
   );
-  const tooltipLabelStyle = useMemo(() => theme === "dark" ? { color: "#f9fafb", fontWeight: 600 } : { color: "#111827", fontWeight: 600 }, [theme]);
-  const tooltipItemStyle = useMemo(() => theme === "dark" ? { color: "#d1d5db" } : { color: "#111827" }, [theme]);
+  const tooltipLabelStyle = useMemo(() => isDark ? { color: "#FAFAFA", fontWeight: 600 } : { color: "#18181B", fontWeight: 600 }, [isDark]);
+  const tooltipItemStyle = useMemo(() => isDark ? { color: "#F4F4F5" } : { color: "#27272A" }, [isDark]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -645,15 +652,17 @@ export const DashboardPage = () => {
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-1">
             Painel · <span className="capitalize">{format(mesVisualizacao, "MMMM", { locale: ptBR })}</span>
           </p>
-          <h1 className="font-display font-bold tracking-tight text-3xl text-zinc-900 dark:text-zinc-100">Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'}</h1>
+          <h1 className="font-display font-bold tracking-tight text-3xl text-zinc-900 dark:text-zinc-50">
+            Olá, <Pista>{user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'}</Pista>
+          </h1>
         </div>
 
         {/* Seletor de Mês */}
-        <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 rounded-xl p-2 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="month-selector">
+        <div className="flex items-center gap-2 bg-white dark:bg-white/[0.04] rounded-xl p-2 border border-zinc-200 dark:border-white/[0.06]" data-tour="month-selector">
           <button
             onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))}
             aria-label="Mês anterior"
-            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors"
           >
             <ChevronLeft className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
           </button>
@@ -663,7 +672,7 @@ export const DashboardPage = () => {
           <button
             onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))}
             aria-label="Próximo mês"
-            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors"
           >
             <ChevronRight className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
           </button>
@@ -679,37 +688,38 @@ export const DashboardPage = () => {
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm grid grid-cols-1 lg:grid-cols-2" data-tour="card-saldo-total">
             {/* Esquerda: Saldo livre */}
             <div className="p-6" data-tour="saldo-livre">
-              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-400">Saldo livre · Disponível agora</p>
-              <p className={`font-display font-extrabold tracking-tighter text-5xl sm:text-6xl mt-2 inline-block scale-x-90 origin-left ${data.saldoLivre >= 0 ? 'text-zinc-900 dark:text-zinc-100' : 'text-red-600 dark:text-red-400'}`}>
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">Saldo livre · Disponível agora</p>
+              <p className={`font-display font-extrabold tracking-tighter text-5xl sm:text-6xl mt-2 inline-block whitespace-nowrap scale-x-[0.92] origin-left ${data.saldoLivre >= 0 ? 'text-zinc-900 dark:text-zinc-50' : 'text-red-600 dark:text-red-400'}`}>
                 {formatCurrency(data.saldoLivre)}
               </p>
-              {/* Mini-stats */}
-              <div className="mt-6 flex flex-wrap">
-                <div className="pr-5" data-tour="card-saldo-total-mini">
-                  <p className="text-zinc-400 text-xs">Saldo total</p>
-                  <p className="font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">{formatCurrency(data.saldoTotal)}</p>
+              {/* Faixa de resumo: auto-fit para ceder em janela estreita, separada
+                  pelo gap (divisória de 1px como filha do grid quebraria o auto-fit). */}
+              <div className="mt-6 grid gap-x-6 gap-y-4 [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]">
+                <div className="min-w-0" data-tour="card-saldo-total-mini">
+                  <p className="text-zinc-500 dark:text-zinc-400 text-xs">Saldo total</p>
+                  <p className="font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-50 mt-0.5">{formatCurrency(data.saldoTotal)}</p>
                 </div>
-                <div className="px-5 border-l border-zinc-100 dark:border-zinc-800" data-tour="card-a-receber">
-                  <p className="text-zinc-400 text-xs">A receber</p>
-                  <p className="font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
+                <div className="min-w-0" data-tour="card-a-receber">
+                  <p className="text-zinc-500 dark:text-zinc-400 text-xs">A receber</p>
+                  <p className="font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-50 mt-0.5">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
                 </div>
-                <div className="pl-5 border-l border-zinc-100 dark:border-zinc-800">
-                  <p className="text-zinc-400 text-xs">Meus gastos</p>
-                  <p className="font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">{formatCurrency(data.totalGastosMesAtual)}</p>
+                <div className="min-w-0">
+                  <p className="text-zinc-500 dark:text-zinc-400 text-xs">Meus gastos</p>
+                  <p className="font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-50 mt-0.5">{formatCurrency(data.totalGastosMesAtual)}</p>
                 </div>
               </div>
             </div>
 
             {/* Direita: Fluxo do mês */}
             <div className="p-6 border-t lg:border-t-0 lg:border-l border-zinc-100 dark:border-zinc-800" data-tour="fluxo-mensal">
-              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-400 mb-4">Fluxo do mês</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500 mb-4">Fluxo do mês</p>
               <div className="space-y-3">
                 <div data-tour="card-receitas-fixas">
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-zinc-500 dark:text-zinc-400">Receitas fixas</span>
                     <span className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100">{formatCurrency(data.receitasFixasMensais)}</span>
                   </div>
-                  <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="h-2 bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden">
                     <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(data.receitasFixasMensais / maxFluxo) * 100}%` }} />
                   </div>
                 </div>
@@ -718,8 +728,8 @@ export const DashboardPage = () => {
                     <span className="text-zinc-500 dark:text-zinc-400">Gastos fixos</span>
                     <span className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100">{formatCurrency(data.gastosFixosMensais)}</span>
                   </div>
-                  <div className="h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-zinc-300 dark:bg-zinc-600 rounded-full" style={{ width: `${(data.gastosFixosMensais / maxFluxo) * 100}%` }} />
+                  <div className="h-2 bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden">
+                    <div className="h-full bg-zinc-300 dark:bg-white/25 rounded-full" style={{ width: `${(data.gastosFixosMensais / maxFluxo) * 100}%` }} />
                   </div>
                 </div>
               </div>
@@ -740,15 +750,15 @@ export const DashboardPage = () => {
         <div className="md:col-span-2 bg-white dark:bg-zinc-900 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800 shadow-sm min-w-0 overflow-hidden" data-tour="grafico-mensal">
           <div className="flex items-center justify-between mb-4">
             <span className="font-display font-bold text-zinc-900 dark:text-zinc-100">Por mês</span>
-            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-400">Últimos 6 meses</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-zinc-400 dark:text-zinc-500">Últimos 6 meses</span>
           </div>
           {data.tendenciaMensal.length > 0 ? (
             <div className="h-44">
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={data.tendenciaMensal}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F4F4F5" vertical={false} />
-                  <XAxis dataKey="mes" stroke="#A1A1AA" fontSize={11} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
-                  <YAxis stroke="#A1A1AA" fontSize={10} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />
+                  <XAxis dataKey="mes" stroke={chartAxis} fontSize={11} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
+                  <YAxis stroke={chartAxis} fontSize={10} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
                   <Tooltip
                     contentStyle={tooltipStyle}
                     labelStyle={tooltipLabelStyle}
@@ -784,7 +794,7 @@ export const DashboardPage = () => {
                     }`} />
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{gasto.descricao}</p>
-                      <p className="font-mono text-[11px] text-zinc-400 capitalize">{gasto.categoria}</p>
+                      <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 capitalize">{gasto.categoria}</p>
                     </div>
                   </div>
                   <span className="font-mono tabular-nums text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex-shrink-0 ml-2">
@@ -806,12 +816,12 @@ export const DashboardPage = () => {
       {/* Tendência de Gastos */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="trend-comparison">
         <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
-          <TrendingDown className="w-5 h-5 text-zinc-400" />
+          <TrendingDown className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
           Tendência de Gastos (vs mês anterior)
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Meus Gastos */}
-          <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3 sm:p-4 border border-zinc-100 dark:border-zinc-800">
+          <div className="bg-zinc-50 dark:bg-white/[0.04] rounded-lg p-3 sm:p-4 border border-zinc-100 dark:border-zinc-800">
             <p className="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm mb-1">Meus Gastos</p>
             <p className="font-mono tabular-nums text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(data.totalGastosMesAtual)}</p>
             {data.totalGastosMesAnterior > 0 && (
@@ -826,13 +836,13 @@ export const DashboardPage = () => {
                     ? `${Math.abs(((data.totalGastosMesAtual - data.totalGastosMesAnterior) / data.totalGastosMesAnterior) * 100).toFixed(0)}%`
                     : '—'}
                 </span>
-                <span className="font-mono tabular-nums text-zinc-400 dark:text-zinc-500 text-xs">({formatCurrency(data.totalGastosMesAnterior)} ant.)</span>
+                <span className="font-mono tabular-nums text-zinc-500 dark:text-zinc-400 text-xs">({formatCurrency(data.totalGastosMesAnterior)} ant.)</span>
               </div>
             )}
           </div>
 
           {/* Empréstimos/Gastos Compartilhados */}
-          <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3 sm:p-4 border border-zinc-100 dark:border-zinc-800">
+          <div className="bg-zinc-50 dark:bg-white/[0.04] rounded-lg p-3 sm:p-4 border border-zinc-100 dark:border-zinc-800">
             <p className="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm mb-1">Gastos Compartilhados</p>
             <p className="font-mono tabular-nums text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
             {data.totalEmprestimosMesAnterior > 0 && (
@@ -847,7 +857,7 @@ export const DashboardPage = () => {
                     ? `${Math.abs(((data.totalEmprestimosMesAtual - data.totalEmprestimosMesAnterior) / data.totalEmprestimosMesAnterior) * 100).toFixed(0)}%`
                     : '—'}
                 </span>
-                <span className="font-mono tabular-nums text-zinc-400 dark:text-zinc-500 text-xs">({formatCurrency(data.totalEmprestimosMesAnterior)} ant.)</span>
+                <span className="font-mono tabular-nums text-zinc-500 dark:text-zinc-400 text-xs">({formatCurrency(data.totalEmprestimosMesAnterior)} ant.)</span>
               </div>
             )}
           </div>
@@ -864,7 +874,7 @@ export const DashboardPage = () => {
                 Meus gastos
               </span>
               <span className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400" data-tour="trend-6meses-compartilhados">
-                <span className="w-3 border-t-2 border-dashed border-zinc-400" />
+                <span className="w-3 border-t-2 border-dashed border-zinc-400 dark:border-zinc-500" />
                 Compartilhados
               </span>
             </div>
@@ -878,9 +888,9 @@ export const DashboardPage = () => {
                     <stop offset="95%" stopColor="#059669" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F4F4F5" />
-                <XAxis dataKey="mes" stroke="#A1A1AA" fontSize={11} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
-                <YAxis stroke="#A1A1AA" fontSize={10} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+                <XAxis dataKey="mes" stroke={chartAxis} fontSize={11} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
+                <YAxis stroke={chartAxis} fontSize={10} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
                 <Tooltip
                   contentStyle={tooltipStyle}
                   labelStyle={tooltipLabelStyle}
@@ -899,7 +909,7 @@ export const DashboardPage = () => {
       {data.metasGasto.length > 0 && (
         <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="metas-section">
           <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
-            <Target className="w-5 h-5 text-zinc-400" />
+            <Target className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
             Metas de Gasto
           </h2>
           <div className="space-y-4">
@@ -916,10 +926,10 @@ export const DashboardPage = () => {
                       <span className={`font-mono tabular-nums text-sm font-bold ${estourou ? 'text-red-600' : quaseEstourando ? 'text-amber-600' : 'text-emerald-600'}`}>
                         {formatCurrency(meta.gastoAtual)}
                       </span>
-                      <span className="font-mono tabular-nums text-zinc-400 dark:text-zinc-500 text-xs">/ {formatCurrency(meta.limite)}</span>
+                      <span className="font-mono tabular-nums text-zinc-500 dark:text-zinc-400 text-xs">/ {formatCurrency(meta.limite)}</span>
                     </div>
                   </div>
-                  <div className="relative h-3 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="relative h-3 bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-700 ${
                         estourou ? 'bg-red-500' : quaseEstourando ? 'bg-amber-500' : 'bg-emerald-500'
@@ -950,14 +960,14 @@ export const DashboardPage = () => {
         {/* Taxa de Quitação */}
         <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="taxa-quitacao">
           <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="w-5 h-5 text-zinc-400" />
+            <CheckCircle className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
             <span className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">Taxa de Quitação</span>
           </div>
           <p className="font-mono tabular-nums text-3xl font-bold text-zinc-900 dark:text-zinc-100">{data.taxaQuitacao.toFixed(0)}%</p>
-          <p className="text-zinc-400 dark:text-zinc-500 text-xs mt-1">
+          <p className="text-zinc-500 dark:text-zinc-400 text-xs mt-1">
             {data.pessoasQuitadas} de {data.totalPessoas} pessoas quitaram
           </p>
-          <div className="mt-3 h-2 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+          <div className="mt-3 h-2 bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden">
             <div
               className="h-full bg-emerald-500 rounded-full transition-all duration-500"
               style={{ width: `${data.taxaQuitacao}%` }}
@@ -968,11 +978,11 @@ export const DashboardPage = () => {
         {/* Média por Pessoa */}
         <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="media-por-pessoa">
           <div className="flex items-center gap-2 mb-2">
-            <Users className="w-5 h-5 text-zinc-400" />
+            <Users className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
             <span className="text-zinc-500 dark:text-zinc-400 text-sm font-medium">Média por Pessoa</span>
           </div>
           <p className="font-mono tabular-nums text-3xl font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(data.mediaGastosPorPessoa)}</p>
-          <p className="text-zinc-400 dark:text-zinc-500 text-xs mt-1">
+          <p className="text-zinc-500 dark:text-zinc-400 text-xs mt-1">
             {data.totalPessoas} pessoas com gastos este mês
           </p>
         </div>
@@ -981,7 +991,7 @@ export const DashboardPage = () => {
         <div className={`bg-white dark:bg-zinc-900 rounded-2xl p-4 border shadow-sm ${data.economiasMes >= 0 ? 'border-emerald-200 dark:border-emerald-900/40' : 'border-red-200 dark:border-red-900/40'}`} data-tour="economias-mes">
           <div className="flex items-center gap-2 mb-2">
             {data.economiasMes >= 0 ? (
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
+              <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             ) : (
               <TrendingDown className="w-5 h-5 text-red-600" />
             )}
@@ -990,7 +1000,7 @@ export const DashboardPage = () => {
             </span>
           </div>
           <p className={`font-mono tabular-nums text-3xl font-bold ${data.economiasMes >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{formatCurrency(Math.abs(data.economiasMes))}</p>
-          <p className="text-zinc-400 dark:text-zinc-500 text-xs mt-1">
+          <p className="text-zinc-500 dark:text-zinc-400 text-xs mt-1">
             {data.economiasMes >= 0 ? 'Sobra mensal' : 'Déficit mensal'}
           </p>
         </div>
@@ -1002,19 +1012,19 @@ export const DashboardPage = () => {
         {data.top5Gastos.length > 0 && (
           <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="top5-gastos">
             <h3 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
-              <Receipt className="w-5 h-5 text-zinc-400" />
+              <Receipt className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
               Top 5 Gastos do Mês
             </h3>
             <div className="space-y-3">
               {data.top5Gastos.map((gasto, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-100 dark:border-zinc-800">
+                <div key={index} className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-white/[0.04] rounded-lg border border-zinc-100 dark:border-zinc-800">
                   <div className="flex items-center gap-3">
                     <span className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-bold flex items-center justify-center">
                       {index + 1}
                     </span>
                     <div>
                       <p className="text-zinc-900 dark:text-zinc-100 text-sm font-medium truncate max-w-[140px]">{gasto.descricao}</p>
-                      <p className="text-zinc-400 dark:text-zinc-500 text-xs">{gasto.pessoa}</p>
+                      <p className="text-zinc-500 dark:text-zinc-400 text-xs">{gasto.pessoa}</p>
                     </div>
                   </div>
                   <p className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100 font-semibold">{formatCurrency(gasto.valor)}</p>
@@ -1036,7 +1046,7 @@ export const DashboardPage = () => {
                 <div key={index} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg">
                   <div>
                     <p className="text-zinc-900 dark:text-zinc-100 text-sm font-medium truncate max-w-[180px]">{parcela.descricao}</p>
-                    <p className="text-zinc-400 dark:text-zinc-500 text-xs">{parcela.pessoa}</p>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-xs">{parcela.pessoa}</p>
                   </div>
                   <div className="text-right">
                     <p className="font-mono tabular-nums text-amber-600 font-bold text-lg">{parcela.parcelasRestantes}</p>
@@ -1054,16 +1064,16 @@ export const DashboardPage = () => {
       {/* Gráfico de Projeção Anual */}
       <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="projecao-saldo">
         <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-zinc-400" />
+          <TrendingUp className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
           Projeção de Saldo (12 meses)
         </h2>
         <div className="h-64">
           <ResponsiveContainer width="100%" height={256}>
             <LineChart data={data.projecaoAnual}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F4F4F5" />
-              <XAxis dataKey="mes" stroke="#A1A1AA" fontSize={12} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+              <XAxis dataKey="mes" stroke={chartAxis} fontSize={12} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
               <YAxis
-                stroke="#A1A1AA"
+                stroke={chartAxis}
                 fontSize={12}
                 fontFamily="Geist Mono, monospace"
                 tickLine={false}
@@ -1093,7 +1103,7 @@ export const DashboardPage = () => {
       {(data.gastosFixosMes > 0 || data.gastosVariaveisMes > 0) && (
         <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="fixos-variaveis">
           <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
-            <Receipt className="w-5 h-5 text-zinc-400" />
+            <Receipt className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
             Gastos Fixos vs Variáveis (Meus Gastos)
           </h2>
           <div className="space-y-4">
@@ -1126,12 +1136,12 @@ export const DashboardPage = () => {
               <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-lg p-4 border border-emerald-100 dark:border-emerald-900/30">
                 <p className="text-emerald-700 dark:text-emerald-400 text-sm mb-1 font-medium">Gastos Fixos</p>
                 <p className="font-mono tabular-nums text-xl font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(data.gastosFixosMes)}</p>
-                <p className="text-zinc-400 dark:text-zinc-500 text-xs mt-1">Contas recorrentes</p>
+                <p className="text-zinc-500 dark:text-zinc-400 text-xs mt-1">Contas recorrentes</p>
               </div>
-              <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg p-4 border border-zinc-100 dark:border-zinc-800">
+              <div className="bg-zinc-50 dark:bg-white/[0.03] rounded-lg p-4 border border-zinc-100 dark:border-zinc-800">
                 <p className="text-zinc-600 dark:text-zinc-300 text-sm mb-1 font-medium">Gastos Variáveis</p>
                 <p className="font-mono tabular-nums text-xl font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(data.gastosVariaveisMes)}</p>
-                <p className="text-zinc-400 dark:text-zinc-500 text-xs mt-1">Gastos pessoais</p>
+                <p className="text-zinc-500 dark:text-zinc-400 text-xs mt-1">Gastos pessoais</p>
               </div>
             </div>
           </div>
@@ -1142,16 +1152,16 @@ export const DashboardPage = () => {
       {data.gastosPorCategoria.length > 0 && (
         <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
           <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
-            <TrendingDown className="w-5 h-5 text-zinc-400" />
+            <TrendingDown className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
             Gastos por Categoria (30 dias)
           </h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height={256}>
               <BarChart data={data.gastosPorCategoria} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#F4F4F5" />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
                 <XAxis
                   type="number"
-                  stroke="#A1A1AA"
+                  stroke={chartAxis}
                   fontSize={12}
                   fontFamily="Geist Mono, monospace"
                   tickFormatter={(value) => `R$${value}`}
@@ -1159,7 +1169,7 @@ export const DashboardPage = () => {
                 <YAxis
                   dataKey="categoria"
                   type="category"
-                  stroke="#A1A1AA"
+                  stroke={chartAxis}
                   fontSize={11}
                   fontFamily="Geist Mono, monospace"
                   width={80}
@@ -1185,16 +1195,16 @@ export const DashboardPage = () => {
       {data.emprestadosPorPessoa.length > 0 && (
         <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
           <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-zinc-400" />
+            <Users className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
             Empréstimos por Pessoa
           </h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height={256}>
               <BarChart data={data.emprestadosPorPessoa} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#F4F4F5" />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
                 <XAxis
                   type="number"
-                  stroke="#A1A1AA"
+                  stroke={chartAxis}
                   fontSize={12}
                   fontFamily="Geist Mono, monospace"
                   tickFormatter={(value) => `R$${value}`}
@@ -1202,7 +1212,7 @@ export const DashboardPage = () => {
                 <YAxis
                   dataKey="pessoa"
                   type="category"
-                  stroke="#A1A1AA"
+                  stroke={chartAxis}
                   fontSize={11}
                   fontFamily="Geist Mono, monospace"
                   width={80}
@@ -1228,16 +1238,16 @@ export const DashboardPage = () => {
       {data.emprestadosPorCategoria.length > 0 && (
         <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
           <h2 className="font-display font-bold tracking-tight text-lg text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
-            <Receipt className="w-5 h-5 text-zinc-400" />
+            <Receipt className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
             Empréstimos por Categoria
           </h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height={256}>
               <BarChart data={data.emprestadosPorCategoria} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#F4F4F5" />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
                 <XAxis
                   type="number"
-                  stroke="#A1A1AA"
+                  stroke={chartAxis}
                   fontSize={12}
                   fontFamily="Geist Mono, monospace"
                   tickFormatter={(value) => `R$${value}`}
@@ -1245,7 +1255,7 @@ export const DashboardPage = () => {
                 <YAxis
                   dataKey="categoria"
                   type="category"
-                  stroke="#A1A1AA"
+                  stroke={chartAxis}
                   fontSize={11}
                   fontFamily="Geist Mono, monospace"
                   width={90}

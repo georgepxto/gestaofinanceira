@@ -11,16 +11,16 @@ export function AuthSplashSkeleton() {
 
 export function AppShellSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-[#0B0F19]">
+    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0B]">
       {/* Mobile header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 z-40 flex items-center px-4 gap-3">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 z-40 flex items-center px-4 gap-3">
         <Skeleton className="w-6 h-6 rounded" />
         <Skeleton className="w-24 h-4" />
       </div>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:flex-col fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
-        <div className="h-16 flex items-center px-4 border-b border-gray-200 dark:border-gray-800 gap-2">
+      <aside className="hidden md:flex md:flex-col fixed top-0 left-0 h-full w-64 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800">
+        <div className="h-16 flex items-center px-4 border-b border-zinc-200 dark:border-zinc-800 gap-2">
           <Skeleton className="w-5 h-5 rounded-full" />
           <Skeleton className="w-20 h-4" />
         </div>
@@ -29,7 +29,7 @@ export function AppShellSkeleton() {
             <Skeleton key={i} className="h-10 w-full rounded-lg" />
           ))}
         </div>
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800 space-y-3">
+        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
           <Skeleton className="h-10 w-full rounded-lg" />
           <Skeleton className="h-9 w-full rounded-lg" />
         </div>

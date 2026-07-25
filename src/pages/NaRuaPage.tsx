@@ -7,12 +7,12 @@ import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import type { UserFeatures } from "../types/admin";
 
 /**
- * Aba-mãe "Na Rua" — o dinheiro que tenho a receber.
+ * Aba-mãe "A receber" — o dinheiro que tenho a receber.
  * Reúne três recortes do mesmo domínio sob um cabeçalho único, alternando por
  * sub-rotas reais:
- *  - Por mês   (/a-receber/mes)     — empréstimos parcelados do mês
- *  - Em aberto (/a-receber/aberto)  — cobranças avulsas por saldo
- *  - Por pessoa(/a-receber/pessoas) — devedores
+ *  - Por pessoa (/a-receber/pessoas) — devedores
+ *  - Em aberto  (/a-receber/aberto)  — cobranças avulsas por saldo
+ *  - Do mês     (/a-receber/mes)     — empréstimos parcelados do mês
  *
  * Só apresentação/navegação: o cabeçalho assume a identidade da visão ativa
  * (PageHeader + Pista preservados) e o corpo de cada visão vem pelo <Outlet/>.
@@ -30,17 +30,17 @@ interface NaRuaView {
 
 const VIEWS: NaRuaView[] = [
   {
-    to: "/a-receber/mes",
-    label: "Por mês",
-    feature: "gastos_compartilhados",
-    tourHeaderId: "gastos-header",
-    eyebrow: "Empréstimos",
+    to: "/a-receber/pessoas",
+    label: "Por pessoa",
+    feature: "pessoas",
+    tourHeaderId: "devedores-header",
+    eyebrow: "A receber",
     title: (
       <>
-        Empréstimos do <Pista>mês</Pista>
+        <Pista>Devedores</Pista>
       </>
     ),
-    description: "Valores a receber organizados por devedor",
+    description: "Gerencie pessoas com valores em aberto com você",
   },
   {
     to: "/a-receber/aberto",
@@ -56,17 +56,17 @@ const VIEWS: NaRuaView[] = [
     description: "Acompanhe quanto ainda precisam te pagar",
   },
   {
-    to: "/a-receber/pessoas",
-    label: "Por pessoa",
-    feature: "pessoas",
-    tourHeaderId: "devedores-header",
-    eyebrow: "A receber",
+    to: "/a-receber/mes",
+    label: "Do mês",
+    feature: "gastos_compartilhados",
+    tourHeaderId: "gastos-header",
+    eyebrow: "Empréstimos",
     title: (
       <>
-        <Pista>Devedores</Pista>
+        Empréstimos do <Pista>mês</Pista>
       </>
     ),
-    description: "Gerencie pessoas com valores em aberto com você",
+    description: "Valores a receber organizados por devedor",
   },
 ];
 
@@ -89,7 +89,7 @@ export const NaRuaPage = () => {
       </div>
 
       <SegmentedTabs
-        ariaLabel="Visões do que está na rua"
+        ariaLabel="Visões do que há a receber"
         tabs={availableViews.map((v) => ({ to: v.to, label: v.label }))}
       />
 

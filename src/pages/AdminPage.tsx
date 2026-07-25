@@ -39,12 +39,12 @@ import {
 } from "../types/admin";
 
 // ========== ACTION LABELS ==========
-const ACTION_LABELS: Record<string, { label: string; color: string; icon: string }> = {
-  login: { label: "Login", color: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30", icon: "🟢" },
-  logout: { label: "Logout", color: "text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-800", icon: "⚪" },
-  login_failed: { label: "Login Falhou", color: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30", icon: "🟡" },
-  login_blocked: { label: "Bloqueado", color: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-950/30", icon: "🔴" },
-  password_reset: { label: "Reset Senha", color: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/30", icon: "🔵" },
+const ACTION_LABELS: Record<string, { label: string; color: string; dot: string }> = {
+  login: { label: "Login", color: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30", dot: "bg-emerald-500" },
+  logout: { label: "Logout", color: "text-zinc-600 bg-zinc-50 dark:text-zinc-400 dark:bg-white/[0.04]", dot: "bg-zinc-300" },
+  login_failed: { label: "Login Falhou", color: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30", dot: "bg-amber-500" },
+  login_blocked: { label: "Bloqueado", color: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-950/30", dot: "bg-red-500" },
+  password_reset: { label: "Reset Senha", color: "text-zinc-600 bg-zinc-100 dark:text-zinc-400 dark:bg-white/[0.04]", dot: "bg-zinc-400" },
 
 };
 
@@ -148,7 +148,7 @@ export const AdminPage = () => {
           : "O usuário poderá acessar o sistema novamente."
       }`,
       confirmLabel: user.is_active ? "Desativar" : "Ativar",
-      confirmColor: user.is_active ? "red" : "green",
+      confirmColor: user.is_active ? "red" : "emerald",
       onConfirm: async () => {
         const success = await toggleUserActive(user.id, !user.is_active);
         if (success) {
@@ -172,7 +172,7 @@ export const AdminPage = () => {
       titulo: "Resetar Senha",
       mensagem: `Deseja enviar um email de redefinição de senha para "${nome}" (${user.email})? O usuário receberá um link para criar uma nova senha.`,
       confirmLabel: "Enviar Email",
-      confirmColor: "blue",
+      confirmColor: "emerald",
       onConfirm: async () => {
         const success = await resetPassword(user.id, user.email);
         if (success) {
@@ -319,14 +319,14 @@ export const AdminPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-950/30 rounded-xl flex items-center justify-center">
-            <Shield className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+          <div className="w-10 h-10 bg-zinc-100 dark:bg-white/[0.04] rounded-xl flex items-center justify-center">
+            <Shield className="w-6 h-6 text-zinc-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
               Painel Admin
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
+            <p className="text-zinc-500 dark:text-zinc-400 text-sm">
               Gerencie usuários, monitore atividade
             </p>
           </div>
@@ -334,15 +334,15 @@ export const AdminPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-1 overflow-x-auto">
+      <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
               activeTab === tab.id
-                ? "bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300"
-                : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                ? "bg-emerald-600 text-white"
+                : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
             }`}
           >
             {tab.icon}
@@ -370,50 +370,50 @@ export const AdminPage = () => {
         <div className="space-y-4">
           {/* Cards de Estatísticas */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
-                <Users className="w-4 h-4 text-indigo-500" />
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Total</span>
+                <Users className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Total</span>
               </div>
-              <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{totalUsers}</p>
+              <p className="font-mono tabular-nums text-2xl font-bold text-zinc-900 dark:text-zinc-100">{totalUsers}</p>
             </div>
-            <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <UserCheck className="w-4 h-4 text-emerald-500" />
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Ativos</span>
+                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Ativos</span>
               </div>
-              <p className="text-2xl font-bold text-emerald-600">{activeUsers}</p>
+              <p className="font-mono tabular-nums text-2xl font-bold text-emerald-600 dark:text-emerald-400">{activeUsers}</p>
             </div>
-            <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <UserX className="w-4 h-4 text-red-500" />
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Inativos</span>
+                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Inativos</span>
               </div>
-              <p className="text-2xl font-bold text-red-600">{inactiveUsersCount}</p>
+              <p className="font-mono tabular-nums text-2xl font-bold text-red-600">{inactiveUsersCount}</p>
             </div>
           </div>
 
           {/* Busca e Filtros */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por nome ou email..."
-                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
-            <div className="flex gap-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-1">
+            <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1">
               {(["all", "active", "inactive"] as const).map((status) => (
                 <button
                   key={status}
                   onClick={() => setFilterStatus(status)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filterStatus === status
-                      ? "bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300"
-                      : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      ? "bg-emerald-600 text-white"
+                      : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
                   }`}
                 >
                   {status === "all" ? "Todos" : status === "active" ? "Ativos" : "Inativos"}
@@ -423,7 +423,7 @@ export const AdminPage = () => {
             <button
               onClick={fetchUsers}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-colors text-gray-700 dark:text-gray-300"
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.08] rounded-xl transition-colors text-zinc-700 dark:text-zinc-300"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </button>
@@ -432,9 +432,9 @@ export const AdminPage = () => {
           {/* Lista de Usuários */}
           <div className="space-y-3">
             {filteredUsers.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-                <Users className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">
+              <div className="text-center py-16 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+                <Users className="w-12 h-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
+                <p className="text-zinc-500 dark:text-zinc-400">
                   {searchTerm ? "Nenhum usuário encontrado." : "Nenhum usuário cadastrado."}
                 </p>
               </div>
@@ -442,10 +442,12 @@ export const AdminPage = () => {
               filteredUsers.map((user) => (
                 <div
                   key={user.id}
-                  className={`bg-white dark:bg-gray-900 rounded-xl border shadow-sm overflow-hidden transition-all ${
+                  // Conta inativa se sinaliza pela borda vermelha e pelo selo
+                  // "Inativo" — sem `opacity` por cima, que apagaria os dados.
+                  className={`bg-white dark:bg-zinc-900 rounded-2xl border shadow-sm overflow-hidden transition-colors ${
                     !user.is_active
-                      ? "border-red-200 dark:border-red-900/50 opacity-75"
-                      : "border-gray-200 dark:border-gray-800"
+                      ? "border-red-200 dark:border-red-900/50"
+                      : "border-zinc-200 dark:border-zinc-800"
                   }`}
                 >
                   {/* User Row */}
@@ -454,27 +456,27 @@ export const AdminPage = () => {
                     <div
                       className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${
                         user.role === "admin"
-                          ? "bg-indigo-100 dark:bg-indigo-950/30"
+                          ? "bg-zinc-100 dark:bg-white/[0.04]"
                           : user.is_active
                           ? "bg-emerald-100 dark:bg-emerald-950/30"
                           : "bg-red-100 dark:bg-red-950/30"
                       }`}
                     >
                       {user.role === "admin" ? (
-                        <Shield className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                        <Shield className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
                       ) : (
-                        <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <User className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
                       )}
                     </div>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-gray-800 dark:text-gray-100 truncate">
+                        <span className="font-semibold text-zinc-800 dark:text-zinc-100 truncate">
                           {user.nome || "Sem nome"}
                         </span>
                         {user.role === "admin" && (
-                          <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold uppercase rounded-full">
+                          <span className="px-2 py-0.5 bg-zinc-200 dark:bg-white/[0.04] text-zinc-700 dark:text-zinc-300 text-[10px] font-bold uppercase rounded-full">
                             Admin
                           </span>
                         )}
@@ -485,12 +487,12 @@ export const AdminPage = () => {
                         )}
                       </div>
                       <div className="flex items-center gap-4 mt-0.5">
-                        <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate">
+                        <span className="text-sm text-zinc-500 dark:text-zinc-400 flex items-center gap-1 truncate">
                           <Mail className="w-3 h-3 flex-shrink-0" />
                           {user.email}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 mt-1 text-xs text-gray-400 dark:text-gray-500">
+                      <div className="flex items-center gap-4 mt-1 font-mono text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           Criado: {formatDate(user.created_at)}
@@ -509,7 +511,7 @@ export const AdminPage = () => {
                         <button
                           onClick={() => handleResetPassword(user)}
                           disabled={saving}
-                          className="p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-500 dark:text-blue-400 transition-colors"
+                          className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                           title="Resetar senha"
                         >
                           <KeyRound className="w-5 h-5" />
@@ -536,7 +538,7 @@ export const AdminPage = () => {
                         {/* Expandir Features */}
                         <button
                           onClick={() => handleToggleExpand(user.id)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
+                          className="p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors text-zinc-500 dark:text-zinc-400"
                           title="Gerenciar funcionalidades"
                         >
                           <Settings2 className="w-5 h-5" />
@@ -548,20 +550,28 @@ export const AdminPage = () => {
                         </button>
                       </div>
                     )}
+
+                    {/* Conta de administrador não recebe ação destrutiva —
+                        ninguém suspende ou reseta a própria conta por aqui. */}
+                    {user.role === "admin" && (
+                      <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 flex-shrink-0">
+                        sem ações
+                      </span>
+                    )}
                   </div>
 
                   {/* Features Panel (Expandido) */}
                   {expandedUser === user.id && user.role !== "admin" && (
-                    <div className="border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 p-4">
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-white/[0.03] p-4">
                       {loadingFeatures === user.id ? (
                         <div className="flex items-center justify-center py-8">
-                          <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                          <Loader2 className="w-6 h-6 animate-spin text-emerald-600 dark:text-emerald-400" />
                         </div>
                       ) : (
                         <>
                           {/* Presets */}
                           <div className="flex flex-wrap items-center gap-2 mb-4">
-                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                               Presets:
                             </span>
                             <button
@@ -572,7 +582,7 @@ export const AdminPage = () => {
                             </button>
                             <button
                               onClick={() => handlePresetPessoal(user.id)}
-                              className="px-3 py-1.5 text-xs font-medium bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-950/50 transition-colors"
+                              className="px-3 py-1.5 text-xs font-medium bg-zinc-100 dark:bg-white/[0.04] text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-200 dark:hover:bg-white/[0.08] transition-colors"
                             >
                               Apenas Pessoal
                             </button>
@@ -594,20 +604,20 @@ export const AdminPage = () => {
                                   onClick={() => handleToggleFeature(user.id, feature)}
                                   className={`flex items-center gap-3 p-3 rounded-lg border transition-all text-left ${
                                     isEnabled
-                                      ? "bg-white dark:bg-gray-900 border-emerald-200 dark:border-emerald-800 hover:border-emerald-300"
-                                      : "bg-gray-100 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700 opacity-60 hover:opacity-80"
+                                      ? "bg-white dark:bg-white/[0.06] border-emerald-200 dark:border-emerald-800 hover:border-emerald-300"
+                                      : "bg-zinc-100 dark:bg-white/[0.02] border-zinc-200 dark:border-white/[0.09] hover:border-zinc-300 dark:hover:border-white/[0.14]"
                                   }`}
                                 >
                                   <div className={`w-8 h-5 rounded-full flex items-center transition-colors flex-shrink-0 ${
-                                    isEnabled ? "bg-emerald-500 justify-end" : "bg-gray-300 dark:bg-gray-600 justify-start"
+                                    isEnabled ? "bg-emerald-500 justify-end" : "bg-zinc-300 dark:bg-white/25 justify-start"
                                   }`}>
                                     <div className="w-4 h-4 bg-white rounded-full shadow mx-0.5" />
                                   </div>
                                   <div className="min-w-0">
-                                    <span className={`text-sm font-medium block ${isEnabled ? "text-gray-800 dark:text-gray-100" : "text-gray-500 dark:text-gray-400"}`}>
+                                    <span className={`text-sm font-medium block ${isEnabled ? "text-zinc-800 dark:text-zinc-100" : "text-zinc-500 dark:text-zinc-400"}`}>
                                       {FEATURE_LABELS[feature]}
                                     </span>
-                                    <span className="text-[11px] text-gray-400 dark:text-gray-500 block truncate">
+                                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400 block truncate">
                                       {FEATURE_DESCRIPTIONS[feature]}
                                     </span>
                                   </div>
@@ -617,11 +627,11 @@ export const AdminPage = () => {
                           </div>
 
                           {/* Salvar */}
-                          <div className="flex justify-end mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                          <div className="flex justify-end mt-4 pt-3 border-t border-zinc-200 dark:border-white/[0.09]">
                             <button
                               onClick={() => handleSaveFeatures(user.id)}
                               disabled={saving}
-                              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium text-sm"
+                              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium text-sm"
                             >
                               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                               Salvar Alterações
@@ -643,60 +653,60 @@ export const AdminPage = () => {
         <div className="space-y-4">
           {loadingStats ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+              <Loader2 className="w-8 h-8 animate-spin text-emerald-600 dark:text-emerald-400" />
             </div>
           ) : usageStats ? (
             <>
               {/* Métricas Principais */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatCard icon={<Users className="w-5 h-5" />} label="Total Usuários" value={usageStats.total_users} color="indigo" />
+                <StatCard icon={<Users className="w-5 h-5" />} label="Total Usuários" value={usageStats.total_users} color="zinc" />
                 <StatCard icon={<UserCheck className="w-5 h-5" />} label="Ativos Hoje" value={usageStats.active_today} color="emerald" />
-                <StatCard icon={<Activity className="w-5 h-5" />} label="Ativos 7 dias" value={usageStats.active_7d} color="blue" />
-                <StatCard icon={<TrendingUp className="w-5 h-5" />} label="Ativos 30 dias" value={usageStats.active_30d} color="purple" />
+                <StatCard icon={<Activity className="w-5 h-5" />} label="Ativos 7 dias" value={usageStats.active_7d} color="zinc" />
+                <StatCard icon={<TrendingUp className="w-5 h-5" />} label="Ativos 30 dias" value={usageStats.active_30d} color="zinc" />
               </div>
 
               {/* Logins e Novos Usuários */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Logins */}
-                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-4">
-                    <Activity className="w-5 h-5 text-blue-500" />
+                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5">
+                  <h3 className="font-display font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
+                    <Activity className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
                     Logins
                   </h3>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Hoje</span>
-                      <span className="font-bold text-gray-800 dark:text-gray-100">{usageStats.logins_today}</span>
+                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Hoje</span>
+                      <span className="font-mono tabular-nums font-bold text-zinc-900 dark:text-zinc-100">{usageStats.logins_today}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Últimos 7 dias</span>
-                      <span className="font-bold text-gray-800 dark:text-gray-100">{usageStats.logins_7d}</span>
+                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Últimos 7 dias</span>
+                      <span className="font-mono tabular-nums font-bold text-zinc-900 dark:text-zinc-100">{usageStats.logins_7d}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Últimos 30 dias</span>
-                      <span className="font-bold text-gray-800 dark:text-gray-100">{usageStats.logins_30d}</span>
+                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Últimos 30 dias</span>
+                      <span className="font-mono tabular-nums font-bold text-zinc-900 dark:text-zinc-100">{usageStats.logins_30d}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Novos Usuários */}
-                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-4">
+                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5">
+                  <h3 className="font-display font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
                     <TrendingUp className="w-5 h-5 text-emerald-500" />
                     Novos Cadastros
                   </h3>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Últimos 7 dias</span>
-                      <span className="font-bold text-emerald-600">{usageStats.new_users_7d}</span>
+                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Últimos 7 dias</span>
+                      <span className="font-mono tabular-nums font-bold text-emerald-600 dark:text-emerald-400">{usageStats.new_users_7d}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Últimos 30 dias</span>
-                      <span className="font-bold text-emerald-600">{usageStats.new_users_30d}</span>
+                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Últimos 30 dias</span>
+                      <span className="font-mono tabular-nums font-bold text-emerald-600 dark:text-emerald-400">{usageStats.new_users_30d}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Taxa de retenção (30d)</span>
-                      <span className="font-bold text-indigo-600">
+                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Taxa de retenção (30d)</span>
+                      <span className="font-mono tabular-nums font-bold text-zinc-900 dark:text-zinc-100">
                         {usageStats.total_users > 0
                           ? Math.round((usageStats.active_30d / usageStats.total_users) * 100)
                           : 0}%
@@ -707,16 +717,16 @@ export const AdminPage = () => {
               </div>
 
               {/* Gráfico de Logins por Dia */}
-              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+              <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-indigo-500" />
+                  <h3 className="font-display font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
                     Logins por Dia (últimos 30 dias)
                   </h3>
                   <button
                     onClick={fetchUsageStats}
                     disabled={loadingStats}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500"
+                    className="p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors text-zinc-500"
                   >
                     <RefreshCw className={`w-4 h-4 ${loadingStats ? "animate-spin" : ""}`} />
                   </button>
@@ -729,24 +739,24 @@ export const AdminPage = () => {
                       const height = Math.max((d.total / maxVal) * 100, 4);
                       return (
                         <div key={i} className="flex flex-col items-center gap-1 min-w-[24px]" title={`${d.dia}: ${d.total} logins`}>
-                          <span className="text-[10px] text-gray-400">{d.total}</span>
+                          <span className="font-mono tabular-nums text-[10px] text-zinc-500 dark:text-zinc-400">{d.total}</span>
                           <div
-                            className="w-5 bg-indigo-500 dark:bg-indigo-400 rounded-t-sm transition-all hover:bg-indigo-600"
+                            className="w-5 bg-emerald-500 dark:bg-emerald-400 rounded-t-sm transition-all hover:bg-emerald-600"
                             style={{ height: `${height}%` }}
                           />
-                          <span className="text-[9px] text-gray-400 -rotate-45 origin-left whitespace-nowrap">{d.dia}</span>
+                          <span className="font-mono text-[9px] text-zinc-400 dark:text-zinc-500 -rotate-45 origin-left whitespace-nowrap">{d.dia}</span>
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <p className="text-center text-gray-400 dark:text-gray-500 py-8">Nenhum dado de login ainda.</p>
+                  <p className="text-center text-zinc-400 dark:text-zinc-500 py-8">Nenhum dado de login ainda.</p>
                 )}
               </div>
 
               {/* Gráfico de Cadastros por Dia */}
-              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-                <h3 className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-4">
+              <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5">
+                <h3 className="font-display font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
                   <Calendar className="w-5 h-5 text-emerald-500" />
                   Novos Cadastros por Dia (últimos 30 dias)
                 </h3>
@@ -758,23 +768,23 @@ export const AdminPage = () => {
                       const height = Math.max((d.total / maxVal) * 100, 4);
                       return (
                         <div key={i} className="flex flex-col items-center gap-1 min-w-[24px]" title={`${d.dia}: ${d.total} cadastros`}>
-                          <span className="text-[10px] text-gray-400">{d.total}</span>
+                          <span className="font-mono tabular-nums text-[10px] text-zinc-500 dark:text-zinc-400">{d.total}</span>
                           <div
                             className="w-5 bg-emerald-500 dark:bg-emerald-400 rounded-t-sm transition-all hover:bg-emerald-600"
                             style={{ height: `${height}%` }}
                           />
-                          <span className="text-[9px] text-gray-400 -rotate-45 origin-left whitespace-nowrap">{d.dia}</span>
+                          <span className="font-mono text-[9px] text-zinc-400 dark:text-zinc-500 -rotate-45 origin-left whitespace-nowrap">{d.dia}</span>
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <p className="text-center text-gray-400 dark:text-gray-500 py-8">Nenhum cadastro nos últimos 30 dias.</p>
+                  <p className="text-center text-zinc-400 dark:text-zinc-500 py-8">Nenhum cadastro nos últimos 30 dias.</p>
                 )}
               </div>
             </>
           ) : (
-            <p className="text-center text-gray-500 py-16">Erro ao carregar estatísticas.</p>
+            <p className="text-center text-zinc-500 py-16">Erro ao carregar estatísticas.</p>
           )}
         </div>
       )}
@@ -784,10 +794,10 @@ export const AdminPage = () => {
         <div className="space-y-4">
           {/* Filtro de dias */}
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Sem acesso há mais de:
             </span>
-            <div className="flex gap-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-1">
+            <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1">
               {[7, 15, 30, 60, 90].map((days) => (
                 <button
                   key={days}
@@ -795,10 +805,10 @@ export const AdminPage = () => {
                     setInactiveDays(days);
                     fetchInactiveUsers(days);
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg font-mono tabular-nums text-sm font-medium transition-colors ${
                     inactiveDays === days
                       ? "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300"
-                      : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
                   }`}
                 >
                   {days}d
@@ -808,7 +818,7 @@ export const AdminPage = () => {
             <button
               onClick={() => fetchInactiveUsers(inactiveDays)}
               disabled={loadingInactive}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500"
+              className="p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors text-zinc-500"
             >
               <RefreshCw className={`w-4 h-4 ${loadingInactive ? "animate-spin" : ""}`} />
             </button>
@@ -819,40 +829,40 @@ export const AdminPage = () => {
               <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
             </div>
           ) : inactiveUsers.length === 0 ? (
-            <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+            <div className="text-center py-16 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
               <UserCheck className="w-12 h-12 text-emerald-300 dark:text-emerald-600 mx-auto mb-3" />
-              <p className="text-gray-500 dark:text-gray-400 font-medium">
-                Todos os usuários estão ativos! 🎉
+              <p className="text-zinc-500 dark:text-zinc-400 font-medium">
+                Todos os usuários estão ativos!
               </p>
-              <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
+              <p className="text-zinc-400 dark:text-zinc-500 text-sm mt-1">
                 Nenhum usuário inativo há mais de {inactiveDays} dias.
               </p>
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 <AlertTriangle className="w-4 h-4 inline mr-1 text-amber-500" />
                 {inactiveUsers.length} usuário{inactiveUsers.length > 1 ? "s" : ""} inativo{inactiveUsers.length > 1 ? "s" : ""} há mais de {inactiveDays} dias
               </p>
               {inactiveUsers.map((iu) => (
                 <div
                   key={iu.id}
-                  className="bg-white dark:bg-gray-900 rounded-xl border border-amber-200 dark:border-amber-900/50 p-4 flex items-center gap-4"
+                  className="bg-white dark:bg-zinc-900 rounded-2xl border border-amber-200 dark:border-amber-900/50 p-4 flex items-center gap-4"
                 >
                   <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center flex-shrink-0">
                     <UserMinus className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">
+                    <p className="font-semibold text-zinc-800 dark:text-zinc-100 truncate">
                       {iu.nome || "Sem nome"}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{iu.email}</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
-                      <span className="flex items-center gap-1">
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">{iu.email}</p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                      <span className="flex items-center gap-1 font-mono tabular-nums">
                         <Clock className="w-3 h-3" />
                         Último acesso: {formatDateShort(iu.last_sign_in_at)}
                       </span>
-                      <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 rounded-full font-medium">
+                      <span className="px-2 py-0.5 font-mono tabular-nums bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 rounded-full font-medium">
                         {iu.days_inactive} dias inativo
                       </span>
                       {!iu.is_active && (
@@ -886,7 +896,7 @@ export const AdminPage = () => {
         <div className="space-y-4">
           {/* Filtros de log */}
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex gap-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-1 overflow-x-auto">
+            <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 overflow-x-auto">
               {[
                 { value: "all", label: "Todos" },
                 { value: "login", label: "Logins" },
@@ -902,8 +912,8 @@ export const AdminPage = () => {
                   }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
                     logFilter === f.value
-                      ? "bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300"
-                      : "text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      ? "bg-emerald-600 text-white"
+                      : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
                   }`}
                 >
                   {f.label}
@@ -913,7 +923,7 @@ export const AdminPage = () => {
             <button
               onClick={() => fetchActivityLogs(logFilter === "all" ? undefined : logFilter)}
               disabled={loadingLogs}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-500"
+              className="p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors text-zinc-500"
             >
               <RefreshCw className={`w-4 h-4 ${loadingLogs ? "animate-spin" : ""}`} />
             </button>
@@ -921,16 +931,16 @@ export const AdminPage = () => {
 
           {loadingLogs ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+              <Loader2 className="w-8 h-8 animate-spin text-emerald-600 dark:text-emerald-400" />
             </div>
           ) : activityLogs.length === 0 ? (
-            <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-              <Activity className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-              <p className="text-gray-500 dark:text-gray-400">Nenhum registro de atividade encontrado.</p>
+            <div className="text-center py-16 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+              <Activity className="w-12 h-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
+              <p className="text-zinc-500 dark:text-zinc-400">Nenhum registro de atividade encontrado.</p>
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {activityLogs.map((log) => (
                   <LogRow key={log.id} log={log} formatDate={formatDate} />
                 ))}
@@ -957,21 +967,19 @@ function StatCard({
   color: string;
 }) {
   const colorMap: Record<string, string> = {
-    indigo: "text-indigo-500",
     emerald: "text-emerald-500",
-    blue: "text-blue-500",
-    purple: "text-purple-500",
     amber: "text-amber-500",
     red: "text-red-500",
+    zinc: "text-zinc-400 dark:text-zinc-500",
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
+    <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
       <div className="flex items-center gap-2 mb-1">
-        <span className={colorMap[color] || "text-gray-500"}>{icon}</span>
-        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{label}</span>
+        <span className={colorMap[color] || "text-zinc-400 dark:text-zinc-500"}>{icon}</span>
+        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 truncate">{label}</span>
       </div>
-      <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{value}</p>
+      <p className="font-mono tabular-nums text-2xl font-bold text-zinc-900 dark:text-zinc-100">{value}</p>
     </div>
   );
 }
@@ -979,23 +987,23 @@ function StatCard({
 function LogRow({ log, formatDate }: { log: ActivityLog; formatDate: (d: string | null) => string }) {
   const actionInfo = ACTION_LABELS[log.action] || {
     label: log.action,
-    color: "text-gray-600 bg-gray-50 dark:text-gray-400 dark:bg-gray-800",
-    icon: "⚪",
+    color: "text-zinc-600 bg-zinc-50 dark:text-zinc-400 dark:bg-white/[0.04]",
+    dot: "bg-zinc-300",
   };
 
   return (
-    <div className="px-4 py-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-      <span className="text-base">{actionInfo.icon}</span>
+    <div className="px-4 py-3 flex items-center gap-3 hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors">
+      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${actionInfo.dot}`} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${actionInfo.color}`}>
             {actionInfo.label}
           </span>
-          <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
+          <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate">
             {log.email || "—"}
           </span>
         </div>
-        <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+        <div className="flex items-center gap-3 mt-0.5 font-mono text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
           <span>{formatDate(log.created_at)}</span>
           {log.ip_address && (
             <span className="flex items-center gap-1">

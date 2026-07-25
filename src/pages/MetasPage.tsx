@@ -231,7 +231,7 @@ export const MetasPage = () => {
   return (
     <div className="space-y-6">
       {/* Adicionar nova meta */}
-      <section className="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="metas-form">
+      <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="metas-form">
         <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">
           {metaEmEdicao ? "Editar Meta" : "Nova Meta"}
         </h2>
@@ -239,7 +239,7 @@ export const MetasPage = () => {
           <select
             value={novaMeta.categoria}
             onChange={(e) => setNovaMeta({ ...novaMeta, categoria: e.target.value })}
-            className="flex-1 px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none appearance-none"
+            className="flex-1 px-4 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none appearance-none"
           >
             <option value="" disabled>Selecione uma categoria</option>
             {categoriasDisponiveis.map((cat) => (
@@ -253,7 +253,7 @@ export const MetasPage = () => {
               value={novaMeta.limite}
               onChange={(e) => setNovaMeta({ ...novaMeta, limite: e.target.value })}
               placeholder="0,00"
-              className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             />
           </div>
           <button
@@ -275,49 +275,52 @@ export const MetasPage = () => {
           {metaEmEdicao && (
             <button
               onClick={handleCancelarEdicao}
-              className="px-4 py-3 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+              className="px-4 py-3 border border-zinc-300 dark:border-white/[0.09] text-zinc-600 dark:text-zinc-300 rounded-lg hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors"
             >
               Cancelar
             </button>
           )}
         </div>
-        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-2">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
           Selecione a categoria e defina o limite mensal. As barras de progresso aparecerão no Dashboard.
         </p>
       </section>
 
       {/* Lista de metas */}
-      <section className="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="metas-lista">
+      <section className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm" data-tour="metas-lista">
         <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Suas Metas</h2>
         {metas.length > 0 ? (
           <div className="space-y-3">
             {metas.map((meta) => (
-              <div key={meta.id} className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:border-zinc-700 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-950/40 rounded-xl flex items-center justify-center">
+              <div key={meta.id} className="flex items-center justify-between gap-3 bg-zinc-50 dark:bg-white/[0.04] rounded-lg p-4 border border-zinc-100 hover:border-zinc-300 dark:border-white/[0.06] dark:hover:border-white/[0.14] transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 flex-shrink-0 bg-emerald-100 dark:bg-emerald-950/40 rounded-xl flex items-center justify-center">
                     <Target className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 capitalize">{meta.categoria}</span>
-                    <p className="text-zinc-400 dark:text-zinc-500 text-xs">Limite: <span className="font-mono tabular-nums">{formatCurrency(meta.limite)}</span> / mês</p>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-xs">Limite: <span className="font-mono tabular-nums">{formatCurrency(meta.limite)}</span> / mês</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5">
+                {/* Ação em item de lista: ícone fantasma — cor só no hover. */}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   <button
                     onClick={() => handleEditarMeta(meta)}
-                    className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors group"
+                    className="p-1.5 rounded-lg text-zinc-500 hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400 transition-colors"
                     title="Editar meta"
+                    aria-label={`Editar meta de ${meta.categoria}`}
                   >
-                    <Edit2 className="w-4 h-4 text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-700 dark:group-hover:text-zinc-200 transition-colors" />
+                    <Edit2 className="w-4 h-4" />
                   </button>
 
                   <button
                     onClick={() => handleDeleteMeta(meta)}
                     data-tour="metas-item-remover"
-                    className="p-1.5 hover:bg-red-50 rounded-lg transition-colors group"
+                    className="p-1.5 rounded-lg text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"
                     title="Remover meta"
+                    aria-label={`Remover meta de ${meta.categoria}`}
                   >
-                    <X className="w-4 h-4 text-zinc-400 dark:text-zinc-500 group-hover:text-red-500 transition-colors" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>

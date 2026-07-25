@@ -180,7 +180,7 @@ export const GastosPage = () => {
                   onClick={handleExportPDF}
                   disabled={parcelasAtivas.length === 0}
                   data-tour="gastos-btn-pdf"
-                  className="border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 px-3 py-2.5 rounded-xl flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  className="border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/[0.06] hover:border-zinc-300 px-3 py-2.5 rounded-xl flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                   title="Exportar PDF"
                 >
                   <FileText className="w-5 h-5" />

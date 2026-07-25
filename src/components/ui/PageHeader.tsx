@@ -15,7 +15,7 @@ export const Pista = ({ children }: { children: ReactNode }) => (
     >
       <path
         d="M0,6 C12,4 22,7 35,5 C48,3 58,6 72,4 C82,3 92,5 100,2"
-        stroke="#10b981"
+        className="stroke-emerald-500 dark:stroke-emerald-400"
         strokeWidth="1.6"
         strokeLinecap="round"
         fill="none"
@@ -38,11 +38,11 @@ interface PageHeaderProps {
 export const PageHeader = ({ eyebrow, title, description }: PageHeaderProps) => (
   <div>
     {eyebrow && (
-      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500 mb-1">
+      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-1">
         {eyebrow}
       </p>
     )}
-    <h1 className="font-display text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+    <h1 className="font-display text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
       {title}
     </h1>
     {description && (

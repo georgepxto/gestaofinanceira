@@ -41,7 +41,7 @@ interface AppContextType {
   modalFeedback: { show: boolean; titulo: string; mensagem: string; tipo: "sucesso" | "info" };
   setModalFeedback: (modal: { show: boolean; titulo: string; mensagem: string; tipo: "sucesso" | "info" }) => void;
   modalConfirm: { show: boolean; titulo: string; mensagem: string; onConfirm: () => void };
-  setModalConfirm: (modal: { show: boolean; titulo: string; mensagem: string; onConfirm: () => void; confirmLabel?: string; confirmColor?: "red" | "green" | "blue" | "indigo" | "purple" }) => void;
+  setModalConfirm: (modal: { show: boolean; titulo: string; mensagem: string; onConfirm: () => void; confirmLabel?: string; confirmColor?: "red" | "emerald" | "amber" }) => void;
 
   // Pessoas
   pessoas: string[];

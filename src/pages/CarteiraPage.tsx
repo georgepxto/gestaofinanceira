@@ -28,7 +28,7 @@ interface CarteiraView {
 const VIEWS: CarteiraView[] = [
   {
     to: "/carteira/contas",
-    label: "Contas",
+    label: "Contas e receitas",
     feature: "contas_bancarias",
     tourHeaderId: "contas-header",
     eyebrow: "Saldo",

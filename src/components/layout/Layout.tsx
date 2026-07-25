@@ -18,7 +18,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
 
   return (
     <TutorialHelpContext.Provider value={{ helpButton, setHelpButton }}>
-      <div className="min-h-screen bg-zinc-50 dark:bg-[#0B0F19]">
+      <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0B]">
         <Sidebar onLogout={onLogout} userName={userName} userEmail={userEmail} />
 
         {/* Main Content */}
@@ -29,7 +29,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
           transition-all duration-300
         ">
           {/* Desktop Header for Notifications */}
-          <header className="hidden md:flex justify-end items-center p-4 pb-0 bg-zinc-50 dark:bg-[#0B0F19] z-30 relative">
+          <header className="hidden md:flex justify-end items-center p-4 pb-0 bg-zinc-50 dark:bg-[#0A0A0B] z-30 relative">
             <div className="flex items-center gap-2">
               {helpButton && (
                 <button
@@ -37,7 +37,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
                   data-tour={helpButton.dataTour}
                   title={helpButton.title}
                   aria-label={helpButton.ariaLabel}
-                  className="flex w-8 h-8 rounded-full border border-zinc-300 dark:border-zinc-700 bg-white/80 dark:bg-zinc-900/80 text-zinc-500 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-400 dark:hover:border-emerald-500 items-center justify-center shadow-sm transition-colors"
+                  className="flex w-8 h-8 rounded-full border border-zinc-300 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.04] text-zinc-500 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-400 dark:hover:border-emerald-500 items-center justify-center shadow-sm transition-colors"
                 >
                   ?
                 </button>

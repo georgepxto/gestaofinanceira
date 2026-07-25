@@ -17,7 +17,7 @@ interface LinhaConsumo extends MetaGasto {
 function corDoConsumo(pct: number) {
   if (pct > 100) return { barra: "bg-red-500", texto: "text-red-600" };
   if (pct >= 80) return { barra: "bg-amber-500", texto: "text-amber-600" };
-  return { barra: "bg-emerald-500", texto: "text-emerald-600" };
+  return { barra: "bg-emerald-500", texto: "text-emerald-600 dark:text-emerald-400" };
 }
 
 /**
@@ -82,13 +82,13 @@ export function OrcamentoMetasResumo({ meusGastosDoMes }: OrcamentoMetasResumoPr
     >
       <div className="mb-4 flex items-end justify-between gap-4">
         <div className="min-w-0">
-          <p className="mb-1 flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-600">
+          <p className="mb-1 flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
             <Target className="h-3.5 w-3.5" />
             Orçado vs. gasto
           </p>
           <p className="font-mono text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalGasto)}
-            <span className="text-base font-medium text-zinc-400 dark:text-zinc-500">
+            <span className="text-base font-medium text-zinc-500 dark:text-zinc-400">
               {" "}
               / {formatCurrency(totalLimite)}
             </span>
@@ -102,7 +102,7 @@ export function OrcamentoMetasResumo({ meusGastosDoMes }: OrcamentoMetasResumoPr
       </div>
 
       {/* Barra total */}
-      <div className="mb-5 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+      <div className="mb-5 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/[0.04]">
         <div
           className={`h-full rounded-full transition-all duration-700 ${corTotal.barra}`}
           style={{ width: `${Math.min(pctTotal, 100)}%` }}
@@ -125,7 +125,7 @@ export function OrcamentoMetasResumo({ meusGastosDoMes }: OrcamentoMetasResumoPr
                   {formatCurrency(linha.limite)}
                 </span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+              <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-white/[0.04]">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${cor.barra}`}
                   style={{ width: `${Math.min(linha.pct, 100)}%` }}

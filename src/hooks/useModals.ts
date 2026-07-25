@@ -13,7 +13,7 @@ interface ModalConfirm {
   mensagem: string;
   onConfirm: () => void;
   confirmLabel?: string;
-  confirmColor?: "red" | "green" | "blue" | "indigo" | "purple";
+  confirmColor?: "red" | "emerald" | "amber";
 }
 
 export function useModals() {

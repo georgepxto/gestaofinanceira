@@ -20,9 +20,9 @@ function SegmentedTab({ to, label }: SegmentedTab) {
       to={to}
       role="tab"
       aria-selected={isActive}
-      className={`whitespace-nowrap rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-100 dark:focus-visible:ring-offset-zinc-900 ${
+      className={`whitespace-nowrap rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 focus-visible:ring-offset-zinc-100 dark:focus-visible:ring-offset-[#0A0A0B] ${
         isActive
-          ? "bg-white text-emerald-700 shadow-sm dark:bg-zinc-900 dark:text-emerald-400"
+          ? "bg-white text-emerald-700 shadow-sm dark:bg-white/[0.09] dark:text-emerald-400 dark:shadow-none"
           : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
       }`}
     >
@@ -49,7 +49,7 @@ export function SegmentedTabs({ tabs, ariaLabel }: SegmentedTabsProps) {
       <div
         role="tablist"
         aria-label={ariaLabel}
-        className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-zinc-100 p-1 dark:border-zinc-800 dark:bg-zinc-800/60"
+        className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-zinc-100 p-1 dark:border-white/[0.06] dark:bg-white/[0.04]"
       >
         {tabs.map((tab) => (
           <SegmentedTab key={tab.to} {...tab} />

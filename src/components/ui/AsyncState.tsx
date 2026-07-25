@@ -31,15 +31,15 @@ function StateCard({ icon, title, description, colorClass, compact, actionLabel,
         <div className={`mx-auto mb-3 w-12 h-12 rounded-full flex items-center justify-center ${colorClass}`}>
           {icon}
         </div>
-        <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">{title}</h3>
+        <h3 className="text-base font-semibold text-zinc-800 dark:text-zinc-100">{title}</h3>
         {description ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{description}</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{description}</p>
         ) : null}
 
         {onAction ? (
           <button
             onClick={onAction}
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium transition-colors"
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-200 text-sm font-medium transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
             {actionLabel || "Tentar novamente"}
@@ -85,10 +85,10 @@ export function PageLoadingState({ title = "Carregando...", description = "Estam
 export function PageEmptyState({ title, description, compact }: BaseProps) {
   return (
     <StateCard
-      icon={<Inbox className="w-6 h-6 text-gray-500" />}
+      icon={<Inbox className="w-6 h-6 text-zinc-500" />}
       title={title}
       description={description}
-      colorClass="bg-gray-100 dark:bg-gray-800"
+      colorClass="bg-zinc-100 dark:bg-white/[0.04]"
       compact={compact}
     />
   );

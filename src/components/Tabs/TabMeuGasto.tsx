@@ -122,11 +122,11 @@ export function TabMeuGasto({
   return (
     <>
       {/* Navegação de Meses */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm p-4 border border-zinc-200 dark:border-zinc-800" data-tour="eu-navegacao-mes">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm p-4 border border-zinc-200 dark:border-zinc-800" data-tour="eu-navegacao-mes">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navegarMes("anterior")}
-            className="p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-50 dark:hover:bg-white/[0.06] rounded-lg transition-colors"
             aria-label="Mês anterior"
           >
             <ChevronLeft className="w-6 h-6 text-zinc-600 dark:text-zinc-400" />
@@ -146,7 +146,7 @@ export function TabMeuGasto({
 
           <button
             onClick={() => navegarMes("proximo")}
-            className="p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-50 dark:hover:bg-white/[0.06] rounded-lg transition-colors"
             aria-label="Próximo mês"
           >
             <ChevronRight className="w-6 h-6 text-zinc-600 dark:text-zinc-400" />
@@ -154,44 +154,49 @@ export function TabMeuGasto({
         </div>
       </div>
 
-      {/* Faixa de Resumo */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 grid grid-cols-2 sm:grid-cols-4 divide-x divide-zinc-100 dark:divide-zinc-800" data-tour="eu-resumo-cards">
-        <div className="p-4 min-w-0" data-tour="eu-card-credito">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 mb-1">
+      {/* Faixa de Resumo — auto-fit com piso de 200px (maior que a tinta do
+          maior valor em 24px mono, então nada vaza na coluna vizinha) e sem
+          divisória filha, que quebraria o auto-fit. Valor em R$ nunca trunca. */}
+      <div
+        className="grid gap-x-8 gap-y-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]"
+        data-tour="eu-resumo-cards"
+      >
+        <div className="min-w-0" data-tour="eu-card-credito">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-1">
             Crédito
           </p>
-          <p className="font-mono tabular-nums text-lg sm:text-2xl font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+          <p className="font-mono tabular-nums text-lg sm:text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalMeusGastosCredito)}
           </p>
         </div>
-        <div className="p-4 min-w-0" data-tour="eu-card-debito">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 mb-1">
+        <div className="min-w-0" data-tour="eu-card-debito">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-1">
             Débito
           </p>
-          <p className="font-mono tabular-nums text-lg sm:text-2xl font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+          <p className="font-mono tabular-nums text-lg sm:text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalMeusGastosDebito)}
           </p>
         </div>
-        <div className="p-4 min-w-0" data-tour="eu-card-pagos">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 mb-1">
+        <div className="min-w-0" data-tour="eu-card-pagos">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-1">
             Pago
           </p>
-          <p className="font-mono tabular-nums text-lg sm:text-2xl font-semibold text-emerald-700 dark:text-emerald-400 truncate">
+          <p className="font-mono tabular-nums text-lg sm:text-2xl font-semibold text-emerald-700 dark:text-emerald-400">
             {formatCurrency(totalMeusGastosPagos)}
           </p>
         </div>
-        <div className="p-4 min-w-0" data-tour="eu-card-fixos">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 mb-1">
+        <div className="min-w-0" data-tour="eu-card-fixos">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-1">
             Fixos
           </p>
-          <p className="font-mono tabular-nums text-lg sm:text-2xl font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+          <p className="font-mono tabular-nums text-lg sm:text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalGastosFixos)}
           </p>
         </div>
       </div>
 
       {/* Filtro de Categoria */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800" data-tour="eu-filtro-categoria">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800" data-tour="eu-filtro-categoria">
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-2">Filtrar por:</p>
         <div className="flex gap-2 flex-wrap">
           <button
@@ -199,7 +204,7 @@ export function TabMeuGasto({
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               filtroCategoriaMeuGasto === ""
                 ? "bg-emerald-600 text-white"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.08]"
             }`}
           >
             Todos
@@ -209,7 +214,7 @@ export function TabMeuGasto({
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
               filtroCategoriaMeuGasto === "pessoal"
                 ? "bg-emerald-600 text-white"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.08]"
             }`}
           >
             <User className="w-3 h-3" /> Pessoal
@@ -219,7 +224,7 @@ export function TabMeuGasto({
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
               filtroCategoriaMeuGasto === "dividido"
                 ? "bg-emerald-600 text-white"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.08]"
             }`}
           >
             <Users className="w-3 h-3" /> Dividido
@@ -229,7 +234,7 @@ export function TabMeuGasto({
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
               filtroCategoriaMeuGasto === "divida"
                 ? "bg-emerald-600 text-white"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.08]"
             }`}
           >
             <Receipt className="w-3 h-3" /> Dívida
@@ -247,14 +252,14 @@ export function TabMeuGasto({
                 onChange={(e) => setFiltroDiaMeuGasto(e.target.value)}
                 max={format(mesVisualizacao, "yyyy-MM") + "-31"}
                 min={format(mesVisualizacao, "yyyy-MM") + "-01"}
-                className="w-full px-3 py-1.5 pl-10 rounded-lg text-sm font-mono tabular-nums bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 outline-none dark:[color-scheme:dark]"
+                className="w-full px-3 py-1.5 pl-10 rounded-lg text-sm font-mono tabular-nums bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 outline-none dark:[color-scheme:dark]"
               />
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600 dark:text-emerald-500 pointer-events-none" />
             </div>
             {filtroDiaMeuGasto && (
               <button
                 onClick={() => setFiltroDiaMeuGasto("")}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.08] transition-colors"
               >
                 Limpar
               </button>
@@ -265,9 +270,9 @@ export function TabMeuGasto({
 
       {/* Gastos Fixos */}
       {gastosFixos.length > 0 && (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800" data-tour="eu-gastos-fixos">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800" data-tour="eu-gastos-fixos">
           <h3 className="font-display text-zinc-800 dark:text-zinc-100 font-semibold mb-3 flex items-center gap-2">
-            <Repeat className="w-4 h-4 text-zinc-400" />
+            <Repeat className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
             Gastos Fixos Mensais
           </h3>
           <div className="space-y-2">
@@ -277,20 +282,21 @@ export function TabMeuGasto({
                 const isSuspenso = gasto.meses_suspensos?.includes(format(mesVisualizacao, "yyyy-MM"));
                 
                 return (
+                // Atenuar é um recurso só (o texto do item já usa zinc-500 +
+                // line-through); empilhar `opacity`/`grayscale` por cima
+                // derrubaria o contraste abaixo do legível.
                 <div
                   key={gasto.id}
                   className={`p-3 rounded-xl border flex items-center gap-3 ${
-                    isSuspenso
-                      ? "bg-zinc-100/60 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 opacity-60 grayscale-[0.7]"
-                      : gasto.ativo !== false
-                      ? "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
-                      : "bg-zinc-100 dark:bg-zinc-800/60 border-zinc-200 dark:border-zinc-700 opacity-60"
+                    isSuspenso || gasto.ativo === false
+                      ? "bg-zinc-100 dark:bg-white/[0.03] border-zinc-200 dark:border-white/[0.09]"
+                      : "bg-zinc-50 dark:bg-white/[0.04] border-zinc-200 dark:border-white/[0.09]"
                   }`}
                 >
                   {/* Ícone */}
                   <div className={`p-2 rounded-lg flex-shrink-0 ${
                     gasto.tipo === "credito"
-                      ? "bg-zinc-100 dark:bg-zinc-700/60"
+                      ? "bg-zinc-100 dark:bg-white/[0.07]"
                       : "bg-emerald-100 dark:bg-emerald-500/20"
                   }`}>
                     {gasto.tipo === "credito" ? (
@@ -302,7 +308,11 @@ export function TabMeuGasto({
 
                   {/* Nome + info */}
                   <div className="min-w-0 flex-1">
-                    <p className="text-zinc-800 dark:text-zinc-100 font-semibold text-sm truncate">
+                    <p className={`font-semibold text-sm truncate ${
+                      isSuspenso || gasto.ativo === false
+                        ? "text-zinc-500 dark:text-zinc-400 line-through"
+                        : "text-zinc-800 dark:text-zinc-100"
+                    }`}>
                       {gasto.descricao}
                     </p>
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
@@ -310,7 +320,7 @@ export function TabMeuGasto({
                         Dia {gasto.dia_vencimento}
                       </span>
                       {gasto.dividido_com && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600 dark:bg-zinc-700/60 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 font-medium">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400 border border-zinc-200 dark:border-white/[0.09] font-medium">
                           c/ {formatarDivididoCom(gasto)}
                         </span>
                       )}
@@ -320,7 +330,7 @@ export function TabMeuGasto({
                         </span>
                       )}
                       {gasto.ativo === false && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400 font-medium">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-200 text-zinc-500 dark:bg-white/[0.07] dark:text-zinc-400 font-medium">
                           Inativo
                         </span>
                       )}
@@ -346,7 +356,7 @@ export function TabMeuGasto({
                       </button>
                       <button
                         onClick={() => handleEditMeuGasto(gasto)}
-                        className="p-1.5 rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                        className="p-1.5 rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-white/[0.08] dark:hover:text-zinc-300 transition-colors"
                         title="Editar"
                       >
                         <Edit3 className="w-4 h-4" />
@@ -382,7 +392,7 @@ export function TabMeuGasto({
       )}
 
       {/* Lista de Meus Gastos do Mês */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800" data-tour="eu-lista-gastos">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800" data-tour="eu-lista-gastos">
         <h3 className="font-display text-zinc-800 dark:text-zinc-100 font-semibold mb-3 flex items-center gap-2">
           <Receipt className="w-4 h-4 text-emerald-600 dark:text-emerald-500" />
           Meus Gastos do Mês ({meusGastosDoMes.length})
@@ -438,7 +448,7 @@ export function TabMeuGasto({
                     <span className="font-mono text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-500">
                       Dia {dia}
                     </span>
-                    <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800"></div>
+                    <div className="flex-1 h-px bg-zinc-100 dark:bg-white/[0.04]"></div>
                   </div>
                   {/* Lista de gastos do dia */}
                   <ul className="space-y-3">
@@ -463,14 +473,16 @@ export function TabMeuGasto({
                       return (
                         <li
                           key={gasto.id}
-                          className={`p-4 rounded-xl border transition-all ${
+                          // Atenuação vem do texto (zinc-500 + line-through), não
+                          // de `opacity`/`grayscale` — empilhar as duas some com o texto.
+                          className={`p-4 rounded-xl border transition-colors ${
                             isSuspenso
-                              ? "bg-zinc-200/50 dark:bg-zinc-800/50 border-zinc-300 dark:border-zinc-700 opacity-60 grayscale-[0.8]"
+                              ? "bg-zinc-100 dark:bg-white/[0.03] border-zinc-200 dark:border-white/[0.09]"
                               : gasto.pago
-                              ? "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-800 opacity-70"
+                              ? "bg-zinc-100 dark:bg-white/[0.04] border-zinc-200 dark:border-zinc-800"
                               : gasto.categoria === "divida"
                               ? "bg-amber-50/60 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50"
-                              : "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-800"
+                              : "bg-zinc-50 dark:bg-white/[0.04] border-zinc-200 dark:border-zinc-800"
                           }`}
                         >
                           <div className="flex items-start justify-between">
@@ -485,7 +497,7 @@ export function TabMeuGasto({
                                     ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
                                     : gasto.categoria === "divida"
                                     ? "bg-amber-100/60 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 hover:bg-amber-200/60 dark:hover:bg-amber-900/60"
-                                    : "bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-600"
+                                    : "bg-zinc-100 dark:bg-white/[0.07] text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.12]"
                                 }`}
                               >
                                 {gasto.pago ? (
@@ -497,8 +509,8 @@ export function TabMeuGasto({
                               <div>
                                 <p
                                   className={`font-medium ${
-                                    gasto.pago
-                                      ? "text-zinc-500 dark:text-zinc-400"
+                                    gasto.pago || isSuspenso
+                                      ? "text-zinc-500 dark:text-zinc-400 line-through"
                                       : "text-zinc-800 dark:text-zinc-100"
                                   }`}
                                 >
@@ -506,7 +518,7 @@ export function TabMeuGasto({
                                 </p>
                                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                                   <span
-                                    className="font-mono text-[10px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-600 dark:bg-zinc-700/60 dark:text-zinc-400"
+                                    className="font-mono text-[10px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400"
                                   >
                                     {gasto.tipo === "credito"
                                       ? (nomeFatura ? `Crédito (Fatura de ${nomeFatura})` : "Crédito")
@@ -518,7 +530,7 @@ export function TabMeuGasto({
                                     </span>
                                   )}
                                   {!!gasto.dividido_com && (
-                                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 dark:bg-zinc-700/60 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 flex items-center gap-1">
+                                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400 border border-zinc-200 dark:border-white/[0.09] flex items-center gap-1">
                                       <Users className="w-3 h-3" />
                                       {formatarDivididoCom(gasto)}
                                     </span>
@@ -568,7 +580,7 @@ export function TabMeuGasto({
                               )}
                               <button
                                 onClick={() => handleEditMeuGasto(gasto)}
-                                className="p-1.5 rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                                className="p-1.5 rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-white/[0.08] dark:hover:text-zinc-300 transition-colors"
                                 title="Editar"
                               >
                                 <Edit3 className="w-4 h-4" />

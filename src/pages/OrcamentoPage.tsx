@@ -7,10 +7,9 @@ import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import type { UserFeatures } from "../types/admin";
 
 /**
- * Aba-mãe "Orçamento" — o que gasto vs. quanto quero gastar.
- * Reúne os Lançamentos pessoais (Meus Gastos) e as Metas por categoria sob um
- * cabeçalho único, alternando por sub-rotas reais (/orcamento/gastos,
- * /orcamento/metas).
+ * Aba-mãe "Gastos" — o que gasto vs. quanto quero gastar.
+ * Reúne os Lançamentos pessoais e as Metas por categoria sob um cabeçalho
+ * único, alternando por sub-rotas reais (/gastos/lancamentos, /gastos/metas).
  *
  * Só apresentação/navegação: o cabeçalho assume a identidade da visão ativa
  * (PageHeader + Pista preservados) e o corpo de cada visão vem pelo <Outlet/>.
@@ -28,7 +27,7 @@ interface OrcamentoView {
 
 const VIEWS: OrcamentoView[] = [
   {
-    to: "/orcamento/gastos",
+    to: "/gastos/lancamentos",
     label: "Lançamentos",
     feature: "meus_gastos",
     tourHeaderId: "eu-header",
@@ -41,7 +40,7 @@ const VIEWS: OrcamentoView[] = [
     description: "Despesas pessoais e gastos fixos",
   },
   {
-    to: "/orcamento/metas",
+    to: "/gastos/metas",
     label: "Metas",
     feature: "metas",
     tourHeaderId: "metas-header",
@@ -74,7 +73,7 @@ export const OrcamentoPage = () => {
       </div>
 
       <SegmentedTabs
-        ariaLabel="Visões do orçamento"
+        ariaLabel="Visões de gastos"
         tabs={availableViews.map((v) => ({ to: v.to, label: v.label }))}
       />
 

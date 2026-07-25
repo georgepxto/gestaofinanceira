@@ -27,7 +27,7 @@ export function Toaster() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="animate-in slide-in-from-right-full fade-in duration-500 ease-out fill-mode-forwards bg-white dark:bg-gray-900 text-gray-800 dark:text-white shadow-xl shadow-black/10 dark:shadow-black/40 rounded-2xl p-4 flex items-center gap-3 min-w-[280px] max-w-sm pointer-events-auto border border-gray-100 dark:border-gray-800 relative z-50 overflow-hidden"
+          className="animate-in slide-in-from-right-full fade-in duration-500 ease-out fill-mode-forwards bg-white dark:bg-zinc-900 text-zinc-800 dark:text-white shadow-xl shadow-black/10 dark:shadow-black/40 rounded-2xl p-4 flex items-center gap-3 min-w-[280px] max-w-sm pointer-events-auto border border-zinc-100 dark:border-zinc-800 relative z-50 overflow-hidden"
         >
           {t.type === 'success' ? (
             <div className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-1.5 rounded-full shrink-0">
@@ -42,7 +42,7 @@ export function Toaster() {
           <button
             onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
             aria-label="Fechar notificação"
-            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors bg-transparent border-0 outline-none cursor-pointer p-1"
+            className="text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors bg-transparent border-0 outline-none cursor-pointer p-1"
           >
              <X className="w-4 h-4" />
           </button>

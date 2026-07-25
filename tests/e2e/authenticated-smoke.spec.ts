@@ -80,7 +80,7 @@ async function attachScreenshot(page: Page, name: string, testInfo: TestInfo) {
 
 /**
  * Confirma que a pílula ativa do segmented control (sub-navegação das abas-mãe
- * Orçamento/Na Rua/Carteira) corresponde à visão esperada.
+ * Gastos/A receber/Carteira) corresponde à visão esperada.
  */
 async function expectActiveTab(page: Page, label: string) {
   await expect(page.getByRole("tab", { name: label })).toHaveAttribute(
@@ -105,8 +105,8 @@ async function navigateAllEnabledPages(page: Page, testInfo: TestInfo) {
   // manter a cobertura de cada visão fundida (redireciona se a flag estiver off,
   // nunca cai no /login).
   const subRoutes = [
-    "/orcamento/gastos",
-    "/orcamento/metas",
+    "/gastos/lancamentos",
+    "/gastos/metas",
     "/a-receber/mes",
     "/a-receber/aberto",
     "/a-receber/pessoas",
@@ -136,7 +136,7 @@ async function navigateAllEnabledPages(page: Page, testInfo: TestInfo) {
 
 async function runMetasCrud(page: Page, testInfo: TestInfo) {
   await appendChecklist(testInfo, "Metas", ["Salvar", "Atualizar", "Excluir"]);
-  await page.goto("/orcamento/metas");
+  await page.goto("/gastos/metas");
   await expect(page.getByRole("heading", { name: "Metas de Gasto" })).toBeVisible();
   await expectActiveTab(page, "Metas");
 
@@ -538,7 +538,7 @@ async function runEmprestimosMesFullFlow(page: Page, testInfo: TestInfo) {
   try {
     await page.goto("/a-receber/mes");
     await expect(page.getByRole("heading", { name: "Empréstimos do Mês" })).toBeVisible();
-    await expectActiveTab(page, "Por mês");
+    await expectActiveTab(page, "Do mês");
     await attachScreenshot(page, "80-gastos-overview", testInfo);
 
     await page.getByRole("button", { name: "Próximo mês" }).click();
@@ -653,7 +653,7 @@ async function runMeusGastosFullFlow(page: Page, testInfo: TestInfo) {
   };
 
   try {
-    await page.goto("/orcamento/gastos");
+    await page.goto("/gastos/lancamentos");
     await expect(page.locator("main h1", { hasText: "Meus Gastos" })).toBeVisible();
     await expectActiveTab(page, "Lançamentos");
     await attachScreenshot(page, "90-meus-gastos-overview", testInfo);
@@ -693,7 +693,7 @@ async function runMeusGastosFullFlow(page: Page, testInfo: TestInfo) {
     await itemEditado.locator("button").first().click();
     await attachScreenshot(page, "94-meus-gastos-marcado-pago", testInfo);
   } finally {
-    await page.goto("/orcamento/gastos");
+    await page.goto("/gastos/lancamentos");
     await resetMeusGastosFilters();
 
     const cleanupItemEditado = getItem(descricaoEditada);

@@ -92,12 +92,12 @@ export const PessoasPage = () => {
 
   const { theme } = useTheme();
   const tooltipStyle = useMemo(() => theme === "dark"
-    ? { backgroundColor: "#111827", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 4px 24px -4px rgba(0,0,0,0.5)", fontSize: "12px", color: "#f3f4f6" }
-    : { backgroundColor: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "10px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", fontSize: "12px" },
+    ? { backgroundColor: "#18181B", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 4px 24px -4px rgba(0,0,0,0.5)", fontSize: "12px", color: "#FAFAFA" }
+    : { backgroundColor: "#FFFFFF", border: "1px solid #E4E4E7", borderRadius: "10px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", fontSize: "12px" },
     [theme]
   );
-  const tooltipItemStyle = useMemo(() => theme === "dark" ? { color: "#d1d5db" } : { color: "#374151" }, [theme]);
-  const tooltipLabelStyle = useMemo(() => theme === "dark" ? { color: "#9ca3af" } : { color: "#6b7280" }, [theme]);
+  const tooltipItemStyle = useMemo(() => theme === "dark" ? { color: "#F4F4F5" } : { color: "#27272A" }, [theme]);
+  const tooltipLabelStyle = useMemo(() => theme === "dark" ? { color: "#A1A1AA" } : { color: "#71717A" }, [theme]);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -192,11 +192,11 @@ export const PessoasPage = () => {
       </div>
 
       {/* Seletor de Mês */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm p-4 border border-zinc-200 dark:border-zinc-800" data-tour="devedores-mes">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm p-4 border border-zinc-200 dark:border-zinc-800" data-tour="devedores-mes">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navegarMes("anterior")}
-            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors"
             aria-label="Mês anterior"
           >
             <ChevronLeft className="w-6 h-6 text-zinc-500 dark:text-zinc-400" />
@@ -214,7 +214,7 @@ export const PessoasPage = () => {
           </div>
           <button
             onClick={() => navegarMes("proximo")}
-            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors"
             aria-label="Próximo mês"
           >
             <ChevronRight className="w-6 h-6 text-zinc-500 dark:text-zinc-400" />
@@ -224,7 +224,7 @@ export const PessoasPage = () => {
 
       {/* Add Person Form */}
       {showAddForm && (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
           <h3 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Adicionar Devedor</h3>
           <div className="space-y-3">
             <input
@@ -232,7 +232,7 @@ export const PessoasPage = () => {
               value={novaPessoa}
               onChange={(e) => setNovaPessoa(e.target.value)}
               placeholder="Nome do devedor"
-              className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              className="w-full px-4 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               autoFocus
             />
@@ -247,7 +247,7 @@ export const PessoasPage = () => {
               </button>
               <button
                 onClick={() => { setShowAddForm(false); setNovaPessoa(""); }}
-                className="px-4 py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400 rounded-lg transition-colors"
+                className="px-4 py-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] text-zinc-600 dark:text-zinc-300 rounded-lg transition-colors"
               >
                 Cancelar
               </button>
@@ -259,7 +259,7 @@ export const PessoasPage = () => {
       {/* People List with Charts */}
       <div className="space-y-3" data-tour="devedores-lista">
         {pessoas.length === 0 ? (
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 shadow-sm">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 shadow-sm">
             <PageEmptyState
               compact
               title="Nenhum devedor cadastrado"
@@ -278,31 +278,36 @@ export const PessoasPage = () => {
             return (
               <div
                 key={pessoa}
-                className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm"
+                className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm"
               >
-                {/* Header clicável */}
-                <div
-                  onClick={() => toggleExpand(pessoa)}
-                  className="w-full p-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-3" data-tour="devedores-item-acoes">
-                    <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center">
+                {/* Header — o gesto de expandir é um botão de verdade, para
+                    funcionar por teclado; excluir fica fora dele (botão dentro
+                    de botão é HTML inválido). */}
+                <div className="flex items-center justify-between gap-3 p-4 hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors" data-tour="devedores-item-acoes">
+                  <button
+                    type="button"
+                    onClick={() => toggleExpand(pessoa)}
+                    aria-expanded={isExpanded}
+                    className="flex flex-1 min-w-0 items-center gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg"
+                  >
+                    <div className="w-12 h-12 flex-shrink-0 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center">
                       <span className="font-display text-emerald-600 dark:text-emerald-400 font-bold text-xl">
                         {pessoa.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <div className="text-left">
-                      <h3 className="text-zinc-900 dark:text-zinc-100 font-semibold text-lg">{pessoa}</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-zinc-900 dark:text-zinc-50 font-semibold text-lg truncate">{pessoa}</h3>
                       <p className="text-zinc-500 dark:text-zinc-400 text-sm">
-                        {formatCurrency(stats.gastosMesAtual + stats.totalDividas)} total
+                        <span className="font-mono tabular-nums">{formatCurrency(stats.gastosMesAtual + stats.totalDividas)}</span> total
                       </p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
+                  </button>
+                  <div className="flex items-center gap-3 flex-shrink-0">
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(pessoa); }}
+                      onClick={() => handleDelete(pessoa)}
                       disabled={pessoas.length <= 1}
-                      className="p-2 text-zinc-400 dark:text-zinc-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      aria-label={`Excluir ${pessoa}`}
+                      className="p-2 rounded-lg text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-zinc-500"
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -318,7 +323,7 @@ export const PessoasPage = () => {
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-zinc-100 dark:border-zinc-800">
                     <div className="grid grid-cols-2 gap-3 mt-4 mb-4">
-                      <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-3 border border-zinc-200 dark:border-zinc-800">
+                      <div className="bg-zinc-50 dark:bg-white/[0.03] rounded-xl p-3 border border-zinc-200 dark:border-zinc-800">
                         <p className="text-zinc-500 dark:text-zinc-400 text-xs mb-1">Gastos do Mês</p>
                         <p className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100 font-semibold">{formatCurrency(stats.gastosMesAtual)}</p>
                       </div>
@@ -374,11 +379,11 @@ export const PessoasPage = () => {
 
       {/* Gráfico Total */}
       {pessoas.length > 0 && (totalGastosMes > 0 || totalDividasGeral > 0) && (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-4" data-tour="devedores-resumo-total">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-4" data-tour="devedores-resumo-total">
           <h3 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4 text-center">Resumo Total</h3>
           
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-3 text-center border border-zinc-200 dark:border-zinc-800">
+            <div className="bg-zinc-50 dark:bg-white/[0.03] rounded-xl p-3 text-center border border-zinc-200 dark:border-zinc-800">
               <p className="text-zinc-500 dark:text-zinc-400 text-xs mb-1">Total Gastos do Mês</p>
               <p className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100 font-bold text-lg">{formatCurrency(totalGastosMes)}</p>
             </div>
@@ -419,7 +424,7 @@ export const PessoasPage = () => {
             </div>
           )}
 
-          <div className="text-center mt-4 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+          <div className="text-center mt-4 p-3 bg-zinc-50 dark:bg-white/[0.04] rounded-lg">
             <p className="text-zinc-500 dark:text-zinc-400 text-sm">Total Geral</p>
             <p className="text-zinc-900 dark:text-zinc-100 font-bold text-2xl">
               {formatCurrency(totalGastosMes + totalDividasGeral)}

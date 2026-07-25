@@ -63,12 +63,12 @@ export function ResetPasswordPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-[#0B0F19] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0B] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Back */}
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-200 mb-6 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar para o App
@@ -79,34 +79,34 @@ export function ResetPasswordPage() {
             <img src="/favicon-light.png" alt="Hedge" className="w-8 h-8 dark:hidden" />
             <img src="/favicon-dark.png" alt="Hedge" className="w-8 h-8 hidden dark:block" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             Atualizar Senha
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">
+          <p className="text-zinc-500 dark:text-zinc-400 mt-2">
             Digite sua nova senha de acesso abaixo
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 shadow-xl">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-xl">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Senha */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+              <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
                 Nova Senha
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-12 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-400"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -115,16 +115,16 @@ export function ResetPasswordPage() {
 
             {/* Confirmar Senha */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+              <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
                 Confirmar Nova Senha
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
                 <input
                   type={showPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   placeholder="••••••••"
                 />
               </div>
@@ -150,7 +150,7 @@ export function ResetPasswordPage() {
             <button
               type="submit"
               disabled={loading || !!success}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-emerald-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
