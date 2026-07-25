@@ -1,20 +1,12 @@
 import { useState, useEffect } from "react";
 import {
-  Shield,
   Users,
   Loader2,
   UserCheck,
-  UserX,
-  ChevronDown,
-  ChevronUp,
-  ToggleLeft,
-  ToggleRight,
   Search,
   RefreshCw,
   CheckCircle,
   Clock,
-  Mail,
-  User,
   Settings2,
   KeyRound,
   BarChart3,
@@ -85,6 +77,11 @@ export const AdminPage = () => {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  // A faixa de resumo usa "Ativas hoje" — carrega as estatísticas já na entrada.
+  useEffect(() => {
+    fetchUsageStats();
+  }, [fetchUsageStats]);
 
   // Carregar dados da tab quando mudar
   useEffect(() => {
@@ -300,7 +297,7 @@ export const AdminPage = () => {
   // ========== TABS ==========
   const tabs: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
     { id: "users", label: "Usuários", icon: <Users className="w-4 h-4" /> },
-    { id: "dashboard", label: "Dashboard", icon: <BarChart3 className="w-4 h-4" /> },
+    { id: "dashboard", label: "Uso", icon: <BarChart3 className="w-4 h-4" /> },
     { id: "inactive", label: "Inativos", icon: <UserMinus className="w-4 h-4" /> },
     { id: "logs", label: "Atividade", icon: <Activity className="w-4 h-4" /> },
   ];
@@ -316,37 +313,80 @@ export const AdminPage = () => {
 
   return (
     <div className={`${PAGE_CONTAINER_CLASS} pb-20`}>
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-zinc-100 dark:bg-white/[0.04] rounded-xl flex items-center justify-center">
-            <Shield className="w-6 h-6 text-zinc-500" />
-          </div>
-          <div>
-            <h1 className="font-display text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-              Painel Admin
-            </h1>
-            <p className="text-zinc-500 dark:text-zinc-400 text-sm">
-              Gerencie usuários, monitore atividade
-            </p>
-          </div>
+      {/* HEADER_PAGINA — ferramenta interna, sem PISTA e com eyebrow neutra */}
+      <div className="flex items-end justify-between flex-wrap gap-5 mb-6">
+        <div>
+          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400 mb-1">
+            Ferramenta interna
+          </p>
+          <h1 className="font-display font-bold text-[34px] leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50">
+            Painel Admin
+          </h1>
+          <p className="text-[15px] text-zinc-500 dark:text-zinc-400 mt-1">
+            Contas, permissões e atividade dos usuários.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            fetchUsers();
+            fetchUsageStats();
+            if (activeTab === "logs") fetchActivityLogs(logFilter === "all" ? undefined : logFilter);
+            if (activeTab === "inactive") fetchInactiveUsers(inactiveDays);
+          }}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          Atualizar
+        </button>
+      </div>
+
+      {/* FAIXA_RESUMO */}
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 md:p-7 grid gap-x-7 gap-y-5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Contas</p>
+          <p className="font-display font-extrabold tracking-tighter tabular-nums whitespace-nowrap text-[30px] leading-tight text-zinc-900 dark:text-zinc-50 mt-1">
+            {totalUsers}
+          </p>
+          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">sem contar administradores</p>
+        </div>
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Habilitadas</p>
+          <p className="font-mono tabular-nums text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5">{activeUsers}</p>
+        </div>
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Suspensas</p>
+          <p className="font-mono tabular-nums text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5">{inactiveUsersCount}</p>
+        </div>
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">Ativas hoje</p>
+          <p className="font-mono tabular-nums text-2xl font-semibold text-emerald-700 dark:text-emerald-400 mt-1.5">
+            {usageStats ? usageStats.active_today : "—"}
+          </p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 overflow-x-auto">
+      {/* SEGMENTADO de abas */}
+      <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] p-1 rounded-xl overflow-x-auto w-fit max-w-full">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors whitespace-nowrap ${
               activeTab === tab.id
-                ? "bg-emerald-600 text-white"
-                : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
+                ? "bg-emerald-600 text-white font-semibold"
+                : "text-zinc-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
             }`}
           >
             {tab.icon}
             {tab.label}
+            {tab.id === "inactive" && inactiveUsers.length > 0 && (
+              <span className={`font-mono tabular-nums text-xs px-1.5 py-0.5 rounded-full ${
+                activeTab === "inactive" ? "bg-white/25 text-white" : "bg-zinc-200 dark:bg-white/[0.07] text-zinc-600 dark:text-zinc-300"
+              }`}>
+                {inactiveUsers.length}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -367,284 +407,270 @@ export const AdminPage = () => {
 
       {/* ==================== TAB: USERS ==================== */}
       {activeTab === "users" && (
-        <div className="space-y-4">
-          {/* Cards de Estatísticas */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-              <div className="flex items-center gap-2 mb-1">
-                <Users className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
-                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Total</span>
-              </div>
-              <p className="font-mono tabular-nums text-2xl font-bold text-zinc-900 dark:text-zinc-100">{totalUsers}</p>
-            </div>
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-              <div className="flex items-center gap-2 mb-1">
-                <UserCheck className="w-4 h-4 text-emerald-500" />
-                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Ativos</span>
-              </div>
-              <p className="font-mono tabular-nums text-2xl font-bold text-emerald-600 dark:text-emerald-400">{activeUsers}</p>
-            </div>
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-              <div className="flex items-center gap-2 mb-1">
-                <UserX className="w-4 h-4 text-red-500" />
-                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Inativos</span>
-              </div>
-              <p className="font-mono tabular-nums text-2xl font-bold text-red-600">{inactiveUsersCount}</p>
-            </div>
-          </div>
-
-          {/* Busca e Filtros */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-5">
+          {/* Toolbar */}
+          <div className="flex flex-col lg:flex-row gap-3 lg:items-center mb-4">
+            <div className="relative flex-1 min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por nome ou email..."
-                className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full pl-10 pr-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
               />
             </div>
-            <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1">
-              {(["all", "active", "inactive"] as const).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filterStatus === status
-                      ? "bg-emerald-600 text-white"
-                      : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
-                  }`}
-                >
-                  {status === "all" ? "Todos" : status === "active" ? "Ativos" : "Inativos"}
-                </button>
-              ))}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] p-1 rounded-xl">
+                {(["all", "active", "inactive"] as const).map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => setFilterStatus(status)}
+                    className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                      filterStatus === status
+                        ? "bg-emerald-600 text-white font-semibold"
+                        : "text-zinc-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
+                    }`}
+                  >
+                    {status === "all" ? "Todas" : status === "active" ? "Habilitadas" : "Suspensas"}
+                  </button>
+                ))}
+              </div>
+              <span className="font-mono tabular-nums text-[13px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                {filteredUsers.length} {filteredUsers.length === 1 ? "resultado" : "resultados"}
+              </span>
             </div>
-            <button
-              onClick={fetchUsers}
-              disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.08] rounded-xl transition-colors text-zinc-700 dark:text-zinc-300"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            </button>
           </div>
 
-          {/* Lista de Usuários */}
-          <div className="space-y-3">
-            {filteredUsers.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                <Users className="w-12 h-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
-                <p className="text-zinc-500 dark:text-zinc-400">
-                  {searchTerm ? "Nenhum usuário encontrado." : "Nenhum usuário cadastrado."}
-                </p>
-              </div>
-            ) : (
-              filteredUsers.map((user) => (
-                <div
-                  key={user.id}
-                  // Conta inativa se sinaliza pela borda vermelha e pelo selo
-                  // "Inativo" — sem `opacity` por cima, que apagaria os dados.
-                  className={`bg-white dark:bg-zinc-900 rounded-2xl border shadow-sm overflow-hidden transition-colors ${
-                    !user.is_active
-                      ? "border-red-200 dark:border-red-900/50"
-                      : "border-zinc-200 dark:border-zinc-800"
-                  }`}
-                >
-                  {/* User Row */}
-                  <div className="p-4 flex items-center gap-4">
-                    {/* Avatar */}
+          {filteredUsers.length === 0 ? (
+            <div className="text-center py-16">
+              <Users className="w-12 h-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
+              <p className="text-zinc-500 dark:text-zinc-400">
+                {searchTerm ? "Nenhum usuário encontrado." : "Nenhum usuário cadastrado."}
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Wrapper rolável SÓ nas linhas — o painel de permissões vive fora */}
+              <div className="overflow-x-auto">
+                <div className="min-w-[820px]">
+                  {/* Cabeçalho */}
+                  <div className="grid [grid-template-columns:minmax(200px,1fr)_120px_120px_128px_150px] gap-3 items-center pb-2 border-b border-zinc-200 dark:border-zinc-800">
+                    <span className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Usuário</span>
+                    <span className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Criada</span>
+                    <span className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Último acesso</span>
+                    <span className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Status</span>
+                    <span className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Ações</span>
+                  </div>
+                  {filteredUsers.map((user) => (
                     <div
-                      className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        user.role === "admin"
-                          ? "bg-zinc-100 dark:bg-white/[0.04]"
-                          : user.is_active
-                          ? "bg-emerald-100 dark:bg-emerald-950/30"
-                          : "bg-red-100 dark:bg-red-950/30"
+                      key={user.id}
+                      className={`grid [grid-template-columns:minmax(200px,1fr)_120px_120px_128px_150px] gap-3 items-center py-3 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0 hover:bg-[#FCFCFC] dark:hover:bg-white/[0.02] transition-colors ${
+                        expandedUser === user.id ? "bg-emerald-50/40 dark:bg-emerald-950/10" : ""
                       }`}
                     >
+                      {/* Usuário */}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          user.role === "admin" || !user.is_active
+                            ? "bg-zinc-100 dark:bg-white/[0.06]"
+                            : "bg-emerald-50 dark:bg-emerald-950/40"
+                        }`}>
+                          <span className={`font-display font-bold ${
+                            user.role === "admin" || !user.is_active
+                              ? "text-zinc-500 dark:text-zinc-400"
+                              : "text-emerald-700 dark:text-emerald-400"
+                          }`}>
+                            {(user.nome || user.email || "U").charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                              {user.nome || "Sem nome"}
+                            </p>
+                            {user.role === "admin" && (
+                              <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400">Admin</span>
+                            )}
+                          </div>
+                          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 truncate">{user.email}</p>
+                        </div>
+                      </div>
+                      {/* Criada */}
+                      <span className="font-mono tabular-nums text-[13px] text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
+                        {formatDateShort(user.created_at)}
+                      </span>
+                      {/* Último acesso */}
+                      <span className="font-mono tabular-nums text-[13px] text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
+                        {formatDateShort(user.last_sign_in_at)}
+                      </span>
+                      {/* Status — badge textual, nunca no mesmo controle que a ação */}
+                      <span>
+                        {user.is_active ? (
+                          <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            Habilitada
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400">
+                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+                            Suspensa
+                          </span>
+                        )}
+                      </span>
+                      {/* Ações */}
                       {user.role === "admin" ? (
-                        <Shield className="w-5 h-5 text-zinc-500 dark:text-zinc-400" />
+                        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">
+                          sem ações
+                        </span>
                       ) : (
-                        <User className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleToggleExpand(user.id)}
+                            aria-expanded={expandedUser === user.id}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1.5 border rounded-lg text-xs font-medium transition-colors ${
+                              expandedUser === user.id
+                                ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400"
+                                : "bg-white dark:bg-white/[0.04] border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+                            }`}
+                            title="Gerenciar permissões"
+                          >
+                            <Settings2 className="w-3.5 h-3.5" />
+                            Permissões
+                          </button>
+                          <button
+                            onClick={() => handleResetPassword(user)}
+                            disabled={saving}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+                            title="Enviar reset de senha"
+                            aria-label={`Enviar reset de senha para ${user.nome || user.email}`}
+                          >
+                            <KeyRound className="w-[15px] h-[15px]" />
+                          </button>
+                          {user.is_active ? (
+                            <button
+                              onClick={() => handleToggleActive(user)}
+                              disabled={saving}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"
+                              title="Suspender conta"
+                              aria-label={`Suspender conta de ${user.nome || user.email}`}
+                            >
+                              <Ban className="w-[15px] h-[15px]" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleActive(user)}
+                              disabled={saving}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400 transition-colors"
+                              title="Reativar conta"
+                              aria-label={`Reativar conta de ${user.nome || user.email}`}
+                            >
+                              <UserCheck className="w-[15px] h-[15px]" />
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
+                  ))}
+                </div>
+              </div>
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
+              {/* Painel de permissões — FORA do wrapper rolável, largura total */}
+              {expandedUser && (() => {
+                const user = users.find((u) => u.id === expandedUser);
+                if (!user || user.role === "admin") return null;
+                return (
+                  <div className="mt-4 border-t border-zinc-100 dark:border-zinc-800 pt-4">
+                    <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                      <h3 className="font-display font-bold text-zinc-900 dark:text-zinc-100">
+                        Permissões de {user.nome || user.email}
+                      </h3>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-zinc-800 dark:text-zinc-100 truncate">
-                          {user.nome || "Sem nome"}
-                        </span>
-                        {user.role === "admin" && (
-                          <span className="px-2 py-0.5 bg-zinc-200 dark:bg-white/[0.04] text-zinc-700 dark:text-zinc-300 text-[10px] font-bold uppercase rounded-full">
-                            Admin
-                          </span>
-                        )}
-                        {!user.is_active && (
-                          <span className="px-2 py-0.5 bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-[10px] font-bold uppercase rounded-full">
-                            Inativo
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 mt-0.5">
-                        <span className="text-sm text-zinc-500 dark:text-zinc-400 flex items-center gap-1 truncate">
-                          <Mail className="w-3 h-3 flex-shrink-0" />
-                          {user.email}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 mt-1 font-mono text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          Criado: {formatDate(user.created_at)}
-                        </span>
-                        <span className="hidden sm:flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" />
-                          Último login: {formatDate(user.last_sign_in_at)}
-                        </span>
+                        <button
+                          onClick={() => handleSetAllFeatures(user.id, true)}
+                          className="px-3 py-1.5 text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors"
+                        >
+                          Completo
+                        </button>
+                        <button
+                          onClick={() => handlePresetPessoal(user.id)}
+                          className="px-3 py-1.5 text-xs font-medium bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-300 rounded-lg hover:bg-zinc-200 dark:hover:bg-white/[0.08] hover:text-zinc-900 transition-colors"
+                        >
+                          Apenas pessoal
+                        </button>
+                        <button
+                          onClick={() => handleSetAllFeatures(user.id, false)}
+                          className="px-3 py-1.5 text-xs font-medium bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-300 rounded-lg hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"
+                        >
+                          Desabilitar tudo
+                        </button>
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    {user.role !== "admin" && (
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        {/* Reset Senha */}
-                        <button
-                          onClick={() => handleResetPassword(user)}
-                          disabled={saving}
-                          className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
-                          title="Resetar senha"
-                        >
-                          <KeyRound className="w-5 h-5" />
-                        </button>
-
-                        {/* Toggle Ativo */}
-                        <button
-                          onClick={() => handleToggleActive(user)}
-                          disabled={saving}
-                          className={`p-2 rounded-lg transition-colors ${
-                            user.is_active
-                              ? "hover:bg-red-50 dark:hover:bg-red-950/30 text-emerald-600 dark:text-emerald-400"
-                              : "hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-red-500 dark:text-red-400"
-                          }`}
-                          title={user.is_active ? "Desativar conta" : "Ativar conta"}
-                        >
-                          {user.is_active ? (
-                            <ToggleRight className="w-6 h-6" />
-                          ) : (
-                            <ToggleLeft className="w-6 h-6" />
-                          )}
-                        </button>
-
-                        {/* Expandir Features */}
-                        <button
-                          onClick={() => handleToggleExpand(user.id)}
-                          className="p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors text-zinc-500 dark:text-zinc-400"
-                          title="Gerenciar funcionalidades"
-                        >
-                          <Settings2 className="w-5 h-5" />
-                          {expandedUser === user.id ? (
-                            <ChevronUp className="w-3 h-3 absolute -mt-1 ml-3" />
-                          ) : (
-                            <ChevronDown className="w-3 h-3 absolute -mt-1 ml-3" />
-                          )}
-                        </button>
+                    {loadingFeatures === user.id ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-emerald-600 dark:text-emerald-400" />
                       </div>
-                    )}
+                    ) : (
+                      <>
+                        {/* Grid de toggles */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {(Object.keys(FEATURE_LABELS) as (keyof UserFeatures)[]).map((feature) => {
+                            const isEnabled = (editingFeatures[user.id] || DEFAULT_FEATURES)[feature];
+                            return (
+                              <button
+                                key={feature}
+                                onClick={() => handleToggleFeature(user.id, feature)}
+                                role="switch"
+                                aria-checked={isEnabled}
+                                className={`flex items-center gap-3 p-3 rounded-lg border transition-all text-left ${
+                                  isEnabled
+                                    ? "bg-white dark:bg-white/[0.06] border-emerald-100 dark:border-emerald-900/60 hover:border-emerald-300"
+                                    : "bg-zinc-50 dark:bg-white/[0.02] border-zinc-200 dark:border-white/[0.09] hover:border-zinc-300 dark:hover:border-white/[0.14]"
+                                }`}
+                              >
+                                <div className={`w-8 h-5 rounded-full flex items-center transition-colors flex-shrink-0 ${
+                                  isEnabled ? "bg-emerald-500 justify-end" : "bg-zinc-300 dark:bg-white/25 justify-start"
+                                }`}>
+                                  <div className="w-4 h-4 bg-white rounded-full shadow mx-0.5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <span className={`text-sm font-medium block ${isEnabled ? "text-zinc-800 dark:text-zinc-100" : "text-zinc-500 dark:text-zinc-400"}`}>
+                                    {FEATURE_LABELS[feature]}
+                                  </span>
+                                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400 block truncate">
+                                    {FEATURE_DESCRIPTIONS[feature]}
+                                  </span>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
 
-                    {/* Conta de administrador não recebe ação destrutiva —
-                        ninguém suspende ou reseta a própria conta por aqui. */}
-                    {user.role === "admin" && (
-                      <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 flex-shrink-0">
-                        sem ações
-                      </span>
+                        {/* Rodapé */}
+                        <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                          <button
+                            onClick={() => setExpandedUser(null)}
+                            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            onClick={() => handleSaveFeatures(user.id)}
+                            disabled={saving}
+                            className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-200 disabled:text-zinc-400 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-500 disabled:shadow-none text-white rounded-xl text-sm font-semibold shadow-[0_4px_12px_-3px_rgba(5,150,105,0.5)] transition-colors"
+                          >
+                            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                            Salvar permissões
+                          </button>
+                        </div>
+                      </>
                     )}
                   </div>
-
-                  {/* Features Panel (Expandido) */}
-                  {expandedUser === user.id && user.role !== "admin" && (
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-white/[0.03] p-4">
-                      {loadingFeatures === user.id ? (
-                        <div className="flex items-center justify-center py-8">
-                          <Loader2 className="w-6 h-6 animate-spin text-emerald-600 dark:text-emerald-400" />
-                        </div>
-                      ) : (
-                        <>
-                          {/* Presets */}
-                          <div className="flex flex-wrap items-center gap-2 mb-4">
-                            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                              Presets:
-                            </span>
-                            <button
-                              onClick={() => handleSetAllFeatures(user.id, true)}
-                              className="px-3 py-1.5 text-xs font-medium bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-950/50 transition-colors"
-                            >
-                              Completo
-                            </button>
-                            <button
-                              onClick={() => handlePresetPessoal(user.id)}
-                              className="px-3 py-1.5 text-xs font-medium bg-zinc-100 dark:bg-white/[0.04] text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-200 dark:hover:bg-white/[0.08] transition-colors"
-                            >
-                              Apenas Pessoal
-                            </button>
-                            <button
-                              onClick={() => handleSetAllFeatures(user.id, false)}
-                              className="px-3 py-1.5 text-xs font-medium bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-950/50 transition-colors"
-                            >
-                              Desabilitar Tudo
-                            </button>
-                          </div>
-
-                          {/* Feature Toggles */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {(Object.keys(FEATURE_LABELS) as (keyof UserFeatures)[]).map((feature) => {
-                              const isEnabled = (editingFeatures[user.id] || DEFAULT_FEATURES)[feature];
-                              return (
-                                <button
-                                  key={feature}
-                                  onClick={() => handleToggleFeature(user.id, feature)}
-                                  className={`flex items-center gap-3 p-3 rounded-lg border transition-all text-left ${
-                                    isEnabled
-                                      ? "bg-white dark:bg-white/[0.06] border-emerald-200 dark:border-emerald-800 hover:border-emerald-300"
-                                      : "bg-zinc-100 dark:bg-white/[0.02] border-zinc-200 dark:border-white/[0.09] hover:border-zinc-300 dark:hover:border-white/[0.14]"
-                                  }`}
-                                >
-                                  <div className={`w-8 h-5 rounded-full flex items-center transition-colors flex-shrink-0 ${
-                                    isEnabled ? "bg-emerald-500 justify-end" : "bg-zinc-300 dark:bg-white/25 justify-start"
-                                  }`}>
-                                    <div className="w-4 h-4 bg-white rounded-full shadow mx-0.5" />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <span className={`text-sm font-medium block ${isEnabled ? "text-zinc-800 dark:text-zinc-100" : "text-zinc-500 dark:text-zinc-400"}`}>
-                                      {FEATURE_LABELS[feature]}
-                                    </span>
-                                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400 block truncate">
-                                      {FEATURE_DESCRIPTIONS[feature]}
-                                    </span>
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-
-                          {/* Salvar */}
-                          <div className="flex justify-end mt-4 pt-3 border-t border-zinc-200 dark:border-white/[0.09]">
-                            <button
-                              onClick={() => handleSaveFeatures(user.id)}
-                              disabled={saving}
-                              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium text-sm"
-                            >
-                              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                              Salvar Alterações
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
+                );
+              })()}
+            </>
+          )}
         </div>
       )}
 
