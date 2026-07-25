@@ -6,16 +6,9 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Settings,
-  LayoutDashboard,
+  Wallet,
   Receipt,
-  Shield,
-  Landmark,
-  CreditCard,
-  Target,
-  Users,
-  Clock,
-  CalendarDays,
+  Coins,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
@@ -29,37 +22,40 @@ interface SidebarProps {
   userEmail?: string;
 }
 
-type NavIcon = LucideIcon;
-
 interface NavChild {
   path: string;
   label: string;
-  icon: NavIcon;
   feature: keyof UserFeatures;
 }
 
-/** Grupos da navegação — os itens apontam para as sub-rotas reais que já existem. */
-const NAV_GROUPS: { label: string; items: NavChild[] }[] = [
+/**
+ * Grupos da navegação — os itens apontam para as sub-rotas reais que já
+ * existem. Ícone só no rótulo do grupo; os itens são texto puro.
+ */
+const NAV_GROUPS: { label: string; icon: LucideIcon; items: NavChild[] }[] = [
   {
     label: "Carteira",
+    icon: Wallet,
     items: [
-      { path: "/carteira/contas", label: "Contas e receitas", icon: Landmark, feature: "contas_bancarias" },
-      { path: "/carteira/cartoes", label: "Cartões", icon: CreditCard, feature: "cartoes_credito" },
+      { path: "/carteira/contas", label: "Contas e receitas", feature: "contas_bancarias" },
+      { path: "/carteira/cartoes", label: "Cartões", feature: "cartoes_credito" },
     ],
   },
   {
     label: "Gastos",
+    icon: Receipt,
     items: [
-      { path: "/gastos/lancamentos", label: "Lançamentos", icon: Receipt, feature: "meus_gastos" },
-      { path: "/gastos/metas", label: "Metas", icon: Target, feature: "metas" },
+      { path: "/gastos/lancamentos", label: "Lançamentos", feature: "meus_gastos" },
+      { path: "/gastos/metas", label: "Metas", feature: "metas" },
     ],
   },
   {
     label: "A receber",
+    icon: Coins,
     items: [
-      { path: "/a-receber/pessoas", label: "Por pessoa", icon: Users, feature: "pessoas" },
-      { path: "/a-receber/aberto", label: "Em aberto", icon: Clock, feature: "saldo_devedor" },
-      { path: "/a-receber/mes", label: "Do mês", icon: CalendarDays, feature: "gastos_compartilhados" },
+      { path: "/a-receber/pessoas", label: "Por pessoa", feature: "pessoas" },
+      { path: "/a-receber/aberto", label: "Em aberto", feature: "saldo_devedor" },
+      { path: "/a-receber/mes", label: "Do mês", feature: "gastos_compartilhados" },
     ],
   },
 ];
@@ -79,15 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
 
   const showConfiguracoes = features.configuracoes || isAdmin;
 
-  const NavItem = ({
-    path,
-    label,
-    icon: Icon,
-  }: {
-    path: string;
-    label: string;
-    icon: NavIcon;
-  }) => {
+  const NavItem = ({ path, label }: { path: string; label: string }) => {
     const isActive =
       path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
     return (
@@ -101,19 +89,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
             : "text-zinc-500 font-medium hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100"
         } ${isCollapsed ? "md:justify-center" : ""}`}
       >
-        <Icon className="w-5 h-5 flex-shrink-0" strokeWidth={1.75} />
+        {/* Recolhida, o item vira a inicial (não há mais ícone por tela). */}
+        <span className={`font-mono text-xs font-semibold hidden ${isCollapsed ? "md:inline" : ""}`} aria-hidden="true">
+          {label.charAt(0).toUpperCase()}
+        </span>
         <span className={isCollapsed ? "md:hidden" : ""}>{label}</span>
       </NavLink>
     );
   };
 
-  const GroupLabel = ({ children }: { children: React.ReactNode }) => (
+  const GroupLabel = ({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) => (
     <p
-      className={`font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 px-3 pt-4 pb-1 ${
-        isCollapsed ? "md:hidden" : ""
+      className={`flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 px-3 pt-4 pb-1 ${
+        isCollapsed ? "md:justify-center md:px-0" : ""
       }`}
     >
-      {children}
+      <Icon className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.75} />
+      <span className={isCollapsed ? "md:hidden" : ""}>{children}</span>
     </p>
   );
 
@@ -212,13 +204,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         {/* Navegação */}
         <nav className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-0.5">
           {(isAdmin || features.dashboard) && (
-            <NavItem path="/" label="Dashboard" icon={LayoutDashboard} />
+            <NavItem path="/" label="Dashboard" />
           )}
           {visibleGroups.map((group) => (
             <div key={group.label} className="flex flex-col gap-0.5">
-              <GroupLabel>{group.label}</GroupLabel>
+              <GroupLabel icon={group.icon}>{group.label}</GroupLabel>
               {group.items.map((item) => (
-                <NavItem key={item.path} path={item.path} label={item.label} icon={item.icon} />
+                <NavItem key={item.path} path={item.path} label={item.label} />
               ))}
             </div>
           ))}
@@ -226,9 +218,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
 
         {/* Rodapé */}
         <div className="shrink-0 p-3 border-t border-zinc-100 dark:border-white/[0.05] bg-[#FCFCFC] dark:bg-white/[0.03] flex flex-col gap-0.5">
-          {isAdmin && <NavItem path="/admin" label="Admin" icon={Shield} />}
+          {isAdmin && <NavItem path="/admin" label="Admin" />}
           {showConfiguracoes && (
-            <NavItem path="/configuracoes" label="Configurações" icon={Settings} />
+            <NavItem path="/configuracoes" label="Configurações" />
           )}
 
           {/* Cartão do usuário (logout embutido) */}
