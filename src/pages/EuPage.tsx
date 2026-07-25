@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Plus, FileText, Loader2, CheckCircle2 } from "lucide-react";
+import { Plus, FileText, Loader2, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { TabMeuGasto } from "../components/Tabs";
-import { OrcamentoMetasResumo } from "../components/OrcamentoMetasResumo";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { supabase } from "../lib/supabase";
+import { formatMonthYear } from "../utils/calculations";
 import type { MetaGasto } from "../types";
 
 interface MeuGastoTutorialStep {
@@ -187,51 +189,85 @@ export const EuPage = () => {
     }
   };
 
+  const isMesCorrente = format(mesVisualizacao, "yyyy-MM") === format(new Date(), "yyyy-MM");
+
   return (
     <div className="space-y-6">
-      {/* Barra de ações da visão Lançamentos */}
-      <div className="flex justify-end">
-            <div className="flex items-center gap-2" data-tour="eu-actions">
-              {features.exportar_pdf && (
-                <button
-                  onClick={handleExportPDF}
-                  disabled={exportingPDF || (meusGastosDoMes.length === 0 && gastosFixos.length === 0)}
-                  data-tour="eu-btn-pdf"
-                  className="border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/[0.06] hover:border-zinc-300 dark:hover:border-white/[0.14] px-3 py-2.5 rounded-xl flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                  title="Exportar PDF"
-                >
-                  {exportingPDF ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <FileText className="w-5 h-5" />
-                  )}
-                  <span className="hidden sm:inline">PDF</span>
-                </button>
-              )}
-              {meusGastosDoMes.some(g => g.tipo === "credito" && !g.pago) && (
-                <button
-                  onClick={handlePagarTodosCredito}
-                  data-tour="eu-btn-pagar-fatura"
-                  className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/25 px-3 py-2.5 rounded-xl flex items-center gap-2 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                  title="Dar baixa em todas as despesas de crédito"
-                >
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span className="hidden sm:inline">Pagar Fatura</span>
-                </button>
-              )}
+      {/* HEADER_PAGINA */}
+      <div className="flex items-end justify-between flex-wrap gap-5 mb-6" data-tour="eu-header">
+        <div>
+          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-1">
+            Gastos · <span className="capitalize">{format(mesVisualizacao, "MMMM", { locale: ptBR })}</span>
+          </p>
+          <h1 className="font-display font-bold text-[34px] leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50">
+            Lançamentos
+          </h1>
+          <p className="text-[15px] text-zinc-500 dark:text-zinc-400 mt-1">
+            Suas despesas pessoais e gastos fixos do mês.
+          </p>
+        </div>
+        <div className="flex items-center gap-3 flex-wrap" data-tour="eu-actions">
+          {/* MES_PILL */}
+          <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm" data-tour="eu-navegacao-mes">
+            <button
+              onClick={() => navegarMes("anterior")}
+              aria-label="Mês anterior"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+            >
+              <ChevronLeft className="w-[18px] h-[18px]" />
+            </button>
+            <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
+              {formatMonthYear(mesVisualizacao)}
+            </span>
+            {!isMesCorrente && (
               <button
-                onClick={() => setShowFormMeuGasto(true)}
-                data-tour="eu-btn-novo"
-                className="bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white px-4 py-2.5 rounded-xl flex items-center gap-2 font-semibold transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                onClick={irParaHoje}
+                className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
               >
-                <Plus className="w-5 h-5" />
-                <span className="hidden sm:inline">Novo</span>
+                hoje
               </button>
-            </div>
+            )}
+            <button
+              onClick={() => navegarMes("proximo")}
+              aria-label="Próximo mês"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+            >
+              <ChevronRight className="w-[18px] h-[18px]" />
+            </button>
+          </div>
+          {features.exportar_pdf && (
+            <button
+              onClick={handleExportPDF}
+              disabled={exportingPDF || (meusGastosDoMes.length === 0 && gastosFixos.length === 0)}
+              data-tour="eu-btn-pdf"
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+              title="Exportar PDF"
+            >
+              {exportingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+              PDF
+            </button>
+          )}
+          {meusGastosDoMes.some(g => g.tipo === "credito" && !g.pago) && (
+            <button
+              onClick={handlePagarTodosCredito}
+              data-tour="eu-btn-pagar-fatura"
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-emerald-400 text-zinc-600 hover:text-emerald-700 dark:text-zinc-300 dark:hover:text-emerald-400 rounded-xl text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+              title="Dar baixa em todas as despesas de crédito"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Pagar fatura</span>
+            </button>
+          )}
+          <button
+            onClick={() => setShowFormMeuGasto(true)}
+            data-tour="eu-btn-novo"
+            className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-[0_4px_12px_-3px_rgba(5,150,105,0.5)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+          >
+            <Plus className="w-[18px] h-[18px]" />
+            Novo gasto
+          </button>
+        </div>
       </div>
-
-      {/* Faixa orçado vs. gasto — assinatura da aba Orçamento */}
-      <OrcamentoMetasResumo meusGastosDoMes={meusGastosDoMes} />
 
       {/* Content */}
       <TabMeuGasto

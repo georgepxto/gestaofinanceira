@@ -24,20 +24,9 @@ interface OrcamentoView {
   description: ReactNode;
 }
 
+// Visões cujo cabeçalho ainda é renderizado aqui — quando a página-filha passa
+// a renderizar o próprio HEADER_PAGINA (com data-tour), a entrada sai da lista.
 const VIEWS: OrcamentoView[] = [
-  {
-    to: "/gastos/lancamentos",
-    label: "Lançamentos",
-    feature: "meus_gastos",
-    tourHeaderId: "eu-header",
-    eyebrow: "Pessoal",
-    title: (
-      <>
-        Meus <Pista>gastos</Pista>
-      </>
-    ),
-    description: "Despesas pessoais e gastos fixos",
-  },
   {
     to: "/gastos/metas",
     label: "Metas",
@@ -58,18 +47,19 @@ export const OrcamentoPage = () => {
   const location = useLocation();
 
   const availableViews = VIEWS.filter((v) => isAdmin || features[v.feature]);
-  const activeView =
-    availableViews.find((v) => location.pathname.startsWith(v.to)) ?? availableViews[0];
+  const activeView = availableViews.find((v) => location.pathname.startsWith(v.to));
 
   return (
     <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
-      <div data-tour={activeView?.tourHeaderId}>
-        <PageHeader
-          eyebrow={activeView?.eyebrow}
-          title={activeView?.title}
-          description={activeView?.description}
-        />
-      </div>
+      {activeView && (
+        <div data-tour={activeView.tourHeaderId}>
+          <PageHeader
+            eyebrow={activeView.eyebrow}
+            title={activeView.title}
+            description={activeView.description}
+          />
+        </div>
+      )}
 
       <Outlet />
     </div>
