@@ -1,8 +1,5 @@
 import {
-  ChevronLeft,
-  ChevronRight,
   Calendar,
-  User,
   Hash,
   Edit3,
   Trash2,
@@ -11,7 +8,6 @@ import {
   Undo2,
   MessageSquare,
   CheckCircle,
-  CircleDot,
   Check,
   Repeat,
 } from "lucide-react";
@@ -19,8 +15,20 @@ import { format } from "date-fns";
 import { PageEmptyState, PageErrorState, PageLoadingState } from "../ui/AsyncState";
 import type { ParcelaAtiva, ResumoMensal } from "../../types";
 import type { PagamentoParcial } from "../../types/extended";
-import { formatCurrency, formatMonthYear } from "../../utils/calculations";
+import { formatCurrency } from "../../utils/calculations";
 import { toActionableErrorMessage } from "../../utils/feedbackMessages";
+
+/** CHIP dos filtros. */
+const chipClasse = (ativo: boolean) =>
+  `px-3.5 py-2 rounded-[10px] text-[13px] transition-colors ${
+    ativo
+      ? "bg-emerald-600 text-white font-semibold"
+      : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
+  }`;
+
+const BADGE_NEUTRA = "inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400";
+const BADGE_AMBAR = "inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400";
+const BADGE_ESMERALDA = "inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400";
 
 interface TabGastosProps {
   mesVisualizacao: Date;
@@ -57,8 +65,6 @@ interface TabGastosProps {
 
 export function TabGastos({
   mesVisualizacao,
-  navegarMes,
-  irParaHoje,
   error,
   totalMes,
   parcelasAtivas,
@@ -87,41 +93,12 @@ export function TabGastos({
   getMesFechado,
   handleDesfazerFechamento,
 }: TabGastosProps) {
+  // Totais da faixa: emprestado (fluxo do mês), recebido e o que falta.
+  const totalRecebido = resumoMensal.reduce((sum, r) => sum + getTotalPagoParcial(r.pessoa), 0);
+  const totalAReceber = Math.max(totalMes - totalRecebido, 0);
+
   return (
     <>
-      {/* Navegação de Meses */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm p-4 border border-zinc-200 dark:border-zinc-800" data-tour="gastos-navegacao-mes">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => navegarMes("anterior")}
-            className="p-2 hover:bg-zinc-50 dark:hover:bg-white/[0.06] rounded-lg transition-colors"
-            aria-label="Mês anterior"
-          >
-            <ChevronLeft className="w-6 h-6 text-zinc-600 dark:text-zinc-400" />
-          </button>
-
-          <div className="text-center">
-            <h2 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 capitalize">
-              {formatMonthYear(mesVisualizacao)}
-            </h2>
-            <button
-              onClick={irParaHoje}
-              className="text-sm text-emerald-600 hover:text-emerald-700 mt-1"
-            >
-              Ir para hoje
-            </button>
-          </div>
-
-          <button
-            onClick={() => navegarMes("proximo")}
-            className="p-2 hover:bg-zinc-50 dark:hover:bg-white/[0.06] rounded-lg transition-colors"
-            aria-label="Próximo mês"
-          >
-            <ChevronRight className="w-6 h-6 text-zinc-600 dark:text-zinc-400" />
-          </button>
-        </div>
-      </div>
-
       {/* Mensagem de Erro */}
       {error && (
         <PageErrorState
@@ -131,189 +108,180 @@ export function TabGastos({
         />
       )}
 
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-tour="gastos-resumo-cards">
-        {/* Card Total Geral */}
-        <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-zinc-200 dark:border-zinc-800" data-tour="gastos-card-total">
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400 mb-1">Total do Mês</p>
-          <p className="font-mono tabular-nums text-2xl font-bold text-zinc-900 dark:text-zinc-100">{formatCurrency(totalMes)}</p>
-          <p className="font-mono text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-            {parcelasAtivas.length} lançamentos
+      {/* FAIXA_RESUMO */}
+      <div
+        className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 md:p-7 grid gap-x-7 gap-y-5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]"
+        data-tour="gastos-resumo-cards"
+      >
+        <div className="min-w-0" data-tour="gastos-card-total">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">A receber</p>
+          <p className="font-display font-extrabold tracking-tighter tabular-nums whitespace-nowrap text-[30px] leading-tight text-zinc-900 dark:text-zinc-50 mt-1">
+            {formatCurrency(totalAReceber)}
           </p>
+          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">falta entrar neste mês</p>
         </div>
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Emprestado</p>
+          <p className="font-mono tabular-nums text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5 whitespace-nowrap">
+            {formatCurrency(totalMes)}
+          </p>
+          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">{parcelasAtivas.length} {parcelasAtivas.length === 1 ? "lançamento" : "lançamentos"}</p>
+        </div>
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Recebido</p>
+          <p className="font-mono tabular-nums text-2xl font-semibold text-emerald-700 dark:text-emerald-400 mt-1.5 whitespace-nowrap">
+            {formatCurrency(totalRecebido)}
+          </p>
+          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">pagamentos do período</p>
+        </div>
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Devedores</p>
+          <p className="font-mono tabular-nums text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5">
+            {resumoMensal.length}
+          </p>
+          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">com lançamentos no mês</p>
+        </div>
+      </div>
 
-        {/* Cards por Pessoa */}
-        {resumoMensal.map((resumo) => {
-          const obsKey = getObsKey(resumo.pessoa);
-          const temObs = observacoesMes[obsKey];
-          const pagamentos = getPagamentosParciais(resumo.pessoa);
-          const totalPago = getTotalPagoParcial(resumo.pessoa);
-          const restante = resumo.total - totalPago;
-          const temPagamentos = pagamentos.length > 0;
-          const estaQuitado = temPagamentos && restante <= 0;
-          const estaFechado = isMesFechado(resumo.pessoa);
-          const mesFechadoData = getMesFechado(resumo.pessoa);
+      {/* Cards por devedor */}
+      {resumoMensal.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {resumoMensal.map((resumo) => {
+            const obsKey = getObsKey(resumo.pessoa);
+            const temObs = observacoesMes[obsKey];
+            const pagamentos = getPagamentosParciais(resumo.pessoa);
+            const totalPago = getTotalPagoParcial(resumo.pessoa);
+            const restante = resumo.total - totalPago;
+            const temPagamentos = pagamentos.length > 0;
+            const estaQuitado = temPagamentos && restante <= 0;
+            const estaFechado = isMesFechado(resumo.pessoa);
+            const mesFechadoData = getMesFechado(resumo.pessoa);
+            const pctPago = resumo.total > 0 ? Math.min((totalPago / resumo.total) * 100, 100) : 0;
+            const quitadoOuFechadoSemDivida = estaQuitado || (estaFechado && mesFechadoData && mesFechadoData.valorDevedor === 0);
 
-          return (
-            <div
-              key={resumo.pessoa}
-              className="bg-white dark:bg-zinc-900 rounded-2xl p-3 sm:p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0 overflow-hidden">
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-1 flex items-center gap-1.5">
-                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+            return (
+              <div
+                key={resumo.pessoa}
+                className="bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-sm border border-zinc-200 dark:border-zinc-800 min-w-0"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 flex-shrink-0 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center">
+                    <span className="font-display font-bold text-emerald-700 dark:text-emerald-400">
                       {resumo.pessoa.charAt(0).toUpperCase()}
                     </span>
-                    <span className="truncate">{resumo.pessoa}</span>
-                    {estaFechado && mesFechadoData && mesFechadoData.valorDevedor > 0 && (
-                      <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-white/[0.09]">
-                        <CircleDot className="w-[11px] h-[11px]" />
-                        Fechado
-                      </span>
-                    )}
-                    {(estaQuitado || (estaFechado && mesFechadoData && mesFechadoData.valorDevedor === 0)) && (
-                      <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900">
-                        <Check className="w-[11px] h-[11px]" />
-                        Quitado
-                      </span>
-                    )}
-                  </p>
-                  <p className="font-mono tabular-nums text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-100">
-                    {formatCurrency(resumo.total)}
-                  </p>
-                  <p className="font-mono text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                    {resumo.quantidade} itens
-                  </p>
-
-                  {/* Pagamentos Parciais */}
-                  {temPagamentos && (
-                    <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-200 dark:border-emerald-800 overflow-hidden">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                          Pago:
-                        </span>
-                        <button
-                          onClick={() =>
-                            handleDesfazerPagamentoParcial(resumo.pessoa)
-                          }
-                          className="p-0.5 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded transition-colors flex-shrink-0"
-                          title="Desfazer último"
-                        >
-                          <Undo2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                        </button>
-                      </div>
-                      {pagamentos.map((p, i) => (
-                        <div
-                          key={i}
-                          className="flex justify-between text-xs gap-1"
-                        >
-                          <span className="font-mono tabular-nums text-emerald-600 dark:text-emerald-400 truncate">
-                            {p.data}
-                          </span>
-                          <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-300 font-medium flex-shrink-0">
-                            {formatCurrency(p.valor)}
-                          </span>
-                        </div>
-                      ))}
-                      <div className="border-t border-emerald-200 dark:border-emerald-800 mt-1 pt-1 flex justify-between">
-                        {estaQuitado ? (
-                          <>
-                            <span className="text-xs text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1">
-                              <Check className="w-3 h-3" />
-                              Quitado
-                            </span>
-                            <span className="font-mono tabular-nums text-xs text-emerald-700 dark:text-emerald-300 font-bold flex-shrink-0">
-                              {formatCurrency(totalPago)}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-xs text-amber-600 dark:text-amber-400">Falta:</span>
-                            <span className="font-mono tabular-nums text-xs text-amber-700 dark:text-amber-300 font-bold flex-shrink-0">
-                              {formatCurrency(restante)}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Observação */}
-                  {temObs && (
-                    <div className="mt-2 p-2 bg-zinc-50 dark:bg-white/[0.04] rounded-lg overflow-hidden">
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 break-words whitespace-pre-wrap line-clamp-3">
-                        {temObs}
-                      </p>
-                    </div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{resumo.pessoa}</p>
+                    <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">{resumo.quantidade} {resumo.quantidade === 1 ? "item" : "itens"}</p>
+                  </div>
+                  {/* UMA atenuação: o status vem do badge, sem opacity no card */}
+                  {quitadoOuFechadoSemDivida ? (
+                    <span className={BADGE_ESMERALDA}><Check className="w-[11px] h-[11px]" /> Quitado</span>
+                  ) : estaFechado ? (
+                    <span className={BADGE_NEUTRA}>Fechado</span>
+                  ) : temPagamentos ? (
+                    <span className={BADGE_AMBAR}>Parcial</span>
+                  ) : (
+                    <span className={BADGE_AMBAR}>Em aberto</span>
                   )}
                 </div>
-                <div className="flex flex-col gap-1 ml-2">
-                  <button
-                    onClick={() => handleAbrirObs(resumo.pessoa)}
-                    className={`p-1.5 ${temObs ? "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400" : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400"} hover:bg-zinc-200 dark:hover:bg-white/[0.08] rounded-lg transition-colors`}
-                    title={
-                      temObs ? "Editar observação" : "Adicionar observação"
-                    }
-                  >
-                    {temObs ? (
-                      <Edit3 className="w-4 h-4" />
-                    ) : (
-                      <MessageSquare className="w-4 h-4" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (!estaQuitado) {
-                        setShowPagamentoParcial(resumo.pessoa);
-                        setValorPagamentoParcial("");
-                      }
-                    }}
-                    disabled={estaQuitado || estaFechado}
-                    className={`p-1.5 ${
-                      estaQuitado || estaFechado
-                        ? "bg-zinc-100 dark:bg-white/[0.04] text-zinc-400 dark:text-zinc-500 cursor-not-allowed"
-                        : temPagamentos
-                        ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/30"
-                        : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.08]"
-                    } rounded-lg transition-colors`}
-                    title={estaFechado ? "Mês fechado" : estaQuitado ? "Já quitado" : "Pagamento parcial"}
-                  >
-                    <Banknote className="w-4 h-4" />
-                  </button>
-                  {estaFechado ? (
+
+                <div className="flex items-end justify-between gap-3 mt-4">
+                  <span className="text-sm text-zinc-500 dark:text-zinc-400">a receber</span>
+                  <span className={`font-mono tabular-nums text-[22px] font-semibold whitespace-nowrap ${
+                    quitadoOuFechadoSemDivida ? "text-emerald-700 dark:text-emerald-400" : "text-zinc-900 dark:text-zinc-100"
+                  }`}>
+                    {formatCurrency(Math.max(restante, 0))}
+                  </span>
+                </div>
+
+                {/* Progresso pago/total */}
+                <div className="h-2 rounded-full bg-zinc-100 dark:bg-white/[0.04] overflow-hidden mt-2">
+                  <div className="h-full rounded-full bg-emerald-500 transition-all duration-300" style={{ width: `${pctPago}%` }} />
+                </div>
+
+                {/* Observação */}
+                {temObs && (
+                  <div className="mt-3 p-2.5 bg-zinc-50 dark:bg-white/[0.04] rounded-lg overflow-hidden">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 break-words whitespace-pre-wrap line-clamp-3">
+                      {temObs}
+                    </p>
+                  </div>
+                )}
+
+                {/* Rodapé: nota + ações */}
+                <div className="border-t border-zinc-100 dark:border-zinc-800 mt-4 pt-3 flex items-center justify-between gap-3">
+                  <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                    {estaFechado && mesFechadoData && mesFechadoData.valorDevedor > 0
+                      ? `mês fechado · ${formatCurrency(mesFechadoData.valorDevedor)}`
+                      : temPagamentos
+                      ? `pago ${formatCurrency(totalPago)} de ${formatCurrency(resumo.total)}`
+                      : "nenhum pagamento registrado"}
+                  </p>
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
                     <button
-                      onClick={() => handleDesfazerFechamento(resumo.pessoa)}
-                      className="p-1.5 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-500/30 rounded-lg transition-colors"
-                      title="Desfazer fechamento do mês"
+                      onClick={() => handleAbrirObs(resumo.pessoa)}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                        temObs
+                          ? "text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                          : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100"
+                      }`}
+                      title={temObs ? "Editar observação" : "Adicionar observação"}
                     >
-                      <Undo2 className="w-4 h-4" />
+                      {temObs ? <Edit3 className="w-[15px] h-[15px]" /> : <MessageSquare className="w-[15px] h-[15px]" />}
                     </button>
-                  ) : (
+                    {temPagamentos && (
+                      <button
+                        onClick={() => handleDesfazerPagamentoParcial(resumo.pessoa)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-950/30 dark:hover:text-amber-400 transition-colors"
+                        title="Desfazer último pagamento"
+                      >
+                        <Undo2 className="w-[15px] h-[15px]" />
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         if (!estaQuitado) {
-                          setShowFecharMes(resumo.pessoa);
-                          setValorPagoFecharMes("");
+                          setShowPagamentoParcial(resumo.pessoa);
+                          setValorPagamentoParcial("");
                         }
                       }}
-                      disabled={estaQuitado}
-                      className={`p-1.5 ${
-                        estaQuitado
-                          ? "bg-zinc-100 dark:bg-white/[0.04] text-zinc-400 dark:text-zinc-500 cursor-not-allowed"
-                          : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.08]"
-                      } rounded-lg transition-colors`}
-                      title={estaQuitado ? "Já quitado" : "Fechar mês"}
+                      disabled={estaQuitado || estaFechado}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400 transition-colors disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-zinc-500"
+                      title={estaFechado ? "Mês fechado" : estaQuitado ? "Já quitado" : "Registrar pagamento"}
                     >
-                      <CheckCircle className="w-4 h-4" />
+                      <Banknote className="w-[15px] h-[15px]" />
                     </button>
-                  )}
+                    {estaFechado ? (
+                      <button
+                        onClick={() => handleDesfazerFechamento(resumo.pessoa)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"
+                        title="Desfazer fechamento do mês"
+                      >
+                        <Undo2 className="w-[15px] h-[15px]" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (!estaQuitado) {
+                            setShowFecharMes(resumo.pessoa);
+                            setValorPagoFecharMes("");
+                          }
+                        }}
+                        disabled={estaQuitado}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400 transition-colors disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-zinc-500"
+                        title={estaQuitado ? "Já quitado" : "Fechar mês"}
+                      >
+                        <CheckCircle className="w-[15px] h-[15px]" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Loading */}
       {loading && (
@@ -324,141 +292,83 @@ export function TabGastos({
         />
       )}
 
-      {/* Lista de Lançamentos */}
+      {/* Card Lançamentos do mês */}
       {!loading && (
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm overflow-hidden border border-zinc-200 dark:border-zinc-800" data-tour="gastos-lista">
-          <div className="p-4 border-b border-zinc-200 dark:border-zinc-800" data-tour="gastos-filtros">
-            <h3 className="font-display font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">
-              Empréstimos do Mês
-            </h3>
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-5" data-tour="gastos-lista">
+          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">
+            Lançamentos do mês
+          </h2>
 
-            {/* Filtros */}
-            <div className="space-y-3">
-              {/* Filtro por Pessoa */}
-              <div>
-                <label className="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5 block">
-                  Filtrar por devedor:
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    onClick={() => setFiltroPessoaGasto("")}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                      filtroPessoaGasto === ""
-                        ? "bg-emerald-600 text-white"
-                        : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-white/[0.08] dark:hover:text-zinc-100"
-                    }`}
-                  >
-                    Todos
+          {/* Filtros */}
+          <div className="space-y-3.5 mb-5" data-tour="gastos-filtros">
+            <div>
+              <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-2">
+                Devedor
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => setFiltroPessoaGasto("")} className={chipClasse(filtroPessoaGasto === "")}>
+                  Todos
+                </button>
+                {pessoas.map((pessoa) => (
+                  <button key={pessoa} onClick={() => setFiltroPessoaGasto(pessoa)} className={chipClasse(filtroPessoaGasto === pessoa)}>
+                    {pessoa}
                   </button>
-                  {pessoas.map((pessoa) => (
-                    <button
-                      key={pessoa}
-                      onClick={() => setFiltroPessoaGasto(pessoa)}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                        filtroPessoaGasto === pessoa
-                          ? "bg-emerald-600 text-white"
-                          : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-white/[0.08] dark:hover:text-zinc-100"
-                      }`}
-                    >
-                      {pessoa}
-                    </button>
-                  ))}
-                </div>
+                ))}
               </div>
+            </div>
 
-              {/* Filtro por Tipo */}
-              <div>
-                <label className="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5 block">
-                  Filtrar por tipo:
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    onClick={() => setFiltroTipoGasto("")}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                      filtroTipoGasto === ""
-                        ? "bg-emerald-600 text-white"
-                        : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-white/[0.08] dark:hover:text-zinc-100"
-                    }`}
-                  >
-                    Todos
-                  </button>
-                  <button
-                    onClick={() => setFiltroTipoGasto("credito")}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                      filtroTipoGasto === "credito"
-                        ? "bg-emerald-600 text-white"
-                        : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-white/[0.08] dark:hover:text-zinc-100"
-                    }`}
-                  >
-                    <CreditCard className="w-3.5 h-3.5" />
-                    Crédito
-                  </button>
-                  <button
-                    onClick={() => setFiltroTipoGasto("debito")}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                      filtroTipoGasto === "debito"
-                        ? "bg-emerald-600 text-white"
-                        : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-white/[0.08] dark:hover:text-zinc-100"
-                    }`}
-                  >
-                    <Banknote className="w-3.5 h-3.5" />
-                    Débito
-                  </button>
+            <div>
+              <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-2">
+                Tipo
+              </p>
+              <div className="flex flex-wrap gap-2 items-center">
+                <button onClick={() => setFiltroTipoGasto("")} className={chipClasse(filtroTipoGasto === "")}>
+                  Todos
+                </button>
+                <button onClick={() => setFiltroTipoGasto("credito")} className={chipClasse(filtroTipoGasto === "credito")}>
+                  Crédito
+                </button>
+                <button onClick={() => setFiltroTipoGasto("debito")} className={chipClasse(filtroTipoGasto === "debito")}>
+                  Débito
+                </button>
+                <div className="relative ml-auto">
+                  <input
+                    type="date"
+                    value={filtroDiaGasto}
+                    onChange={(e) => setFiltroDiaGasto(e.target.value)}
+                    max={format(mesVisualizacao, "yyyy-MM") + "-31"}
+                    min={format(mesVisualizacao, "yyyy-MM") + "-01"}
+                    className="px-3 py-2 pl-9 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-[13px] font-mono tabular-nums text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] dark:[color-scheme:dark]"
+                  />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600 dark:text-emerald-500 pointer-events-none" />
                 </div>
-              </div>
-
-              {/* Filtro por Data */}
-              <div>
-                <label className="text-xs text-zinc-500 dark:text-zinc-400 mb-1.5 block">
-                  Filtrar por dia:
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="date"
-                      value={filtroDiaGasto}
-                      onChange={(e) => setFiltroDiaGasto(e.target.value)}
-                      max={format(mesVisualizacao, "yyyy-MM") + "-31"}
-                      min={format(mesVisualizacao, "yyyy-MM") + "-01"}
-                      className="w-full px-3 py-1.5 pl-10 rounded-lg text-sm font-mono tabular-nums bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500 outline-none dark:[color-scheme:dark]"
-                    />
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600 pointer-events-none" />
-                  </div>
-                  {filtroDiaGasto && (
-                    <button
-                      onClick={() => setFiltroDiaGasto("")}
-                      className="px-3 py-1.5 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 hover:text-zinc-900 dark:hover:bg-white/[0.08] dark:hover:text-zinc-100 transition-colors"
-                    >
-                      Limpar
-                    </button>
-                  )}
-                </div>
+                {filtroDiaGasto && (
+                  <button onClick={() => setFiltroDiaGasto("")} className={chipClasse(false)}>
+                    Limpar
+                  </button>
+                )}
               </div>
             </div>
           </div>
 
           {parcelasAtivas.length === 0 ? (
-            <div className="p-4">
-              <PageEmptyState
-                compact
-                title="Nenhum lançamento encontrado"
-                description={`Ajuste os filtros ou crie um novo empréstimo para este mês.${
-                  filtroPessoaGasto || filtroTipoGasto || filtroDiaGasto
-                    ? " Os filtros atuais podem estar ocultando resultados."
-                    : ""
-                }`}
-              />
-            </div>
+            <PageEmptyState
+              compact
+              title="Nenhum lançamento encontrado"
+              description={`Ajuste os filtros ou crie um novo empréstimo para este mês.${
+                filtroPessoaGasto || filtroTipoGasto || filtroDiaGasto
+                  ? " Os filtros atuais podem estar ocultando resultados."
+                  : ""
+              }`}
+            />
           ) : (
-            <div className="space-y-4 p-4">
+            <div className="space-y-5">
               {(() => {
-                // Filtrar parcelas
-                // Usar parcelasFiltradas diretamente já que parcelasAtivas já vem filtrado do hook
+                // parcelasAtivas já vem filtrado do hook
                 const parcelasFiltradas = parcelasAtivas;
 
                 // Agrupar parcelas por dia
-                const parcelasPorDia: Record<string, typeof parcelasFiltradas> =
-                  {};
+                const parcelasPorDia: Record<string, typeof parcelasFiltradas> = {};
                 parcelasFiltradas.forEach((parcela) => {
                   const dia = parcela.gasto.data_inicio.substring(8, 10);
                   if (!parcelasPorDia[dia]) {
@@ -475,82 +385,69 @@ export function TabGastos({
                 return diasOrdenados.map((dia) => (
                   <div key={dia}>
                     {/* Cabeçalho do dia */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      <span className="font-mono text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                        Dia {dia}
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                        Dia {parseInt(dia, 10)}
                       </span>
-                      <div className="flex-1 h-px bg-zinc-200 dark:bg-white/[0.04]"></div>
+                      <div className="flex-1 h-px bg-zinc-100 dark:bg-white/[0.04]"></div>
                     </div>
                     {/* Lista de parcelas do dia */}
-                    <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 rounded-xl overflow-hidden">
+                    <ul className="space-y-2.5">
                       {parcelasPorDia[dia].map(
                         ({ gasto, parcela_atual, valor_parcela }) => (
                           <li
                             key={gasto.id}
-                            className="p-4 hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors bg-zinc-50 dark:bg-white/[0.04]"
+                            className="bg-[#FCFCFC] dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] rounded-[14px] p-3.5"
                           >
-                            <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center justify-between gap-4">
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-mono text-[10px] font-medium border bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-white/[0.09]">
+                                <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                  <span className={BADGE_NEUTRA}>
                                     {gasto.tipo === "credito" ? (
                                       <CreditCard className="w-3 h-3" />
                                     ) : (
                                       <Banknote className="w-3 h-3" />
                                     )}
-                                    {gasto.tipo === "credito"
-                                      ? "Crédito"
-                                      : "Débito"}
+                                    {gasto.tipo === "credito" ? "Crédito" : "Débito"}
                                   </span>
                                   {gasto.recorrente && (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-mono text-[10px] font-medium bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-white/[0.09]">
+                                    <span className={BADGE_NEUTRA}>
                                       <Repeat className="w-3 h-3" />
                                       Fixo
                                     </span>
                                   )}
-                                  <span className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
-                                    <User className="w-3 h-3" />
+                                  <span className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
                                     {gasto.pessoa}
                                   </span>
                                 </div>
-                                <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
                                   {gasto.descricao}
                                 </p>
-                                <div className="flex items-center gap-4 mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                                  <span className="flex items-center gap-1">
-                                    <Hash className="w-3 h-3" />
-                                    {gasto.recorrente ? (
-                                      <span className="text-zinc-500">Mensal</span>
-                                    ) : (
-                                      <span className="font-mono tabular-nums">
-                                        Parcela {parcela_atual}/{gasto.num_parcelas}
-                                      </span>
-                                    )}
-                                  </span>
-                                  <span className="font-mono tabular-nums text-xs text-zinc-500 dark:text-zinc-400">
-                                    {gasto.recorrente ? "Valor:" : "Total:"} {formatCurrency(gasto.valor_total)}
-                                  </span>
-                                </div>
+                                <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 flex items-center gap-1">
+                                  <Hash className="w-3 h-3" />
+                                  {gasto.recorrente
+                                    ? `mensal · valor ${formatCurrency(gasto.valor_total)}`
+                                    : `parcela ${parcela_atual}/${gasto.num_parcelas} · total ${formatCurrency(gasto.valor_total)}`}
+                                </p>
                               </div>
                               <div className="text-right flex-shrink-0">
-                                <p className="font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
+                                <p className="font-mono tabular-nums text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
                                   {formatCurrency(valor_parcela)}
                                 </p>
-                                <div className="flex items-center justify-end gap-1 mt-2" data-tour="gastos-item-acoes">
+                                <div className="flex items-center justify-end gap-0.5 mt-1.5" data-tour="gastos-item-acoes">
                                   <button
                                     onClick={() => handleEditGasto(gasto)}
-                                    className="p-1 text-zinc-400 hover:text-emerald-600 transition-colors"
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
                                     aria-label="Editar"
                                   >
-                                    <Edit3 className="w-4 h-4" />
+                                    <Edit3 className="w-[15px] h-[15px]" />
                                   </button>
                                   <button
                                     onClick={() => handleDelete(gasto.id)}
-                                    className="p-1 rounded text-zinc-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 transition-colors"
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"
                                     aria-label="Excluir"
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className="w-[15px] h-[15px]" />
                                   </button>
                                 </div>
                               </div>
