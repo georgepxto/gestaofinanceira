@@ -33,6 +33,7 @@ import {
 } from "../types/admin";
 import { Rotulo } from "../components/ui/Rotulo";
 import { Card } from "../components/ui/Card";
+import { Resumo, ResumoItem } from "../components/ui/Resumo";
 
 // ========== ACTION LABELS ==========
 const ACTION_LABELS: Record<string, { label: string; color: string; dot: string }> = {
@@ -340,29 +341,24 @@ export const AdminPage = () => {
       />
 
       {/* FAIXA_RESUMO */}
-      <Card padding="resumo" className="grid gap-x-7 gap-y-5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
-        <div className="min-w-0">
-          <Rotulo>Contas</Rotulo>
+      <Resumo>
+        <ResumoItem rotulo="Contas" apoio="sem contar administradores">
           <Valor porte="destaque" className="block mt-1 text-zinc-900 dark:text-zinc-50">
             {totalUsers}
           </Valor>
-          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">sem contar administradores</p>
-        </div>
-        <div className="min-w-0">
-          <Rotulo>Habilitadas</Rotulo>
-          <p className="font-mono valor text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5">{activeUsers}</p>
-        </div>
-        <div className="min-w-0">
-          <Rotulo>Suspensas</Rotulo>
-          <p className="font-mono valor text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5">{inactiveUsersCount}</p>
-        </div>
-        <div className="min-w-0">
-          <Rotulo tom="acento">Ativas hoje</Rotulo>
-          <p className="font-mono valor text-2xl font-semibold text-emerald-700 dark:text-emerald-400 mt-1.5">
+        </ResumoItem>
+        <ResumoItem rotulo="Habilitadas">
+          <Valor porte="medio" className="block mt-1.5 text-zinc-900 dark:text-zinc-50">{activeUsers}</Valor>
+        </ResumoItem>
+        <ResumoItem rotulo="Suspensas">
+          <Valor porte="medio" className="block mt-1.5 text-zinc-900 dark:text-zinc-50">{inactiveUsersCount}</Valor>
+        </ResumoItem>
+        <ResumoItem rotulo="Ativas hoje" tomRotulo="acento">
+          <Valor porte="medio" className="block mt-1.5 text-emerald-700 dark:text-emerald-400">
             {usageStats ? usageStats.active_today : "—"}
-          </p>
-        </div>
-      </Card>
+          </Valor>
+        </ResumoItem>
+      </Resumo>
 
       {/* SEGMENTADO de abas */}
       <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] p-1 rounded-xl overflow-x-auto w-fit max-w-full">
@@ -684,12 +680,20 @@ export const AdminPage = () => {
           ) : usageStats ? (
             <>
               {/* Métricas Principais */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatCard icon={<Users className="w-5 h-5" />} label="Total Usuários" value={usageStats.total_users} color="zinc" />
-                <StatCard icon={<UserCheck className="w-5 h-5" />} label="Ativos Hoje" value={usageStats.active_today} color="emerald" />
-                <StatCard icon={<Activity className="w-5 h-5" />} label="Ativos 7 dias" value={usageStats.active_7d} color="zinc" />
-                <StatCard icon={<TrendingUp className="w-5 h-5" />} label="Ativos 30 dias" value={usageStats.active_30d} color="zinc" />
-              </div>
+              <Resumo>
+                <ResumoItem rotulo="Total usuários">
+                  <Valor porte="medio" className="block mt-1.5 text-zinc-900 dark:text-zinc-100">{usageStats.total_users}</Valor>
+                </ResumoItem>
+                <ResumoItem rotulo="Ativos hoje" tomRotulo="acento">
+                  <Valor porte="medio" className="block mt-1.5 text-emerald-700 dark:text-emerald-400">{usageStats.active_today}</Valor>
+                </ResumoItem>
+                <ResumoItem rotulo="Ativos 7 dias">
+                  <Valor porte="medio" className="block mt-1.5 text-zinc-900 dark:text-zinc-100">{usageStats.active_7d}</Valor>
+                </ResumoItem>
+                <ResumoItem rotulo="Ativos 30 dias">
+                  <Valor porte="medio" className="block mt-1.5 text-zinc-900 dark:text-zinc-100">{usageStats.active_30d}</Valor>
+                </ResumoItem>
+              </Resumo>
 
               {/* Logins e Novos Usuários */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -986,36 +990,6 @@ export const AdminPage = () => {
   );
 };
 
-// ========== COMPONENTES AUXILIARES ==========
-
-function StatCard({
-  icon,
-  label,
-  value,
-  color,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  color: string;
-}) {
-  const colorMap: Record<string, string> = {
-    emerald: "text-emerald-500",
-    amber: "text-amber-500",
-    red: "text-red-500",
-    zinc: "text-zinc-400 dark:text-zinc-500",
-  };
-
-  return (
-    <Card padding="compacto">
-      <div className="flex items-center gap-2 mb-1">
-        <span className={colorMap[color] || "text-zinc-400 dark:text-zinc-500"}>{icon}</span>
-        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 truncate">{label}</span>
-      </div>
-      <p className="font-mono valor text-2xl font-bold text-zinc-900 dark:text-zinc-100">{value}</p>
-    </Card>
-  );
-}
 
 function LogRow({ log, formatDate }: { log: ActivityLog; formatDate: (d: string | null) => string }) {
   const actionInfo = ACTION_LABELS[log.action] || {

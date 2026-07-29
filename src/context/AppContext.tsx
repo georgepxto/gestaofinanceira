@@ -264,8 +264,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     fetchPagamentosParciais,
   } = usePagamentosParciais({
     user,
+    mesVisualizacao,
     getObsKey,
-    getMesAtual,
     setModalConfirm,
     setModalFeedback,
     resumoMensal,

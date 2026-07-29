@@ -6,13 +6,13 @@ import {
   pagamentosParciaisFunctions,
 } from "../lib/supabase";
 import type { PagamentoParcial } from "../types/extended";
-import { formatCurrency, parseCurrency } from "../utils/calculations";
+import { formatCurrency, parseCurrency, chaveMesPagamentoParcial } from "../utils/calculations";
 import { toast } from "../components/ui/Toaster";
 
 interface UsePagamentosParciaisProps {
   user: { id: string } | null;
+  mesVisualizacao: Date;
   getObsKey: (pessoa: string) => string;
-  getMesAtual: () => string;
   setModalConfirm: (modal: {
     show: boolean;
     titulo: string;
@@ -31,8 +31,8 @@ interface UsePagamentosParciaisProps {
 
 export function usePagamentosParciais({
   user,
+  mesVisualizacao,
   getObsKey,
-  getMesAtual,
   setModalConfirm,
   resumoMensal,
   setError,
@@ -128,7 +128,7 @@ export function usePagamentosParciais({
     }
 
     const dataPagamento = format(new Date(), "dd/MM/yyyy");
-    const mes = getMesAtual();
+    const mes = chaveMesPagamentoParcial(mesVisualizacao);
     const key = getObsKey(pessoa);
 
     setSaving(true);

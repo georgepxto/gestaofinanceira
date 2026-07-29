@@ -20,6 +20,7 @@ import { formatCurrency } from "../../utils/calculations";
 import { toActionableErrorMessage } from "../../utils/feedbackMessages";
 import { Rotulo } from "../ui/Rotulo";
 import { Card } from "../ui/Card";
+import { Resumo, ResumoItem } from "../ui/Resumo";
 
 /** CHIP dos filtros. */
 const chipClasse = (ativo: boolean) =>
@@ -35,8 +36,6 @@ const BADGE_ESMERALDA = "inline-flex items-center gap-1 font-mono text-[10px] fo
 
 interface TabGastosProps {
   mesVisualizacao: Date;
-  navegarMes: (direcao: "anterior" | "proximo") => void;
-  irParaHoje: () => void;
   error: string | null;
   totalMes: number;
   parcelasAtivas: ParcelaAtiva[];
@@ -112,40 +111,36 @@ export function TabGastos({
       )}
 
       {/* FAIXA_RESUMO */}
-      <Card
-        padding="resumo"
-        className="grid gap-x-7 gap-y-5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]"
-        data-tour="gastos-resumo-cards"
-      >
-        <div className="min-w-0" data-tour="gastos-card-total">
-          <Rotulo tom="acento">A receber</Rotulo>
+      <Resumo data-tour="gastos-resumo-cards">
+        <ResumoItem
+          rotulo="A receber"
+          tomRotulo="acento"
+          apoio="falta entrar neste mês"
+          data-tour="gastos-card-total"
+        >
           <Valor porte="destaque" className="block mt-1 text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalAReceber)}
           </Valor>
-          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">falta entrar neste mês</p>
-        </div>
-        <div className="min-w-0">
-          <Rotulo>Emprestado</Rotulo>
-          <p className="font-mono valor text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5 whitespace-nowrap">
+        </ResumoItem>
+        <ResumoItem
+          rotulo="Emprestado"
+          apoio={`${parcelasAtivas.length} ${parcelasAtivas.length === 1 ? "lançamento" : "lançamentos"}`}
+        >
+          <Valor porte="medio" className="block mt-1.5 text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalMes)}
-          </p>
-          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">{parcelasAtivas.length} {parcelasAtivas.length === 1 ? "lançamento" : "lançamentos"}</p>
-        </div>
-        <div className="min-w-0">
-          <Rotulo>Recebido</Rotulo>
-          <p className="font-mono valor text-2xl font-semibold text-emerald-700 dark:text-emerald-400 mt-1.5 whitespace-nowrap">
+          </Valor>
+        </ResumoItem>
+        <ResumoItem rotulo="Recebido" apoio="pagamentos do período">
+          <Valor porte="medio" className="block mt-1.5 text-emerald-700 dark:text-emerald-400">
             {formatCurrency(totalRecebido)}
-          </p>
-          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">pagamentos do período</p>
-        </div>
-        <div className="min-w-0">
-          <Rotulo>Devedores</Rotulo>
-          <p className="font-mono valor text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5">
+          </Valor>
+        </ResumoItem>
+        <ResumoItem rotulo="Devedores" apoio="com lançamentos no mês">
+          <Valor porte="medio" className="block mt-1.5 text-zinc-900 dark:text-zinc-50">
             {resumoMensal.length}
-          </p>
-          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">com lançamentos no mês</p>
-        </div>
-      </Card>
+          </Valor>
+        </ResumoItem>
+      </Resumo>
 
       {/* Cards por devedor */}
       {resumoMensal.length > 0 && (

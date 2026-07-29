@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, FileText, Loader2, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, FileText, Loader2, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
@@ -8,9 +8,9 @@ import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { TabMeuGasto } from "../components/Tabs";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { supabase } from "../lib/supabase";
-import { formatMonthYear } from "../utils/calculations";
 import type { MetaGasto } from "../types";
 import { PageHeader } from "../components/ui/PageHeader";
+import { SeletorMes } from "../components/ui/SeletorMes";
 
 interface MeuGastoTutorialStep {
   target: string;
@@ -108,8 +108,6 @@ const MEUS_GASTOS_TUTORIAL_STEPS: MeuGastoTutorialStep[] = [
 export const EuPage = () => {
   const {
     mesVisualizacao,
-    navegarMes,
-    irParaHoje,
     totalMeusGastosCredito,
     totalMeusGastosDebito,
     totalMeusGastosPagos,
@@ -190,8 +188,6 @@ export const EuPage = () => {
     }
   };
 
-  const isMesCorrente = format(mesVisualizacao, "yyyy-MM") === format(new Date(), "yyyy-MM");
-
   return (
     <div className="space-y-6">
       {/* HEADER_PAGINA */}
@@ -202,34 +198,7 @@ export const EuPage = () => {
         description="Suas despesas pessoais e gastos fixos do mês."
         action={
           <div className="flex items-center gap-3 flex-wrap" data-tour="eu-actions">
-            {/* MES_PILL */}
-            <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm" data-tour="eu-navegacao-mes">
-              <button
-                onClick={() => navegarMes("anterior")}
-                aria-label="Mês anterior"
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-              >
-                <ChevronLeft className="w-[18px] h-[18px]" />
-              </button>
-              <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
-                {formatMonthYear(mesVisualizacao)}
-              </span>
-              {!isMesCorrente && (
-                <button
-                  onClick={irParaHoje}
-                  className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
-                >
-                  hoje
-                </button>
-              )}
-              <button
-                onClick={() => navegarMes("proximo")}
-                aria-label="Próximo mês"
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-              >
-                <ChevronRight className="w-[18px] h-[18px]" />
-              </button>
-            </div>
+            <SeletorMes data-tour="eu-navegacao-mes" />
             {features.exportar_pdf && (
               <button
                 onClick={handleExportPDF}
@@ -268,8 +237,6 @@ export const EuPage = () => {
       {/* Content */}
       <TabMeuGasto
         mesVisualizacao={mesVisualizacao}
-        navegarMes={navegarMes}
-        irParaHoje={irParaHoje}
         totalMeusGastosCredito={totalMeusGastosCredito}
         totalMeusGastosDebito={totalMeusGastosDebito}
         totalMeusGastosPagos={totalMeusGastosPagos}

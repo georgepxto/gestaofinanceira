@@ -1,22 +1,18 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Link, useLocation } from "react-router-dom";
-import {
-  TrendingUp,
-  TrendingDown,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { useAppContext } from "../context";
 import { useTheme } from "../hooks/useTheme";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
 import { Valor } from "../components/ui/Valor";
 import { PageHeader } from "../components/ui/PageHeader";
+import { SeletorMes } from "../components/ui/SeletorMes";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
-import { formatCurrency, isGastoAtivoNoMes } from "../utils/calculations";
+import { chaveMesPagamentoParcial, formatCurrency, isGastoAtivoNoMes } from "../utils/calculations";
 import { categoriaDeGasto } from "../utils/categories";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
@@ -55,7 +51,6 @@ interface DashboardData {
   totalEmprestimosMesAnterior: number;
   gastosFixosMes: number;
   gastosVariaveisMes: number;
-  taxaQuitacao: number;
   totalPessoas: number;
   pessoasQuitadas: number;
   mediaGastosPorPessoa: number;
@@ -190,7 +185,7 @@ const DASHBOARD_TUTORIAL_STEPS: DashboardTutorialStep[] = [
 ];
 
 export const DashboardPage = () => {
-  const { user } = useAppContext();
+  const { user, mesVisualizacao } = useAppContext();
   const { theme } = useTheme();
   const location = useLocation();
 
@@ -210,7 +205,6 @@ export const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [mesVisualizacao, setMesVisualizacao] = useState(new Date());
   const [data, setData] = useState<DashboardData>({
     saldoTotal: 0,
     totalDevido: 0,
@@ -228,7 +222,6 @@ export const DashboardPage = () => {
     gastosFixosMes: 0,
     gastosVariaveisMes: 0,
     // Novas métricas
-    taxaQuitacao: 0,
     totalPessoas: 0,
     pessoasQuitadas: 0,
     mediaGastosPorPessoa: 0,
@@ -412,7 +405,7 @@ export const DashboardPage = () => {
       const { data: pagamentosParciais } = await supabase
         .from("pagamentos_parciais")
         .select("*")
-        .eq("mes", format(mesVisualizacao, "MMMM yyyy", { locale: ptBR }));
+        .eq("mes", chaveMesPagamentoParcial(mesVisualizacao));
       
       // Pessoas únicas que têm gastos no mês
       const pessoasComGastos = new Set(gastosCompartilhadosDoMes.map(g => g.pessoa));
@@ -435,8 +428,6 @@ export const DashboardPage = () => {
         }
       });
       
-      const taxaQuitacao = totalPessoas > 0 ? (pessoasQuitadas / totalPessoas) * 100 : 0;
-
       // 2. Média de gastos por pessoa
       const mediaGastosPorPessoa = totalPessoas > 0 
         ? totalEmprestimosMesAtual / totalPessoas 
@@ -541,7 +532,6 @@ export const DashboardPage = () => {
         gastosFixosMes,
         gastosVariaveisMes,
         // Novas métricas
-        taxaQuitacao,
         totalPessoas,
         pessoasQuitadas,
         mediaGastosPorPessoa,
@@ -592,28 +582,7 @@ export const DashboardPage = () => {
         eyebrow={<>Painel · <span className="capitalize">{format(mesVisualizacao, "MMMM", { locale: ptBR })}</span></>}
         title={<>Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'}</>}
         description="Sua vida financeira inteira num só lugar."
-        action={
-          /* MES_PILL */
-          <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm" data-tour="month-selector">
-            <button
-              onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))}
-              aria-label="Mês anterior"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-            >
-              <ChevronLeft className="w-[18px] h-[18px]" />
-            </button>
-            <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
-              {format(mesVisualizacao, "MMMM yyyy", { locale: ptBR })}
-            </span>
-            <button
-              onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))}
-              aria-label="Próximo mês"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-            >
-              <ChevronRight className="w-[18px] h-[18px]" />
-            </button>
-          </div>
-        }
+        action={<SeletorMes data-tour="month-selector" />}
       />
 
       {/* Card Herói: Saldo livre + Fluxo do mês */}
@@ -642,18 +611,27 @@ export const DashboardPage = () => {
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-3">
                 É o que sobra do seu saldo depois dos gastos fixos do mês.
               </p>
-              <div className="border-t border-zinc-100 dark:border-zinc-800 mt-5 pt-5 grid gap-x-6 gap-y-4 [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]">
+              {/* Piso de 172px: em Geist Mono 22px o valor mede ~158, e `.valor`
+                  não quebra linha — a 140 ele vazava por cima do vizinho na largura
+                  em que cabiam exatamente três colunas. */}
+              <div className="border-t border-zinc-100 dark:border-zinc-800 mt-5 pt-5 grid gap-x-6 gap-y-4 [grid-template-columns:repeat(auto-fit,minmax(172px,1fr))]">
                 <div className="min-w-0" data-tour="card-saldo-total-mini">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Saldo total</p>
-                  <p className="font-mono valor text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-0.5">{formatCurrency(data.saldoTotal)}</p>
+                  <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.saldoTotal)}</Valor>
                 </div>
                 <div className="min-w-0" data-tour="card-a-receber">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">A receber</p>
-                  <p className="font-mono valor text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-0.5">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
+                  <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.totalEmprestimosMesAtual)}</Valor>
+                  {/* Sem ninguém com gasto compartilhado no mês, "0 de 0" é ruído: a linha some. */}
+                  {data.totalPessoas > 0 && (
+                    <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      {data.pessoasQuitadas} de {data.totalPessoas} {data.totalPessoas === 1 ? "acertou" : "acertaram"}
+                    </p>
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Meus gastos</p>
-                  <p className="font-mono valor text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-0.5">{formatCurrency(data.totalGastosMesAtual)}</p>
+                  <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.totalGastosMesAtual)}</Valor>
                 </div>
               </div>
             </div>
@@ -686,9 +664,9 @@ export const DashboardPage = () => {
               </div>
               <div className="flex justify-between items-center mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800">
                 <span className="text-zinc-500 dark:text-zinc-400 text-sm">Sobra mensal</span>
-                <span className={`font-mono valor text-xl font-semibold ${sobraMensal >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                <Valor porte="medio" className={sobraMensal >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
                   {sobraMensal >= 0 ? '+' : ''}{formatCurrency(sobraMensal)}
-                </span>
+                </Valor>
               </div>
             </div>
           </Card>
@@ -705,7 +683,10 @@ export const DashboardPage = () => {
           </div>
           {data.tendenciaMensal.length > 0 ? (
             <div className="h-44">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+              {/* initialDimension: o ResponsiveContainer da v3 nasce com -1×-1 e só mede
+                  um quadro depois, o que dispara um aviso de tamanho no console (recharts
+                  #6716). A altura vem do pai; a largura é chute de desktop, vale um quadro. */}
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 600, height: 176 }}>
                 <BarChart data={data.tendenciaMensal} margin={{ top: 16 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />
                   <XAxis dataKey="mes" stroke={chartAxis} fontSize={11} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
@@ -889,7 +870,8 @@ export const DashboardPage = () => {
             </div>
           </div>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            {/* Mesmo motivo do gráfico de barras acima — ver recharts #6716. */}
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 900, height: 256 }}>
               <AreaChart data={data.tendenciaMensal}>
                 <defs>
                   <linearGradient id="colorMeus" x1="0" y1="0" x2="0" y2="1">

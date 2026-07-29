@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "check:ds": "bash scripts/check-design-system.sh",
+    "prebuild": "npm run check:ds",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",

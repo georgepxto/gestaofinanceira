@@ -1,8 +1,8 @@
-import { Plus, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { PageHeader } from "../components/ui/PageHeader";
-import { formatMonthYear } from "../utils/calculations";
+import { SeletorMes } from "../components/ui/SeletorMes";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
@@ -91,8 +91,6 @@ const GASTOS_TUTORIAL_STEPS: GastosTutorialStep[] = [
 export const GastosPage = () => {
   const {
     mesVisualizacao,
-    navegarMes,
-    irParaHoje,
     error,
     totalMes,
     parcelasAtivas,
@@ -174,8 +172,6 @@ export const GastosPage = () => {
     );
   };
 
-  const isMesCorrente = format(mesVisualizacao, "yyyy-MM") === format(new Date(), "yyyy-MM");
-
   return (
     <div className="space-y-6">
       {/* HEADER_PAGINA */}
@@ -186,34 +182,7 @@ export const GastosPage = () => {
         description="Valores a receber, organizados por devedor."
         action={
           <div className="flex items-center gap-3 flex-wrap" data-tour="gastos-actions">
-            {/* MES_PILL */}
-            <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm" data-tour="gastos-navegacao-mes">
-              <button
-                onClick={() => navegarMes("anterior")}
-                aria-label="Mês anterior"
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-              >
-                <ChevronLeft className="w-[18px] h-[18px]" />
-              </button>
-              <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
-                {formatMonthYear(mesVisualizacao)}
-              </span>
-              {!isMesCorrente && (
-                <button
-                  onClick={irParaHoje}
-                  className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
-                >
-                  hoje
-                </button>
-              )}
-              <button
-                onClick={() => navegarMes("proximo")}
-                aria-label="Próximo mês"
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-              >
-                <ChevronRight className="w-[18px] h-[18px]" />
-              </button>
-            </div>
+            <SeletorMes data-tour="gastos-navegacao-mes" />
             {features.exportar_pdf && (
               <button
                 onClick={handleExportPDF}
@@ -241,8 +210,6 @@ export const GastosPage = () => {
       {/* Content */}
       <TabGastos
         mesVisualizacao={mesVisualizacao}
-        navegarMes={navegarMes}
-        irParaHoje={irParaHoje}
         error={error}
         totalMes={totalMes}
         parcelasAtivas={parcelasAtivas}

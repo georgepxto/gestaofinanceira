@@ -8,7 +8,7 @@ import {
 } from "../lib/supabase";
 import type { SaldoDevedor, SaldoDevedorForm, ResumoMensal } from "../types";
 import type { PagamentoParcial } from "../types/extended";
-import { formatCurrency, parseCurrency, formatMonthYear } from "../utils/calculations";
+import { formatCurrency, parseCurrency, formatMonthYear, chaveMesPagamentoParcial } from "../utils/calculations";
 import { toast } from "../components/ui/Toaster";
 
 interface UseSaldosDevedoresProps {
@@ -420,7 +420,7 @@ export function useSaldosDevedores({
       // Registrar o pagamento se houver valor pago
       if (valorPago > 0) {
         const dataPagamento = format(new Date(), "dd/MM/yyyy");
-        const mes = getMesAtual();
+        const mes = chaveMesPagamentoParcial(mesVisualizacao);
         const key = getObsKey(pessoa);
 
         if (isSupabaseConfigured && supabase) {
@@ -571,7 +571,7 @@ export function useSaldosDevedores({
 
       // Limpar pagamentos parciais da pessoa para este mês
       const pagamentosKey = getObsKey(pessoa);
-      const mes = getMesAtual();
+      const mes = chaveMesPagamentoParcial(mesVisualizacao);
       
       // Deletar do Supabase
       if (isSupabaseConfigured && supabase) {

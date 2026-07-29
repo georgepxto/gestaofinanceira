@@ -4,7 +4,15 @@ import tseslint from "typescript-eslint";
 
 export default [
   {
-    ignores: ["dist/**", "node_modules/**", "playwright-report/**", "test-results/**"],
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "playwright-report/**",
+      "test-results/**",
+      // Mocks de design guardados para consulta, não são fonte do app. O diretório
+      // existe em duas cópias no repositório, daí o `**/` na frente.
+      "**/design_handoff_hedge_visual_revision/**",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

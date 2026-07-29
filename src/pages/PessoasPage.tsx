@@ -1,18 +1,20 @@
 import { useState } from "react";
-import { Plus, Trash2, Loader2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { Plus, Trash2, Loader2, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAppContext } from "../context";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageHeader } from "../components/ui/PageHeader";
+import { SeletorMes } from "../components/ui/SeletorMes";
 import { PageEmptyState } from "../components/ui/AsyncState";
 import { Valor } from "../components/ui/Valor";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
-import { formatCurrency, formatMonthYear } from "../utils/calculations";
+import { formatCurrency } from "../utils/calculations";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { Rotulo } from "../components/ui/Rotulo";
 import { Card } from "../components/ui/Card";
+import { Resumo, ResumoItem } from "../components/ui/Resumo";
 
 interface DevedoresTutorialStep {
   target: string;
@@ -93,8 +95,6 @@ export const PessoasPage = () => {
     isMesFechado,
     setShowPagamentoParcial,
     mesVisualizacao,
-    navegarMes,
-    irParaHoje,
   } = useAppContext();
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -185,7 +185,6 @@ export const PessoasPage = () => {
     (a, b) => getEstatisticasPessoa(b).dividaAberta - getEstatisticasPessoa(a).dividaAberta
   );
 
-  const isMesCorrente = format(mesVisualizacao, "yyyy-MM") === format(new Date(), "yyyy-MM");
   const mesNome = format(mesVisualizacao, "MMMM", { locale: ptBR });
 
   const toggleExpand = (nome: string) => {
@@ -202,34 +201,7 @@ export const PessoasPage = () => {
         description="Quem deve o quê — comparável de uma olhada."
         action={
           <div className="flex items-center gap-3 flex-wrap">
-            {/* MES_PILL */}
-            <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm" data-tour="devedores-mes">
-              <button
-                onClick={() => navegarMes("anterior")}
-                aria-label="Mês anterior"
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-              >
-                <ChevronLeft className="w-[18px] h-[18px]" />
-              </button>
-              <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
-                {formatMonthYear(mesVisualizacao)}
-              </span>
-              {!isMesCorrente && (
-                <button
-                  onClick={irParaHoje}
-                  className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
-                >
-                  hoje
-                </button>
-              )}
-              <button
-                onClick={() => navegarMes("proximo")}
-                aria-label="Próximo mês"
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-              >
-                <ChevronRight className="w-[18px] h-[18px]" />
-              </button>
-            </div>
+            <SeletorMes data-tour="devedores-mes" />
             <button
               onClick={() => setShowAddForm(true)}
               data-tour="devedores-btn-novo"
@@ -243,33 +215,31 @@ export const PessoasPage = () => {
       />
 
       {/* FAIXA_RESUMO — estoque e fluxo lado a lado, nunca somados */}
-      <Card
-        padding="resumo"
-        className="grid gap-x-7 gap-y-5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]"
-        data-tour="devedores-resumo-total"
-      >
-        <div className="min-w-0">
-          <Rotulo>Dívidas em aberto</Rotulo>
+      <Resumo data-tour="devedores-resumo-total">
+        <ResumoItem
+          rotulo="Dívidas em aberto"
+          apoio={`saldo acumulado · ${pessoasComDivida} ${pessoasComDivida === 1 ? "pessoa" : "pessoas"}`}
+        >
           <Valor porte="destaque" className="block mt-1 text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalDividasGeral)}
           </Valor>
-          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">saldo acumulado · {pessoasComDivida} {pessoasComDivida === 1 ? "pessoa" : "pessoas"}</p>
-        </div>
-        <div className="min-w-0">
-          <Rotulo className="capitalize">Empréstimos de {mesNome}</Rotulo>
+        </ResumoItem>
+        <ResumoItem
+          // O mês vem em minúscula do date-fns; `capitalize` no próprio texto
+          // ganha do `uppercase` do Rotulo, que é como esta linha sempre leu.
+          rotulo={<span className="capitalize">Empréstimos de {mesNome}</span>}
+          apoio={`fluxo do mês · ${pessoasComEmprestimos} ${pessoasComEmprestimos === 1 ? "pessoa" : "pessoas"}`}
+        >
           <Valor porte="destaque" className="block mt-1 text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalEmprestimosMes)}
           </Valor>
-          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">fluxo do mês · {pessoasComEmprestimos} {pessoasComEmprestimos === 1 ? "pessoa" : "pessoas"}</p>
-        </div>
-        <div className="min-w-0">
-          <Rotulo>Recebido no mês</Rotulo>
+        </ResumoItem>
+        <ResumoItem rotulo="Recebido no mês" apoio="pagamentos registrados no período">
           <Valor porte="destaque" className="block mt-1 text-emerald-700 dark:text-emerald-400">
             {formatCurrency(totalRecebidoMes)}
           </Valor>
-          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">pagamentos registrados no período</p>
-        </div>
-      </Card>
+        </ResumoItem>
+      </Resumo>
 
       {/* Form Novo devedor */}
       {showAddForm && (

@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Plus, X, Loader2, Edit2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, X, Loader2, Edit2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageHeader } from "../components/ui/PageHeader";
+import { SeletorMes } from "../components/ui/SeletorMes";
 import { useAppContext } from "../context";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
-import { formatCurrency, formatMonthYear } from "../utils/calculations";
+import { formatCurrency, formatMesAno } from "../utils/calculations";
 import { CATEGORIAS, categoriaDeGasto } from "../utils/categories";
 import { toast } from "../components/ui/Toaster";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
@@ -80,7 +80,7 @@ interface LinhaConsumo extends MetaGasto {
 }
 
 export const MetasPage = () => {
-  const { user, setModalConfirm, meusGastosDoMes, mesVisualizacao, navegarMes, irParaHoje } = useAppContext();
+  const { user, setModalConfirm, meusGastosDoMes, mesVisualizacao } = useAppContext();
 
   const [metas, setMetas] = useState<MetaGasto[]>([]);
   const [novaMeta, setNovaMeta] = useState({ categoria: "", limite: "" });
@@ -249,8 +249,6 @@ export const MetasPage = () => {
   const noControle = linhas.filter((l) => l.pct < 80);
   const emRisco = [...estouradas, ...quaseNoLimite];
 
-  const isMesCorrente = format(mesVisualizacao, "yyyy-MM") === format(new Date(), "yyyy-MM");
-
   if (loading) {
     return <PageLoadingState title="Carregando metas" description="Estamos buscando suas metas cadastradas." />;
   }
@@ -274,43 +272,14 @@ export const MetasPage = () => {
         eyebrow="Gastos"
         title="Metas de gasto"
         description="Seus limites por categoria — e quanto de cada um você já usou."
-        action={
-          /* MES_PILL */
-          <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm">
-            <button
-              onClick={() => navegarMes("anterior")}
-              aria-label="Mês anterior"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-            >
-              <ChevronLeft className="w-[18px] h-[18px]" />
-            </button>
-            <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
-              {formatMonthYear(mesVisualizacao)}
-            </span>
-            {!isMesCorrente && (
-              <button
-                onClick={irParaHoje}
-                className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
-              >
-                hoje
-              </button>
-            )}
-            <button
-              onClick={() => navegarMes("proximo")}
-              aria-label="Próximo mês"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-            >
-              <ChevronRight className="w-[18px] h-[18px]" />
-            </button>
-          </div>
-        }
+        action={<SeletorMes />}
       />
 
       {/* Card herói: Orçado vs. gasto */}
       {linhas.length > 0 && (
         <Card as="section" padding="resumo">
           <Rotulo tom="acento" className="mb-2">
-            Orçado vs. gasto · <span className="normal-case">{formatMonthYear(mesVisualizacao)}</span>
+            Orçado vs. gasto · <span className="normal-case">{formatMesAno(mesVisualizacao)}</span>
           </Rotulo>
           <div className="flex items-end justify-between gap-5 flex-wrap mb-4">
             <p className="whitespace-nowrap">

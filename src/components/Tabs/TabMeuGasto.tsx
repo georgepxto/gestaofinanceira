@@ -19,6 +19,7 @@ import type { MeuGasto, CartaoCredito } from "../../types";
 import { formatCurrency, getMesFaturaCartao } from "../../utils/calculations";
 import { Rotulo } from "../ui/Rotulo";
 import { Card } from "../ui/Card";
+import { Resumo, ResumoItem } from "../ui/Resumo";
 import { Valor } from "../ui/Valor";
 
 function getPessoasDivididas(gasto: MeuGasto): string[] {
@@ -75,8 +76,6 @@ const BADGE_AMBAR = "font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg
 
 interface TabMeuGastoProps {
   mesVisualizacao: Date;
-  navegarMes: (direcao: "anterior" | "proximo") => void;
-  irParaHoje: () => void;
   totalMeusGastosCredito: number;
   totalMeusGastosDebito: number;
   totalMeusGastosPagos: number;
@@ -151,44 +150,28 @@ export function TabMeuGasto({
     <>
       {/* FAIXA_RESUMO — auto-fit com piso de 200px; sem divisória filha
           (quebraria o auto-fit). Valor em R$ nunca trunca. */}
-      <Card
-        padding="resumo"
-        className="grid gap-x-7 gap-y-5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]"
-        data-tour="eu-resumo-cards"
-      >
-        <div className="min-w-0" data-tour="eu-card-credito">
-          <Rotulo className="mb-1">
-            Crédito
-          </Rotulo>
-          <Valor porte="medio" className="block text-zinc-900 dark:text-zinc-50">
+      <Resumo data-tour="eu-resumo-cards">
+        <ResumoItem rotulo="Crédito" data-tour="eu-card-credito">
+          <Valor porte="medio" className="block mt-1 text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalMeusGastosCredito)}
           </Valor>
-        </div>
-        <div className="min-w-0" data-tour="eu-card-debito">
-          <Rotulo className="mb-1">
-            Débito
-          </Rotulo>
-          <Valor porte="medio" className="block text-zinc-900 dark:text-zinc-50">
+        </ResumoItem>
+        <ResumoItem rotulo="Débito" data-tour="eu-card-debito">
+          <Valor porte="medio" className="block mt-1 text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalMeusGastosDebito)}
           </Valor>
-        </div>
-        <div className="min-w-0" data-tour="eu-card-pagos">
-          <Rotulo tom="acento" className="mb-1">
-            Pago
-          </Rotulo>
-          <Valor porte="medio" className="block text-emerald-700 dark:text-emerald-400">
+        </ResumoItem>
+        <ResumoItem rotulo="Pago" tomRotulo="acento" data-tour="eu-card-pagos">
+          <Valor porte="medio" className="block mt-1 text-emerald-700 dark:text-emerald-400">
             {formatCurrency(totalMeusGastosPagos)}
           </Valor>
-        </div>
-        <div className="min-w-0" data-tour="eu-card-fixos">
-          <Rotulo className="mb-1">
-            Fixos
-          </Rotulo>
-          <Valor porte="medio" className="block text-zinc-900 dark:text-zinc-50">
+        </ResumoItem>
+        <ResumoItem rotulo="Fixos" data-tour="eu-card-fixos">
+          <Valor porte="medio" className="block mt-1 text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalGastosFixos)}
           </Valor>
-        </div>
-      </Card>
+        </ResumoItem>
+      </Resumo>
 
       {/* Grid principal: filtros + fixos à esquerda, lançamentos à direita */}
       <div className="grid grid-cols-1 lg:[grid-template-columns:minmax(0,0.92fr)_minmax(0,1.08fr)] gap-5 items-start">
