@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, Trash2, Edit2, X, Calendar, CalendarDays, ChevronLeft, ChevronRight, Check, Plus, History, Clock } from "lucide-react";
-import { format, addMonths, subMonths } from "date-fns";
+import { Loader2, Trash2, Edit2, X, Calendar, CalendarDays, Check, Plus, History, Clock } from "lucide-react";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAppContext } from "../context";
 import { PageHeader } from "../components/ui/PageHeader";
+import { SeletorMes } from "../components/ui/SeletorMes";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
@@ -110,7 +111,7 @@ const CARTOES_TUTORIAL_STEPS: CartoesTutorialStep[] = [
 ];
 
 export const CartoesCreditoPage = () => {
-  const { user, setModalConfirm, getTotalPagoParcial, resumoMensal } = useAppContext();
+  const { user, setModalConfirm, getTotalPagoParcial, resumoMensal, mesVisualizacao } = useAppContext();
   
   // Usar os cartões do context que já carregam ou buscar locais para este componente? O componente já usa um estado local `cartoes` que não precisa se o AppContext fornece, mas vamos manter o fetchCartoes que existe aqui.
   
@@ -124,8 +125,7 @@ export const CartoesCreditoPage = () => {
   const [saving, setSaving] = useState(false);
   
   const [cartaoSelecionado, setCartaoSelecionado] = useState<CartaoCredito | null>(null);
-  const [mesVisualizacao, setMesVisualizacao] = useState(new Date());
-  
+
   // Modal cartão
   const [showFormCartao, setShowFormCartao] = useState(false);
   const [editandoCartao, setEditandoCartao] = useState<CartaoCredito | null>(null);
@@ -235,8 +235,6 @@ export const CartoesCreditoPage = () => {
   });
 
   // Calculações
-  const getMesAno = () => format(mesVisualizacao, "MMMM yyyy", { locale: ptBR });
-  
   // Verifica se uma data está dentro do período da fatura
   const estaNoPeríodoFatura = (dataStr: string, cartaoId: string) => {
     const cartao = cartoesState.find((c) => c.id === cartaoId);
@@ -642,7 +640,7 @@ export const CartoesCreditoPage = () => {
     <Card className="min-w-0" data-tour="cartoes-consolidado">
       <div className="flex items-center justify-between gap-3 mb-2">
         <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Limite consolidado</h2>
-        <span className="font-mono valor text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{percentUsado.toFixed(0)}%</span>
+        <Valor porte="medio" className="text-zinc-900 dark:text-zinc-50">{percentUsado.toFixed(0)}%</Valor>
       </div>
       {barraLimite(percentUsado)}
       <div className="grid grid-cols-3 gap-3 mt-4 mb-4">
@@ -697,26 +695,7 @@ export const CartoesCreditoPage = () => {
         description="Faturas, limites e transações de cada cartão."
         action={
           <div className="flex items-center gap-3 flex-wrap">
-            {/* MES_PILL — o mês vem daqui; sem navegações duplicadas na tela */}
-            <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm">
-              <button
-                onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))}
-                aria-label="Mês anterior"
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-              >
-                <ChevronLeft className="w-[18px] h-[18px]" />
-              </button>
-              <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
-                {getMesAno()}
-              </span>
-              <button
-                onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))}
-                aria-label="Próximo mês"
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-              >
-                <ChevronRight className="w-[18px] h-[18px]" />
-              </button>
-            </div>
+            <SeletorMes />
             <button
               onClick={() => { resetFormCartao(); setShowFormCartao(true); }}
               className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors"
@@ -839,9 +818,9 @@ export const CartoesCreditoPage = () => {
                   </div>
                   <div className="text-right flex-shrink-0">
                     <Rotulo>Melhor dia p/ comprar</Rotulo>
-                    <p className="font-mono valor text-2xl font-semibold text-emerald-700 dark:text-emerald-400 mt-1">
+                    <Valor porte="medio" className="block mt-1 text-emerald-700 dark:text-emerald-400">
                       {cartaoSelecionado.melhor_dia_compra || "—"}
-                    </p>
+                    </Valor>
                   </div>
                 </div>
                 <div className="border-t border-zinc-100 dark:border-zinc-800 mt-5 pt-5">

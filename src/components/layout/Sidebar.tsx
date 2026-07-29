@@ -105,7 +105,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
       area: rodapePaths.includes(activePath) ? "rodape" : "nav",
       top: el.offsetTop + el.offsetHeight / 2 - 8,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Deps enxutas de propósito: `navPaths` e `rodapePaths` são recriados a cada
+    // render, então entrar na lista faria o efeito rodar sem parar. O que de fato
+    // move o indicador está abaixo — rota, colapso e quais grupos aparecem.
   }, [location.pathname, isCollapsed, isAdmin, showConfiguracoes, visibleGroups.length]);
 
   const Indicador = ({ area }: { area: "nav" | "rodape" }) =>

@@ -151,6 +151,18 @@ regra "corpo fora de 22/30/34/44" \
   "Acima de 15px existem quatro corpos: 22 (Valor medio), 30 (destaque), 34 (PageHeader), 44 (herói)." \
   'text-\[(1[6-9]|2[013-9]|3[1-35-9]|4[0-35-9]|[5-9][0-9]|[0-9]{3,})px\]'
 
+# O degrau nomeado do Tailwind é o caminho por onde a escala vazou: dezessete valores
+# nasceram `text-2xl` (24px) ou `text-lg` (18px) porque `text-[24px]` seria pego e o
+# degrau nomeado não. Dinheiro passa pelo <Valor>, o único lugar que escolhe corpo.
+#
+# A âncora é `valor`, não o corpo: título de cartão em text-lg continua livre. O que
+# esta regra barra é text-lg em dinheiro, não text-lg.
+regra "valor com corpo nomeado do Tailwind" \
+  "Dinheiro usa <Valor porte=…>. text-lg/xl/2xl não são degraus da escala (18/20/24)." \
+  'valor[^"'"'"']*\btext-(lg|xl|[2-9]xl)\b|\btext-(lg|xl|[2-9]xl)[^"'"'"']*\bvalor\b' \
+  produto \
+  'src/components/ui/Valor\.tsx'
+
 # ─────────────────────────────────────────────────────────────────────────────
 grupo "Cor"
 

@@ -296,11 +296,11 @@ export function TabDividas({
                     </div>
 
                     <div className="text-right flex-shrink-0">
-                      <p className={`font-mono valor text-2xl font-semibold whitespace-nowrap ${
+                      <Valor porte="medio" className={`block ${
                         quitada ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"
                       }`}>
                         {formatCurrency(divida.valor_atual)}
-                      </p>
+                      </Valor>
                       <Rotulo>restante</Rotulo>
 
                       <div className="flex gap-1 mt-2.5 justify-end items-center" data-tour="dividas-item-acoes">

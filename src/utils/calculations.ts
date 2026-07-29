@@ -51,10 +51,33 @@ export function clampDay(day: number, year: number, month: number): number {
 }
 
 /**
- * Formata uma data para exibição (ex: "Janeiro 2024")
+ * Mês por extenso em frase (ex: "Janeiro de 2024") — modal e PDF, onde o mês
+ * aparece dentro de um texto corrido e a preposição faz falta.
  */
 export function formatMonthYear(date: Date): string {
   return format(date, "MMMM 'de' yyyy", { locale: ptBR });
+}
+
+/**
+ * Mês por extenso sem preposição (ex: "Janeiro 2024") — para rótulo e controle,
+ * onde o espaço é fixo e a preposição só ocupa lugar. Frase usa `formatMonthYear`.
+ *
+ * Os dois existem de propósito: são registros diferentes, não duplicação.
+ */
+export function formatMesAno(date: Date): string {
+  return format(date, "MMMM yyyy", { locale: ptBR });
+}
+
+/**
+ * A chave de mês gravada na coluna `mes` de `pagamentos_parciais`.
+ *
+ * Bate com `formatMesAno` hoje, e mesmo assim é função própria: aquela é
+ * formato de exibição e pode ser reajustada quando o desenho pedir. Esta é
+ * contrato com o banco — mudar o formato aqui deixa de encontrar tudo que já
+ * está salvo, sem erro nenhum, só uma consulta que volta vazia.
+ */
+export function chaveMesPagamentoParcial(date: Date): string {
+  return format(date, "MMMM yyyy", { locale: ptBR });
 }
 
 /**

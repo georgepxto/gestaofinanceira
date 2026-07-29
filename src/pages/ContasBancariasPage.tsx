@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Loader2, Trash2, Edit2, X, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Loader2, Trash2, Edit2, X, Check } from "lucide-react";
 import { useAppContext } from "../context";
 import { PageHeader } from "../components/ui/PageHeader";
+import { SeletorMes } from "../components/ui/SeletorMes";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
-import { formatCurrency, formatCurrencyInput, formatCurrencyValue, parseCurrency, formatMonthYear } from "../utils/calculations";
+import { formatCurrency, formatCurrencyInput, formatCurrencyValue, parseCurrency } from "../utils/calculations";
 import { CATEGORIAS_RECEITA, TIPOS_RECEITA, CATEGORIA_RECEITA_PADRAO } from "../utils/receitas";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { toast } from "../components/ui/Toaster";
@@ -17,6 +18,7 @@ import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import type { ContaBancaria, Receita, ContaBancariaForm, ReceitaForm } from "../types";
 import { Rotulo } from "../components/ui/Rotulo";
 import { Card } from "../components/ui/Card";
+import { Resumo, ResumoItem } from "../components/ui/Resumo";
 
 interface ContasTutorialStep {
   target: string;
@@ -82,7 +84,7 @@ const CONTAS_TUTORIAL_STEPS: ContasTutorialStep[] = [
 ];
 
 export const ContasBancariasPage = () => {
-  const { user, setModalConfirm, setModalFeedback, mesVisualizacao, navegarMes, irParaHoje, gastosFixos, meusGastosDoMes } = useAppContext();
+  const { user, setModalConfirm, setModalFeedback, mesVisualizacao, gastosFixos, meusGastosDoMes } = useAppContext();
   
   const [contas, setContas] = useState<ContaBancaria[]>([]);
   const [receitas, setReceitas] = useState<Receita[]>([]);
@@ -387,8 +389,6 @@ export const ContasBancariasPage = () => {
 
   const saldoTotal = contas.reduce((sum, c) => sum + calcularSaldoConta(c), 0);
 
-  const isMesCorrente = format(mesVisualizacao, "yyyy-MM") === format(new Date(), "yyyy-MM");
-
   // Entradas do mês: funde receitas programadas (fixo/recorrente) e avulsas do
   // mês numa lista única ordenada por dia, marcando cada uma como recebida ou
   // prevista — mesmos dados que as duas seções antigas mostravam separadas.
@@ -457,34 +457,7 @@ export const ContasBancariasPage = () => {
         description="Onde o dinheiro está e quando ele entra."
         action={
           <div className="flex items-center gap-3 flex-wrap">
-            {/* MES_PILL */}
-            <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm" data-tour="contas-mes">
-              <button
-                onClick={() => navegarMes("anterior")}
-                aria-label="Mês anterior"
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-              >
-                <ChevronLeft className="w-[18px] h-[18px]" />
-              </button>
-              <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
-                {formatMonthYear(mesVisualizacao)}
-              </span>
-              {!isMesCorrente && (
-                <button
-                  onClick={irParaHoje}
-                  className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
-                >
-                  hoje
-                </button>
-              )}
-              <button
-                onClick={() => navegarMes("proximo")}
-                aria-label="Próximo mês"
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-              >
-                <ChevronRight className="w-[18px] h-[18px]" />
-              </button>
-            </div>
+            <SeletorMes data-tour="contas-mes" />
             {/* CTA */}
             <button
               onClick={() => { resetFormConta(); setShowModalConta(true); }}
@@ -498,29 +471,29 @@ export const ContasBancariasPage = () => {
       />
 
       {/* FAIXA_RESUMO */}
-      <Card
-        padding="resumo"
-        className="grid gap-x-7 gap-y-5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]"
-        data-tour="contas-cards"
-      >
-        <div className="min-w-0">
-          <Rotulo tom="acento">Saldo total</Rotulo>
+      <Resumo data-tour="contas-cards">
+        <ResumoItem
+          rotulo="Saldo total"
+          tomRotulo="acento"
+          apoio={`em ${contas.length} ${contas.length === 1 ? "conta" : "contas"}`}
+        >
           <Valor porte="destaque" className={`block mt-1 ${saldoTotal < 0 ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-50"}`}>
             {formatCurrency(saldoTotal)}
           </Valor>
-          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">em {contas.length} {contas.length === 1 ? "conta" : "contas"}</p>
-        </div>
-        <div className="min-w-0">
-          <Rotulo>Recebido no mês</Rotulo>
-          <p className="font-mono valor text-2xl font-semibold text-emerald-700 dark:text-emerald-400 mt-1.5">{formatCurrency(totalRecebidoMes)}</p>
-          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">{entradasRecebidas.length} {entradasRecebidas.length === 1 ? "entrada" : "entradas"}</p>
-        </div>
-        <div className="min-w-0">
-          <Rotulo>Ainda a receber</Rotulo>
-          <p className="font-mono valor text-2xl font-semibold text-amber-600 dark:text-amber-400 mt-1.5">{formatCurrency(totalPrevistoMes)}</p>
-          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">{entradasPrevistas.length} {entradasPrevistas.length === 1 ? "entrada prevista" : "entradas previstas"}</p>
-        </div>
-      </Card>
+        </ResumoItem>
+        <ResumoItem
+          rotulo="Recebido no mês"
+          apoio={`${entradasRecebidas.length} ${entradasRecebidas.length === 1 ? "entrada" : "entradas"}`}
+        >
+          <Valor porte="medio" className="block mt-1.5 text-emerald-700 dark:text-emerald-400">{formatCurrency(totalRecebidoMes)}</Valor>
+        </ResumoItem>
+        <ResumoItem
+          rotulo="Ainda a receber"
+          apoio={`${entradasPrevistas.length} ${entradasPrevistas.length === 1 ? "entrada prevista" : "entradas previstas"}`}
+        >
+          <Valor porte="medio" className="block mt-1.5 text-amber-600 dark:text-amber-400">{formatCurrency(totalPrevistoMes)}</Valor>
+        </ResumoItem>
+      </Resumo>
 
       {/* Grid de cards */}
       <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(340px,1fr))]">
@@ -664,9 +637,9 @@ export const ContasBancariasPage = () => {
         })()}
         <div className="border-t border-zinc-100 dark:border-zinc-800 mt-4 pt-4">
           <Rotulo>Sobra prevista</Rotulo>
-          <p className={`font-mono valor text-2xl font-semibold mt-1 ${sobraPrevista >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+          <Valor porte="medio" className={`block mt-1 ${sobraPrevista >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
             {formatCurrency(sobraPrevista)}
-          </p>
+          </Valor>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5">
             receitas do mês menos os fixos — não inclui gastos variáveis.
           </p>
