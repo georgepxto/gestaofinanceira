@@ -71,13 +71,16 @@ export function formatMesAno(date: Date): string {
 /**
  * A chave de mês gravada na coluna `mes` de `pagamentos_parciais`.
  *
- * Bate com `formatMesAno` hoje, e mesmo assim é função própria: aquela é
- * formato de exibição e pode ser reajustada quando o desenho pedir. Esta é
- * contrato com o banco — mudar o formato aqui deixa de encontrar tudo que já
- * está salvo, sem erro nenhum, só uma consulta que volta vazia.
+ * `yyyy-MM` porque é o que a escrita sempre gravou. A leitura do Dashboard
+ * consultava "MMMM yyyy" e nunca casava: a consulta é válida, executa, volta
+ * com zero linhas e não acusa nada — a taxa de quitação exibiu zero pagamentos
+ * todo mês, com os pagamentos devidamente salvos no banco.
+ *
+ * Não encoste em `formatMesAno`. Aquela é para os olhos e pode mudar quando o
+ * desenho pedir; esta muda só junto com migração de dados.
  */
 export function chaveMesPagamentoParcial(date: Date): string {
-  return format(date, "MMMM yyyy", { locale: ptBR });
+  return format(date, "yyyy-MM");
 }
 
 /**

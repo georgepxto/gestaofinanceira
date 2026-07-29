@@ -228,6 +228,14 @@ regra "tipo vazando como categoria" \
   "categoria_gasto || categoria faz 'dividido' virar fatia do gráfico. Use categoriaDeGasto()." \
   'categoria_gasto\s*\|\|\s*categoria' "tudo"
 
+# A chave de pagamentos_parciais foi montada por dois caminhos e divergiu: a escrita
+# gravava yyyy-MM, a leitura do Dashboard consultava "MMMM yyyy". Consulta volta vazia,
+# sem erro, e a taxa de quitação mostrou zero por meses.
+regra "chave de mês montada fora do utils" \
+  "Chave de pagamentos_parciais vem de chaveMesPagamentoParcial(). Formato inline diverge calado." \
+  '\.eq\("mes",\s*(format|`|'"'"'|")' \
+  produto
+
 # ─────────────────────────────────────────────────────────────────────────────
 grupo "Acessibilidade"
 
