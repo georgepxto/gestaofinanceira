@@ -51,7 +51,6 @@ interface DashboardData {
   totalEmprestimosMesAnterior: number;
   gastosFixosMes: number;
   gastosVariaveisMes: number;
-  taxaQuitacao: number;
   totalPessoas: number;
   pessoasQuitadas: number;
   mediaGastosPorPessoa: number;
@@ -223,7 +222,6 @@ export const DashboardPage = () => {
     gastosFixosMes: 0,
     gastosVariaveisMes: 0,
     // Novas métricas
-    taxaQuitacao: 0,
     totalPessoas: 0,
     pessoasQuitadas: 0,
     mediaGastosPorPessoa: 0,
@@ -430,8 +428,6 @@ export const DashboardPage = () => {
         }
       });
       
-      const taxaQuitacao = totalPessoas > 0 ? (pessoasQuitadas / totalPessoas) * 100 : 0;
-
       // 2. Média de gastos por pessoa
       const mediaGastosPorPessoa = totalPessoas > 0 
         ? totalEmprestimosMesAtual / totalPessoas 
@@ -536,7 +532,6 @@ export const DashboardPage = () => {
         gastosFixosMes,
         gastosVariaveisMes,
         // Novas métricas
-        taxaQuitacao,
         totalPessoas,
         pessoasQuitadas,
         mediaGastosPorPessoa,
@@ -627,6 +622,12 @@ export const DashboardPage = () => {
                 <div className="min-w-0" data-tour="card-a-receber">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">A receber</p>
                   <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.totalEmprestimosMesAtual)}</Valor>
+                  {/* Sem ninguém com gasto compartilhado no mês, "0 de 0" é ruído: a linha some. */}
+                  {data.totalPessoas > 0 && (
+                    <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      {data.pessoasQuitadas} de {data.totalPessoas} {data.totalPessoas === 1 ? "acertou" : "acertaram"}
+                    </p>
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Meus gastos</p>
@@ -682,7 +683,10 @@ export const DashboardPage = () => {
           </div>
           {data.tendenciaMensal.length > 0 ? (
             <div className="h-44">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+              {/* initialDimension: o ResponsiveContainer da v3 nasce com -1×-1 e só mede
+                  um quadro depois, o que dispara um aviso de tamanho no console (recharts
+                  #6716). A altura vem do pai; a largura é chute de desktop, vale um quadro. */}
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 600, height: 176 }}>
                 <BarChart data={data.tendenciaMensal} margin={{ top: 16 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />
                   <XAxis dataKey="mes" stroke={chartAxis} fontSize={11} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
@@ -866,7 +870,8 @@ export const DashboardPage = () => {
             </div>
           </div>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            {/* Mesmo motivo do gráfico de barras acima — ver recharts #6716. */}
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 900, height: 256 }}>
               <AreaChart data={data.tendenciaMensal}>
                 <defs>
                   <linearGradient id="colorMeus" x1="0" y1="0" x2="0" y2="1">
