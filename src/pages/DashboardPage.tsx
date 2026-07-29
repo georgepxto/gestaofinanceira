@@ -616,7 +616,10 @@ export const DashboardPage = () => {
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-3">
                 É o que sobra do seu saldo depois dos gastos fixos do mês.
               </p>
-              <div className="border-t border-zinc-100 dark:border-zinc-800 mt-5 pt-5 grid gap-x-6 gap-y-4 [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]">
+              {/* Piso de 172px: em Geist Mono 22px o valor mede ~158, e `.valor`
+                  não quebra linha — a 140 ele vazava por cima do vizinho na largura
+                  em que cabiam exatamente três colunas. */}
+              <div className="border-t border-zinc-100 dark:border-zinc-800 mt-5 pt-5 grid gap-x-6 gap-y-4 [grid-template-columns:repeat(auto-fit,minmax(172px,1fr))]">
                 <div className="min-w-0" data-tour="card-saldo-total-mini">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Saldo total</p>
                   <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.saldoTotal)}</Valor>
