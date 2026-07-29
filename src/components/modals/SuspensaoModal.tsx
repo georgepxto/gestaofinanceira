@@ -2,6 +2,7 @@ import { useState } from "react";
 import { format, addMonths } from "date-fns";
 import { X } from "lucide-react";
 import { useFocusTrap } from "../../hooks";
+import { Card } from "../ui/Card";
 
 interface SuspensaoModalProps {
   show: boolean;
@@ -54,12 +55,13 @@ export function SuspensaoModal({ show, onClose, onConfirm, mesRef, nomeGasto }: 
 
   return (
     <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-modal flex items-center justify-center p-6">
-      <div
+      <Card
+        padding="nenhum"
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="suspensao-modal-title"
-        className="bg-white dark:bg-zinc-900 rounded-[22px] w-full max-w-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+        className="w-full max-w-sm overflow-hidden"
       >
         <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800">
           <h2 id="suspensao-modal-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100">
@@ -108,7 +110,7 @@ export function SuspensaoModal({ show, onClose, onConfirm, mesRef, nomeGasto }: 
                     min={minDateLimit}
                     value={dataReativacao}
                     onChange={(e) => setDataReativacao(e.target.value)}
-                    className="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-white/[0.09] text-zinc-800 dark:text-white text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2.5"
+                    className="w-full h-11 px-3.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-white/[0.09] text-zinc-800 dark:text-white text-sm rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   />
                   <p className="text-xs text-zinc-500 mt-1">O gasto voltará a ser cobrado no mês escolhido.</p>
                 </div>
@@ -121,19 +123,19 @@ export function SuspensaoModal({ show, onClose, onConfirm, mesRef, nomeGasto }: 
           <button
             onClick={onClose}
             disabled={salvando}
-            className="flex-1 py-2 text-zinc-700 dark:text-zinc-300 font-medium hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors"
+            className="flex-1 py-2 text-zinc-700 dark:text-zinc-300 font-medium hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-xl transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={handleConfirm}
             disabled={salvando || (tipo === "custom" && !dataReativacao)}
-            className="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+            className="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50"
           >
             {salvando ? "Suspendendo..." : "Confirmar"}
           </button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

@@ -90,21 +90,23 @@ export function formatCurrencyInput(value: string): string {
   // Converte para número e divide por 100 (para centavos)
   const amount = parseInt(numbers, 10) / 100;
 
-  // Formata como moeda brasileira sem o símbolo
-  return amount.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  return formatCurrencyValue(amount);
 }
 
 /**
- * Converte número para string formatada (para preencher inputs)
+ * Valor em pt-BR sem o símbolo — para preencher `<input>` de dinheiro,
+ * que já mostra "R$" como prefixo ou placeholder.
+ *
+ * ds-ok: o idioma abaixo aparece citado, não usado — é o que esta função evita.
+ * Não existe como `formatCurrency(x).replace("R$…", "")` porque aquele
+ * idioma depende de o Intl emitir espaço não-quebrável (U+00A0) entre o
+ * símbolo e o número. Depender disso já custou um bug em produção.
  */
-export function numberToFormattedString(value: number): string {
-  return value.toLocaleString("pt-BR", {
+export function formatCurrencyValue(value: number): string {
+  return new Intl.NumberFormat("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  });
+  }).format(value);
 }
 
 /**

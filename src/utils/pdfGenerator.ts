@@ -3,6 +3,7 @@ import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatCurrency, formatMonthYear } from "./calculations";
+import { categoriaDeGasto, normalizarCategoria } from "./categories";
 import type { ParcelaAtiva, ResumoMensal, MeuGasto, MetaGasto } from "../types";
 import type { PagamentoParcial } from "../types/extended";
 
@@ -85,7 +86,7 @@ export const generateGastosPDF = (
       return [
         safeDate,
         p.gasto.descricao,
-        p.gasto.categoria || "—",
+        normalizarCategoria(p.gasto.categoria) || "—",
         p.gasto.tipo === "credito" ? "Crédito" : "Débito",
         p.gasto.recorrente ? "Fixo" : `${p.parcela_atual}/${p.gasto.num_parcelas}`,
         formatCurrency(p.valor_parcela)
@@ -428,7 +429,7 @@ export const generateMeusGastosPDF = (
 
       // Calcular gasto atual nesta categoria
       const gastoCategoria = meusGastosDoMes
-        .filter(g => (g.categoria_gasto || "").toLowerCase() === meta.categoria.toLowerCase())
+        .filter(g => categoriaDeGasto(g).toLowerCase() === meta.categoria.toLowerCase())
         .reduce((acc, g) => {
           const val = g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor;
           return acc + val;
@@ -500,7 +501,7 @@ export const generateMeusGastosPDF = (
         `Dia ${g.dia_vencimento || "—"}`,
         g.descricao,
         g.tipo === "credito" ? "Crédito" : "Débito",
-        g.categoria_gasto || "—",
+        normalizarCategoria(g.categoria_gasto) || "—",
         formatCurrency(g.valor),
       ]);
 
@@ -555,7 +556,7 @@ export const generateMeusGastosPDF = (
       return [
         safeDate,
         g.descricao,
-        g.categoria_gasto || "—",
+        normalizarCategoria(g.categoria_gasto) || "—",
         categoriaLabel[g.categoria] || g.categoria,
         g.tipo === "credito" ? "Crédito" : "Débito",
         g.pago || g.tipo === "debito" ? "✓ Pago" : "Pendente",
@@ -600,7 +601,7 @@ export const generateMeusGastosPDF = (
   // ─── Resumo por Categoria de Gasto ───
   const categoriaMap: Record<string, number> = {};
   meusGastosDoMes.forEach(g => {
-    const cat = g.categoria_gasto || "Sem categoria";
+    const cat = normalizarCategoria(g.categoria_gasto) || "Sem categoria";
     const val = g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor;
     categoriaMap[cat] = (categoriaMap[cat] || 0) + val;
   });

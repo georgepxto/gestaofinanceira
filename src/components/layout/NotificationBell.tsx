@@ -109,7 +109,7 @@ export const NotificationBell = () => {
         />
         {totalCount > 0 && (
           <span
-            className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center font-mono tabular-nums text-[10px] font-bold rounded-full px-1 ${
+            className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center font-mono valor text-[10px] font-bold rounded-full px-1 ${
               dangerCount > 0
                 ? "bg-red-500 text-white"
                 : "bg-amber-500 text-white"
@@ -127,7 +127,7 @@ export const NotificationBell = () => {
               <Bell className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
               Notificações
               {totalCount > 0 && (
-                <span className="font-mono tabular-nums text-xs text-zinc-400 dark:text-zinc-500">({totalCount})</span>
+                <span className="font-mono valor text-xs text-zinc-400 dark:text-zinc-500">({totalCount})</span>
               )}
             </h3>
             <div className="flex items-center gap-2">

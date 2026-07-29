@@ -3,13 +3,13 @@ import { format } from "date-fns";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import type { Gasto, GastoForm, ParcelaAtiva, ResumoMensal } from "../types";
 import {
-  formatCurrency,
+  formatCurrencyValue,
   parseCurrency,
   getParcelasAtivas,
   calcularResumoMensal,
   calcularTotalMes,
 } from "../utils/calculations";
-import { CATEGORIA_PADRAO } from "../utils/categories";
+import { CATEGORIA_PADRAO, normalizarCategoria } from "../utils/categories";
 import { PARCELAS_MAX } from "../utils/constants";
 
 interface UseGastosProps {
@@ -295,11 +295,11 @@ export function useGastos({
     setFormData({
       descricao: gasto.descricao,
       pessoa: gasto.pessoa,
-      valor_total: formatCurrency(gasto.valor_total).replace("R$\u00a0", ""),
+      valor_total: formatCurrencyValue(gasto.valor_total),
       num_parcelas: gasto.num_parcelas,
       data_inicio: gasto.data_inicio,
       tipo: gasto.tipo,
-      categoria: gasto.categoria || CATEGORIA_PADRAO,
+      categoria: normalizarCategoria(gasto.categoria) || CATEGORIA_PADRAO,
       recorrente: gasto.recorrente || false,
       cartao_id: gasto.cartao_id || "",
       conta_id: gasto.conta_id || "",

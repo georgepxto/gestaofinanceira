@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 import { useAppContext } from "../context";
 import { PageErrorState, PageSuccessState } from "../components/ui/AsyncState";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
+import { Card } from "../components/ui/Card";
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ export function ResetPasswordPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0B] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-zinc-50 dark:bg-app-dark flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Back */}
         <button
@@ -87,7 +88,7 @@ export function ResetPasswordPage() {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-800 shadow-xl">
+        <Card padding="resumo">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Senha */}
             <div>
@@ -100,7 +101,7 @@ export function ResetPasswordPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full h-11 pl-10 pr-12 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
                   placeholder="••••••••"
                 />
                 <button
@@ -124,7 +125,7 @@ export function ResetPasswordPage() {
                   type={showPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full h-11 pl-10 pr-4 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
                   placeholder="••••••••"
                 />
               </div>
@@ -162,7 +163,7 @@ export function ResetPasswordPage() {
               )}
             </button>
           </form>
-        </div>
+        </Card>
       </div>
     </div>
   );

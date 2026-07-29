@@ -1,8 +1,9 @@
 import React from "react";
 import { X, Loader2, Banknote } from "lucide-react";
-import { formatCurrency, formatCurrencyInput } from "../../utils/calculations";
+import { formatCurrency, formatCurrencyInput, formatCurrencyValue } from "../../utils/calculations";
 import { formatMonthYear } from "../../utils/calculations";
 import { useFocusTrap } from "../../hooks";
+import { Card } from "../ui/Card";
 
 interface PagamentoParcialModalProps {
   show: boolean;
@@ -39,12 +40,13 @@ export const PagamentoParcialModal: React.FC<PagamentoParcialModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-modal flex items-center justify-center p-6">
-      <div
+      <Card
+        padding="nenhum"
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="pag-parcial-modal-title"
-        className="bg-white dark:bg-zinc-900 rounded-[22px] w-full max-w-[460px] shadow-sm border border-zinc-200 dark:border-zinc-800"
+        className="w-full max-w-[460px]"
       >
         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <h2 id="pag-parcial-modal-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -70,7 +72,7 @@ export const PagamentoParcialModal: React.FC<PagamentoParcialModalProps> = ({
             </div>
             <div className="flex justify-between">
               <span className="text-zinc-500 dark:text-zinc-400">Total do mês:</span>
-              <span className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100 font-medium">
+              <span className="font-mono valor text-zinc-900 dark:text-zinc-100 font-medium">
                 {formatCurrency(totalDevido)}
               </span>
             </div>
@@ -78,13 +80,13 @@ export const PagamentoParcialModal: React.FC<PagamentoParcialModalProps> = ({
               <>
                 <div className="flex justify-between">
                   <span className="text-emerald-600 dark:text-emerald-400">Já pago:</span>
-                  <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-500 font-medium">
+                  <span className="font-mono valor text-emerald-700 dark:text-emerald-500 font-medium">
                     {formatCurrency(jaPago)}
                   </span>
                 </div>
                 <div className="flex justify-between border-t border-zinc-200 dark:border-zinc-800 pt-2">
                   <span className="text-amber-600">Falta pagar:</span>
-                  <span className="font-mono tabular-nums text-amber-600 dark:text-amber-500 font-bold">
+                  <span className="font-mono valor text-amber-600 dark:text-amber-500 font-bold">
                     {formatCurrency(restante)}
                   </span>
                 </div>
@@ -107,35 +109,21 @@ export const PagamentoParcialModal: React.FC<PagamentoParcialModalProps> = ({
                   onValorChange(formatCurrencyInput(e.target.value))
                 }
                 placeholder="0,00"
-                className="w-full pl-10 pr-3 py-3 font-mono tabular-nums bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
+                className="w-full h-11 pl-10 pr-3 font-mono tabular-nums bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
                 inputMode="numeric"
               />
             </div>
             {restante > 0 && (
               <div className="flex gap-2 mt-2">
                 <button
-                  onClick={() =>
-                    onValorChange(
-                      restante.toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })
-                    )
-                  }
-                  className="px-3 py-1.5 text-xs font-mono tabular-nums bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium transition-colors"
+                  onClick={() => onValorChange(formatCurrencyValue(restante))}
+                  className="px-3 py-1.5 text-xs font-mono valor bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors"
                 >
                   Tudo ({formatCurrency(restante)})
                 </button>
                 <button
-                  onClick={() =>
-                    onValorChange(
-                      (restante / 2).toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })
-                    )
-                  }
-                  className="px-3 py-1.5 text-xs font-mono tabular-nums bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 rounded font-medium transition-colors"
+                  onClick={() => onValorChange(formatCurrencyValue(restante / 2))}
+                  className="px-3 py-1.5 text-xs font-mono valor bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 rounded-lg font-medium transition-colors"
                 >
                   Metade ({formatCurrency(restante / 2)})
                 </button>
@@ -144,7 +132,7 @@ export const PagamentoParcialModal: React.FC<PagamentoParcialModalProps> = ({
           </div>
 
           {error && (
-            <div className="bg-red-100 border border-red-500/50 rounded-lg p-3 text-red-600 text-sm">
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-500/30 rounded-lg p-3 text-red-700 dark:text-red-300 text-sm">
               {error}
             </div>
           )}
@@ -153,7 +141,7 @@ export const PagamentoParcialModal: React.FC<PagamentoParcialModalProps> = ({
             <button
               onClick={onClose}
               disabled={saving}
-              className={`flex-1 py-3 text-zinc-800 dark:text-zinc-100 font-medium rounded-lg transition-colors ${
+              className={`flex-1 py-3 text-zinc-800 dark:text-zinc-100 font-medium rounded-xl transition-colors ${
                 saving
                   ? "bg-zinc-50 dark:bg-white/[0.04] cursor-not-allowed"
                   : "bg-zinc-50 dark:bg-white/[0.04] hover:bg-zinc-200 dark:bg-white/[0.07] dark:hover:bg-white/[0.08]"
@@ -164,7 +152,7 @@ export const PagamentoParcialModal: React.FC<PagamentoParcialModalProps> = ({
             <button
               onClick={() => onSubmit(pessoa)}
               disabled={restante <= 0 || saving}
-              className={`flex-1 py-3 font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 ${
+              className={`flex-1 py-3 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 ${
                 saving || restante <= 0
                   ? "bg-zinc-200 dark:bg-white/[0.07] text-zinc-500 dark:text-zinc-400 cursor-not-allowed opacity-50"
                   : "bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -181,7 +169,7 @@ export const PagamentoParcialModal: React.FC<PagamentoParcialModalProps> = ({
             </button>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

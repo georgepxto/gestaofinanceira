@@ -3,17 +3,20 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus, Loader2, Trash2, Edit2, X, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAppContext } from "../context";
-import { Pista } from "../components/ui/PageHeader";
+import { PageHeader } from "../components/ui/PageHeader";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
-import { formatCurrency, formatCurrencyInput, parseCurrency, formatMonthYear } from "../utils/calculations";
+import { formatCurrency, formatCurrencyInput, formatCurrencyValue, parseCurrency, formatMonthYear } from "../utils/calculations";
 import { CATEGORIAS_RECEITA, TIPOS_RECEITA, CATEGORIA_RECEITA_PADRAO } from "../utils/receitas";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { toast } from "../components/ui/Toaster";
 import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
+import { Valor } from "../components/ui/Valor";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import type { ContaBancaria, Receita, ContaBancariaForm, ReceitaForm } from "../types";
+import { Rotulo } from "../components/ui/Rotulo";
+import { Card } from "../components/ui/Card";
 
 interface ContasTutorialStep {
   target: string;
@@ -233,8 +236,8 @@ export const ContasBancariasPage = () => {
     setFormConta({
       nome: c.nome,
       banco: c.banco || "",
-      saldo_inicial: formatCurrency(c.saldo_inicial).replace("R$\u00a0", ""),
-      saldo_atual: formatCurrency(c.saldo_atual || c.saldo_inicial).replace("R$\u00a0", ""),
+      saldo_inicial: formatCurrencyValue(c.saldo_inicial),
+      saldo_atual: formatCurrencyValue(c.saldo_atual || c.saldo_inicial),
     });
     setEditandoConta(c);
     setShowModalConta(true);
@@ -342,7 +345,7 @@ export const ContasBancariasPage = () => {
 
   const handleEditReceita = (r: Receita) => {
     setFormReceita({
-      conta_id: r.conta_id || "", descricao: r.descricao, valor: formatCurrency(r.valor).replace("R$\u00a0", ""),
+      conta_id: r.conta_id || "", descricao: r.descricao, valor: formatCurrencyValue(r.valor),
       categoria: r.categoria, tipo: r.tipo, dia_recebimento: String(r.dia_recebimento || 1), num_meses: String(r.num_meses || 12),
     });
     setEditandoReceita(r);
@@ -447,90 +450,86 @@ export const ContasBancariasPage = () => {
   return (
     <div className="space-y-6">
       {/* HEADER_PAGINA */}
-      <div className="flex items-end justify-between flex-wrap gap-5 mb-6" data-tour="contas-header">
-        <div>
-          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-1">
-            Carteira
-          </p>
-          <h1 className="font-display font-bold text-[34px] leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50">
-            Contas <Pista>bancárias</Pista>
-          </h1>
-          <p className="text-[15px] text-zinc-500 dark:text-zinc-400 mt-1">
-            Onde o dinheiro está e quando ele entra.
-          </p>
-        </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* MES_PILL */}
-          <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm" data-tour="contas-mes">
-            <button
-              onClick={() => navegarMes("anterior")}
-              aria-label="Mês anterior"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-            >
-              <ChevronLeft className="w-[18px] h-[18px]" />
-            </button>
-            <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
-              {formatMonthYear(mesVisualizacao)}
-            </span>
-            {!isMesCorrente && (
+      <PageHeader
+        data-tour="contas-header"
+        eyebrow="Carteira"
+        title="Contas bancárias"
+        description="Onde o dinheiro está e quando ele entra."
+        action={
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* MES_PILL */}
+            <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm" data-tour="contas-mes">
               <button
-                onClick={irParaHoje}
-                className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
+                onClick={() => navegarMes("anterior")}
+                aria-label="Mês anterior"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
               >
-                hoje
+                <ChevronLeft className="w-[18px] h-[18px]" />
               </button>
-            )}
+              <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
+                {formatMonthYear(mesVisualizacao)}
+              </span>
+              {!isMesCorrente && (
+                <button
+                  onClick={irParaHoje}
+                  className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
+                >
+                  hoje
+                </button>
+              )}
+              <button
+                onClick={() => navegarMes("proximo")}
+                aria-label="Próximo mês"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+              >
+                <ChevronRight className="w-[18px] h-[18px]" />
+              </button>
+            </div>
+            {/* CTA */}
             <button
-              onClick={() => navegarMes("proximo")}
-              aria-label="Próximo mês"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+              onClick={() => { resetFormConta(); setShowModalConta(true); }}
+              data-tour="contas-btn-nova-conta"
+              className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors"
             >
-              <ChevronRight className="w-[18px] h-[18px]" />
+              <Plus className="w-[18px] h-[18px]" /> Nova conta
             </button>
           </div>
-          {/* CTA */}
-          <button
-            onClick={() => { resetFormConta(); setShowModalConta(true); }}
-            data-tour="contas-btn-nova-conta"
-            className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-[0_4px_12px_-3px_rgba(5,150,105,0.5)] transition-colors"
-          >
-            <Plus className="w-[18px] h-[18px]" /> Nova conta
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* FAIXA_RESUMO */}
-      <div
-        className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 md:p-7 grid gap-x-7 gap-y-5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]"
+      <Card
+        padding="resumo"
+        className="grid gap-x-7 gap-y-5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]"
         data-tour="contas-cards"
       >
         <div className="min-w-0">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">Saldo total</p>
-          <p className={`font-display font-extrabold tracking-tighter tabular-nums whitespace-nowrap text-[34px] leading-tight mt-1 ${saldoTotal < 0 ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-50"}`}>
+          <Rotulo tom="acento">Saldo total</Rotulo>
+          <Valor porte="destaque" className={`block mt-1 ${saldoTotal < 0 ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-50"}`}>
             {formatCurrency(saldoTotal)}
-          </p>
+          </Valor>
           <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">em {contas.length} {contas.length === 1 ? "conta" : "contas"}</p>
         </div>
         <div className="min-w-0">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Recebido no mês</p>
-          <p className="font-mono tabular-nums text-2xl font-semibold text-emerald-700 dark:text-emerald-400 mt-1.5">{formatCurrency(totalRecebidoMes)}</p>
+          <Rotulo>Recebido no mês</Rotulo>
+          <p className="font-mono valor text-2xl font-semibold text-emerald-700 dark:text-emerald-400 mt-1.5">{formatCurrency(totalRecebidoMes)}</p>
           <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">{entradasRecebidas.length} {entradasRecebidas.length === 1 ? "entrada" : "entradas"}</p>
         </div>
         <div className="min-w-0">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Ainda a receber</p>
-          <p className="font-mono tabular-nums text-2xl font-semibold text-amber-600 dark:text-amber-400 mt-1.5">{formatCurrency(totalPrevistoMes)}</p>
+          <Rotulo>Ainda a receber</Rotulo>
+          <p className="font-mono valor text-2xl font-semibold text-amber-600 dark:text-amber-400 mt-1.5">{formatCurrency(totalPrevistoMes)}</p>
           <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">{entradasPrevistas.length} {entradasPrevistas.length === 1 ? "entrada prevista" : "entradas previstas"}</p>
         </div>
-      </div>
+      </Card>
 
       {/* Grid de cards */}
       <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(340px,1fr))]">
 
       {/* Card Minhas contas */}
-      <section className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 min-w-0" data-tour="contas-section-contas">
+      <Card as="section" className="min-w-0" data-tour="contas-section-contas">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Minhas contas</h2>
-          <span className="font-mono tabular-nums text-[13px] text-zinc-500 dark:text-zinc-400">{contas.length} {contas.length === 1 ? "conta" : "contas"}</span>
+          <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">{contas.length} {contas.length === 1 ? "conta" : "contas"}</span>
         </div>
         <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-4">barra = participação no saldo total</p>
         {contas.length === 0 ? (
@@ -546,16 +545,19 @@ export const ContasBancariasPage = () => {
                   <div className="min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{c.nome}</p>
-                      <span className="font-mono tabular-nums text-[11px] text-zinc-500 dark:text-zinc-400">{participacao.toFixed(0)}%</span>
+                      <span className="font-mono valor text-[11px] text-zinc-500 dark:text-zinc-400">{participacao.toFixed(0)}%</span>
                     </div>
                     <div className="h-2 rounded-full bg-zinc-100 dark:bg-white/[0.04] overflow-hidden mt-1.5">
                       <div className={`h-full rounded-full ${tomBarra}`} style={{ width: `${Math.min(participacao, 100)}%` }} />
                     </div>
-                    <p className="font-mono text-[10px] text-zinc-500 dark:text-zinc-400 mt-1 truncate">
-                      {c.banco || "sem banco"} · inicial {formatCurrency(c.saldo_inicial)}
+                    {/* O nome do banco trunca; o valor nunca — cortar centavos é perder dado sem avisar. */}
+                    <p className="font-mono text-[10px] text-zinc-500 dark:text-zinc-400 mt-1 flex items-baseline gap-1 min-w-0">
+                      <span className="truncate">{c.banco || "sem banco"}</span>
+                      <span className="shrink-0">· inicial</span>
+                      <span className="valor shrink-0">{formatCurrency(c.saldo_inicial)}</span>
                     </p>
                   </div>
-                  <p className={`font-mono tabular-nums font-semibold whitespace-nowrap text-right ${saldoConta < 0 ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-100"}`}>
+                  <p className={`font-mono valor font-semibold whitespace-nowrap text-right ${saldoConta < 0 ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-100"}`}>
                     {formatCurrency(saldoConta)}
                   </p>
                   <div className="flex gap-0.5 justify-end">
@@ -567,10 +569,10 @@ export const ContasBancariasPage = () => {
             })}
           </div>
         )}
-      </section>
+      </Card>
 
       {/* Card Entradas do mês — recebidas e previstas na mesma lista */}
-      <section className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 min-w-0" data-tour="contas-section-receitas">
+      <Card as="section" className="min-w-0" data-tour="contas-section-receitas">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 capitalize">
             Entradas de {format(mesVisualizacao, "MMMM", { locale: ptBR })}
@@ -593,13 +595,13 @@ export const ContasBancariasPage = () => {
               return (
                 <div key={r.id} className="flex items-center gap-3 py-2.5 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0">
                   {recebida ? (
-                    <span className="w-6 h-6 rounded-[7px] bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
+                    <span className="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
                       <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     </span>
                   ) : (
-                    <span className="w-6 h-6 rounded-[7px] border-[1.5px] border-dashed border-zinc-300 dark:border-zinc-600 flex-shrink-0" />
+                    <span className="w-6 h-6 rounded-lg border-[1.5px] border-dashed border-zinc-300 dark:border-zinc-600 flex-shrink-0" />
                   )}
-                  <span className={`font-mono tabular-nums text-xs font-semibold w-7 flex-shrink-0 ${recebida ? "text-zinc-600 dark:text-zinc-300" : "text-amber-600 dark:text-amber-400"}`}>
+                  <span className={`font-mono valor text-xs font-semibold w-7 flex-shrink-0 ${recebida ? "text-zinc-600 dark:text-zinc-300" : "text-amber-600 dark:text-amber-400"}`}>
                     {String(dia).padStart(2, "0")}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -608,7 +610,7 @@ export const ContasBancariasPage = () => {
                       {recebida ? `${contaNome} · ${tipoLabel}` : "prevista · ainda não caiu"}
                     </p>
                   </div>
-                  <span className={`font-mono tabular-nums text-sm font-semibold whitespace-nowrap ${recebida ? "text-emerald-700 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                  <span className={`font-mono valor text-sm font-semibold whitespace-nowrap ${recebida ? "text-emerald-700 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
                     {recebida ? "+" : ""}{formatCurrency(r.valor)}
                   </span>
                   <div className="flex gap-0.5 flex-shrink-0">
@@ -620,10 +622,10 @@ export const ContasBancariasPage = () => {
             })}
           </div>
         )}
-      </section>
+      </Card>
 
       {/* Card Previsão do mês */}
-      <section className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 min-w-0">
+      <Card as="section" className="min-w-0">
         <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Previsão do mês</h2>
         <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-4">se tudo entrar e sair como previsto</p>
         {(() => {
@@ -633,7 +635,7 @@ export const ContasBancariasPage = () => {
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-zinc-500 dark:text-zinc-400">Recebido</span>
-                  <span className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(totalRecebidoMes)}</span>
+                  <span className="font-mono valor text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(totalRecebidoMes)}</span>
                 </div>
                 <div className="h-2 rounded-full bg-zinc-100 dark:bg-white/[0.04] overflow-hidden">
                   <div className="h-full rounded-full bg-emerald-500" style={{ width: `${(totalRecebidoMes / maxPrevisao) * 100}%` }} />
@@ -642,7 +644,7 @@ export const ContasBancariasPage = () => {
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-zinc-500 dark:text-zinc-400">A receber</span>
-                  <span className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(totalPrevistoMes)}</span>
+                  <span className="font-mono valor text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(totalPrevistoMes)}</span>
                 </div>
                 <div className="h-2 rounded-full bg-zinc-100 dark:bg-white/[0.04] overflow-hidden">
                   <div className="h-full rounded-full bg-amber-500" style={{ width: `${(totalPrevistoMes / maxPrevisao) * 100}%` }} />
@@ -651,7 +653,7 @@ export const ContasBancariasPage = () => {
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-zinc-500 dark:text-zinc-400">Gastos fixos</span>
-                  <span className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100 whitespace-nowrap">−{formatCurrency(totalGastosFixosMes)}</span>
+                  <span className="font-mono valor text-zinc-900 dark:text-zinc-100 whitespace-nowrap">−{formatCurrency(totalGastosFixosMes)}</span>
                 </div>
                 <div className="h-2 rounded-full bg-zinc-100 dark:bg-white/[0.04] overflow-hidden">
                   <div className="h-full rounded-full bg-zinc-300 dark:bg-white/25" style={{ width: `${(totalGastosFixosMes / maxPrevisao) * 100}%` }} />
@@ -661,15 +663,15 @@ export const ContasBancariasPage = () => {
           );
         })()}
         <div className="border-t border-zinc-100 dark:border-zinc-800 mt-4 pt-4">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Sobra prevista</p>
-          <p className={`font-mono tabular-nums text-2xl font-semibold mt-1 ${sobraPrevista >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+          <Rotulo>Sobra prevista</Rotulo>
+          <p className={`font-mono valor text-2xl font-semibold mt-1 ${sobraPrevista >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
             {formatCurrency(sobraPrevista)}
           </p>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5">
             receitas do mês menos os fixos — não inclui gastos variáveis.
           </p>
         </div>
-      </section>
+      </Card>
 
       </div>{/* /grid de cards */}
 
@@ -682,11 +684,11 @@ export const ContasBancariasPage = () => {
               <button onClick={resetFormConta} className="p-1 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded"><X className="w-5 h-5 text-zinc-400 dark:text-zinc-500" /></button>
             </div>
             <form onSubmit={handleSubmitConta} className="space-y-4">
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Nome da conta</label><input type="text" value={formConta.nome} onChange={e => setFormConta({...formConta, nome: e.target.value})} placeholder="Ex: Conta Corrente, Poupança..." className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Banco (opcional)</label><input type="text" value={formConta.banco} onChange={e => setFormConta({...formConta, banco: e.target.value})} placeholder="Ex: Nubank, Inter..." className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Saldo inicial</label><input type="text" value={formConta.saldo_inicial} onChange={e => setFormConta({...formConta, saldo_inicial: formatCurrencyInput(e.target.value)})} className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Nome da conta</label><input type="text" value={formConta.nome} onChange={e => setFormConta({...formConta, nome: e.target.value})} placeholder="Ex: Conta Corrente, Poupança..." className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Banco (opcional)</label><input type="text" value={formConta.banco} onChange={e => setFormConta({...formConta, banco: e.target.value})} placeholder="Ex: Nubank, Inter..." className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Saldo inicial</label><input type="text" value={formConta.saldo_inicial} onChange={e => setFormConta({...formConta, saldo_inicial: formatCurrencyInput(e.target.value)})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
               {editandoConta && (
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Saldo Atual</label><input type="text" value={formConta.saldo_atual} onChange={e => setFormConta({...formConta, saldo_atual: formatCurrencyInput(e.target.value)})} className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /><p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Edite para corrigir manualmente o saldo</p></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Saldo Atual</label><input type="text" value={formConta.saldo_atual} onChange={e => setFormConta({...formConta, saldo_atual: formatCurrencyInput(e.target.value)})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /><p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Edite para corrigir manualmente o saldo</p></div>
               )}
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={resetFormConta} className="flex-1 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:bg-white/[0.07] dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
@@ -706,20 +708,20 @@ export const ContasBancariasPage = () => {
               <button onClick={resetFormReceita} className="p-1 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded"><X className="w-5 h-5 text-zinc-400 dark:text-zinc-500" /></button>
             </div>
             <form onSubmit={handleSubmitReceita} className="space-y-4">
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Descrição</label><input type="text" value={formReceita.descricao} onChange={e => setFormReceita({...formReceita, descricao: e.target.value})} placeholder="Ex: Salário, Freelance..." className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Valor</label><input type="text" value={formReceita.valor} onChange={e => setFormReceita({...formReceita, valor: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Descrição</label><input type="text" value={formReceita.descricao} onChange={e => setFormReceita({...formReceita, descricao: e.target.value})} placeholder="Ex: Salário, Freelance..." className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Valor</label><input type="text" value={formReceita.valor} onChange={e => setFormReceita({...formReceita, valor: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Categoria</label><select value={formReceita.categoria} onChange={e => setFormReceita({...formReceita, categoria: e.target.value})} className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]">{CATEGORIAS_RECEITA.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Tipo</label><select value={formReceita.tipo} onChange={e => setFormReceita({...formReceita, tipo: e.target.value as any})} className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]">{TIPOS_RECEITA.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Categoria</label><select value={formReceita.categoria} onChange={e => setFormReceita({...formReceita, categoria: e.target.value})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]">{CATEGORIAS_RECEITA.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Tipo</label><select value={formReceita.tipo} onChange={e => setFormReceita({...formReceita, tipo: e.target.value as any})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]">{TIPOS_RECEITA.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
               </div>
               {formReceita.tipo !== "avulso" && (
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Dia do recebimento (1-31)</label><input type="number" min="1" max="31" value={formReceita.dia_recebimento} onChange={e => setFormReceita({...formReceita, dia_recebimento: e.target.value})} className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Dia do recebimento (1-31)</label><input type="number" min="1" max="31" value={formReceita.dia_recebimento} onChange={e => setFormReceita({...formReceita, dia_recebimento: e.target.value})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
               )}
               {formReceita.tipo === "recorrente" && (
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Quantos meses?</label><input type="number" min="1" max="60" value={formReceita.num_meses} onChange={e => setFormReceita({...formReceita, num_meses: e.target.value})} className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Quantos meses?</label><input type="number" min="1" max="60" value={formReceita.num_meses} onChange={e => setFormReceita({...formReceita, num_meses: e.target.value})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
               )}
               {contas.length > 0 && (
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Conta (opcional)</label><select value={formReceita.conta_id} onChange={e => setFormReceita({...formReceita, conta_id: e.target.value})} className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"><option value="">Sem conta vinculada</option>{contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Conta (opcional)</label><select value={formReceita.conta_id} onChange={e => setFormReceita({...formReceita, conta_id: e.target.value})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"><option value="">Sem conta vinculada</option>{contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>
               )}
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={resetFormReceita} className="flex-1 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:bg-white/[0.07] dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>

@@ -112,6 +112,7 @@ export const GuidedTourOverlay = ({
       )}
 
       <div
+        /* ds-ok: balão do tour é posicionado no alvo e flutua acima do recorte — geometria e sombra próprias */
         className="absolute pointer-events-auto bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 w-[calc(100vw-24px)] max-w-[360px] rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-2xl max-h-[calc(100vh-24px)] overflow-y-auto"
         style={{ left: tooltipLeft, top: tooltipTop }}
       >
@@ -132,7 +133,7 @@ export const GuidedTourOverlay = ({
         </div>
 
         <div className="px-4 py-4">
-          <div className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold mb-3 border border-emerald-200 dark:border-emerald-900">
+          <div className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-mono text-[10px] font-medium uppercase tracking-[0.16em] mb-3 border border-emerald-200 dark:border-emerald-900">
             {currentStep.alvo}
           </div>
           <p className="text-zinc-600 dark:text-zinc-300 text-sm leading-relaxed">{currentStep.descricao}</p>

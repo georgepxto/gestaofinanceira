@@ -3,17 +3,20 @@ import { Plus, X, Loader2, Edit2, ChevronLeft, ChevronRight } from "lucide-react
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
-import { Pista } from "../components/ui/PageHeader";
+import { PageHeader } from "../components/ui/PageHeader";
 import { useAppContext } from "../context";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
 import { formatCurrency, formatMonthYear } from "../utils/calculations";
-import { CATEGORIAS } from "../utils/categories";
+import { CATEGORIAS, categoriaDeGasto } from "../utils/categories";
 import { toast } from "../components/ui/Toaster";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
+import { Valor } from "../components/ui/Valor";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import type { MetaGasto } from "../types";
+import { Rotulo } from "../components/ui/Rotulo";
+import { Card } from "../components/ui/Card";
 
 interface MetasTutorialStep {
   target: string;
@@ -228,9 +231,7 @@ export const MetasPage = () => {
       .map((meta) => {
         const gasto = meusGastosDoMes
           .filter(
-            (g) =>
-              (g.categoria_gasto || g.categoria || "").toLowerCase() ===
-              meta.categoria.toLowerCase()
+            (g) => categoriaDeGasto(g).toLowerCase() === meta.categoria.toLowerCase()
           )
           .reduce((soma, g) => soma + g.valor, 0);
         const pct = meta.limite > 0 ? (gasto / meta.limite) * 100 : 0;
@@ -268,63 +269,59 @@ export const MetasPage = () => {
   return (
     <div className="space-y-6">
       {/* HEADER_PAGINA */}
-      <div className="flex items-end justify-between flex-wrap gap-5 mb-6" data-tour="metas-header">
-        <div>
-          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-1">
-            Gastos
-          </p>
-          <h1 className="font-display font-bold text-[34px] leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50">
-            Metas de <Pista>gasto</Pista>
-          </h1>
-          <p className="text-[15px] text-zinc-500 dark:text-zinc-400 mt-1">
-            Seus limites por categoria — e quanto de cada um você já usou.
-          </p>
-        </div>
-        {/* MES_PILL */}
-        <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm">
-          <button
-            onClick={() => navegarMes("anterior")}
-            aria-label="Mês anterior"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-          >
-            <ChevronLeft className="w-[18px] h-[18px]" />
-          </button>
-          <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
-            {formatMonthYear(mesVisualizacao)}
-          </span>
-          {!isMesCorrente && (
+      <PageHeader
+        data-tour="metas-header"
+        eyebrow="Gastos"
+        title="Metas de gasto"
+        description="Seus limites por categoria — e quanto de cada um você já usou."
+        action={
+          /* MES_PILL */
+          <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm">
             <button
-              onClick={irParaHoje}
-              className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
+              onClick={() => navegarMes("anterior")}
+              aria-label="Mês anterior"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
             >
-              hoje
+              <ChevronLeft className="w-[18px] h-[18px]" />
             </button>
-          )}
-          <button
-            onClick={() => navegarMes("proximo")}
-            aria-label="Próximo mês"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-          >
-            <ChevronRight className="w-[18px] h-[18px]" />
-          </button>
-        </div>
-      </div>
+            <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
+              {formatMonthYear(mesVisualizacao)}
+            </span>
+            {!isMesCorrente && (
+              <button
+                onClick={irParaHoje}
+                className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
+              >
+                hoje
+              </button>
+            )}
+            <button
+              onClick={() => navegarMes("proximo")}
+              aria-label="Próximo mês"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+            >
+              <ChevronRight className="w-[18px] h-[18px]" />
+            </button>
+          </div>
+        }
+      />
 
       {/* Card herói: Orçado vs. gasto */}
       {linhas.length > 0 && (
-        <section className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 md:p-7">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400 mb-2">
+        <Card as="section" padding="resumo">
+          <Rotulo tom="acento" className="mb-2">
             Orçado vs. gasto · <span className="normal-case">{formatMonthYear(mesVisualizacao)}</span>
-          </p>
+          </Rotulo>
           <div className="flex items-end justify-between gap-5 flex-wrap mb-4">
             <p className="whitespace-nowrap">
-              <span className="font-display font-extrabold tracking-tighter tabular-nums text-[44px] leading-none text-zinc-900 dark:text-zinc-50">
+              <Valor porte="heroi" className="text-zinc-900 dark:text-zinc-50">
                 {formatCurrency(totalGasto)}
-              </span>
-              <span className="font-mono tabular-nums text-[19px] text-zinc-500 dark:text-zinc-400"> / {formatCurrency(totalLimite)}</span>
+              </Valor>
+              {/* Encosta no herói na mesma linha, então acompanha a família dele. */}
+              <span className="font-num valor tracking-[-0.015em] text-[19px] text-zinc-500 dark:text-zinc-400"> / {formatCurrency(totalLimite)}</span>
             </p>
             <div className="text-right">
-              <p className={`font-mono tabular-nums text-[22px] font-semibold whitespace-nowrap ${disponivel >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+              <p className={`font-mono valor text-[22px] font-semibold whitespace-nowrap ${disponivel >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                 {formatCurrency(disponivel)}
               </p>
               <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
@@ -352,13 +349,13 @@ export const MetasPage = () => {
               {noControle.length} no controle
             </span>
           </div>
-        </section>
+        </Card>
       )}
 
       {/* Grid: Suas metas + coluna direita */}
       <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(330px,1fr))]">
         {/* Card Suas metas */}
-        <section className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 min-w-0" data-tour="metas-lista">
+        <Card as="section" className="min-w-0" data-tour="metas-lista">
           <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Suas metas</h2>
           <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-4">ordenadas por risco de estouro</p>
           {linhas.length > 0 ? (
@@ -376,7 +373,7 @@ export const MetasPage = () => {
                     <div className="flex items-center justify-between gap-3 mb-1.5">
                       <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 capitalize truncate">{linha.categoria}</span>
                       <span className="flex items-center gap-1 flex-shrink-0">
-                        <span className="font-mono tabular-nums text-[13px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                        <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                           <span className={corGasto}>{formatCurrency(linha.gasto)}</span> / {formatCurrency(linha.limite)}
                         </span>
                         <button
@@ -420,12 +417,12 @@ export const MetasPage = () => {
               description="Crie uma meta por categoria para acompanhar limites e evitar estouro de orçamento."
             />
           )}
-        </section>
+        </Card>
 
         {/* Coluna direita */}
         <div className="space-y-5 min-w-0">
           {/* Card Nova meta */}
-          <section className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5" data-tour="metas-form">
+          <Card as="section" data-tour="metas-form">
             <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">
               {metaEmEdicao ? "Editar meta" : "Nova meta"}
             </h2>
@@ -438,7 +435,7 @@ export const MetasPage = () => {
                 <select
                   value={novaMeta.categoria}
                   onChange={(e) => setNovaMeta({ ...novaMeta, categoria: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none"
+                  className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none"
                 >
                   <option value="" disabled>Selecione uma categoria</option>
                   {categoriasDisponiveis.map((cat) => (
@@ -455,7 +452,7 @@ export const MetasPage = () => {
                     value={novaMeta.limite}
                     onChange={(e) => setNovaMeta({ ...novaMeta, limite: e.target.value })}
                     placeholder="0,00"
-                    className="w-full pl-10 pr-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm font-mono tabular-nums text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
+                    className="w-full h-11 pl-10 pr-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-mono tabular-nums text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
                   />
                 </div>
               </div>
@@ -463,7 +460,7 @@ export const MetasPage = () => {
                 onClick={handleSaveMeta}
                 data-tour="metas-btn-salvar"
                 disabled={savingMeta || !novaMeta.categoria.trim() || !novaMeta.limite}
-                className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-200 disabled:text-zinc-400 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-500 disabled:cursor-not-allowed disabled:shadow-none text-white rounded-xl text-sm font-semibold shadow-[0_4px_12px_-3px_rgba(5,150,105,0.5)] transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-200 disabled:text-zinc-400 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-500 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-colors"
               >
                 {savingMeta ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -483,14 +480,14 @@ export const MetasPage = () => {
                 </button>
               )}
             </div>
-          </section>
+          </Card>
 
           {/* Card de atenção — só quando há metas em risco */}
           {emRisco.length > 0 && (
-            <section className="bg-[#FFFBF4] dark:bg-amber-950/20 border border-[#FDE8C8] dark:border-amber-900/40 rounded-2xl p-5">
-              <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-amber-700 dark:text-amber-400 mb-2">
+            <section className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-2xl p-5">
+              <Rotulo tom="alerta" className="mb-2">
                 Atenção
-              </p>
+              </Rotulo>
               <p className="text-sm text-zinc-700 dark:text-zinc-300">
                 {emRisco.length === 1 ? (
                   <>A categoria <strong className="capitalize">{emRisco[0].categoria}</strong> está {emRisco[0].pct > 100 ? "com o limite estourado" : "perto do limite"}.</>

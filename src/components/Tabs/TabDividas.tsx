@@ -8,8 +8,11 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { PageEmptyState } from "../ui/AsyncState";
+import { Valor } from "../ui/Valor";
 import type { SaldoDevedor } from "../../types";
 import { formatCurrency } from "../../utils/calculations";
+import { Rotulo } from "../ui/Rotulo";
+import { Card } from "../ui/Card";
 
 interface TabDividasProps {
   saldosDevedores: SaldoDevedor[];
@@ -36,7 +39,7 @@ interface TabDividasProps {
 
 /** CHIP do filtro por devedor. */
 const chipClasse = (ativo: boolean) =>
-  `px-3.5 py-2 rounded-[10px] text-[13px] transition-colors inline-flex items-center gap-2 ${
+  `px-3.5 py-2 rounded-xl text-[13px] transition-colors inline-flex items-center gap-2 ${
     ativo
       ? "bg-emerald-600 text-white font-semibold"
       : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
@@ -65,11 +68,9 @@ export function TabDividas({
   return (
     <div className="space-y-5">
       {/* Card status: total à esquerda, SEGMENTADO à direita */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 md:p-7 shadow-sm border border-zinc-200 dark:border-zinc-800 flex items-end justify-between gap-6 flex-wrap" data-tour="dividas-total-card">
+      <Card padding="resumo" className="flex items-end justify-between gap-6 flex-wrap" data-tour="dividas-total-card">
         <div className="min-w-0">
-          <p className={`font-mono text-[10px] font-medium uppercase tracking-[0.16em] ${
-            pendentes ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
-          }`}>
+          <Rotulo tom={pendentes ? "alerta" : "acento"}>
             {filtroPessoaDivida
               ? pendentes
                 ? `Em aberto de ${filtroPessoaDivida}`
@@ -77,12 +78,12 @@ export function TabDividas({
               : pendentes
               ? "Total em aberto"
               : "Total quitado"}
-          </p>
-          <p className={`font-display font-extrabold tracking-tighter tabular-nums whitespace-nowrap text-[44px] leading-none mt-2 ${
+          </Rotulo>
+          <Valor porte="heroi" className={`block mt-2 ${
             pendentes ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400"
           }`}>
             {formatCurrency(pendentes ? totalDividasPendentes : totalDividasQuitadas)}
-          </p>
+          </Valor>
           <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-2">
             {dividasFiltradas.length} {dividasFiltradas.length === 1 ? "cobrança" : "cobranças"}{" "}
             {pendentes ? (dividasFiltradas.length === 1 ? "ativa" : "ativas") : (dividasFiltradas.length === 1 ? "quitada" : "quitadas")}
@@ -113,7 +114,7 @@ export function TabDividas({
             <Clock className="w-[15px] h-[15px]" />
             Pendentes
             {totalPendentes > 0 && (
-              <span className={`font-mono tabular-nums text-xs px-1.5 py-0.5 rounded-full ${
+              <span className={`font-mono valor text-xs px-1.5 py-0.5 rounded-full ${
                 pendentes ? "bg-white/25 text-white" : "bg-zinc-200 dark:bg-white/[0.07] text-zinc-600 dark:text-zinc-300"
               }`}>
                 {totalPendentes}
@@ -134,7 +135,7 @@ export function TabDividas({
             <CheckCircle className="w-[15px] h-[15px]" />
             Pagos
             {totalPagos > 0 && (
-              <span className={`font-mono tabular-nums text-xs px-1.5 py-0.5 rounded-full ${
+              <span className={`font-mono valor text-xs px-1.5 py-0.5 rounded-full ${
                 !pendentes ? "bg-white/25 text-white" : "bg-zinc-200 dark:bg-white/[0.07] text-zinc-600 dark:text-zinc-300"
               }`}>
                 {totalPagos}
@@ -142,12 +143,12 @@ export function TabDividas({
             )}
           </button>
         </div>
-      </div>
+      </Card>
 
       {/* Filtro por devedor */}
       {pessoasComDividas.length > 0 && (
         <div data-tour="dividas-filtro-pessoa">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-2">Devedor</p>
+          <Rotulo className="mb-2">Devedor</Rotulo>
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setFiltroPessoaDivida("")} className={chipClasse(filtroPessoaDivida === "")}>
               Todos
@@ -171,7 +172,7 @@ export function TabDividas({
                   className={chipClasse(filtroPessoaDivida === pessoa)}
                 >
                   {pessoa}
-                  <span className={`font-mono tabular-nums text-[11px] ${
+                  <span className={`font-mono valor text-[11px] ${
                     filtroPessoaDivida === pessoa ? "text-white/70" : "text-zinc-500 dark:text-zinc-400"
                   }`}>
                     {formatCurrency(valorExibir)}
@@ -184,7 +185,7 @@ export function TabDividas({
       )}
 
       {/* Card lista */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-5" data-tour="dividas-lista">
+      <Card data-tour="dividas-lista">
         <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">
           {pendentes ? "Cobranças em aberto" : "Cobranças quitadas"}
           {filtroPessoaDivida && (
@@ -228,15 +229,15 @@ export function TabDividas({
               const dataQuitacao = quitada && ultimoPagamento ? ultimoPagamento.data : null;
 
               return (
-                <li key={divida.id} className="bg-[#FCFCFC] dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] rounded-[14px] p-3.5">
+                <li key={divida.id} className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] rounded-xl p-3.5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                        <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400">
+                        <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400">
                           {divida.pessoa}
                         </span>
                         {quitada && (
-                          <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">
+                          <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">
                             <Check className="w-[11px] h-[11px]" />
                             Quitado
                           </span>
@@ -273,9 +274,11 @@ export function TabDividas({
                                 key={pag.id}
                                 className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center justify-between gap-2"
                               >
-                                <span className="min-w-0 truncate">
-                                  −{formatCurrency(pag.valor)} · {format(new Date(pag.data), "dd/MM")}
-                                  {pag.observacao && <span> · {pag.observacao}</span>}
+                                {/* Só a observação trunca — valor e data ficam inteiros. */}
+                                <span className="min-w-0 flex items-baseline gap-1">
+                                  <span className="valor shrink-0">−{formatCurrency(pag.valor)}</span>
+                                  <span className="shrink-0">· {format(new Date(pag.data), "dd/MM")}</span>
+                                  {pag.observacao && <span className="truncate">· {pag.observacao}</span>}
                                 </span>
                                 <button
                                   onClick={() => handleDesfazerPagamento(divida.id, pag.id, pag.valor)}
@@ -293,18 +296,18 @@ export function TabDividas({
                     </div>
 
                     <div className="text-right flex-shrink-0">
-                      <p className={`font-mono tabular-nums text-2xl font-semibold whitespace-nowrap ${
+                      <p className={`font-mono valor text-2xl font-semibold whitespace-nowrap ${
                         quitada ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"
                       }`}>
                         {formatCurrency(divida.valor_atual)}
                       </p>
-                      <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">restante</p>
+                      <Rotulo>restante</Rotulo>
 
                       <div className="flex gap-1 mt-2.5 justify-end items-center" data-tour="dividas-item-acoes">
                         {!quitada && (
                           <button
                             onClick={() => setShowPagamento(showPagamento === divida.id ? null : divida.id)}
-                            className="inline-flex items-center gap-1.5 h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-[0_4px_12px_-3px_rgba(5,150,105,0.5)] transition-colors"
+                            className="inline-flex items-center gap-1.5 h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors"
                             title="Registrar pagamento"
                           >
                             <MinusCircle className="w-3.5 h-3.5" />
@@ -340,7 +343,7 @@ export function TabDividas({
             })}
           </ul>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

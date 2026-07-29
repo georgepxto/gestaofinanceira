@@ -27,6 +27,7 @@ export function Toaster() {
       {toasts.map((t) => (
         <div
           key={t.id}
+          /* ds-ok: toast flutua sobre a tela — sombra elevada e borda própria, não é a superfície assentada do Card */
           className="animate-in slide-in-from-right-full fade-in duration-500 ease-out fill-mode-forwards bg-white dark:bg-zinc-900 text-zinc-800 dark:text-white shadow-xl shadow-black/10 dark:shadow-black/40 rounded-2xl p-4 flex items-center gap-3 min-w-[280px] max-w-sm pointer-events-auto border border-zinc-100 dark:border-zinc-800 relative z-50 overflow-hidden"
         >
           {t.type === 'success' ? (

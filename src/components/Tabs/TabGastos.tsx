@@ -13,22 +13,25 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { PageEmptyState, PageErrorState, PageLoadingState } from "../ui/AsyncState";
+import { Valor } from "../ui/Valor";
 import type { ParcelaAtiva, ResumoMensal } from "../../types";
 import type { PagamentoParcial } from "../../types/extended";
 import { formatCurrency } from "../../utils/calculations";
 import { toActionableErrorMessage } from "../../utils/feedbackMessages";
+import { Rotulo } from "../ui/Rotulo";
+import { Card } from "../ui/Card";
 
 /** CHIP dos filtros. */
 const chipClasse = (ativo: boolean) =>
-  `px-3.5 py-2 rounded-[10px] text-[13px] transition-colors ${
+  `px-3.5 py-2 rounded-xl text-[13px] transition-colors ${
     ativo
       ? "bg-emerald-600 text-white font-semibold"
       : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
   }`;
 
-const BADGE_NEUTRA = "inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400";
-const BADGE_AMBAR = "inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400";
-const BADGE_ESMERALDA = "inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400";
+const BADGE_NEUTRA = "inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400";
+const BADGE_AMBAR = "inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400";
+const BADGE_ESMERALDA = "inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400";
 
 interface TabGastosProps {
   mesVisualizacao: Date;
@@ -109,39 +112,40 @@ export function TabGastos({
       )}
 
       {/* FAIXA_RESUMO */}
-      <div
-        className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 md:p-7 grid gap-x-7 gap-y-5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]"
+      <Card
+        padding="resumo"
+        className="grid gap-x-7 gap-y-5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]"
         data-tour="gastos-resumo-cards"
       >
         <div className="min-w-0" data-tour="gastos-card-total">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">A receber</p>
-          <p className="font-display font-extrabold tracking-tighter tabular-nums whitespace-nowrap text-[30px] leading-tight text-zinc-900 dark:text-zinc-50 mt-1">
+          <Rotulo tom="acento">A receber</Rotulo>
+          <Valor porte="destaque" className="block mt-1 text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalAReceber)}
-          </p>
+          </Valor>
           <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">falta entrar neste mês</p>
         </div>
         <div className="min-w-0">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Emprestado</p>
-          <p className="font-mono tabular-nums text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5 whitespace-nowrap">
+          <Rotulo>Emprestado</Rotulo>
+          <p className="font-mono valor text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5 whitespace-nowrap">
             {formatCurrency(totalMes)}
           </p>
           <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">{parcelasAtivas.length} {parcelasAtivas.length === 1 ? "lançamento" : "lançamentos"}</p>
         </div>
         <div className="min-w-0">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Recebido</p>
-          <p className="font-mono tabular-nums text-2xl font-semibold text-emerald-700 dark:text-emerald-400 mt-1.5 whitespace-nowrap">
+          <Rotulo>Recebido</Rotulo>
+          <p className="font-mono valor text-2xl font-semibold text-emerald-700 dark:text-emerald-400 mt-1.5 whitespace-nowrap">
             {formatCurrency(totalRecebido)}
           </p>
           <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">pagamentos do período</p>
         </div>
         <div className="min-w-0">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Devedores</p>
-          <p className="font-mono tabular-nums text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5">
+          <Rotulo>Devedores</Rotulo>
+          <p className="font-mono valor text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5">
             {resumoMensal.length}
           </p>
           <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">com lançamentos no mês</p>
         </div>
-      </div>
+      </Card>
 
       {/* Cards por devedor */}
       {resumoMensal.length > 0 && (
@@ -160,9 +164,9 @@ export function TabGastos({
             const quitadoOuFechadoSemDivida = estaQuitado || (estaFechado && mesFechadoData && mesFechadoData.valorDevedor === 0);
 
             return (
-              <div
+              <Card
                 key={resumo.pessoa}
-                className="bg-white dark:bg-zinc-900 rounded-2xl p-5 shadow-sm border border-zinc-200 dark:border-zinc-800 min-w-0"
+                className="min-w-0"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 flex-shrink-0 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center">
@@ -188,7 +192,7 @@ export function TabGastos({
 
                 <div className="flex items-end justify-between gap-3 mt-4">
                   <span className="text-sm text-zinc-500 dark:text-zinc-400">a receber</span>
-                  <span className={`font-mono tabular-nums text-[22px] font-semibold whitespace-nowrap ${
+                  <span className={`font-mono valor text-[22px] font-semibold whitespace-nowrap ${
                     quitadoOuFechadoSemDivida ? "text-emerald-700 dark:text-emerald-400" : "text-zinc-900 dark:text-zinc-100"
                   }`}>
                     {formatCurrency(Math.max(restante, 0))}
@@ -211,7 +215,12 @@ export function TabGastos({
 
                 {/* Rodapé: nota + ações */}
                 <div className="border-t border-zinc-100 dark:border-zinc-800 mt-4 pt-3 flex items-center justify-between gap-3">
-                  <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                  {/* A frase é montada como string, então quebra em duas linhas em vez de
+                      truncar — esconder metade de um valor é pior que ganhar altura. */}
+                  <p
+                    className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 min-w-0"
+                    style={{ textWrap: "pretty" }}
+                  >
                     {estaFechado && mesFechadoData && mesFechadoData.valorDevedor > 0
                       ? `mês fechado · ${formatCurrency(mesFechadoData.valorDevedor)}`
                       : temPagamentos
@@ -277,7 +286,7 @@ export function TabGastos({
                     )}
                   </div>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -294,7 +303,7 @@ export function TabGastos({
 
       {/* Card Lançamentos do mês */}
       {!loading && (
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-5" data-tour="gastos-lista">
+        <Card data-tour="gastos-lista">
           <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">
             Lançamentos do mês
           </h2>
@@ -302,9 +311,9 @@ export function TabGastos({
           {/* Filtros */}
           <div className="space-y-3.5 mb-5" data-tour="gastos-filtros">
             <div>
-              <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-2">
+              <Rotulo className="mb-2">
                 Devedor
-              </p>
+              </Rotulo>
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => setFiltroPessoaGasto("")} className={chipClasse(filtroPessoaGasto === "")}>
                   Todos
@@ -318,9 +327,9 @@ export function TabGastos({
             </div>
 
             <div>
-              <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-2">
+              <Rotulo className="mb-2">
                 Tipo
-              </p>
+              </Rotulo>
               <div className="flex flex-wrap gap-2 items-center">
                 <button onClick={() => setFiltroTipoGasto("")} className={chipClasse(filtroTipoGasto === "")}>
                   Todos
@@ -338,7 +347,7 @@ export function TabGastos({
                     onChange={(e) => setFiltroDiaGasto(e.target.value)}
                     max={format(mesVisualizacao, "yyyy-MM") + "-31"}
                     min={format(mesVisualizacao, "yyyy-MM") + "-01"}
-                    className="px-3 py-2 pl-9 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-[13px] font-mono tabular-nums text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] dark:[color-scheme:dark]"
+                    className="h-11 px-3.5 pl-9 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-[13px] font-mono tabular-nums text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] dark:[color-scheme:dark]"
                   />
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600 dark:text-emerald-500 pointer-events-none" />
                 </div>
@@ -397,7 +406,7 @@ export function TabGastos({
                         ({ gasto, parcela_atual, valor_parcela }) => (
                           <li
                             key={gasto.id}
-                            className="bg-[#FCFCFC] dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] rounded-[14px] p-3.5"
+                            className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] rounded-xl p-3.5"
                           >
                             <div className="flex items-center justify-between gap-4">
                               <div className="flex-1 min-w-0">
@@ -431,7 +440,7 @@ export function TabGastos({
                                 </p>
                               </div>
                               <div className="text-right flex-shrink-0">
-                                <p className="font-mono tabular-nums text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
+                                <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
                                   {formatCurrency(valor_parcela)}
                                 </p>
                                 <div className="flex items-center justify-end gap-0.5 mt-1.5" data-tour="gastos-item-acoes">
@@ -461,7 +470,7 @@ export function TabGastos({
               })()}
             </div>
           )}
-        </div>
+        </Card>
       )}
     </>
   );

@@ -3,6 +3,7 @@ import { format, subMonths, startOfMonth, endOfMonth, getDaysInMonth, getDate } 
 import { supabase } from "../lib/supabase";
 import { useAppContext } from "../context";
 import { formatCurrency, isGastoAtivoNoMes } from "../utils/calculations";
+import { categoriaDeGasto } from "../utils/categories";
 import type { MeuGasto, Gasto, Receita, MetaGasto } from "../types";
 
 export interface Alerta {
@@ -92,12 +93,12 @@ export const useAlertas = () => {
       // a) Categorias com aumento ≥30% vs mês anterior
       const catMapAtual = new Map<string, number>();
       gastosDoMes.forEach((g) => {
-        const cat = g.categoria_gasto || g.categoria || "Outros";
+        const cat = categoriaDeGasto(g);
         catMapAtual.set(cat, (catMapAtual.get(cat) || 0) + g.valor);
       });
       const catMapAnterior = new Map<string, number>();
       gastosDoMesAnterior.forEach((g) => {
-        const cat = g.categoria_gasto || g.categoria || "Outros";
+        const cat = categoriaDeGasto(g);
         catMapAnterior.set(cat, (catMapAnterior.get(cat) || 0) + g.valor);
       });
       catMapAtual.forEach((valorAtual, cat) => {
@@ -167,9 +168,7 @@ export const useAlertas = () => {
       todasMetas.forEach((meta) => {
         const gastoAtual = gastosDoMes
           .filter(
-            (g) =>
-              (g.categoria_gasto || g.categoria || "").toLowerCase() ===
-              meta.categoria.toLowerCase()
+            (g) => categoriaDeGasto(g).toLowerCase() === meta.categoria.toLowerCase()
           )
           .reduce((acc, g) => acc + g.valor, 0);
         if (gastoAtual > meta.limite) {

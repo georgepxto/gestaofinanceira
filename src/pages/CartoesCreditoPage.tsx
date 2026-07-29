@@ -3,17 +3,21 @@ import { Loader2, Trash2, Edit2, X, Calendar, CalendarDays, ChevronLeft, Chevron
 import { format, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAppContext } from "../context";
-import { Pista } from "../components/ui/PageHeader";
+import { PageHeader } from "../components/ui/PageHeader";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
-import { formatCurrency, formatCurrencyInput, parseCurrency, getMesFaturaCartao } from "../utils/calculations";
+import { formatCurrency, formatCurrencyInput, formatCurrencyValue, parseCurrency, getMesFaturaCartao } from "../utils/calculations";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
+import { normalizarCategoria } from "../utils/categories";
 import { toast } from "../components/ui/Toaster";
 import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
+import { Valor } from "../components/ui/Valor";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
 
 import type { CartaoCredito, CartaoCreditoForm, TransacaoCartao, ContaBancaria, MeuGasto, Gasto } from "../types";
+import { Rotulo } from "../components/ui/Rotulo";
+import { Card } from "../components/ui/Card";
 
 /**
  * Cor do cartão = identidade do banco (dado do usuário): vive no dot e na
@@ -21,6 +25,8 @@ import type { CartaoCredito, CartaoCreditoForm, TransacaoCartao, ContaBancaria, 
  * os semânticos — esmeralda/âmbar/vermelho ficam reservados para ESTADO.
  */
 const CORES_CARTAO = [
+  // Ficam fora da paleta de estado justamente para não competir com ela.
+  // ds-ok: identidade do cartão escolhida pela pessoa — é dado, não cor de interface.
   "#5B21B6", "#1E3A8A", "#155E75", "#9D174D", "#7C2D12", "#4A044E", "#3F3F46",
 ];
 
@@ -279,7 +285,7 @@ export const CartoesCreditoPage = () => {
     const trans = getTransacoesDoMes(cartaoId).map(t => ({ ...t, origem: "transacao" as const }));
     const gastos = getGastosDoMes(cartaoId).map(g => ({
       id: g.id, descricao: g.descricao, valor: g.minha_parte || g.valor, 
-      categoria: g.categoria_gasto || g.categoria || "Gasto",
+      categoria: normalizarCategoria(g.categoria_gasto) || "Gasto",
       data: g.categoria === "fixo" ? format(mesVisualizacao, "yyyy-MM") + `-${String(Math.min(g.dia_vencimento || 1, new Date(mesVisualizacao.getFullYear(), mesVisualizacao.getMonth() + 1, 0).getDate())).padStart(2, "0")}` : g.data, 
       pago: g.pago, origem: "gasto" as const, pessoa: "",
     }));
@@ -309,7 +315,7 @@ export const CartoesCreditoPage = () => {
         valorPago: valorPagoItem,
         valorRestante: valorRestante,
         percentualPago: percentualPago,
-        categoria: g.categoria || "Gasto",
+        categoria: normalizarCategoria(g.categoria) || "Gasto",
         data: g.data_inicio, 
         pago: itemPago, 
         pagoParcial: itemPagoParcial,
@@ -450,8 +456,8 @@ export const CartoesCreditoPage = () => {
   const handleEditCartao = (c: CartaoCredito) => {
     setFormCartao({
       nome: c.nome, conta_id: c.conta_id || "", dia_vencimento: String(c.dia_vencimento),
-      melhor_dia_compra: String(c.melhor_dia_compra || ""), limite: formatCurrency(c.limite).replace("R$\u00a0", ""),
-      divida_inicial: c.divida_inicial ? formatCurrency(c.divida_inicial).replace("R$\u00a0", "") : "",
+      melhor_dia_compra: String(c.melhor_dia_compra || ""), limite: formatCurrencyValue(c.limite),
+      divida_inicial: c.divida_inicial ? formatCurrencyValue(c.divida_inicial) : "",
       cor: c.cor || CORES_CARTAO[0],
     });
     setEditandoCartao(c);
@@ -633,24 +639,24 @@ export const CartoesCreditoPage = () => {
 
   // Card "Limite consolidado" — aparece na vista "Todos" e na coluna do cartão.
   const renderLimiteConsolidado = () => (
-    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 min-w-0" data-tour="cartoes-consolidado">
+    <Card className="min-w-0" data-tour="cartoes-consolidado">
       <div className="flex items-center justify-between gap-3 mb-2">
         <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Limite consolidado</h2>
-        <span className="font-mono tabular-nums text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{percentUsado.toFixed(0)}%</span>
+        <span className="font-mono valor text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{percentUsado.toFixed(0)}%</span>
       </div>
       {barraLimite(percentUsado)}
       <div className="grid grid-cols-3 gap-3 mt-4 mb-4">
         <div className="min-w-0">
           <p className="text-xs text-zinc-500 dark:text-zinc-400">Disponível</p>
-          <p className="font-mono tabular-nums text-sm font-semibold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">{formatCurrency(consolidado.disponivel)}</p>
+          <p className="font-mono valor text-sm font-semibold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">{formatCurrency(consolidado.disponivel)}</p>
         </div>
         <div className="min-w-0">
           <p className="text-xs text-zinc-500 dark:text-zinc-400">Usado</p>
-          <p className="font-mono tabular-nums text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(consolidado.usado)}</p>
+          <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(consolidado.usado)}</p>
         </div>
         <div className="min-w-0">
           <p className="text-xs text-zinc-500 dark:text-zinc-400">Limite total</p>
-          <p className="font-mono tabular-nums text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(consolidado.limiteTotal)}</p>
+          <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(consolidado.limiteTotal)}</p>
         </div>
       </div>
       <div className="space-y-3 border-t border-zinc-100 dark:border-zinc-800 pt-4" data-tour="cartoes-limites-grid">
@@ -668,7 +674,7 @@ export const CartoesCreditoPage = () => {
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-[7px] h-[7px] rounded-full flex-shrink-0" style={{ backgroundColor: corDoCartao(c) }} />
                 <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate flex-1">{c.nome}</span>
-                <span className="font-mono tabular-nums text-[11px] text-zinc-500 dark:text-zinc-400">{pct.toFixed(0)}%</span>
+                <span className="font-mono valor text-[11px] text-zinc-500 dark:text-zinc-400">{pct.toFixed(0)}%</span>
               </div>
               {barraLimite(pct)}
             </button>
@@ -678,53 +684,48 @@ export const CartoesCreditoPage = () => {
       <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-4">
         dot = banco · barra = estado (verde ok · âmbar ≥80% · vermelho estourado)
       </p>
-    </div>
+    </Card>
   );
 
   return (
     <div className="space-y-6">
       {/* HEADER_PAGINA */}
-      <div className="flex items-end justify-between flex-wrap gap-5 mb-6" data-tour="cartoes-header">
-        <div>
-          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-1">
-            Carteira
-          </p>
-          <h1 className="font-display font-bold text-[34px] leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50">
-            Cartões de <Pista>crédito</Pista>
-          </h1>
-          <p className="text-[15px] text-zinc-500 dark:text-zinc-400 mt-1">
-            Faturas, limites e transações de cada cartão.
-          </p>
-        </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* MES_PILL — o mês vem daqui; sem navegações duplicadas na tela */}
-          <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm">
+      <PageHeader
+        data-tour="cartoes-header"
+        eyebrow="Carteira"
+        title="Cartões de crédito"
+        description="Faturas, limites e transações de cada cartão."
+        action={
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* MES_PILL — o mês vem daqui; sem navegações duplicadas na tela */}
+            <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm">
+              <button
+                onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))}
+                aria-label="Mês anterior"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+              >
+                <ChevronLeft className="w-[18px] h-[18px]" />
+              </button>
+              <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
+                {getMesAno()}
+              </span>
+              <button
+                onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))}
+                aria-label="Próximo mês"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+              >
+                <ChevronRight className="w-[18px] h-[18px]" />
+              </button>
+            </div>
             <button
-              onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))}
-              aria-label="Mês anterior"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+              onClick={() => { resetFormCartao(); setShowFormCartao(true); }}
+              className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors"
             >
-              <ChevronLeft className="w-[18px] h-[18px]" />
-            </button>
-            <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
-              {getMesAno()}
-            </span>
-            <button
-              onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))}
-              aria-label="Próximo mês"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-            >
-              <ChevronRight className="w-[18px] h-[18px]" />
+              <Plus className="w-[18px] h-[18px]" /> Novo cartão
             </button>
           </div>
-          <button
-            onClick={() => { resetFormCartao(); setShowFormCartao(true); }}
-            className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-[0_4px_12px_-3px_rgba(5,150,105,0.5)] transition-colors"
-          >
-            <Plus className="w-[18px] h-[18px]" /> Novo cartão
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Rail de tiles */}
       <div className="flex gap-3 overflow-x-auto pb-2" data-tour="cartoes-lista">
@@ -733,14 +734,14 @@ export const CartoesCreditoPage = () => {
           type="button"
           onClick={() => setCartaoSelecionado(null)}
           aria-pressed={cartaoSelecionado === null}
-          className={`relative overflow-hidden flex-shrink-0 w-44 p-3.5 rounded-[14px] border text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+          className={`relative overflow-hidden flex-shrink-0 w-44 p-3.5 rounded-xl border text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
             cartaoSelecionado === null
               ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
               : "border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.04] hover:bg-zinc-50 dark:hover:bg-white/[0.08]"
           }`}
         >
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-1.5">Todos</p>
-          <p className="font-mono tabular-nums text-[19px] font-semibold text-zinc-900 dark:text-zinc-50 whitespace-nowrap">
+          <Rotulo className="mb-1.5">Todos</Rotulo>
+          <p className="font-mono valor text-[19px] font-semibold text-zinc-900 dark:text-zinc-50 whitespace-nowrap">
             {formatCurrency(cartoesState.reduce((sum, c) => sum + getFaturaCartao(c.id), 0))}
           </p>
           <p className="font-mono text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">{cartoesState.length} {cartoesState.length === 1 ? "cartão" : "cartões"}</p>
@@ -752,7 +753,7 @@ export const CartoesCreditoPage = () => {
             type="button"
             onClick={() => setCartaoSelecionado(c)}
             aria-pressed={cartaoSelecionado?.id === c.id}
-            className={`relative overflow-hidden flex-shrink-0 w-44 p-3.5 pl-4 rounded-[14px] border text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+            className={`relative overflow-hidden flex-shrink-0 w-44 p-3.5 pl-4 rounded-xl border text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
               cartaoSelecionado?.id === c.id
                 ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
                 : "border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.04] hover:bg-zinc-50 dark:hover:bg-white/[0.08]"
@@ -763,7 +764,7 @@ export const CartoesCreditoPage = () => {
               <span className="w-[7px] h-[7px] rounded-full flex-shrink-0" style={{ backgroundColor: corDoCartao(c) }} />
               <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{c.nome}</span>
             </div>
-            <p className="font-mono tabular-nums text-[19px] font-semibold text-zinc-900 dark:text-zinc-50 whitespace-nowrap">{formatCurrency(getFaturaCartao(c.id))}</p>
+            <p className="font-num valor tracking-[-0.015em] text-[19px] font-semibold text-zinc-900 dark:text-zinc-50 whitespace-nowrap">{formatCurrency(getFaturaCartao(c.id))}</p>
             <p className="font-mono text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">vence dia {c.dia_vencimento}</p>
           </button>
         ))}
@@ -771,7 +772,7 @@ export const CartoesCreditoPage = () => {
         <button
           type="button"
           onClick={() => { resetFormCartao(); setShowFormCartao(true); }}
-          className="flex-shrink-0 w-44 p-3.5 rounded-[14px] border border-dashed border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-white/[0.02] hover:border-emerald-400 hover:text-emerald-700 text-zinc-500 dark:text-zinc-400 flex flex-col items-center justify-center gap-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          className="flex-shrink-0 w-44 p-3.5 rounded-xl border border-dashed border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-white/[0.02] hover:border-emerald-400 hover:text-emerald-700 text-zinc-500 dark:text-zinc-400 flex flex-col items-center justify-center gap-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
         >
           <Plus className="w-5 h-5" />
           <span className="text-sm font-medium">Novo cartão</span>
@@ -802,19 +803,19 @@ export const CartoesCreditoPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 space-y-4 min-w-0">
               {/* Card fatura (herói) */}
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 md:p-7" data-tour="cartoes-detalhes-fatura">
+              <Card padding="resumo" data-tour="cartoes-detalhes-fatura">
                 <div className="flex items-start justify-between gap-5 flex-wrap">
                   <div className="min-w-0">
-                    <p className="flex items-center gap-2 font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">
+                    <Rotulo className="flex items-center gap-2">
                       <span className="w-[7px] h-[7px] rounded-full flex-shrink-0" style={{ backgroundColor: corDoCartao(cartaoSelecionado) }} />
                       {cartaoSelecionado.nome} · fatura de {format(mesVisualizacao, "MMMM", { locale: ptBR })}
-                    </p>
+                    </Rotulo>
                     <div className="flex items-center gap-3 flex-wrap mt-2">
-                      <p className="font-display font-extrabold tracking-tighter tabular-nums whitespace-nowrap text-[46px] leading-none text-zinc-900 dark:text-zinc-50">
+                      <Valor porte="heroi" className="text-zinc-900 dark:text-zinc-50">
                         {formatCurrency(fatura)}
-                      </p>
+                      </Valor>
                       {quitada && (
-                        <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">
+                        <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">
                           <Check className="w-[11px] h-[11px]" /> Quitada
                         </span>
                       )}
@@ -837,16 +838,16 @@ export const CartoesCreditoPage = () => {
                     )}
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Melhor dia p/ comprar</p>
-                    <p className="font-mono tabular-nums text-2xl font-semibold text-emerald-700 dark:text-emerald-400 mt-1">
+                    <Rotulo>Melhor dia p/ comprar</Rotulo>
+                    <p className="font-mono valor text-2xl font-semibold text-emerald-700 dark:text-emerald-400 mt-1">
                       {cartaoSelecionado.melhor_dia_compra || "—"}
                     </p>
                   </div>
                 </div>
                 <div className="border-t border-zinc-100 dark:border-zinc-800 mt-5 pt-5">
                   <div className="flex items-center justify-between gap-3 mb-1.5">
-                    <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Limite usado</p>
-                    <span className="font-mono tabular-nums text-[11px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                    <Rotulo>Limite usado</Rotulo>
+                    <span className="font-mono valor text-[11px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                       {pct.toFixed(0)}% de {formatCurrency(limite)}
                     </span>
                   </div>
@@ -855,25 +856,25 @@ export const CartoesCreditoPage = () => {
                     <div className="min-w-0">
                       <p className="text-xs text-zinc-500 dark:text-zinc-400">Disponível</p>
                       {/* Folga é sempre esmeralda; vermelho só quando estoura. */}
-                      <p className={`font-mono tabular-nums text-sm font-semibold whitespace-nowrap ${limite - usado < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}>{formatCurrency(limite - usado)}</p>
+                      <p className={`font-mono valor text-sm font-semibold whitespace-nowrap ${limite - usado < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}>{formatCurrency(limite - usado)}</p>
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs text-zinc-500 dark:text-zinc-400">Usado</p>
-                      <p className="font-mono tabular-nums text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(usado)}</p>
+                      <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(usado)}</p>
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs text-zinc-500 dark:text-zinc-400">Limite total</p>
-                      <p className="font-mono tabular-nums text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(limite)}</p>
+                      <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(limite)}</p>
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
 
               {/* Transações da fatura */}
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 min-w-0" data-tour="cartoes-detalhes-transacoes">
+              <Card className="min-w-0" data-tour="cartoes-detalhes-transacoes">
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Transações da fatura</h2>
-                  <span className="font-mono tabular-nums text-[13px] text-zinc-500 dark:text-zinc-400">{itens.length} {itens.length === 1 ? "item" : "itens"}</span>
+                  <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">{itens.length} {itens.length === 1 ? "item" : "itens"}</span>
                 </div>
                 {cartaoSelecionado.divida_inicial && cartaoSelecionado.divida_inicial > 0 ? (
                   <div className="flex items-center justify-between gap-3 p-3 mb-2 bg-zinc-50 dark:bg-white/[0.04] rounded-xl">
@@ -881,7 +882,7 @@ export const CartoesCreditoPage = () => {
                       <Clock className="w-4 h-4 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
                       <span className="text-sm text-zinc-500 dark:text-zinc-400 truncate">Saldo anterior</span>
                     </div>
-                    <span className="font-mono tabular-nums text-sm font-semibold text-zinc-900 dark:text-zinc-50 whitespace-nowrap">{formatCurrency(cartaoSelecionado.divida_inicial)}</span>
+                    <span className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-50 whitespace-nowrap">{formatCurrency(cartaoSelecionado.divida_inicial)}</span>
                   </div>
                 ) : null}
                 {itens.length === 0 ? (
@@ -907,23 +908,23 @@ export const CartoesCreditoPage = () => {
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <p className={`text-sm font-medium ${t.pago ? "text-zinc-500 dark:text-zinc-400 line-through" : "text-zinc-800 dark:text-zinc-100"}`}>{t.descricao}</p>
                               {t.pago && (
-                                <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">
+                                <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">
                                   <Check className="w-[11px] h-[11px]" /> Pago
                                 </span>
                               )}
                               {t.pagoParcial && (
-                                <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 whitespace-nowrap">
+                                <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 whitespace-nowrap">
                                   Pago {formatCurrency(t.valorPago || 0)}
                                 </span>
                               )}
                               {t.origem === "gasto" && !fixo && !t.pago && (
-                                <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-white/[0.07] text-zinc-600 dark:text-zinc-300">Gasto</span>
+                                <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-white/[0.07] text-zinc-600 dark:text-zinc-300">Gasto</span>
                               )}
                               {fixo && (
-                                <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400">Fixo</span>
+                                <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400">Fixo</span>
                               )}
                               {t.origem === "compartilhado" && !t.pago && !t.pagoParcial && (
-                                <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                                <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
                                   Emprestado · {t.pessoa}
                                 </span>
                               )}
@@ -934,9 +935,9 @@ export const CartoesCreditoPage = () => {
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             {t.pagoParcial ? (
-                              <span className="font-mono tabular-nums text-sm font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">Falta {formatCurrency(t.valorRestante || 0)}</span>
+                              <span className="font-mono valor text-sm font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">Falta {formatCurrency(t.valorRestante || 0)}</span>
                             ) : (
-                              <span className={`font-mono tabular-nums text-sm font-semibold whitespace-nowrap ${t.pago ? "text-zinc-500 dark:text-zinc-400 line-through" : "text-zinc-900 dark:text-zinc-50"}`}>{formatCurrency(t.valor)}</span>
+                              <span className={`font-mono valor text-sm font-semibold whitespace-nowrap ${t.pago ? "text-zinc-500 dark:text-zinc-400 line-through" : "text-zinc-900 dark:text-zinc-50"}`}>{formatCurrency(t.valor)}</span>
                             )}
                             {t.origem === "transacao" && (
                               <button
@@ -953,13 +954,13 @@ export const CartoesCreditoPage = () => {
                     })}
                   </div>
                 )}
-              </div>
+              </Card>
             </div>
 
             {/* Coluna direita */}
             <div className="space-y-4 min-w-0">
               {/* Este cartão */}
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 h-fit" data-tour="cartoes-detalhes-limite">
+              <Card className="h-fit" data-tour="cartoes-detalhes-limite">
                 <div className="flex items-center justify-between gap-3 mb-4">
                   <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Este cartão</h2>
                   <div className="flex gap-0.5">
@@ -970,15 +971,15 @@ export const CartoesCreditoPage = () => {
                 <div className="space-y-2.5 text-sm mb-5">
                   <div className="flex justify-between gap-3">
                     <span className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 min-w-0"><Calendar className="w-4 h-4 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />Vencimento</span>
-                    <span className="font-mono tabular-nums text-zinc-900 dark:text-zinc-50 whitespace-nowrap">dia {cartaoSelecionado.dia_vencimento}</span>
+                    <span className="font-mono valor text-zinc-900 dark:text-zinc-50 whitespace-nowrap">dia {cartaoSelecionado.dia_vencimento}</span>
                   </div>
                   <div className="flex justify-between gap-3">
                     <span className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 min-w-0"><CalendarDays className="w-4 h-4 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />Melhor dia de compra</span>
-                    <span className="font-mono tabular-nums text-zinc-900 dark:text-zinc-50 whitespace-nowrap">{cartaoSelecionado.melhor_dia_compra ? `dia ${cartaoSelecionado.melhor_dia_compra}` : "—"}</span>
+                    <span className="font-mono valor text-zinc-900 dark:text-zinc-50 whitespace-nowrap">{cartaoSelecionado.melhor_dia_compra ? `dia ${cartaoSelecionado.melhor_dia_compra}` : "—"}</span>
                   </div>
                   <div className="flex justify-between gap-3">
                     <span className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 min-w-0"><History className="w-4 h-4 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />Dívida inicial</span>
-                    <span className="font-mono tabular-nums text-zinc-900 dark:text-zinc-50 whitespace-nowrap">{formatCurrency(cartaoSelecionado.divida_inicial || 0)}</span>
+                    <span className="font-mono valor text-zinc-900 dark:text-zinc-50 whitespace-nowrap">{formatCurrency(cartaoSelecionado.divida_inicial || 0)}</span>
                   </div>
                 </div>
                 {quitada ? (
@@ -987,13 +988,13 @@ export const CartoesCreditoPage = () => {
                   </button>
                 ) : (
                   <button
-                    onClick={() => { setValorPagamento(formatCurrency(fatura).replace("R$ ", "")); setShowPagarFatura(true); }}
-                    className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-[0_4px_12px_-3px_rgba(5,150,105,0.5)] transition-colors"
+                    onClick={() => { setValorPagamento(formatCurrencyValue(fatura)); setShowPagarFatura(true); }}
+                    className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors"
                   >
                     <Check className="w-4 h-4" /> Pagar fatura
                   </button>
                 )}
-              </div>
+              </Card>
 
               {/* Limite consolidado */}
               {renderLimiteConsolidado()}
@@ -1027,13 +1028,13 @@ export const CartoesCreditoPage = () => {
               <button onClick={resetFormCartao} className="p-1 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded"><X className="w-5 h-5 text-zinc-400 dark:text-zinc-500" /></button>
             </div>
             <form onSubmit={handleSubmitCartao} className="space-y-4">
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Nome</label><input type="text" value={formCartao.nome} onChange={e => setFormCartao({...formCartao, nome: e.target.value})} placeholder="Ex: Nubank, Inter..." className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Limite</label><input type="text" value={formCartao.limite} onChange={e => setFormCartao({...formCartao, limite: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Nome</label><input type="text" value={formCartao.nome} onChange={e => setFormCartao({...formCartao, nome: e.target.value})} placeholder="Ex: Nubank, Inter..." className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Limite</label><input type="text" value={formCartao.limite} onChange={e => setFormCartao({...formCartao, limite: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Dia de Vencimento</label><input type="number" min="1" max="31" value={formCartao.dia_vencimento} onChange={e => setFormCartao({...formCartao, dia_vencimento: e.target.value})} className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Melhor dia compra</label><input type="number" min="1" max="31" value={formCartao.melhor_dia_compra} onChange={e => setFormCartao({...formCartao, melhor_dia_compra: e.target.value})} className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Dia de Vencimento</label><input type="number" min="1" max="31" value={formCartao.dia_vencimento} onChange={e => setFormCartao({...formCartao, dia_vencimento: e.target.value})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
+                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Melhor dia compra</label><input type="number" min="1" max="31" value={formCartao.melhor_dia_compra} onChange={e => setFormCartao({...formCartao, melhor_dia_compra: e.target.value})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
               </div>
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Dívida Inicial (se houver)</label><input type="text" value={formCartao.divida_inicial} onChange={e => setFormCartao({...formCartao, divida_inicial: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Dívida Inicial (se houver)</label><input type="text" value={formCartao.divida_inicial} onChange={e => setFormCartao({...formCartao, divida_inicial: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
               <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Cor</label><div className="flex gap-2 flex-wrap">{CORES_CARTAO.map(cor => (<button key={cor} type="button" onClick={() => setFormCartao({...formCartao, cor})} className={`w-8 h-8 rounded-lg ${formCartao.cor === cor ? "ring-2 ring-emerald-500" : ""}`} style={{ backgroundColor: cor }} />))}</div></div>
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={resetFormCartao} className="flex-1 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:bg-white/[0.07] dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
@@ -1049,10 +1050,10 @@ export const CartoesCreditoPage = () => {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-md p-5 border border-zinc-200 dark:border-zinc-800 shadow-xl">
             <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100 mb-2">Pagar Fatura</h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">Selecione a conta de onde sairá o dinheiro para pagar esta fatura de <strong className="font-mono tabular-nums text-emerald-600 dark:text-emerald-400">{formatCurrency(getFaturaCartao(cartaoSelecionado.id))}</strong>.</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">Selecione a conta de onde sairá o dinheiro para pagar esta fatura de <strong className="font-mono valor text-emerald-600 dark:text-emerald-400">{formatCurrency(getFaturaCartao(cartaoSelecionado.id))}</strong>.</p>
             <div className="space-y-4">
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Conta de Origem</label><select value={contaPagamento} onChange={e => setContaPagamento(e.target.value)} className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"><option value="">Selecione...</option>{contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Valor</label><input type="text" value={valorPagamento} onChange={e => setValorPagamento(formatCurrencyInput(e.target.value))} className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /><p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Insira o valor pago (deixe como está para pagamento total)</p></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Conta de Origem</label><select value={contaPagamento} onChange={e => setContaPagamento(e.target.value)} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"><option value="">Selecione...</option>{contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>
+              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Valor</label><input type="text" value={valorPagamento} onChange={e => setValorPagamento(formatCurrencyInput(e.target.value))} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /><p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Insira o valor pago (deixe como está para pagamento total)</p></div>
             </div>
             <div className="flex flex-col gap-2 mt-4">
               <button onClick={handlePagarFatura} disabled={saving} className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}Confirmar Pagamento</button>

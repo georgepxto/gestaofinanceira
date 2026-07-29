@@ -11,7 +11,7 @@ export function AuthSplashSkeleton() {
 
 export function AppShellSkeleton() {
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0B]">
+    <div className="min-h-screen bg-zinc-50 dark:bg-app-dark">
       {/* Mobile header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 z-40 flex items-center px-4 gap-3">
         <Skeleton className="w-6 h-6 rounded" />

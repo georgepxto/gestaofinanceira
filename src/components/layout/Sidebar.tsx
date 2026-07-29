@@ -127,7 +127,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         }}
         onClick={() => setIsOpen(false)}
         title={isCollapsed ? label : undefined}
-        className={`flex items-center gap-3 px-3 py-2 rounded-[10px] text-sm transition-colors duration-300 ${
+        className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors duration-300 ${
           isActive
             ? "text-zinc-900 font-semibold dark:text-zinc-50"
             : "text-zinc-500 font-medium hover:text-zinc-900 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-white/[0.04]"
@@ -191,6 +191,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
       {isOpen && (
         <div
           className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+          aria-hidden="true"
+          /* ds-ok: fundo de dispensa. Quem usa teclado fecha no Esc e no botão do menu — o fundo não entra na ordem de foco de propósito */
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -216,6 +218,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
             <img src="/favicon-light.png" alt="Hedge" className="w-7 h-7 dark:hidden flex-shrink-0 object-contain" />
             <img src="/favicon-dark.png" alt="Hedge" className="w-7 h-7 hidden dark:block flex-shrink-0 object-contain" />
             <h2
+              /* ds-ok: wordmark da sidebar — corpo casado com o favicon de 28px, não é título de tela */
               className={`font-display font-bold text-[19px] tracking-tight text-zinc-900 dark:text-zinc-50 ${
                 isCollapsed ? "md:hidden" : ""
               }`}
@@ -262,7 +265,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         </nav>
 
         {/* Rodapé */}
-        <div className="relative shrink-0 p-3 border-t border-zinc-100 dark:border-white/[0.05] bg-[#FCFCFC] dark:bg-white/[0.03] flex flex-col gap-0.5">
+        <div className="relative shrink-0 p-3 border-t border-zinc-100 dark:border-white/[0.05] bg-app-row dark:bg-white/[0.03] flex flex-col gap-0.5">
           <Indicador area="rodape" />
           {isAdmin && <NavItem path="/admin" label="Admin" />}
           {showConfiguracoes && (

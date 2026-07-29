@@ -18,7 +18,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
 
   return (
     <TutorialHelpContext.Provider value={{ helpButton, setHelpButton }}>
-      <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0B]">
+      <div className="min-h-screen bg-zinc-50 dark:bg-app-dark">
         <Sidebar onLogout={onLogout} userName={userName} userEmail={userEmail} />
 
         {/* Main Content */}
@@ -29,7 +29,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
           transition-all duration-300
         ">
           {/* Desktop Header for Notifications */}
-          <header className="hidden md:flex justify-end items-center p-4 pb-0 bg-zinc-50 dark:bg-[#0A0A0B] z-30 relative">
+          <header className="hidden md:flex justify-end items-center p-4 pb-0 bg-zinc-50 dark:bg-app-dark z-30 relative">
             <div className="flex items-center gap-2">
               {helpButton && (
                 <button

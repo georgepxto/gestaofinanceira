@@ -1,7 +1,7 @@
 import { Plus, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Pista } from "../components/ui/PageHeader";
+import { PageHeader } from "../components/ui/PageHeader";
 import { formatMonthYear } from "../utils/calculations";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
@@ -179,69 +179,64 @@ export const GastosPage = () => {
   return (
     <div className="space-y-6">
       {/* HEADER_PAGINA */}
-      <div className="flex items-end justify-between flex-wrap gap-5 mb-6" data-tour="gastos-header">
-        <div>
-          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-1">
-            A receber · <span className="capitalize">{format(mesVisualizacao, "MMMM", { locale: ptBR })}</span>
-          </p>
-          <h1 className="font-display font-bold text-[34px] leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50">
-            Empréstimos do <Pista>mês</Pista>
-          </h1>
-          <p className="text-[15px] text-zinc-500 dark:text-zinc-400 mt-1">
-            Valores a receber, organizados por devedor.
-          </p>
-        </div>
-        <div className="flex items-center gap-3 flex-wrap" data-tour="gastos-actions">
-          {/* MES_PILL */}
-          <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm" data-tour="gastos-navegacao-mes">
-            <button
-              onClick={() => navegarMes("anterior")}
-              aria-label="Mês anterior"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-            >
-              <ChevronLeft className="w-[18px] h-[18px]" />
-            </button>
-            <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
-              {formatMonthYear(mesVisualizacao)}
-            </span>
-            {!isMesCorrente && (
+      <PageHeader
+        data-tour="gastos-header"
+        eyebrow={<>A receber · <span className="capitalize">{format(mesVisualizacao, "MMMM", { locale: ptBR })}</span></>}
+        title="Empréstimos do mês"
+        description="Valores a receber, organizados por devedor."
+        action={
+          <div className="flex items-center gap-3 flex-wrap" data-tour="gastos-actions">
+            {/* MES_PILL */}
+            <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm" data-tour="gastos-navegacao-mes">
               <button
-                onClick={irParaHoje}
-                className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
+                onClick={() => navegarMes("anterior")}
+                aria-label="Mês anterior"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
               >
-                hoje
+                <ChevronLeft className="w-[18px] h-[18px]" />
+              </button>
+              <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
+                {formatMonthYear(mesVisualizacao)}
+              </span>
+              {!isMesCorrente && (
+                <button
+                  onClick={irParaHoje}
+                  className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
+                >
+                  hoje
+                </button>
+              )}
+              <button
+                onClick={() => navegarMes("proximo")}
+                aria-label="Próximo mês"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+              >
+                <ChevronRight className="w-[18px] h-[18px]" />
+              </button>
+            </div>
+            {features.exportar_pdf && (
+              <button
+                onClick={handleExportPDF}
+                disabled={parcelasAtivas.length === 0}
+                data-tour="gastos-btn-pdf"
+                className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                title="Exportar PDF"
+              >
+                <FileText className="w-4 h-4" />
+                PDF
               </button>
             )}
             <button
-              onClick={() => navegarMes("proximo")}
-              aria-label="Próximo mês"
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+              onClick={() => setShowForm(true)}
+              data-tour="gastos-btn-novo"
+              className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
             >
-              <ChevronRight className="w-[18px] h-[18px]" />
+              <Plus className="w-[18px] h-[18px]" />
+              Novo empréstimo
             </button>
           </div>
-          {features.exportar_pdf && (
-            <button
-              onClick={handleExportPDF}
-              disabled={parcelasAtivas.length === 0}
-              data-tour="gastos-btn-pdf"
-              className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-              title="Exportar PDF"
-            >
-              <FileText className="w-4 h-4" />
-              PDF
-            </button>
-          )}
-          <button
-            onClick={() => setShowForm(true)}
-            data-tour="gastos-btn-novo"
-            className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-[0_4px_12px_-3px_rgba(5,150,105,0.5)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
-          >
-            <Plus className="w-[18px] h-[18px]" />
-            Novo empréstimo
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Content */}
       <TabGastos

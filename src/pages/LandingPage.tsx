@@ -5,16 +5,18 @@ import {
   Wallet, Users, CreditCard, Target, Building2,
   ArrowRight, FileText, TrendingUp, Lock, ShieldCheck, EyeOff,
   Menu, X,
+  UtensilsCrossed, Music, Dumbbell, Home,
 } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import { formatCurrency } from "../utils/calculations";
 import { CursorDot } from "../components/CursorDot";
 
 gsap.registerPlugin(ScrollTrigger);
 
 /* ═══════════════════════════════════════════════════════════════════════
-   🔀  TOGGLE — mude esta linha para trocar o layout da seção Features
+   TOGGLE — mude esta linha para trocar o layout da seção Features
        "list"       → lista interativa com preview lateral  (editorial)
        "horizontal" → scroll horizontal GSAP pinned         (imersivo)
    ═══════════════════════════════════════════════════════════════════════ */
@@ -31,9 +33,6 @@ const gastosChartData = [
   { mes: "Jun", valor: 2103.75 },
 ];
 
-const brl = (v: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
-
 const maxGastosChart = Math.max(...gastosChartData.map(d => d.valor));
 
 const GastosMiniChart = () => (
@@ -41,13 +40,13 @@ const GastosMiniChart = () => (
     {gastosChartData.map(d => (
       <div key={d.mes} className="group flex-1 flex flex-col items-center justify-end gap-0 relative">
         <div
-          className="w-full rounded-t-[3px] bg-blue-500 transition-opacity duration-100 group-hover:opacity-80"
+          className="w-full rounded-t-[3px] bg-emerald-500 transition-opacity duration-100 group-hover:opacity-80"
           style={{ height: `${(d.valor / maxGastosChart) * 100}%`, maxWidth: 20 }}
         />
         <span className="absolute bottom-0 text-[7px] leading-[14px] text-zinc-400">{d.mes}</span>
         <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block bg-white border border-zinc-200 rounded-xl px-3 py-2 shadow-lg pointer-events-none whitespace-nowrap z-50">
           <p className="text-[11px] font-bold text-zinc-900 mb-0.5">{d.mes}</p>
-          <p className="text-[10px] text-zinc-500">Meus Gastos: <span className="font-semibold text-zinc-800">{brl(d.valor)}</span></p>
+          <p className="text-[10px] text-zinc-500">Meus Gastos: <span className="font-semibold text-zinc-800">{formatCurrency(d.valor)}</span></p>
         </div>
       </div>
     ))}
@@ -95,10 +94,10 @@ function ScreenHeader({
 
 function ScreenGastosPessoais() {
   const items = [
-    { emoji: "🍕", name: "iFood",    cat: "Alimentação", val: "R$ 45,90",  paid: true  },
-    { emoji: "🎵", name: "Spotify",  cat: "Assinaturas", val: "R$ 21,90",  paid: true  },
-    { emoji: "💪", name: "Academia", cat: "Saúde",       val: "R$ 99,00",  paid: false },
-    { emoji: "🏠", name: "Aluguel",  cat: "2 de 12",     val: "R$ 1.200",  paid: true  },
+    { Icon: UtensilsCrossed, name: "iFood",    cat: "Alimentação", val: "R$ 45,90",  paid: true  },
+    { Icon: Music,           name: "Spotify",  cat: "Assinaturas", val: "R$ 21,90",  paid: true  },
+    { Icon: Dumbbell,        name: "Academia", cat: "Saúde",       val: "R$ 99,00",  paid: false },
+    { Icon: Home,            name: "Aluguel",  cat: "2 de 12",     val: "R$ 1.200",  paid: true  },
   ];
   return (
     <ScreenCard>
@@ -106,7 +105,9 @@ function ScreenGastosPessoais() {
       <div className="divide-y divide-zinc-50">
         {items.map(t => (
           <div key={t.name} className="flex items-center px-4 py-2.5 gap-3">
-            <span className="text-base">{t.emoji}</span>
+            <div className="w-7 h-7 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+              <t.Icon className="w-[14px] h-[14px] text-emerald-600" />
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-medium text-zinc-800">{t.name}</p>
               <p className="text-[9px] text-zinc-400">{t.cat}</p>
@@ -132,7 +133,7 @@ function ScreenCompartilhados() {
   ];
   return (
     <ScreenCard>
-      <ScreenHeader title="Churrasco de março 🍖" sub="Total: R$ 135,00 · 3 pessoas" />
+      <ScreenHeader title="Churrasco de março" sub="Total: R$ 135,00 · 3 pessoas" />
       <div className="divide-y divide-zinc-50">
         {people.map(p => (
           <div key={p.name} className="flex items-center px-4 py-3 gap-3">
@@ -165,7 +166,7 @@ function ScreenCartoes() {
     <ScreenCard>
       <ScreenHeader title="Cartões de Crédito" sub="1 cartão ativo" />
       <div className="p-4">
-        <div className="rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-700 p-4 text-white mb-4">
+        <div className="rounded-xl bg-zinc-800 p-4 text-white mb-4">
           <p className="text-[9px] text-zinc-400 mb-1 font-medium tracking-wider">NUBANK · •••• 4521</p>
           <p className="text-lg font-bold font-display">R$ 1.360,00</p>
           <p className="text-[9px] text-zinc-400 mt-0.5">de R$ 2.000,00 usados · 68%</p>
@@ -196,7 +197,7 @@ function ScreenCartoes() {
 function ScreenMetas() {
   const goals = [
     { cat: "Alimentação", used: 380, total: 500, pct: 76, ok: true  },
-    { cat: "Delivery",    used: 145, total: 150, pct: 97, ok: false },
+    { cat: "Assinaturas", used: 145, total: 150, pct: 97, ok: false },
     { cat: "Transporte",  used: 95,  total: 200, pct: 47, ok: true  },
     { cat: "Lazer",       used: 230, total: 300, pct: 77, ok: true  },
   ];
@@ -229,9 +230,9 @@ function ScreenMetas() {
 
 function ScreenContas() {
   const accounts = [
-    { bank: "Nubank",   initial: "Nu", balance: "R$ 1.240,00", color: "bg-purple-600" },
-    { bank: "Bradesco", initial: "Br", balance: "R$ 3.890,00", color: "bg-red-600"    },
-    { bank: "Inter",    initial: "In", balance: "R$ 560,00",   color: "bg-orange-500" },
+    { bank: "Nubank",   initial: "Nu", balance: "R$ 1.240,00", color: "bg-zinc-800" },
+    { bank: "Bradesco", initial: "Br", balance: "R$ 3.890,00", color: "bg-zinc-800" },
+    { bank: "Inter",    initial: "In", balance: "R$ 560,00",   color: "bg-zinc-800" },
   ];
   return (
     <ScreenCard>
@@ -266,7 +267,7 @@ function ScreenRelatorios() {
     { m: "Fev", total: 48, c: [32, 30, 20, 18] },
     { m: "Mar", total: 68, c: [34, 28, 18, 20] },
   ];
-  const BAR_COLORS = ["bg-emerald-500", "bg-blue-400", "bg-amber-400", "bg-zinc-300"];
+  const BAR_COLORS = ["bg-emerald-900", "bg-emerald-700", "bg-emerald-600", "bg-emerald-500"];
   const globalMax = Math.max(...months.flatMap(mo => mo.c.map(pct => mo.total * pct / 100)));
   return (
     <ScreenCard>
@@ -294,10 +295,10 @@ function ScreenRelatorios() {
       </div>
       <div className="px-4 py-3 grid grid-cols-2 gap-1.5 border-t border-zinc-50">
         {[
-          { name: "Alimentação", pct: 34, color: "bg-emerald-500" },
-          { name: "Moradia",     pct: 28, color: "bg-blue-400"    },
-          { name: "Transporte",  pct: 18, color: "bg-amber-400"   },
-          { name: "Outros",      pct: 20, color: "bg-zinc-300"    },
+          { name: "Alimentação", pct: 34, color: BAR_COLORS[0] },
+          { name: "Moradia",     pct: 28, color: BAR_COLORS[1] },
+          { name: "Transporte",  pct: 18, color: BAR_COLORS[2] },
+          { name: "Outros",      pct: 20, color: BAR_COLORS[3] },
         ].map(c => (
           <div key={c.name} className="flex items-center gap-1.5">
             <div className={`w-2 h-2 rounded-full ${c.color} shrink-0`} />
@@ -573,7 +574,7 @@ function FeaturesListVariant({ onSignup }: { onSignup: () => void }) {
               </div>
 
               <div className="mt-7 pt-7 border-t border-zinc-100">
-                <p className="text-xs font-semibold tracking-[0.12em] text-emerald-600 mb-2 uppercase">
+                <p className="text-xs font-semibold tracking-[0.2em] text-emerald-600 mb-2 uppercase">
                   {f.shortDesc}
                 </p>
                 <p className="text-zinc-600 leading-relaxed text-sm max-w-md">{f.longDesc}</p>
@@ -736,7 +737,7 @@ function FeaturesHorizontalVariant() {
       {/* Mobile fallback */}
       <section id="features" data-cursor="#0d9488" className="lg:hidden py-20 px-6 bg-white">
         <Reveal>
-          <h2 className="font-display text-4xl font-bold mb-12 text-zinc-900 text-balance">
+          <h2 className="font-display text-[40px] leading-[1.05] tracking-tight font-bold mb-12 text-zinc-900 text-balance">
             Tudo para organizar suas finanças.
           </h2>
         </Reveal>
@@ -850,6 +851,7 @@ const AnimatedCounter = ({ target, active }: { target: number; active: boolean }
     rafId = requestAnimationFrame(run);
     return () => cancelAnimationFrame(rafId);
   }, [target, active]);
+  // ds-ok: contador inteiro da animação de números, não é dinheiro — só quer separador de milhar
   return <>{count.toLocaleString("pt-BR")}</>;
 };
 
@@ -1276,7 +1278,7 @@ export const LandingPage = () => {
         <div className="flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-10 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <Reveal fromLoad>
-              <p className="text-[11px] font-semibold tracking-[0.22em] text-zinc-500 mb-10 uppercase">
+              <p className="text-[11px] font-semibold tracking-[0.2em] text-zinc-500 mb-10 uppercase">
                 Gratuito &middot; Seguro &middot; Sem anúncios
               </p>
             </Reveal>
@@ -1321,7 +1323,7 @@ export const LandingPage = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/login?mode=signup")}
-                  className="group px-8 py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white font-semibold rounded-xl transition-all flex items-center gap-2.5 text-base shadow-lg shadow-emerald-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                  className="group px-8 py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white font-semibold rounded-xl transition-all flex items-center gap-2.5 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                 >
                   Começar gratuitamente
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -1338,7 +1340,7 @@ export const LandingPage = () => {
         <div data-cursor="#ffffff" className="flex-shrink-0 py-3.5 bg-emerald-600 overflow-hidden" aria-hidden="true">
           <div className="flex whitespace-nowrap animate-marquee">
             {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
-              <span key={i} className="inline-flex items-center gap-4 px-6 text-xs font-semibold text-white/90 uppercase tracking-[0.15em]">
+              <span key={i} className="inline-flex items-center gap-4 px-6 text-xs font-semibold text-white/90 uppercase tracking-[0.2em]">
                 {item}<span className="text-white/30">·</span>
               </span>
             ))}
@@ -1399,13 +1401,13 @@ export const LandingPage = () => {
           <Reveal delay={120} className="lg:hidden">
             <div className="relative rounded-2xl border border-zinc-200 shadow-xl shadow-zinc-200/60 overflow-hidden bg-zinc-50">
               <div className="px-5 py-3.5 border-b border-zinc-200 bg-white">
-                <p className="text-sm font-bold text-zinc-900 font-display">Olá, usuário 👋</p>
+                <p className="text-sm font-bold text-zinc-900 font-display">Olá, Marina</p>
                 <p className="text-[10px] text-zinc-500 mt-0.5">Visão geral das suas finanças</p>
               </div>
               <div className="p-4 grid grid-cols-2 gap-2">
                 {[
                   { label: "Saldo Total",    val: "R$4.720,15",  color: "text-emerald-600", Icon: Wallet     },
-                  { label: "A Receber",      val: "R$340,00",    color: "text-blue-500",    Icon: Users      },
+                  { label: "A Receber",      val: "R$340,00",    color: "text-emerald-600", Icon: Users      },
                   { label: "Receitas Fixas", val: "R$5.200,00",  color: "text-emerald-600", Icon: TrendingUp },
                   { label: "Gastos Fixos",   val: "R$850,00",    color: "text-amber-500",   Icon: CreditCard },
                 ].map(c => (
@@ -1427,7 +1429,7 @@ export const LandingPage = () => {
           <Reveal delay={120} className="hidden lg:block">
             <div ref={dashTiltRef} className="relative" style={{ willChange: "transform" } as React.CSSProperties}>
               <div className="absolute -inset-6 bg-emerald-400/15 rounded-3xl blur-3xl" style={{ willChange: "transform" }} />
-              <div className="relative rounded-2xl border border-zinc-200 shadow-2xl shadow-zinc-400/30 overflow-hidden bg-zinc-50 select-none cursor-default">
+              <div className="relative rounded-2xl border border-zinc-200 shadow-xl shadow-zinc-900/10 overflow-hidden bg-zinc-50 select-none cursor-default">
                 {/* Dashboard scrollável — sem sidebar, tema light, Lenis container */}
                 <div
                   ref={dashScrollRef}
@@ -1438,7 +1440,7 @@ export const LandingPage = () => {
                   <div>
                     {/* Header */}
                     <div className="px-5 py-3.5 border-b border-zinc-200">
-                      <p className="text-sm font-bold text-zinc-900 font-display">Olá, usuário 👋</p>
+                      <p className="text-sm font-bold text-zinc-900 font-display">Olá, Marina</p>
                       <p className="text-[10px] text-zinc-500 mt-0.5">Visão geral das suas finanças</p>
                     </div>
 
@@ -1447,7 +1449,7 @@ export const LandingPage = () => {
                       <div className="grid grid-cols-4 gap-2">
                         {[
                           { label: "Saldo Total",    val: "R$4.720,15",  color: "text-emerald-600", Icon: Wallet     },
-                          { label: "A Receber",      val: "R$340,00",    color: "text-blue-500",    Icon: Users      },
+                          { label: "A Receber",      val: "R$340,00",    color: "text-emerald-600", Icon: Users      },
                           { label: "Receitas Fixas", val: "R$5.200,00",  color: "text-emerald-600", Icon: TrendingUp },
                           { label: "Gastos Fixos",   val: "R$850,00",    color: "text-amber-500",   Icon: CreditCard },
                         ].map(c => (
@@ -1568,8 +1570,8 @@ export const LandingPage = () => {
                       <div className="bg-white border border-zinc-200 rounded-xl p-3 shadow-sm">
                         <p className="text-[10px] font-semibold text-zinc-700 mb-2">Gastos Fixos vs Variáveis</p>
                         <div className="flex rounded-full overflow-hidden h-2.5 mb-3">
-                          <div className="bg-blue-500" style={{ width: "32%" }} />
-                          <div className="flex-1 bg-blue-200" />
+                          <div className="bg-emerald-500" style={{ width: "32%" }} />
+                          <div className="flex-1 bg-emerald-100" />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div className="bg-zinc-50 border border-zinc-100 rounded-lg p-2">
@@ -1615,7 +1617,7 @@ export const LandingPage = () => {
             <Reveal>
               <div className="lg:sticky" style={{ top: "30vh" }}>
                 <h2 className="leading-[1.05] mb-6 text-balance">
-                  <span className="block font-mono text-xs font-bold uppercase tracking-[0.25em] text-emerald-400 mb-3">
+                  <span className="block font-mono text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-3">
                     [ leva minutos ]
                   </span>
                   <span className="font-display font-bold text-white" style={{ fontSize: "clamp(2.75rem, 6vw, 4.5rem)" }}>
@@ -1623,7 +1625,7 @@ export const LandingPage = () => {
                   </span>
                   <br />
                   <span
-                    className="font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-emerald-500"
+                    className="font-display font-bold text-emerald-400"
                     style={{ fontSize: "clamp(2.75rem, 6vw, 4.5rem)" }}
                   >
                     três passos.
@@ -1835,7 +1837,7 @@ export const LandingPage = () => {
           </h2>
 
           <div className="mb-1">
-            <span className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-emerald-400">
+            <span className="text-[52px] leading-[1.05] tracking-[-0.015em] font-num font-bold text-emerald-400">
               R$ <AnimatedCounter target={1247390} active={ctaVisible} />
             </span>
           </div>
@@ -1845,7 +1847,7 @@ export const LandingPage = () => {
             <button
               type="button"
               onClick={() => navigate("/login?mode=signup")}
-              className="group px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.97] text-white font-bold text-base rounded-xl transition-all shadow-2xl shadow-emerald-900/60 flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+              className="group px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.97] text-white font-bold text-base rounded-xl transition-all flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
             >
               Começar grátis
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

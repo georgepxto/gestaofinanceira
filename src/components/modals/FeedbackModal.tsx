@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { CheckCircle2, X, Info } from "lucide-react";
 import type { ModalFeedback } from "../../types/extended";
 import { useFocusTrap } from "../../hooks";
+import { Card } from "../ui/Card";
 
 interface FeedbackModalProps {
   modal: ModalFeedback;
@@ -35,15 +36,18 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
         className={`fixed inset-0 bg-black/45 backdrop-blur-sm transition-opacity duration-200 ${
           isVisible ? "opacity-100" : "opacity-0"
         }`}
+        aria-hidden="true"
+        /* ds-ok: fundo de dispensa. O foco fica preso no diálogo e o Esc fecha — o fundo não entra na ordem de foco de propósito */
         onClick={onClose}
       />
 
-      <div
+      <Card
+        padding="nenhum"
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="feedback-modal-title"
-        className={`relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[22px] shadow-xl overflow-hidden border border-zinc-100 dark:border-zinc-800 transition-all duration-200 ${
+        className={`relative w-full max-w-sm overflow-hidden transition-all duration-200 ${
           isVisible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-4 sm:translate-y-8"
         }`}
       >
@@ -79,17 +83,17 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
 
             <button
               onClick={onClose}
-              className={`w-full py-2.5 px-4 rounded-xl font-medium transition-all duration-200 focus:ring-4 focus:outline-none ${
+              className={`w-full py-2.5 px-4 rounded-xl font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
                 modal.tipo === "sucesso"
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-600/20"
-                  : "bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-600/20"
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white focus-visible:ring-emerald-500"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white focus-visible:ring-emerald-500"
               }`}
             >
               Entendido
             </button>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

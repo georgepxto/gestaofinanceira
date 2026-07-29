@@ -7,8 +7,9 @@ import {
   meusGastosFunctions,
 } from "../lib/supabase";
 import type { MeuGasto, MeuGastoForm, CartaoCredito } from "../types";
-import { formatCurrency, parseCurrency } from "../utils/calculations";
+import { formatCurrencyValue, parseCurrency } from "../utils/calculations";
 import { PARCELAS_MAX } from "../utils/constants";
+import { CATEGORIA_PADRAO, normalizarCategoria } from "../utils/categories";
 
 // (helper gerarId removed - not needed)
 
@@ -58,7 +59,9 @@ async function criarLancamentoEmprestimoDoMes(
     num_parcelas: numParcelas,
     data_inicio: dataInicio,
     tipo: "credito",
-    categoria: categoriaGasto || "Empréstimo",
+    // O empréstimo em si já é a entidade (Dívidas / Saldos Devedores); sem
+    // categoria escolhida, o gasto espelhado cai no padrão.
+    categoria: categoriaGasto || CATEGORIA_PADRAO,
     recorrente: false,
     cartao_id: undefined,
     conta_id: undefined,
@@ -398,15 +401,15 @@ export function useMeusGastos({
 
     setFormMeuGasto({
       descricao: gasto.descricao.replace(/\s*\(\d+\/\d+\)$/, ""),
-      valor: formatCurrency(valorTotal).replace("R$\u00a0", ""),
+      valor: formatCurrencyValue(valorTotal),
       tipo: gasto.tipo,
       categoria: gasto.categoria,
-      categoria_gasto: gasto.categoria_gasto || "",
+      categoria_gasto: normalizarCategoria(gasto.categoria_gasto),
       data: gasto.data,
       dividido_com: gasto.dividido_com || "",
       dividido_com_pessoas: gasto.dividido_com_pessoas || [],
       minha_parte: minhaParteTotal
-        ? formatCurrency(minhaParteTotal).replace("R$\u00a0", "")
+        ? formatCurrencyValue(minhaParteTotal)
         : "",
       dia_vencimento: gasto.dia_vencimento?.toString() || "",
       num_parcelas: numParcelas.toString(),

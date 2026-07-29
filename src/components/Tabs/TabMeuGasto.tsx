@@ -17,6 +17,8 @@ import { ptBR } from "date-fns/locale";
 import { SuspensaoModal } from "../modals/SuspensaoModal";
 import type { MeuGasto, CartaoCredito } from "../../types";
 import { formatCurrency, getMesFaturaCartao } from "../../utils/calculations";
+import { Rotulo } from "../ui/Rotulo";
+import { Card } from "../ui/Card";
 
 function getPessoasDivididas(gasto: MeuGasto): string[] {
   if (Array.isArray(gasto.dividido_com_pessoas) && gasto.dividido_com_pessoas.length > 0) {
@@ -48,7 +50,7 @@ function formatarDivididoCom(gasto: MeuGasto): string {
 
 /** CHIP do filtro — ativo esmeralda cheio, inativo neutro. */
 const chipClasse = (ativo: boolean) =>
-  `px-3.5 py-2 rounded-[10px] text-[13px] transition-colors ${
+  `px-3.5 py-2 rounded-xl text-[13px] transition-colors ${
     ativo
       ? "bg-emerald-600 text-white font-semibold"
       : "bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
@@ -67,8 +69,8 @@ const ghostClasse = (tom: "neutro" | "excluir" | "pausar" | "reativar") => {
   return `w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 transition-colors ${hover}`;
 };
 
-const BADGE_NEUTRA = "font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400";
-const BADGE_AMBAR = "font-mono text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400";
+const BADGE_NEUTRA = "font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400";
+const BADGE_AMBAR = "font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400";
 
 interface TabMeuGastoProps {
   mesVisualizacao: Date;
@@ -148,52 +150,53 @@ export function TabMeuGasto({
     <>
       {/* FAIXA_RESUMO — auto-fit com piso de 200px; sem divisória filha
           (quebraria o auto-fit). Valor em R$ nunca trunca. */}
-      <div
-        className="grid gap-x-7 gap-y-5 rounded-2xl border border-zinc-200 bg-white p-6 md:p-7 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]"
+      <Card
+        padding="resumo"
+        className="grid gap-x-7 gap-y-5 [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]"
         data-tour="eu-resumo-cards"
       >
         <div className="min-w-0" data-tour="eu-card-credito">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-1">
+          <Rotulo className="mb-1">
             Crédito
-          </p>
-          <p className="font-mono tabular-nums text-[22px] font-semibold text-zinc-900 dark:text-zinc-50">
+          </Rotulo>
+          <p className="font-mono valor text-[22px] font-semibold text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalMeusGastosCredito)}
           </p>
         </div>
         <div className="min-w-0" data-tour="eu-card-debito">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-1">
+          <Rotulo className="mb-1">
             Débito
-          </p>
-          <p className="font-mono tabular-nums text-[22px] font-semibold text-zinc-900 dark:text-zinc-50">
+          </Rotulo>
+          <p className="font-mono valor text-[22px] font-semibold text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalMeusGastosDebito)}
           </p>
         </div>
         <div className="min-w-0" data-tour="eu-card-pagos">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400 mb-1">
+          <Rotulo tom="acento" className="mb-1">
             Pago
-          </p>
-          <p className="font-mono tabular-nums text-[22px] font-semibold text-emerald-700 dark:text-emerald-400">
+          </Rotulo>
+          <p className="font-mono valor text-[22px] font-semibold text-emerald-700 dark:text-emerald-400">
             {formatCurrency(totalMeusGastosPagos)}
           </p>
         </div>
         <div className="min-w-0" data-tour="eu-card-fixos">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-1">
+          <Rotulo className="mb-1">
             Fixos
-          </p>
-          <p className="font-mono tabular-nums text-[22px] font-semibold text-zinc-900 dark:text-zinc-50">
+          </Rotulo>
+          <p className="font-mono valor text-[22px] font-semibold text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalGastosFixos)}
           </p>
         </div>
-      </div>
+      </Card>
 
       {/* Grid principal: filtros + fixos à esquerda, lançamentos à direita */}
       <div className="grid grid-cols-1 lg:[grid-template-columns:minmax(0,0.92fr)_minmax(0,1.08fr)] gap-5 items-start">
         <div className="space-y-5 min-w-0">
           {/* Card Filtros */}
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5" data-tour="eu-filtro-categoria">
-            <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-2.5">
+          <Card data-tour="eu-filtro-categoria">
+            <Rotulo className="mb-2.5">
               Filtrar por tipo
-            </p>
+            </Rotulo>
             <div className="flex gap-2 flex-wrap">
               <button onClick={() => setFiltroCategoriaMeuGasto("")} className={chipClasse(filtroCategoriaMeuGasto === "")}>
                 Todos
@@ -213,9 +216,9 @@ export function TabMeuGasto({
             </div>
 
             <div className="mt-4" data-tour="eu-filtro-dia">
-              <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-2.5">
+              <Rotulo className="mb-2.5">
                 Filtrar por dia
-              </p>
+              </Rotulo>
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <input
@@ -224,7 +227,7 @@ export function TabMeuGasto({
                     onChange={(e) => setFiltroDiaMeuGasto(e.target.value)}
                     max={format(mesVisualizacao, "yyyy-MM") + "-31"}
                     min={format(mesVisualizacao, "yyyy-MM") + "-01"}
-                    className="w-full px-3 py-2.5 pl-10 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-[10px] text-sm font-mono tabular-nums text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] dark:[color-scheme:dark]"
+                    className="w-full h-11 px-3.5 pl-10 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-mono tabular-nums text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] dark:[color-scheme:dark]"
                   />
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600 dark:text-emerald-500 pointer-events-none" />
                 </div>
@@ -235,14 +238,14 @@ export function TabMeuGasto({
                 )}
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Card Gastos fixos */}
           {gastosFixos.length > 0 && (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5" data-tour="eu-gastos-fixos">
+            <Card data-tour="eu-gastos-fixos">
               <div className="flex items-center justify-between gap-3 mb-4">
                 <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Gastos fixos</h2>
-                <span className="font-mono tabular-nums text-[13px] text-zinc-500 dark:text-zinc-400">
+                <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">
                   {gastosFixosAtivos} {gastosFixosAtivos === 1 ? "ativo" : "ativos"}
                 </span>
               </div>
@@ -258,9 +261,9 @@ export function TabMeuGasto({
                       // empilhar `opacity` por cima derrubaria o contraste.
                       <div
                         key={gasto.id}
-                        className="bg-[#FCFCFC] dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] rounded-[14px] p-3.5 flex items-center gap-3"
+                        className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] rounded-xl p-3.5 flex items-center gap-3"
                       >
-                        <div className="w-9 h-9 rounded-[10px] bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
+                        <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
                           <Repeat className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         </div>
 
@@ -288,7 +291,7 @@ export function TabMeuGasto({
                           </div>
                         </div>
 
-                        <p className="font-mono tabular-nums text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
+                        <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
                           {formatCurrency(gasto.valor)}
                         </p>
                         <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -325,15 +328,15 @@ export function TabMeuGasto({
                     );
                   })}
               </div>
-            </div>
+            </Card>
           )}
         </div>
 
         {/* Card Lançamentos do mês */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 min-w-0" data-tour="eu-lista-gastos">
+        <Card className="min-w-0" data-tour="eu-lista-gastos">
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Lançamentos do mês</h2>
-            <span className="font-mono tabular-nums text-[13px] text-zinc-500 dark:text-zinc-400">
+            <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">
               {gastosFiltrados.length} {gastosFiltrados.length === 1 ? "item" : "itens"}
             </span>
           </div>
@@ -398,10 +401,10 @@ export function TabMeuGasto({
                             key={gasto.id}
                             // Atenuação vem do texto (zinc-500 + line-through), não
                             // de `opacity`/`grayscale` — uma atenuação só.
-                            className={`rounded-[14px] border p-3.5 transition-colors ${
+                            className={`rounded-xl border p-3.5 transition-colors ${
                               gasto.categoria === "divida"
                                 ? "bg-amber-50/60 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50"
-                                : "bg-[#FCFCFC] dark:bg-white/[0.03] border-zinc-100 dark:border-white/[0.06]"
+                                : "bg-app-row dark:bg-white/[0.03] border-zinc-100 dark:border-white/[0.06]"
                             }`}
                           >
                             <div className="flex items-center gap-3">
@@ -454,7 +457,7 @@ export function TabMeuGasto({
                               </div>
 
                               <div className="text-right flex-shrink-0">
-                                <p className={`font-mono tabular-nums text-sm font-semibold whitespace-nowrap ${
+                                <p className={`font-mono valor text-sm font-semibold whitespace-nowrap ${
                                   gasto.pago
                                     ? "text-zinc-500 dark:text-zinc-400 line-through"
                                     : "text-zinc-900 dark:text-zinc-100"
@@ -466,7 +469,7 @@ export function TabMeuGasto({
                                   )}
                                 </p>
                                 {!!gasto.dividido_com && gasto.minha_parte && (
-                                  <p className="font-mono tabular-nums text-[11px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                                  <p className="font-mono valor text-[11px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                                     total {formatCurrency(gasto.valor)}
                                   </p>
                                 )}
@@ -507,7 +510,7 @@ export function TabMeuGasto({
               })()}
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
       {modalSuspensao && (

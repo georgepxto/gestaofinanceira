@@ -12,10 +12,12 @@ import { useAppContext } from "../context";
 import { useTheme } from "../hooks/useTheme";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
-import { Pista } from "../components/ui/PageHeader";
+import { Valor } from "../components/ui/Valor";
+import { PageHeader } from "../components/ui/PageHeader";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
 import { formatCurrency, isGastoAtivoNoMes } from "../utils/calculations";
+import { categoriaDeGasto } from "../utils/categories";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
@@ -34,6 +36,8 @@ import {
   LabelList,
 } from "recharts";
 import type { ContaBancaria, SaldoDevedor, MeuGasto, Receita, Gasto } from "../types";
+import { Rotulo } from "../components/ui/Rotulo";
+import { Card } from "../components/ui/Card";
 
 interface DashboardData {
   saldoTotal: number;
@@ -331,7 +335,7 @@ export const DashboardPage = () => {
 
       const categoriaMap = new Map<string, number>();
       gastosDoMes.forEach(g => {
-        const cat = g.categoria_gasto || g.categoria || "Outros";
+        const cat = categoriaDeGasto(g);
         categoriaMap.set(cat, (categoriaMap.get(cat) || 0) + g.valor);
       });
       
@@ -360,7 +364,7 @@ export const DashboardPage = () => {
       // Calcular empréstimos por categoria (do mês selecionado)
       const categoriaEmprestimosMap = new Map<string, number>();
       gastosCompartilhadosDoMes.forEach(g => {
-        const cat = g.categoria || "Outros";
+        const cat = categoriaDeGasto(g);
         const valorParcela = g.valor_total / g.num_parcelas;
         categoriaEmprestimosMap.set(cat, (categoriaEmprestimosMap.get(cat) || 0) + valorParcela);
       });
@@ -457,7 +461,7 @@ export const DashboardPage = () => {
         .map(g => ({
           descricao: g.descricao || 'Sem descrição',
           valor: g.valor,
-          categoria: g.categoria_gasto || g.categoria || 'Outros',
+          categoria: categoriaDeGasto(g),
         }))
         .sort((a, b) => b.valor - a.valor)
         .slice(0, 5);
@@ -514,7 +518,7 @@ export const DashboardPage = () => {
       
       const metasGasto = (metasRaw || []).map((meta: MetaGasto) => {
         const gastoAtual = gastosDoMes
-          .filter(g => (g.categoria_gasto || g.categoria || "").toLowerCase() === meta.categoria.toLowerCase())
+          .filter(g => categoriaDeGasto(g).toLowerCase() === meta.categoria.toLowerCase())
           .reduce((acc, g) => acc + g.valor, 0);
         return { ...meta, gastoAtual };
       });
@@ -583,40 +587,34 @@ export const DashboardPage = () => {
   return (
     <div className={`${PAGE_CONTAINER_RELATIVE_CLASS} pb-20`}>
       {/* HEADER_PAGINA */}
-      <div className="flex items-end justify-between flex-wrap gap-5 mb-6" data-tour="dashboard-header">
-        <div>
-          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-1">
-            Painel · <span className="capitalize">{format(mesVisualizacao, "MMMM", { locale: ptBR })}</span>
-          </p>
-          <h1 className="font-display font-bold text-[34px] leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50">
-            Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'}
-          </h1>
-          <p className="text-[15px] text-zinc-500 dark:text-zinc-400 mt-1">
-            Sua vida <Pista>financeira</Pista> inteira num só lugar.
-          </p>
-        </div>
-
-        {/* MES_PILL */}
-        <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm" data-tour="month-selector">
-          <button
-            onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))}
-            aria-label="Mês anterior"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-          >
-            <ChevronLeft className="w-[18px] h-[18px]" />
-          </button>
-          <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
-            {format(mesVisualizacao, "MMMM yyyy", { locale: ptBR })}
-          </span>
-          <button
-            onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))}
-            aria-label="Próximo mês"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-          >
-            <ChevronRight className="w-[18px] h-[18px]" />
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        data-tour="dashboard-header"
+        eyebrow={<>Painel · <span className="capitalize">{format(mesVisualizacao, "MMMM", { locale: ptBR })}</span></>}
+        title={<>Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'}</>}
+        description="Sua vida financeira inteira num só lugar."
+        action={
+          /* MES_PILL */
+          <div className="inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm" data-tour="month-selector">
+            <button
+              onClick={() => setMesVisualizacao(subMonths(mesVisualizacao, 1))}
+              aria-label="Mês anterior"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+            >
+              <ChevronLeft className="w-[18px] h-[18px]" />
+            </button>
+            <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
+              {format(mesVisualizacao, "MMMM yyyy", { locale: ptBR })}
+            </span>
+            <button
+              onClick={() => setMesVisualizacao(addMonths(mesVisualizacao, 1))}
+              aria-label="Próximo mês"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+            >
+              <ChevronRight className="w-[18px] h-[18px]" />
+            </button>
+          </div>
+        }
+      />
 
       {/* Card Herói: Saldo livre + Fluxo do mês */}
       {(() => {
@@ -626,14 +624,14 @@ export const DashboardPage = () => {
           ? ((data.totalGastosMesAtual - data.totalGastosMesAnterior) / data.totalGastosMesAnterior) * 100
           : null;
         return (
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-8 grid grid-cols-1 lg:[grid-template-columns:1.15fr_1px_0.85fr] gap-8" data-tour="card-saldo-total">
+          <Card padding="resumo" className="grid grid-cols-1 lg:[grid-template-columns:1.15fr_1px_0.85fr] gap-8" data-tour="card-saldo-total">
             {/* Esquerda: Saldo livre */}
             <div className="min-w-0" data-tour="saldo-livre">
-              <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Saldo livre · Disponível agora</p>
+              <Rotulo>Saldo livre · Disponível agora</Rotulo>
               <div className="flex items-center gap-3 flex-wrap mt-2">
-                <p className={`font-display font-extrabold tracking-tighter tabular-nums whitespace-nowrap text-[46px] sm:text-[52px] leading-none inline-block scale-x-[0.92] origin-left ${data.saldoLivre >= 0 ? 'text-zinc-900 dark:text-zinc-50' : 'text-red-600 dark:text-red-400'}`}>
+                <Valor porte="heroi" className={data.saldoLivre >= 0 ? 'text-zinc-900 dark:text-zinc-50' : 'text-red-600 dark:text-red-400'}>
                   {formatCurrency(data.saldoLivre)}
-                </p>
+                </Valor>
                 {variacaoGastos !== null && (
                   <span className="inline-flex items-center gap-1 font-mono text-[13px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 rounded-full whitespace-nowrap">
                     {variacaoGastos <= 0 ? <TrendingDown className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
@@ -647,15 +645,15 @@ export const DashboardPage = () => {
               <div className="border-t border-zinc-100 dark:border-zinc-800 mt-5 pt-5 grid gap-x-6 gap-y-4 [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]">
                 <div className="min-w-0" data-tour="card-saldo-total-mini">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Saldo total</p>
-                  <p className="font-mono tabular-nums text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-0.5">{formatCurrency(data.saldoTotal)}</p>
+                  <p className="font-mono valor text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-0.5">{formatCurrency(data.saldoTotal)}</p>
                 </div>
                 <div className="min-w-0" data-tour="card-a-receber">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">A receber</p>
-                  <p className="font-mono tabular-nums text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-0.5">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
+                  <p className="font-mono valor text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-0.5">{formatCurrency(data.totalEmprestimosMesAtual)}</p>
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Meus gastos</p>
-                  <p className="font-mono tabular-nums text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-0.5">{formatCurrency(data.totalGastosMesAtual)}</p>
+                  <p className="font-mono valor text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-0.5">{formatCurrency(data.totalGastosMesAtual)}</p>
                 </div>
               </div>
             </div>
@@ -665,12 +663,12 @@ export const DashboardPage = () => {
 
             {/* Direita: Fluxo do mês */}
             <div className="min-w-0" data-tour="fluxo-mensal">
-              <p className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500 mb-4">Fluxo do mês</p>
+              <Rotulo className="mb-4">Fluxo do mês</Rotulo>
               <div className="space-y-3">
                 <div data-tour="card-receitas-fixas">
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-zinc-500 dark:text-zinc-400">Receitas fixas</span>
-                    <span className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100">{formatCurrency(data.receitasFixasMensais)}</span>
+                    <span className="font-mono valor text-zinc-900 dark:text-zinc-100">{formatCurrency(data.receitasFixasMensais)}</span>
                   </div>
                   <div className="h-2 bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden">
                     <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(data.receitasFixasMensais / maxFluxo) * 100}%` }} />
@@ -679,7 +677,7 @@ export const DashboardPage = () => {
                 <div data-tour="card-gastos-fixos">
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-zinc-500 dark:text-zinc-400">Gastos fixos</span>
-                    <span className="font-mono tabular-nums text-zinc-900 dark:text-zinc-100">{formatCurrency(data.gastosFixosMensais)}</span>
+                    <span className="font-mono valor text-zinc-900 dark:text-zinc-100">{formatCurrency(data.gastosFixosMensais)}</span>
                   </div>
                   <div className="h-2 bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden">
                     <div className="h-full bg-zinc-300 dark:bg-white/25 rounded-full" style={{ width: `${(data.gastosFixosMensais / maxFluxo) * 100}%` }} />
@@ -688,22 +686,22 @@ export const DashboardPage = () => {
               </div>
               <div className="flex justify-between items-center mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800">
                 <span className="text-zinc-500 dark:text-zinc-400 text-sm">Sobra mensal</span>
-                <span className={`font-mono tabular-nums text-xl font-semibold ${sobraMensal >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                <span className={`font-mono valor text-xl font-semibold ${sobraMensal >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                   {sobraMensal >= 0 ? '+' : ''}{formatCurrency(sobraMensal)}
                 </span>
               </div>
             </div>
-          </div>
+          </Card>
         );
       })()}
 
       {/* Linha 2: Por mês + Últimos lançamentos */}
       <div className="grid grid-cols-1 lg:[grid-template-columns:minmax(0,1.6fr)_minmax(0,1fr)] gap-4">
         {/* Gráfico de barras - Gastos por mês */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 min-w-0 overflow-hidden" data-tour="grafico-mensal">
+        <Card className="min-w-0 overflow-hidden" data-tour="grafico-mensal">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Por mês</h2>
-            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">Últimos 6 meses</span>
+            <Rotulo as="span">Últimos 6 meses</Rotulo>
           </div>
           {data.tendenciaMensal.length > 0 ? (
             <div className="h-44">
@@ -754,10 +752,10 @@ export const DashboardPage = () => {
               description="Adicione novos gastos neste mês para visualizar a tendência."
             />
           )}
-        </div>
+        </Card>
 
         {/* Últimos lançamentos (pessoais) */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 min-w-0" data-tour="ultimos-gastos">
+        <Card className="min-w-0" data-tour="ultimos-gastos">
           <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">Últimos lançamentos</h2>
           {data.top5MeusGastos.length > 0 ? (
             <>
@@ -771,7 +769,7 @@ export const DashboardPage = () => {
                       <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{gasto.descricao}</p>
                       <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 capitalize">{gasto.categoria}</p>
                     </div>
-                    <span className="font-mono tabular-nums text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex-shrink-0">
+                    <span className="font-mono valor text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex-shrink-0">
                       −{formatCurrency(gasto.valor)}
                     </span>
                   </div>
@@ -788,13 +786,13 @@ export const DashboardPage = () => {
               description="Quando você registrar gastos, eles aparecerão aqui automaticamente."
             />
           )}
-        </div>
+        </Card>
       </div>
 
       {/* Linha 3: Onde o dinheiro foi + Metas do mês */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Onde o dinheiro foi */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 min-w-0">
+        <Card className="min-w-0">
           <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Onde o dinheiro foi</h2>
           {data.gastosPorCategoria.length > 0 ? (
             <div className="space-y-4">
@@ -806,7 +804,7 @@ export const DashboardPage = () => {
                   <div key={cat.categoria}>
                     <div className="flex items-center justify-between gap-3 mb-1.5">
                       <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 capitalize truncate">{cat.categoria}</span>
-                      <span className="font-mono tabular-nums text-[13px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                      <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                         {formatCurrency(cat.valor)} · {totalCategorias > 0 ? Math.round((cat.valor / totalCategorias) * 100) : 0}%
                       </span>
                     </div>
@@ -827,10 +825,10 @@ export const DashboardPage = () => {
               description="Registre gastos no mês para ver a distribuição por categoria."
             />
           )}
-        </div>
+        </Card>
 
         {/* Metas do mês */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 min-w-0" data-tour="metas-section">
+        <Card className="min-w-0" data-tour="metas-section">
           <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Metas do mês</h2>
           {data.metasGasto.length > 0 ? (
             <div className="space-y-4">
@@ -842,7 +840,7 @@ export const DashboardPage = () => {
                   <div key={meta.id}>
                     <div className="flex items-center justify-between gap-3 mb-1.5">
                       <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 capitalize truncate">{meta.categoria}</span>
-                      <span className="font-mono tabular-nums text-[13px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                      <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                         {formatCurrency(meta.gastoAtual)} / {formatCurrency(meta.limite)}
                       </span>
                     </div>
@@ -872,20 +870,20 @@ export const DashboardPage = () => {
               description="Crie metas por categoria em Gastos › Metas para acompanhá-las aqui."
             />
           )}
-        </div>
+        </Card>
       </div>
       {/* Linha 4: Gastos totais · 6 meses */}
       {data.tendenciaMensal.length > 0 && (
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-5 min-w-0 overflow-hidden">
+        <Card className="min-w-0 overflow-hidden">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Gastos totais · 6 meses</h2>
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400" data-tour="trend-6meses-meus">
-                <span className="w-3 h-[3px] rounded-sm bg-emerald-600" />
+                <span className="w-3 h-[3px] rounded-full bg-emerald-600" />
                 Meus gastos
               </span>
               <span className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400" data-tour="trend-6meses-compartilhados">
-                <span className="w-3 h-[3px] rounded-sm bg-zinc-300 dark:bg-zinc-600" />
+                <span className="w-3 h-[3px] rounded-full bg-zinc-300 dark:bg-zinc-600" />
                 Compartilhados
               </span>
             </div>
@@ -913,7 +911,7 @@ export const DashboardPage = () => {
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </Card>
       )}
 
       <GuidedTourOverlay
