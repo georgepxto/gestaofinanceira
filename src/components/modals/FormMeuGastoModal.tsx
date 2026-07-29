@@ -68,6 +68,9 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
       setCustomParcelasMode(parcelasSelecionadas > PARCELAS_PRESET_MAX);
       setCustomParcelasInput(formData.num_parcelas);
     }
+    // Roda só na abertura: recalcular a cada mudança de `num_parcelas` sobrescreveria
+    // o modo custom enquanto o usuário digita.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [show]);
 
   React.useEffect(() => {
@@ -93,6 +96,11 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
         minha_parte: minhaParteFormatada,
       });
     }
+    // `formData` inteiro e `onFormChange` ficam fora de propósito: o efeito chama
+    // `onFormChange` com um `formData` novo, então listá-lo criaria loop. A escrita já
+    // é protegida por `ultimaMinhaParteAutomaticaRef`, que impede sobrescrever valor
+    // digitado à mão.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.categoria, formData.dividido_com_pessoas, formData.valor]);
 
   const handleCustomParcelasChange = (

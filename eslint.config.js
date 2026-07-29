@@ -43,10 +43,11 @@ export default [
     rules: {
       // Sempre bug: hook em condicional, em loop ou fora de componente.
       "react-hooks/rules-of-hooks": "error",
-      // Tem falso positivo legítimo (efeito que roda só na montagem). Informa
-      // sem travar o build — como `error` a pressa de destravar produz o pior
-      // conserto: array cheio sem entender, e loop de render.
-      "react-hooks/exhaustive-deps": "warn",
+      // Em zero desde a etapa 32: os casos com conserto limpo foram corrigidos,
+      // os deliberados levam `eslint-disable-next-line` com o motivo escrito.
+      // Como `error` porque aviso permanente é aviso ignorado — com o log limpo,
+      // o próximo a aparecer significa alguma coisa.
+      "react-hooks/exhaustive-deps": "error",
     },
   },
 ];

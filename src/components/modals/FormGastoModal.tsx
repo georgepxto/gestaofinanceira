@@ -56,6 +56,9 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
       setCustomParcelasMode(formData.num_parcelas > PARCELAS_PRESET_MAX);
       setCustomParcelasInput(String(formData.num_parcelas));
     }
+    // Roda só na abertura: recalcular a cada mudança de `num_parcelas` sobrescreveria
+    // o modo custom enquanto o usuário digita.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [show]);
 
   const handleInputChange = (
