@@ -257,16 +257,16 @@ export const PessoasPage = () => {
         </div>
         <div className="min-w-0">
           <Rotulo className="capitalize">Empréstimos de {mesNome}</Rotulo>
-          <p className="font-mono valor text-[26px] font-semibold text-zinc-900 dark:text-zinc-50 mt-1.5 whitespace-nowrap">
+          <Valor porte="destaque" className="block mt-1 text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalEmprestimosMes)}
-          </p>
+          </Valor>
           <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">fluxo do mês · {pessoasComEmprestimos} {pessoasComEmprestimos === 1 ? "pessoa" : "pessoas"}</p>
         </div>
         <div className="min-w-0">
           <Rotulo>Recebido no mês</Rotulo>
-          <p className="font-mono valor text-[26px] font-semibold text-emerald-700 dark:text-emerald-400 mt-1.5 whitespace-nowrap">
+          <Valor porte="destaque" className="block mt-1 text-emerald-700 dark:text-emerald-400">
             {formatCurrency(totalRecebidoMes)}
-          </p>
+          </Valor>
           <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">pagamentos registrados no período</p>
         </div>
       </Card>

@@ -21,6 +21,7 @@ import { PAGE_CONTAINER_CLASS } from "../utils/layout";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import { Rotulo } from "../components/ui/Rotulo";
 import { Card } from "../components/ui/Card";
+import { Valor } from "../components/ui/Valor";
 
 interface Contagens {
   lancamentos: number;
@@ -435,19 +436,19 @@ export const ConfiguracoesPage = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 mb-5">
               <div className="min-w-0">
                 <Rotulo>Lançamentos</Rotulo>
-                <p className="font-mono valor text-[19px] font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">{contagens.lancamentos}</p>
+                <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-100">{contagens.lancamentos}</Valor>
               </div>
               <div className="min-w-0">
                 <Rotulo>Cartões</Rotulo>
-                <p className="font-mono valor text-[19px] font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">{contagens.cartoes}</p>
+                <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-100">{contagens.cartoes}</Valor>
               </div>
               <div className="min-w-0">
                 <Rotulo>Devedores</Rotulo>
-                <p className="font-mono valor text-[19px] font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">{contagens.devedores}</p>
+                <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-100">{contagens.devedores}</Valor>
               </div>
               <div className="min-w-0">
                 <Rotulo>Metas</Rotulo>
-                <p className="font-mono valor text-[19px] font-semibold text-zinc-900 dark:text-zinc-100 mt-0.5">{contagens.metas}</p>
+                <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-100">{contagens.metas}</Valor>
               </div>
             </div>
             <button

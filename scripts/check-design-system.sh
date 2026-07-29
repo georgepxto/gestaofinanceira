@@ -144,9 +144,12 @@ regra "raio fora de 8/12/16" \
   "Três raios: rounded-lg (8), rounded-xl (12), rounded-2xl (16) — mais rounded-full em pílula e avatar." \
   'rounded-(3xl|md|sm)\b'
 
-regra "corpo fora de 30/34/44" \
-  "Acima de 15px existem três corpos: 30 (Valor destaque), 34 (PageHeader), 44 (Valor herói)." \
-  'text-\[(1[6-9]|2[0-9]|3[1-35-9]|4[0-35-9]|[5-9][0-9]|[0-9]{3,})px\]'
+# 22 entrou na escala porque o salto de text-sm (14) para 30 era grande demais e
+# onze lugares inventaram 19px ou 22px na falta de um degrau. Quem precisa dele
+# usa <Valor porte="medio"> — 19 e 26 seguem barrados de propósito.
+regra "corpo fora de 22/30/34/44" \
+  "Acima de 15px existem quatro corpos: 22 (Valor medio), 30 (destaque), 34 (PageHeader), 44 (herói)." \
+  'text-\[(1[6-9]|2[013-9]|3[1-35-9]|4[0-35-9]|[5-9][0-9]|[0-9]{3,})px\]'
 
 # ─────────────────────────────────────────────────────────────────────────────
 grupo "Cor"

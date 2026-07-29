@@ -1,10 +1,14 @@
 import type { ReactNode, HTMLAttributes } from "react";
 
-type Porte = "heroi" | "destaque" | "linha";
+type Porte = "heroi" | "destaque" | "medio" | "linha";
 
 const PORTE: Record<Porte, string> = {
   heroi: "font-num font-bold tracking-[-0.015em] text-[44px] leading-none",
   destaque: "font-num font-bold tracking-[-0.015em] text-[30px] leading-tight",
+  // Métrica secundária: mini-card de estatística, resumo de aba, valor
+  // subordinado ao herói. Existe porque o salto de text-sm para 30px é grande
+  // demais — sem este degrau, 13 lugares inventaram 19px ou 22px por conta.
+  medio: "font-mono text-[22px] font-semibold",
   linha: "font-mono text-sm",
 };
 
@@ -31,6 +35,10 @@ interface ValorProps extends HTMLAttributes<HTMLSpanElement> {
  *
  * Reverter a família é uma linha — `num: ['Syne', …]` no tailwind.config.js.
  * Reverter o tracking não: ele é a correção que sobrevive à escolha de fonte.
+ *
+ * **Por que `medio` é mono e não `font-num`.** Em 22px a Geist Mono ainda lê
+ * bem e casa com o `linha` logo abaixo dela na hierarquia. A `font-num` existe
+ * para corpo grande, onde a largura fixa da mono fica mecânica.
  */
 export const Valor = ({ porte = "linha", className = "", children, ...rest }: ValorProps) => (
   <span className={`valor ${PORTE[porte]} ${className}`} {...rest}>

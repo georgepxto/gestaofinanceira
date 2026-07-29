@@ -192,11 +192,11 @@ export function TabGastos({
 
                 <div className="flex items-end justify-between gap-3 mt-4">
                   <span className="text-sm text-zinc-500 dark:text-zinc-400">a receber</span>
-                  <span className={`font-mono valor text-[22px] font-semibold whitespace-nowrap ${
+                  <Valor porte="medio" className={
                     quitadoOuFechadoSemDivida ? "text-emerald-700 dark:text-emerald-400" : "text-zinc-900 dark:text-zinc-100"
-                  }`}>
+                  }>
                     {formatCurrency(Math.max(restante, 0))}
-                  </span>
+                  </Valor>
                 </div>
 
                 {/* Progresso pago/total */}

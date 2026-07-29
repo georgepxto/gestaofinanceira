@@ -19,6 +19,7 @@ import type { MeuGasto, CartaoCredito } from "../../types";
 import { formatCurrency, getMesFaturaCartao } from "../../utils/calculations";
 import { Rotulo } from "../ui/Rotulo";
 import { Card } from "../ui/Card";
+import { Valor } from "../ui/Valor";
 
 function getPessoasDivididas(gasto: MeuGasto): string[] {
   if (Array.isArray(gasto.dividido_com_pessoas) && gasto.dividido_com_pessoas.length > 0) {
@@ -159,33 +160,33 @@ export function TabMeuGasto({
           <Rotulo className="mb-1">
             Crédito
           </Rotulo>
-          <p className="font-mono valor text-[22px] font-semibold text-zinc-900 dark:text-zinc-50">
+          <Valor porte="medio" className="block text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalMeusGastosCredito)}
-          </p>
+          </Valor>
         </div>
         <div className="min-w-0" data-tour="eu-card-debito">
           <Rotulo className="mb-1">
             Débito
           </Rotulo>
-          <p className="font-mono valor text-[22px] font-semibold text-zinc-900 dark:text-zinc-50">
+          <Valor porte="medio" className="block text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalMeusGastosDebito)}
-          </p>
+          </Valor>
         </div>
         <div className="min-w-0" data-tour="eu-card-pagos">
           <Rotulo tom="acento" className="mb-1">
             Pago
           </Rotulo>
-          <p className="font-mono valor text-[22px] font-semibold text-emerald-700 dark:text-emerald-400">
+          <Valor porte="medio" className="block text-emerald-700 dark:text-emerald-400">
             {formatCurrency(totalMeusGastosPagos)}
-          </p>
+          </Valor>
         </div>
         <div className="min-w-0" data-tour="eu-card-fixos">
           <Rotulo className="mb-1">
             Fixos
           </Rotulo>
-          <p className="font-mono valor text-[22px] font-semibold text-zinc-900 dark:text-zinc-50">
+          <Valor porte="medio" className="block text-zinc-900 dark:text-zinc-50">
             {formatCurrency(totalGastosFixos)}
-          </p>
+          </Valor>
         </div>
       </Card>
 

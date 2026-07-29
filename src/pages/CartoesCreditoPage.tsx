@@ -741,9 +741,9 @@ export const CartoesCreditoPage = () => {
           }`}
         >
           <Rotulo className="mb-1.5">Todos</Rotulo>
-          <p className="font-mono valor text-[19px] font-semibold text-zinc-900 dark:text-zinc-50 whitespace-nowrap">
+          <Valor porte="medio" className="block text-zinc-900 dark:text-zinc-50">
             {formatCurrency(cartoesState.reduce((sum, c) => sum + getFaturaCartao(c.id), 0))}
-          </p>
+          </Valor>
           <p className="font-mono text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">{cartoesState.length} {cartoesState.length === 1 ? "cartão" : "cartões"}</p>
         </button>
         {/* Tiles por cartão — espinha e dot = identidade do banco */}
@@ -764,7 +764,7 @@ export const CartoesCreditoPage = () => {
               <span className="w-[7px] h-[7px] rounded-full flex-shrink-0" style={{ backgroundColor: corDoCartao(c) }} />
               <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{c.nome}</span>
             </div>
-            <p className="font-num valor tracking-[-0.015em] text-[19px] font-semibold text-zinc-900 dark:text-zinc-50 whitespace-nowrap">{formatCurrency(getFaturaCartao(c.id))}</p>
+            <Valor porte="medio" className="block text-zinc-900 dark:text-zinc-50">{formatCurrency(getFaturaCartao(c.id))}</Valor>
             <p className="font-mono text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">vence dia {c.dia_vencimento}</p>
           </button>
         ))}

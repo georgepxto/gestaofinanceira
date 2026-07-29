@@ -317,13 +317,13 @@ export const MetasPage = () => {
               <Valor porte="heroi" className="text-zinc-900 dark:text-zinc-50">
                 {formatCurrency(totalGasto)}
               </Valor>
-              {/* Encosta no herói na mesma linha, então acompanha a família dele. */}
-              <span className="font-num valor tracking-[-0.015em] text-[19px] text-zinc-500 dark:text-zinc-400"> / {formatCurrency(totalLimite)}</span>
+              {/* Subordinado ao herói: mesmo bloco, corpo menor e cor mais fraca. */}
+              <Valor porte="medio" className="text-zinc-500 dark:text-zinc-400"> / {formatCurrency(totalLimite)}</Valor>
             </p>
             <div className="text-right">
-              <p className={`font-mono valor text-[22px] font-semibold whitespace-nowrap ${disponivel >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+              <Valor porte="medio" className={`block ${disponivel >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                 {formatCurrency(disponivel)}
-              </p>
+              </Valor>
               <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
                 {disponivel >= 0 ? "disponível" : "acima do orçado"} · {pctTotal.toFixed(0)}% usado
               </p>
