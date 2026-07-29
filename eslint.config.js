@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import globals from "globals";
+import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
 
 export default [
@@ -32,6 +33,20 @@ export default [
       "no-undef": "off",
       "no-useless-assignment": "off",
       "no-var": "off",
+    },
+  },
+  // Registro manual em vez do preset exportado: o nome do preset mudou entre
+  // versões do plugin, o registro direto funciona igual em todas.
+  {
+    files: ["**/*.{ts,tsx}"],
+    plugins: { "react-hooks": reactHooks },
+    rules: {
+      // Sempre bug: hook em condicional, em loop ou fora de componente.
+      "react-hooks/rules-of-hooks": "error",
+      // Tem falso positivo legítimo (efeito que roda só na montagem). Informa
+      // sem travar o build — como `error` a pressa de destravar produz o pior
+      // conserto: array cheio sem entender, e loop de render.
+      "react-hooks/exhaustive-deps": "warn",
     },
   },
 ];

@@ -24,5 +24,8 @@ jobs:
       - name: Sistema visual
         run: bash scripts/check-design-system.sh
 
+      - name: Lint
+        run: npm run lint
+
       - name: Build
         run: npm run build
