@@ -179,7 +179,7 @@ function AppContent() {
     };
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
-  }, [user, fetchCartoes]);
+  }, [user, fetchCartoes, fetchContas]);
 
   // Loading de autenticação
   if (authLoading) {

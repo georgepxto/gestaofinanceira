@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAppContext } from "../../context";
 import {
   Bell,
@@ -40,7 +40,10 @@ export const NotificationBell = () => {
   const { alertas, loading } = useAlertas();
   const [isOpen, setIsOpen] = useState(false);
   
-  const getStorageKey = () => `reppago_dismissed_notifications_${user?.id || 'guest'}`;
+  const getStorageKey = useCallback(
+    () => `reppago_dismissed_notifications_${user?.id || 'guest'}`,
+    [user?.id]
+  );
   
   const [dismissed, setDismissed] = useState<Set<string>>(() => {
     try {
@@ -63,7 +66,7 @@ export const NotificationBell = () => {
     } catch {
       // Ignore errors
     }
-  }, [dismissed, user]);
+  }, [dismissed, user, getStorageKey]);
 
   const panelRef = useRef<HTMLDivElement>(null);
 
