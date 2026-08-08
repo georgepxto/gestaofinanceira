@@ -61,9 +61,9 @@ export function SuspensaoModal({ show, onClose, onConfirm, mesRef, nomeGasto }: 
         role="dialog"
         aria-modal="true"
         aria-labelledby="suspensao-modal-title"
-        className="w-full max-w-sm overflow-hidden"
+        className="w-full max-w-sm overflow-hidden shadow-xl dark:shadow-black/60"
       >
-        <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-white/[0.06]">
           <h2 id="suspensao-modal-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100">
             Suspender Gasto Fixo
           </h2>
@@ -78,29 +78,29 @@ export function SuspensaoModal({ show, onClose, onConfirm, mesRef, nomeGasto }: 
 
         <div className="p-4 space-y-4">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            Você está suspendendo o gasto <strong className="text-zinc-800 dark:text-white">{nomeGasto}</strong>.
+            Você está suspendendo o gasto <strong className="text-zinc-800 dark:text-zinc-50">{nomeGasto}</strong>.
             Escolha por quanto tempo deseja pausar:
           </p>
 
           <div className="space-y-2">
             <label className="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-zinc-50 dark:hover:bg-white/[0.06] dark:border-white/[0.09]">
-              <input type="radio" checked={tipo === "1"} onChange={() => setTipo("1")} className="w-4 h-4 text-emerald-600 focus:ring-emerald-600" />
+              <input type="radio" checked={tipo === "1"} onChange={() => setTipo("1")} className="w-4 h-4 accent-emerald-600 dark:accent-emerald-500 focus:ring-emerald-600" />
               <span className="text-zinc-700 dark:text-zinc-300">Apenas neste mês (1 mês)</span>
             </label>
 
             <label className="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-zinc-50 dark:hover:bg-white/[0.06] dark:border-white/[0.09]">
-              <input type="radio" checked={tipo === "3"} onChange={() => setTipo("3")} className="w-4 h-4 text-emerald-600 focus:ring-emerald-600" />
+              <input type="radio" checked={tipo === "3"} onChange={() => setTipo("3")} className="w-4 h-4 accent-emerald-600 dark:accent-emerald-500 focus:ring-emerald-600" />
               <span className="text-zinc-700 dark:text-zinc-300">Por 3 meses</span>
             </label>
 
             <label className="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-zinc-50 dark:hover:bg-white/[0.06] dark:border-white/[0.09]">
-              <input type="radio" checked={tipo === "12"} onChange={() => setTipo("12")} className="w-4 h-4 text-emerald-600 focus:ring-emerald-600" />
+              <input type="radio" checked={tipo === "12"} onChange={() => setTipo("12")} className="w-4 h-4 accent-emerald-600 dark:accent-emerald-500 focus:ring-emerald-600" />
               <span className="text-zinc-700 dark:text-zinc-300">Por 1 ano (12 meses)</span>
             </label>
 
             <label className="flex flex-col gap-2 p-3 border rounded-xl cursor-pointer hover:bg-zinc-50 dark:hover:bg-white/[0.06] dark:border-white/[0.09]">
               <div className="flex items-center gap-3">
-                <input type="radio" checked={tipo === "custom"} onChange={() => setTipo("custom")} className="w-4 h-4 text-emerald-600 focus:ring-emerald-600" />
+                <input type="radio" checked={tipo === "custom"} onChange={() => setTipo("custom")} className="w-4 h-4 accent-emerald-600 dark:accent-emerald-500 focus:ring-emerald-600" />
                 <span className="text-zinc-700 dark:text-zinc-300">Escolher mês de volta</span>
               </div>
               {tipo === "custom" && (
@@ -110,7 +110,7 @@ export function SuspensaoModal({ show, onClose, onConfirm, mesRef, nomeGasto }: 
                     min={minDateLimit}
                     value={dataReativacao}
                     onChange={(e) => setDataReativacao(e.target.value)}
-                    className="w-full h-11 px-3.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-white/[0.09] text-zinc-800 dark:text-white text-sm rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-300 dark:border-white/[0.09] text-zinc-800 dark:text-zinc-100 text-sm rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   />
                   <p className="text-xs text-zinc-500 mt-1">O gasto voltará a ser cobrado no mês escolhido.</p>
                 </div>
@@ -119,7 +119,7 @@ export function SuspensaoModal({ show, onClose, onConfirm, mesRef, nomeGasto }: 
           </div>
         </div>
 
-        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 flex gap-2">
+        <div className="p-4 border-t border-zinc-200 dark:border-white/[0.06] flex gap-2">
           <button
             onClick={onClose}
             disabled={salvando}

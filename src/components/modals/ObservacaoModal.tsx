@@ -36,11 +36,11 @@ export const ObservacaoModal: React.FC<ObservacaoModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="obs-modal-title"
-        className="w-full max-w-[460px]"
+        className="w-full max-w-[460px] shadow-xl dark:shadow-black/60"
       >
-        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+        <div className="p-4 border-b border-zinc-200 dark:border-white/[0.06] flex items-center justify-between">
           <h2 id="obs-modal-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-amber-600" />
+            <MessageSquare className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             Observação - {pessoa}
           </h2>
           <button
@@ -71,7 +71,7 @@ export const ObservacaoModal: React.FC<ObservacaoModalProps> = ({
               onChange={(e) => onTextChange(e.target.value)}
               placeholder="Ex: Pagou R$ 1.000 em 15/12, falta R$ 500..."
               rows={4}
-              className="w-full px-3.5 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] resize-none"
+              className="w-full px-3.5 py-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] resize-none"
             />
           </div>
 

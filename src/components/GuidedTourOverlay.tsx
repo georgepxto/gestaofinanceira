@@ -113,7 +113,7 @@ export const GuidedTourOverlay = ({
 
       <div
         /* ds-ok: balão do tour é posicionado no alvo e flutua acima do recorte — geometria e sombra próprias */
-        className="absolute pointer-events-auto bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 w-[calc(100vw-24px)] max-w-[360px] rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-2xl max-h-[calc(100vh-24px)] overflow-y-auto"
+        className="absolute pointer-events-auto bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 w-[calc(100vw-24px)] max-w-[360px] rounded-2xl border border-zinc-200 dark:border-white/[0.06] overflow-hidden shadow-2xl dark:shadow-black/60 max-h-[calc(100vh-24px)] overflow-y-auto"
         style={{ left: tooltipLeft, top: tooltipTop }}
       >
         <div className="px-4 py-3 border-b border-emerald-700/40 flex items-start justify-between gap-3 bg-emerald-600 dark:bg-emerald-700">
@@ -150,7 +150,7 @@ export const GuidedTourOverlay = ({
           </div>
         </div>
 
-        <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2 bg-zinc-50 dark:bg-zinc-950">
+        <div className="px-4 py-3 border-t border-zinc-200 dark:border-white/[0.06] flex items-center justify-between gap-2 bg-zinc-50 dark:bg-zinc-950">
           <button
             onClick={onPrevious}
             disabled={stepIndex === 0}

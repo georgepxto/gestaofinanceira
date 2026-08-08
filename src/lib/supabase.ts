@@ -340,6 +340,218 @@ export const pessoasFunctions = {
   },
 };
 
+// ========== CATEGORIAS PERSONALIZADAS ==========
+export type TipoCategoria = "gasto" | "receita";
+
+export interface CategoriaUsuario {
+  id: string;
+  tipo: TipoCategoria;
+  nome: string;
+  ordem: number;
+}
+
+// Onde o nome da categoria aparece gravado em cada tipo. Renomear ou excluir
+// uma categoria tem que passar por todas — senão o lançamento antigo fica
+// apontando para um nome que não existe mais em lugar nenhum.
+const COLUNAS_DE_CATEGORIA: Record<TipoCategoria, { tabela: string; coluna: string }[]> = {
+  gasto: [
+    { tabela: "gastos", coluna: "categoria" },
+    { tabela: "meus_gastos", coluna: "categoria_gasto" },
+    { tabela: "transacoes_cartao", coluna: "categoria" },
+  ],
+  receita: [{ tabela: "receitas", coluna: "categoria" }],
+};
+
+export const categoriasFunctions = {
+  async getAll(): Promise<CategoriaUsuario[]> {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from("categorias_usuario")
+      .select("id, tipo, nome, ordem")
+      .order("ordem", { ascending: true });
+
+    if (error) {
+      console.error("Erro ao buscar categorias:", error);
+      return [];
+    }
+
+    return data || [];
+  },
+
+  /**
+   * Grava a lista padrão inteira na primeira personalização. Até aqui a pessoa
+   * não tinha linha nenhuma e o app mostrava o padrão do código; a partir daqui
+   * a tabela é a verdade, e é sobre estas linhas que criar/renomear/excluir
+   * passam a operar.
+   */
+  async materializar(tipo: TipoCategoria, nomes: string[]): Promise<CategoriaUsuario[]> {
+    if (!supabase) return [];
+    const user_id = await getCurrentUserId();
+    if (!user_id) return [];
+
+    const { data, error } = await supabase
+      .from("categorias_usuario")
+      .insert(nomes.map((nome, i) => ({ user_id, tipo, nome, ordem: i })))
+      .select("id, tipo, nome, ordem");
+
+    if (error) {
+      console.error("Erro ao materializar categorias padrão:", error);
+      return [];
+    }
+
+    return data || [];
+  },
+
+  async create(
+    tipo: TipoCategoria,
+    nome: string,
+    ordem: number
+  ): Promise<CategoriaUsuario | null> {
+    if (!supabase) return null;
+    const user_id = await getCurrentUserId();
+    if (!user_id) return null;
+
+    const { data, error } = await supabase
+      .from("categorias_usuario")
+      .insert([{ user_id, tipo, nome, ordem }])
+      .select("id, tipo, nome, ordem")
+      .single();
+
+    if (error) {
+      console.error("Erro ao criar categoria:", error);
+      return null;
+    }
+
+    return data;
+  },
+
+  async rename(id: string, nome: string): Promise<boolean> {
+    if (!supabase) return false;
+    const { error } = await supabase
+      .from("categorias_usuario")
+      .update({ nome })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Erro ao renomear categoria:", error);
+      return false;
+    }
+
+    return true;
+  },
+
+  async delete(id: string): Promise<boolean> {
+    if (!supabase) return false;
+    const { error } = await supabase
+      .from("categorias_usuario")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Erro ao excluir categoria:", error);
+      return false;
+    }
+
+    return true;
+  },
+
+  /**
+   * Leva o nome novo para os lançamentos já gravados. Sem isto, renomear
+   * "Lazer" para "Diversão" deixaria o histórico inteiro numa categoria órfã e
+   * o gráfico ganharia duas fatias onde havia uma.
+   */
+  async aplicarRenomeacao(
+    tipo: TipoCategoria,
+    antigo: string,
+    novo: string
+  ): Promise<void> {
+    if (!supabase || antigo === novo) return;
+
+    for (const { tabela, coluna } of COLUNAS_DE_CATEGORIA[tipo]) {
+      const { error } = await supabase
+        .from(tabela)
+        .update({ [coluna]: novo })
+        .eq(coluna, antigo);
+      if (error) console.error(`Erro ao renomear categoria em ${tabela}:`, error);
+    }
+
+    if (tipo === "gasto") await renomearMeta(antigo, novo);
+  },
+
+  /**
+   * Move os lançamentos da categoria excluída para outra. Chamado com o
+   * substituto já escolhido pela tela, que é quem sabe o que sobrou na lista.
+   */
+  async aplicarSubstituicao(
+    tipo: TipoCategoria,
+    removido: string,
+    substituto: string
+  ): Promise<void> {
+    if (!supabase) return;
+
+    for (const { tabela, coluna } of COLUNAS_DE_CATEGORIA[tipo]) {
+      const { error } = await supabase
+        .from(tabela)
+        .update({ [coluna]: substituto })
+        .eq(coluna, removido);
+      if (error) console.error(`Erro ao remanejar categoria em ${tabela}:`, error);
+    }
+
+    // A meta da categoria excluída é apagada, não remanejada: somar dois
+    // limites mensais num só seria inventar um orçamento que ninguém definiu.
+    if (tipo === "gasto") {
+      const { error } = await supabase
+        .from("metas_gasto")
+        .delete()
+        .eq("categoria", removido);
+      if (error) console.error("Erro ao excluir meta da categoria:", error);
+    }
+  },
+
+  /** Quantos lançamentos usam a categoria — a tela mostra antes de excluir. */
+  async contarUsos(tipo: TipoCategoria, nome: string): Promise<number> {
+    if (!supabase) return 0;
+
+    const contagens = await Promise.all(
+      COLUNAS_DE_CATEGORIA[tipo].map(async ({ tabela, coluna }) => {
+        const { count, error } = await supabase!
+          .from(tabela)
+          .select("id", { count: "exact", head: true })
+          .eq(coluna, nome);
+        if (error) {
+          console.error(`Erro ao contar uso da categoria em ${tabela}:`, error);
+          return 0;
+        }
+        return count || 0;
+      })
+    );
+
+    return contagens.reduce((soma, n) => soma + n, 0);
+  },
+};
+
+/**
+ * `metas_gasto` tem UNIQUE(user_id, categoria): renomear para uma categoria que
+ * já tem meta violaria a restrição. Nesse caso a meta antiga sai de cena e o
+ * limite do destino prevalece — o usuário definiu aquele número por último.
+ */
+async function renomearMeta(antigo: string, novo: string): Promise<void> {
+  if (!supabase) return;
+
+  const { data: destino } = await supabase
+    .from("metas_gasto")
+    .select("id")
+    .eq("categoria", novo)
+    .limit(1);
+
+  const query = destino && destino.length > 0
+    ? supabase.from("metas_gasto").delete().eq("categoria", antigo)
+    : supabase.from("metas_gasto").update({ categoria: novo }).eq("categoria", antigo);
+
+  const { error } = await query;
+  if (error) console.error("Erro ao ajustar meta da categoria:", error);
+}
+
 export const meusGastosFunctions = {
   async getAll(): Promise<MeuGasto[]> {
     if (!supabase) return [];

@@ -76,6 +76,10 @@ reportar() {
 #            arquivo que *define* o padrão — Valor.tsx pode usar tracking-tighter
 #            porque ele é o único lugar que tem o direito de apertar a display.
 #            Não é por onde sai um caso incômodo: isso é `ds-ok`, na linha.
+
+# Dialeto do grep usado por `regra`. Fica em E (ERX) e só o `regra_p` troca.
+REGRA_GREP=E
+
 regra() {
   local nome="$1" porque="$2" padrao="$3" escopo="${4:-produto}" excecao="${5:-}"
   local alvo="$SRC" achados
@@ -84,7 +88,7 @@ regra() {
   [ -e "$alvo" ] || return 0
 
   # -H porque com um arquivo só o grep omite o nome, e o `sem_dsok` precisa dele.
-  achados=$(grep -rHnE --include='*.tsx' --include='*.ts' --include='*.css' "$padrao" "$alvo" 2>/dev/null \
+  achados=$(grep -rHn"$REGRA_GREP" --include='*.tsx' --include='*.ts' --include='*.css' "$padrao" "$alvo" 2>/dev/null \
     | sem_dsok || true)
 
   if [ "$escopo" = "produto" ]; then
@@ -96,6 +100,26 @@ regra() {
 
   reportar "$nome" "$porque" "$achados"
 }
+
+# Igual a `regra`, mas com `grep -P`.
+#
+# Existe por causa das duas regras de "par dark:": elas precisam dizer *classe X
+# sem a classe Y na mesma string*, e isso é lookahead — que o `grep -E` não tem.
+# O caminho alternativo (um segundo `grep -v`) foi descartado porque ele filtra
+# a LINHA inteira: um `dark:text-` num atributo vizinho absolveria a classe
+# errada calada. Se você acrescentar uma regra com `(?!…)`, use `regra_p`.
+regra_p() {
+  REGRA_GREP=P
+  regra "$@"
+  REGRA_GREP=E
+}
+
+# Falha alto se o grep desta máquina não tiver PCRE: sem isto as duas regras de
+# par dark: passariam vazias e ninguém notaria (o 2>/dev/null come o erro).
+if ! printf 'a' | grep -qP 'a(?!b)' 2>/dev/null; then
+  printf '%sgrep sem suporte a -P (PCRE) — as regras de par dark: não podem rodar.%s\n' "$RED" "$OFF"
+  exit 1
+fi
 
 printf '%sGuarda do sistema visual — Hedge%s\n' "$BOLD" "$OFF"
 
@@ -190,6 +214,43 @@ hex_fora=$(grep -rnoE --include='*.tsx' --include='*.ts' --include='*.css' \
 reportar "hex fora da paleta" \
   "Hex é aceito onde classe não entra (Recharts, borda CSS) — desde que o valor seja da paleta." \
   "$hex_fora"
+
+# ─────────────────────────────────────────────────────────────────────────────
+grupo "Modo escuro"
+
+# A etapa 39 encontrou este erro 45 vezes: a cor foi escrita olhando só para o
+# claro. amber-600 sobre zinc-900 dá 3,1:1 — o ícone some.
+#
+# O lookahead aceita o par em qualquer variante (`dark:text-`, mas também
+# `dark:hover:text-`), porque num estado de hover o par certo é o hover escuro.
+regra_p "cor de texto sem par dark" \
+  "Texto e ícone coloridos precisam do par dark: — tom 400 no escuro." \
+  'text-(emerald|amber|red)-(600|700)(?![^"'"'"'`]*dark:([a-z-]+:)*text-)'
+
+# Duas gramáticas de borda conviviam: zinc-800 opaco e branco translúcido. O
+# Card usava uma e a Sidebar a outra, então as bordas do app não casavam.
+regra "borda opaca no escuro" \
+  "Borda no dark é branco translúcido: 5% divisória, 6% superfície, 9% controle." \
+  'dark:border-zinc-[0-9]'
+
+# O vidro foi aposentado, mas a regra que importa é outra: zinc-900 é a cor do
+# cartão. Um controle da mesma cor do cartão que o contém é um controle
+# invisível — foi o que aconteceu com o select de mês do modal de suspensão.
+regra "superfície de cartão em controle" \
+  "dark:bg-zinc-900 é cartão. Controle no escuro é branco translúcido (4%–10%)." \
+  '(input|select|textarea|button)[^>]*dark:bg-zinc-900'
+
+# zinc-600 some sobre #0A0A0B. Estava no empty state de Lançamentos.
+regra "zinc-600 como texto no escuro" \
+  "dark:text-zinc-600 não se lê sobre #0A0A0B. Terciário é zinc-500." \
+  'dark:text-zinc-600'
+
+# ring-offset sem par usa o padrão do Tailwind, que é branco: no escuro cada
+# foco de teclado desenhava um anel branco de 2px entre o elemento e o anel
+# esmeralda. Parecia defeito de render.
+regra_p "ring-offset sem par dark" \
+  "Offset do anel é a cor de trás: ring-offset-zinc-900 em card, app-dark em página." \
+  'ring-offset-2(?![^"'"'"'`]*dark:ring-offset)'
 
 # ─────────────────────────────────────────────────────────────────────────────
 grupo "Componentes"

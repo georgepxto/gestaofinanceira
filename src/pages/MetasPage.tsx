@@ -8,7 +8,8 @@ import { useAppContext } from "../context";
 import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
 import { supabase } from "../lib/supabase";
 import { formatCurrency, formatMesAno } from "../utils/calculations";
-import { CATEGORIAS, categoriaDeGasto } from "../utils/categories";
+import { categoriaDeGasto, comCategoriaAtual } from "../utils/categories";
+import { useCategorias } from "../hooks/useCategorias";
 import { toast } from "../components/ui/Toaster";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
@@ -81,6 +82,8 @@ interface LinhaConsumo extends MetaGasto {
 
 export const MetasPage = () => {
   const { user, setModalConfirm, meusGastosDoMes, mesVisualizacao } = useAppContext();
+
+  const { categorias: categoriasGasto } = useCategorias("gasto");
 
   const [metas, setMetas] = useState<MetaGasto[]>([]);
   const [novaMeta, setNovaMeta] = useState({ categoria: "", limite: "" });
@@ -215,7 +218,12 @@ export const MetasPage = () => {
     setNovaMeta({ categoria: "", limite: "" });
   };
 
-  const categoriasDisponiveis = CATEGORIAS.filter(
+  // A meta em edição pode estar numa categoria que saiu da lista — ela precisa
+  // continuar selecionável, senão salvar de novo mudaria a categoria da meta.
+  const categoriasDisponiveis = comCategoriaAtual(
+    categoriasGasto,
+    metaEmEdicao?.categoria
+  ).filter(
     (cat) =>
       !metas.some(
         (m) =>
@@ -404,7 +412,7 @@ export const MetasPage = () => {
                 <select
                   value={novaMeta.categoria}
                   onChange={(e) => setNovaMeta({ ...novaMeta, categoria: e.target.value })}
-                  className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none"
+                  className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none"
                 >
                   <option value="" disabled>Selecione uma categoria</option>
                   {categoriasDisponiveis.map((cat) => (
@@ -421,7 +429,7 @@ export const MetasPage = () => {
                     value={novaMeta.limite}
                     onChange={(e) => setNovaMeta({ ...novaMeta, limite: e.target.value })}
                     placeholder="0,00"
-                    className="w-full h-11 pl-10 pr-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-mono tabular-nums text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
+                    className="w-full h-11 pl-10 pr-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm font-mono tabular-nums text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
                   />
                 </div>
               </div>

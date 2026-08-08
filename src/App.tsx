@@ -1,11 +1,15 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense, useState, useEffect, useCallback } from "react";
 import { AlertCircle, ShieldAlert, LogOut } from "lucide-react";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import { formatCurrency } from "./utils/calculations";
 import type { CartaoCredito, ContaBancaria } from "./types";
 import { Toaster } from "./components/ui/Toaster";
-import { AppShellSkeleton, AuthSplashSkeleton } from "./components/layout/AppShellSkeleton";
+// Import direto do arquivo, não do index de `layout`: o index reexporta o
+// Layout, e um import estático dele arrastaria a casca inteira para o chunk de
+// entrada — justamente o que o `lazy` acima evita.
+import { BootSplash, AparecerSeDemorar } from "./components/layout/BootSplash";
+import { useEsperaLonga } from "./hooks";
 import {
   FormGastoModal,
   FormDividaModal,
@@ -27,6 +31,17 @@ import "./index.css";
 const Layout = lazy(() => import("./components/layout").then((m) => ({ default: m.Layout })));
 
 const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage })));
+
+// O Layout não é uma rota entre outras — é a casca de todas elas, e o Dashboard
+// é a rota de entrada de todo mundo. Deixá-los carregar só sob demanda serializa
+// os chunks depois das RPCs de feature flags; disparando o import aqui, rede e
+// download correm juntos e a espera passa a ser o maior dos dois, não a soma.
+//
+// Só estes dois. Pré-carregar as outras telas trocaria boot rápido por download
+// que ninguém pediu.
+void import("./components/layout");
+void import("./pages/DashboardPage");
+
 const OrcamentoPage = lazy(() => import("./pages/OrcamentoPage").then((m) => ({ default: m.OrcamentoPage })));
 const EuPage = lazy(() => import("./pages/EuPage").then((m) => ({ default: m.EuPage })));
 const NaRuaPage = lazy(() => import("./pages/NaRuaPage").then((m) => ({ default: m.NaRuaPage })));
@@ -160,14 +175,12 @@ function AppContent() {
     }
   }, [user, fetchCartoes, fetchContas]);
 
-  // Refetch cartões quando muda de rota
-  const location = useLocation();
-  useEffect(() => {
-    if (user) {
-      fetchCartoes();
-      fetchContas();
-    }
-  }, [location.pathname, user, fetchCartoes, fetchContas]);
+  // Cartões e contas alimentam os modais de lançamento, que vivem no nível do
+  // App. Quem cobre o dado que envelheceu são o efeito de montagem acima e o de
+  // foco de janela abaixo — havia um terceiro, por troca de rota, que refazia as
+  // duas queries em toda navegação, inclusive nas telas que não têm nada a ver
+  // com cartão ou conta. Se um modal precisar de dado fresco, o lugar de buscar
+  // é a abertura dele.
 
   // Refetch cartões quando a janela ganha foco
   useEffect(() => {
@@ -181,16 +194,21 @@ function AppContent() {
     return () => window.removeEventListener("focus", handleFocus);
   }, [user, fetchCartoes, fetchContas]);
 
+  // Limiar dos dois portões de boot. Ficam aqui em cima, antes de qualquer
+  // `return`: hook depois de saída condicional quebra a ordem entre renders.
+  const mostrarBootAuth = useEsperaLonga(authLoading);
+  const mostrarBootFeatures = useEsperaLonga(featuresLoading);
+
   // Loading de autenticação
   if (authLoading) {
-    return <AuthSplashSkeleton />;
+    return mostrarBootAuth ? <BootSplash /> : null;
   }
 
   if (!isSupabaseConfigured) {
     return (
       <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <AlertCircle className="w-12 h-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
           <h1 className="font-display text-xl font-bold tracking-tight text-white mb-2">
             Configuração Necessária
           </h1>
@@ -214,7 +232,7 @@ function AppContent() {
 
   // Loading de features/role
   if (featuresLoading) {
-    return <AppShellSkeleton />;
+    return mostrarBootFeatures ? <BootSplash /> : null;
   }
 
   // Conta desativada pelo admin
@@ -223,7 +241,7 @@ function AppContent() {
       <div className="min-h-screen bg-zinc-100 dark:bg-app-dark flex items-center justify-center p-4">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 bg-red-100 dark:bg-red-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ShieldAlert className="w-8 h-8 text-red-500" />
+            <ShieldAlert className="w-8 h-8 text-red-500 dark:text-red-400" />
           </div>
           <h1 className="font-display text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">
             Conta Desativada
@@ -245,7 +263,7 @@ function AppContent() {
 
   return (
     <>
-      <Suspense fallback={<AppShellSkeleton />}>
+      <Suspense fallback={<AparecerSeDemorar><BootSplash /></AparecerSeDemorar>}>
         <Routes>
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route

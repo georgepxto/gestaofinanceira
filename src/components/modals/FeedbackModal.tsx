@@ -47,7 +47,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="feedback-modal-title"
-        className={`relative w-full max-w-sm overflow-hidden transition-all duration-200 ${
+        className={`relative w-full max-w-sm overflow-hidden shadow-xl dark:shadow-black/60 transition-all duration-200 ${
           isVisible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-4 sm:translate-y-8"
         }`}
       >
@@ -63,8 +63,8 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
           <div className="flex flex-col items-center text-center">
             <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
               modal.tipo === "sucesso"
-                ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-500"
-                : "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-500"
+                ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                : "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
             }`}>
               {modal.tipo === "sucesso" ? (
                 <CheckCircle2 className="w-6 h-6" />
@@ -83,7 +83,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
 
             <button
               onClick={onClose}
-              className={`w-full py-2.5 px-4 rounded-xl font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+              className={`w-full py-2.5 px-4 rounded-xl font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 ${
                 modal.tipo === "sucesso"
                   ? "bg-emerald-600 hover:bg-emerald-700 text-white focus-visible:ring-emerald-500"
                   : "bg-emerald-600 hover:bg-emerald-700 text-white focus-visible:ring-emerald-500"

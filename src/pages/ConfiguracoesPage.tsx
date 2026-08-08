@@ -22,6 +22,7 @@ import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import { Rotulo } from "../components/ui/Rotulo";
 import { Card } from "../components/ui/Card";
 import { Valor } from "../components/ui/Valor";
+import { GerenciarCategorias } from "../components/GerenciarCategorias";
 
 interface Contagens {
   lancamentos: number;
@@ -354,7 +355,7 @@ export const ConfiguracoesPage = () => {
                 value={novoNome}
                 onChange={(e) => setNovoNome(e.target.value)}
                 placeholder="Seu nome"
-                className="flex-1 min-w-[180px] h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
+                className="flex-1 min-w-[180px] h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
               />
               <button
                 onClick={handleAlterarNome}
@@ -367,7 +368,7 @@ export const ConfiguracoesPage = () => {
             </div>
           </div>
 
-          <div className="border-t border-zinc-100 dark:border-zinc-800 mt-5 pt-4 flex items-center justify-between gap-3 flex-wrap">
+          <div className="border-t border-zinc-100 dark:border-white/[0.05] mt-5 pt-4 flex items-center justify-between gap-3 flex-wrap">
             <div className="min-w-0">
               <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">Senha</p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">enviamos um link por e-mail</p>
@@ -395,7 +396,11 @@ export const ConfiguracoesPage = () => {
                   {theme === "dark" ? "Modo escuro ativado" : "Modo claro ativado"}
                 </p>
               </div>
-              {/* SEGMENTADO claro/escuro */}
+              {/* SEGMENTADO claro/escuro — os dois botões usam a MESMA string de
+                  estado. Enquanto divergiram, "Claro" ficava branco chapado no
+                  escuro (era o controle mais quebrado do modo escuro) e o ativo
+                  do "Escuro" tinha a cor do cartão que o contém, sem se ler.
+                  No dark o degrau é branco a 10% sobre o trilho de 4%. */}
               <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] p-1 rounded-xl" role="radiogroup" aria-label="Tema">
                 <button
                   onClick={() => setTheme("light")}
@@ -403,7 +408,7 @@ export const ConfiguracoesPage = () => {
                   aria-checked={theme === "light"}
                   className={`px-3.5 py-2 rounded-lg text-sm transition-colors flex items-center gap-1.5 ${
                     theme === "light"
-                      ? "bg-white text-zinc-900 shadow-sm font-semibold"
+                      ? "bg-white dark:bg-white/[0.10] text-zinc-900 dark:text-zinc-50 shadow-sm dark:shadow-none font-semibold"
                       : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
                   }`}
                 >
@@ -416,7 +421,7 @@ export const ConfiguracoesPage = () => {
                   aria-checked={theme === "dark"}
                   className={`px-3.5 py-2 rounded-lg text-sm transition-colors flex items-center gap-1.5 ${
                     theme === "dark"
-                      ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm font-semibold"
+                      ? "bg-white dark:bg-white/[0.10] text-zinc-900 dark:text-zinc-50 shadow-sm dark:shadow-none font-semibold"
                       : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
                   }`}
                 >
@@ -461,6 +466,11 @@ export const ConfiguracoesPage = () => {
             </button>
           </Card>
         </div>
+      </div>
+
+      {/* Categorias — acordeão fechado por padrão, como o de baixo */}
+      <div className="mt-5">
+        <GerenciarCategorias />
       </div>
 
       {/* Ações irreversíveis — acordeão fechado por padrão */}
@@ -519,7 +529,7 @@ export const ConfiguracoesPage = () => {
                     value={resetConfirmText}
                     onChange={(e) => setResetConfirmText(e.target.value.toUpperCase())}
                     placeholder="RESETAR"
-                    className="w-full h-11 px-3.5 font-mono text-sm bg-white dark:bg-white/[0.04] border border-amber-300 dark:border-amber-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                    className="w-full h-11 px-3.5 font-mono text-sm bg-white dark:bg-white/[0.04] border border-amber-300 dark:border-amber-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
                   />
                   <div className="flex gap-2 flex-wrap">
                     <button
@@ -557,7 +567,7 @@ export const ConfiguracoesPage = () => {
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
                 placeholder="EXCLUIR"
-                className="w-full h-11 px-3.5 font-mono text-sm bg-white dark:bg-white/[0.04] border border-red-200 dark:border-red-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 mb-3"
+                className="w-full h-11 px-3.5 font-mono text-sm bg-white dark:bg-white/[0.04] border border-red-200 dark:border-red-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 mb-3"
               />
               <button
                 onClick={handleExcluirConta}

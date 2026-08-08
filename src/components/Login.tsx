@@ -139,7 +139,7 @@ function LoginGhostTrace() {
         {GHOST_TRACES.map((g, i) => (
           <span
             key={g.t}
-            className={`absolute font-mono text-xs whitespace-nowrap text-zinc-900/[0.06] trace-drift-${i % 4}`}
+            className={`absolute font-mono text-xs whitespace-nowrap text-zinc-900/[0.06] dark:text-zinc-50/[0.06] trace-drift-${i % 4}`}
             style={{
               left: `${g.x}%`,
               top: `${g.y}%`,
@@ -156,11 +156,11 @@ function LoginGhostTrace() {
         {GHOST_TRACES.map((g) => (
           <span
             key={g.t}
-            className="absolute font-mono text-xs font-semibold whitespace-nowrap text-emerald-600"
+            className="absolute font-mono text-xs font-semibold whitespace-nowrap text-emerald-600 dark:text-emerald-400"
             style={{ left: `${g.x}%`, top: `${g.y}%`, transform: `rotate(${g.r}deg)` }}
           >
             {g.t}
-            <span className="text-emerald-500/70">{" → "}{g.c}</span>
+            <span className="text-emerald-500/70 dark:text-emerald-400/70">{" → "}{g.c}</span>
           </span>
         ))}
       </div>
@@ -403,7 +403,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
   };
 
   return (
-    <div className="login-root relative min-h-screen bg-white flex overflow-hidden" style={{ colorScheme: "light" }}>
+    <div className="login-root relative min-h-screen bg-white dark:bg-app-dark flex overflow-hidden">
       <CursorDot />
       <style>{`
         @keyframes pista-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
@@ -431,8 +431,10 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
         @media (hover: hover) and (pointer: fine) { .login-root, .login-root * { cursor: none !important; } }
       `}</style>
       {/* Jogo de luzes — vários focos esverdeados de intensidade e posição
-          diferentes, espalhados pela página inteira */}
-      <div className="absolute inset-0 pointer-events-none select-none" aria-hidden="true">
+          diferentes, espalhados pela página inteira.
+          Os alfas são calibrados para branco; sobre preto viram manchas
+          cinza-esverdeadas, então o conjunto inteiro recua no escuro. */}
+      <div className="absolute inset-0 pointer-events-none select-none dark:opacity-45" aria-hidden="true">
         <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 10% 10%, rgba(110,231,183,0.20), transparent 45%)" }} />
         <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 85% 30%, rgba(16,185,129,0.16), transparent 50%)" }} />
         <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 25% 90%, rgba(4,120,87,0.14), transparent 50%)" }} />
@@ -449,11 +451,11 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
       <div className="hidden lg:flex lg:w-[46%] relative flex-col justify-between px-14 py-12 overflow-hidden">
         <a href="/" className="reveal-up relative z-10 flex items-center gap-2.5 w-fit rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
           <img src="/favicon-light.png" alt="Hedge" className="w-7 h-7" />
-          <span className="font-display text-base font-bold tracking-tight text-zinc-900">Hedge</span>
+          <span className="font-display text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Hedge</span>
         </a>
 
         <div className="reveal-up relative z-10 max-w-lg" style={{ animationDelay: "70ms" }}>
-          <h2 className="font-display font-bold leading-[1.05] tracking-tight text-zinc-900 text-balance mb-6" style={{ fontSize: "clamp(2.75rem, 4.4vw, 3.75rem)" }}>
+          <h2 className="font-display font-bold leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50 text-balance mb-6" style={{ fontSize: "clamp(2.75rem, 4.4vw, 3.75rem)" }}>
             Seu dinheiro deixa{" "}
             <span className="relative inline-block" style={{ isolation: "isolate" }}>
               <svg
@@ -476,9 +478,9 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
               <span style={{ position: "relative", zIndex: 1 }}>pistas</span>
             </span>
             .<br />
-            <span className="text-emerald-500">Nós revelamos o caminho.</span>
+            <span className="text-emerald-500 dark:text-emerald-400">Nós revelamos o caminho.</span>
           </h2>
-          <p className="text-zinc-600 text-lg leading-relaxed max-w-md">
+          <p className="text-zinc-600 dark:text-zinc-300 text-lg leading-relaxed max-w-md">
             Entenda para onde seu dinheiro vai, identifique padrões e construa hábitos que fazem diferença.
           </p>
         </div>
@@ -486,8 +488,8 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
         <div className="reveal-up relative z-10 grid grid-cols-3 gap-6 pt-8 border-t border-zinc-200/70" style={{ animationDelay: "240ms" }}>
           {HEDGE_STATS.map((s) => (
             <div key={s.label}>
-              <p className="font-display text-xl font-bold text-zinc-900 mb-0.5">{s.value}</p>
-              <p className="text-xs text-zinc-500 leading-snug">{s.label}</p>
+              <p className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-0.5">{s.value}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-snug">{s.label}</p>
             </div>
           ))}
         </div>
@@ -500,19 +502,19 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
         <div className="w-full max-w-sm">
           <button
             onClick={() => navigate("/")}
-            className="reveal-up flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 mb-6 transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 lg:hidden"
+            className="reveal-up flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 mb-6 transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 lg:hidden"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar
           </button>
 
-          <div className="reveal-up bg-white/70 backdrop-blur-xl border border-white/60 shadow-xl shadow-emerald-900/5 rounded-3xl p-5 sm:p-7 lg:p-9" style={{ animationDelay: "80ms" }}>
+          <div className="reveal-up bg-white/70 dark:bg-white/[0.05] backdrop-blur-xl border border-white/60 dark:border-white/[0.09] shadow-xl shadow-emerald-900/5 dark:shadow-black/50 rounded-3xl p-5 sm:p-7 lg:p-9" style={{ animationDelay: "80ms" }}>
             {/* Logo — só aparece sem o painel de marca (mobile/tablet) */}
             <div className="text-center mb-7 lg:hidden">
               <div className="inline-flex items-center justify-center w-9 h-9 mb-3">
                 <img src="/favicon-light.png" alt="Hedge" className="w-9 h-9" />
               </div>
-              <h1 className="font-display text-xl font-bold tracking-tight text-zinc-900">Hedge</h1>
+              <h1 className="font-display text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Hedge</h1>
             </div>
 
             <div className="reveal-up mb-6" style={{ animationDelay: "150ms" }}>
@@ -520,18 +522,18 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                 <button
                   type="button"
                   onClick={() => switchView("login")}
-                  className="flex items-center gap-1 text-zinc-500 hover:text-zinc-900 text-sm mb-4 transition-colors"
+                  className="flex items-center gap-1 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 text-sm mb-4 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Voltar ao login
                 </button>
               )}
-              <h2 className="font-display text-2xl font-bold tracking-tight text-zinc-900">
+              <h2 className="font-display text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
                 {viewMode === "login" && "Bem-vindo de volta"}
                 {viewMode === "signup" && "Crie sua conta"}
                 {viewMode === "forgot" && "Recuperar senha"}
               </h2>
-              <p className="text-zinc-500 text-sm mt-2">
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2">
                 {viewMode === "login" && "Entre para continuar ao seu dashboard."}
                 {viewMode === "signup" && "Leva menos de um minuto, sem cartão de crédito."}
                 {viewMode === "forgot" && "Informe seu email para receber o link de redefinição."}
@@ -548,7 +550,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                     disabled={loading}
                     tabIndex={gisReady ? -1 : 0}
                     aria-hidden={gisReady || undefined}
-                    className="w-full py-3 bg-white border border-zinc-200 text-zinc-700 font-medium rounded-xl hover:bg-zinc-50 hover:border-zinc-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                    className="w-full py-3 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] text-zinc-700 dark:text-zinc-200 font-medium rounded-xl hover:bg-zinc-50 dark:hover:bg-white/[0.08] hover:border-zinc-300 dark:hover:border-white/[0.14] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -578,14 +580,14 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                 {showEmailForm ? (
                   <div className="flex items-center gap-3 my-5">
                     <div className="flex-1 h-px bg-zinc-200" />
-                    <span className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider">Ou continue com email</span>
+                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Ou continue com email</span>
                     <div className="flex-1 h-px bg-zinc-200" />
                   </div>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setShowEmailForm(true)}
-                    className="reveal-up w-full text-center text-sm text-zinc-500 hover:text-zinc-800 transition-colors mt-5"
+                    className="reveal-up w-full text-center text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors mt-5"
                     style={{ animationDelay: "220ms" }}
                   >
                     Continuar com email
@@ -602,7 +604,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
               {/* Nome (apenas signup) */}
               {viewMode === "signup" && (
                 <div>
-                  <label className="block text-sm font-medium text-zinc-600 mb-2">
+                  <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
                     Nome
                   </label>
                   <div className="relative">
@@ -611,7 +613,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                       type="text"
                       value={nome}
                       onChange={(e) => setNome(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-white/80 border border-zinc-200 rounded-xl text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 bg-white/80 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       placeholder="Seu nome"
                     />
                   </div>
@@ -620,7 +622,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium text-zinc-600 mb-2">
+                <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
                   Email
                 </label>
                 <div className="relative">
@@ -629,7 +631,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/80 border border-zinc-200 rounded-xl text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 bg-white/80 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     placeholder="seu@email.com"
                   />
                 </div>
@@ -638,7 +640,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
               {/* Senha */}
               {viewMode !== "forgot" && (
                 <div>
-                  <label className="block text-sm font-medium text-zinc-600 mb-2">
+                  <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
                     Senha
                   </label>
                   <div className="relative">
@@ -647,13 +649,13 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-12 py-3 bg-white/80 border border-zinc-200 rounded-xl text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full pl-10 pr-12 py-3 bg-white/80 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       placeholder="••••••••"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
                     >
                       {showPassword ? (
                         <EyeOff className="w-5 h-5" />
@@ -668,7 +670,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
               {/* Confirmar Senha (apenas signup) */}
               {viewMode === "signup" && (
                 <div>
-                  <label className="block text-sm font-medium text-zinc-600 mb-2">
+                  <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
                     Confirmar Senha
                   </label>
                   <div className="relative">
@@ -677,7 +679,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                       type={showPassword ? "text" : "password"}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-white/80 border border-zinc-200 rounded-xl text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-3 bg-white/80 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       placeholder="••••••••"
                     />
                   </div>
@@ -690,7 +692,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                   <button
                     type="button"
                     onClick={() => switchView("forgot")}
-                    className="text-sm text-emerald-600 hover:text-emerald-700 transition-colors"
+                    className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
                   >
                     Esqueceu a senha?
                   </button>
@@ -701,8 +703,8 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
               {error && (
                 <div className={`rounded-xl p-3 text-sm flex items-start gap-2 ${
                   isBlocked
-                    ? "bg-red-100 border border-red-300 text-red-700"
-                    : "bg-red-50 border border-red-200 text-red-600"
+                    ? "bg-red-100 dark:bg-red-500/15 border border-red-300 dark:border-red-500/30 text-red-700 dark:text-red-400"
+                    : "bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/25 text-red-600 dark:text-red-400"
                 }`}>
                   {isBlocked && <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5" />}
                   <span>{error}</span>
@@ -711,7 +713,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
 
               {/* Sucesso */}
               {success && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-emerald-600 text-sm">
+                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/25 rounded-xl p-3 text-emerald-600 dark:text-emerald-400 text-sm">
                   {success}
                 </div>
               )}
@@ -720,7 +722,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="group w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                className="group w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:ring-offset-app-dark"
               >
                 {loading ? (
                   <>
@@ -740,7 +742,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
             {/* Alternar entre Login e Signup */}
             {viewMode !== "forgot" && (
               <div className="reveal-up mt-6 text-center" style={{ animationDelay: "360ms" }}>
-                <p className="text-zinc-500 text-sm">
+                <p className="text-zinc-500 dark:text-zinc-400 text-sm">
                   {viewMode === "login" ? "Não tem uma conta?" : "Já tem uma conta?"}
                   <button
                     onClick={() =>
@@ -749,7 +751,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                         viewMode === "login"
                       )
                     }
-                    className="ml-2 text-emerald-600 hover:text-emerald-700 font-semibold"
+                    className="ml-2 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-semibold"
                   >
                     {viewMode === "login" ? "Cadastre-se" : "Fazer login"}
                   </button>

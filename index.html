@@ -8,6 +8,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
+    <meta name="theme-color" content="#FAFAFA" />
     <meta
       name="description"
       content="Hedge - Suas contas na régua. Gestão financeira pessoal simplificada."
@@ -32,6 +33,29 @@
     <!-- Geist Mono — números / mono -->
     <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>Hedge</title>
+    <!-- Tema antes do primeiro paint. Sem isto, quem está no escuro vê um
+         flash branco a cada carregamento: o useEffect que aplica .dark só
+         roda depois de o browser já ter pintado o fundo claro do index.css.
+         A lógica de migração é a mesma de src/hooks/useTheme.tsx — se ela
+         mudar lá, muda aqui. -->
+    <script>
+      (function () {
+        try {
+          var MIGRATION_KEY = "theme-migrated-light-v1";
+          var t = localStorage.getItem("theme");
+          if (t === "dark" && !localStorage.getItem(MIGRATION_KEY)) {
+            localStorage.setItem(MIGRATION_KEY, "1");
+            localStorage.setItem("theme", "light");
+            t = "light";
+          }
+          if (t === "dark") {
+            document.documentElement.classList.add("dark");
+            var m = document.querySelector('meta[name="theme-color"]');
+            if (m) m.setAttribute("content", "#0A0A0B");
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
 
   <body>

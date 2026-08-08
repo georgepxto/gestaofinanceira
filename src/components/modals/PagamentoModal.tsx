@@ -45,9 +45,9 @@ export const PagamentoModal: React.FC<PagamentoModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="pagamento-modal-title"
-        className="w-full max-w-[460px]"
+        className="w-full max-w-[460px] shadow-xl dark:shadow-black/60"
       >
-        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+        <div className="p-4 border-b border-zinc-200 dark:border-white/[0.06] flex items-center justify-between">
           <h2 id="pagamento-modal-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
             <Banknote className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             Registrar Pagamento
@@ -73,7 +73,7 @@ export const PagamentoModal: React.FC<PagamentoModalProps> = ({
                 onValorChange(formatCurrencyInput(e.target.value))
               }
               placeholder="0,00"
-              className="w-full h-11 pl-10 pr-3 font-mono tabular-nums bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
+              className="w-full h-11 pl-10 pr-3 font-mono tabular-nums bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
               inputMode="numeric"
             />
           </div>
@@ -93,17 +93,17 @@ export const PagamentoModal: React.FC<PagamentoModalProps> = ({
             value={obsPagamento}
             onChange={(e) => onObsChange(e.target.value)}
             placeholder="Observação (opcional)"
-            className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
+            className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
           />
-          {error && <div className="text-red-600 text-sm">{error}</div>}
+          {error && <div className="text-red-600 dark:text-red-400 text-sm">{error}</div>}
           <div className="flex gap-2">
             <button
               onClick={onClose}
               disabled={saving}
               className={`flex-1 px-4 py-2.5 text-zinc-800 dark:text-zinc-100 rounded-xl font-medium transition-colors text-sm ${
                 saving
-                  ? "bg-zinc-50 dark:bg-white/[0.04] cursor-not-allowed"
-                  : "bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:bg-white/[0.07] dark:hover:bg-white/[0.08]"
+                  ? "bg-zinc-100 dark:bg-white/[0.04] cursor-not-allowed"
+                  : "bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.10]"
               }`}
             >
               Cancelar

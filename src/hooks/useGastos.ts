@@ -10,6 +10,7 @@ import {
   calcularTotalMes,
 } from "../utils/calculations";
 import { CATEGORIA_PADRAO, normalizarCategoria } from "../utils/categories";
+import { categoriaPadraoAtual } from "./useCategorias";
 import { PARCELAS_MAX } from "../utils/constants";
 
 interface UseGastosProps {
@@ -50,7 +51,9 @@ export function useGastos({
     num_parcelas: 1,
     data_inicio: format(new Date(), "yyyy-MM-dd"),
     tipo: "credito",
-    categoria: CATEGORIA_PADRAO,
+    // A lista da pessoa pode não ter mais "Outros" — o formulário nasce na
+    // categoria que ela de fato tem.
+    categoria: categoriaPadraoAtual("gasto"),
     recorrente: false,
     cartao_id: "",
     conta_id: "",
@@ -255,7 +258,7 @@ export function useGastos({
         num_parcelas: 1,
         data_inicio: format(new Date(), "yyyy-MM-dd"),
         tipo: "credito",
-        categoria: CATEGORIA_PADRAO,
+        categoria: categoriaPadraoAtual("gasto"),
         recorrente: false,
         cartao_id: "",
         conta_id: "",
@@ -365,7 +368,7 @@ export function useGastos({
       num_parcelas: 1,
       data_inicio: format(new Date(), "yyyy-MM-dd"),
       tipo: "credito",
-      categoria: CATEGORIA_PADRAO,
+      categoria: categoriaPadraoAtual("gasto"),
       recorrente: false,
       cartao_id: "",
       conta_id: "",

@@ -2,6 +2,8 @@ import { useState, Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { NotificationBell } from "./NotificationBell";
+import { AparecerSeDemorar } from "./BootSplash";
+import { PageLoadingState } from "../ui/AsyncState";
 import {
   TutorialHelpContext,
   type TutorialHelpButtonConfig,
@@ -37,7 +39,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
                   data-tour={helpButton.dataTour}
                   title={helpButton.title}
                   aria-label={helpButton.ariaLabel}
-                  className="flex w-8 h-8 rounded-full border border-zinc-300 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.04] text-zinc-500 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-400 dark:hover:border-emerald-500 items-center justify-center shadow-sm transition-colors"
+                  className="flex w-8 h-8 rounded-full border border-zinc-300 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.04] text-zinc-500 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-400 dark:hover:border-emerald-500 items-center justify-center shadow-sm dark:shadow-none transition-colors"
                 >
                   ?
                 </button>
@@ -49,8 +51,16 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
           <div className="max-w-6xl mx-auto">
             {/* Fronteira de suspense DENTRO do layout: ao carregar o chunk de
                 uma tela, só o conteúdo suspende — a sidebar permanece montada
-                e o indicador consegue viajar em vez de teleportar. */}
-            <Suspense fallback={null}>
+                e o indicador consegue viajar em vez de teleportar.
+
+                O fallback era `null`, o que deixava toda tela que não a de
+                entrada sem retorno nenhum numa espera longa: o usuário olhava
+                uma área de conteúdo vazia sem explicação. `null` continua certo
+                como PRIMEIRO momento — por isso o limiar. Passados 300ms, o
+                skeleton entra no lugar certo, sob o header real e ao lado da
+                sidebar montada; aqui ele é honesto, porque promete conteúdo que
+                vem naquele formato, naquele lugar. */}
+            <Suspense fallback={<AparecerSeDemorar><PageLoadingState /></AparecerSeDemorar>}>
               <Outlet />
             </Suspense>
           </div>

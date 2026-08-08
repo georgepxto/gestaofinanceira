@@ -313,7 +313,34 @@ CREATE POLICY "Users manage own metas" ON metas_gasto
 
 
 -- =====================================================
--- 13. FUNÇÃO: delete_user_account
+-- 13. TABELA: categorias_usuario
+-- Categorias personalizadas de gasto e de receita.
+-- Vazia = usuário nunca personalizou; o app usa a lista
+-- padrão do código. Ver a migração
+-- 20260805_categorias_personalizadas.sql.
+-- =====================================================
+CREATE TABLE IF NOT EXISTS categorias_usuario (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  tipo TEXT NOT NULL CHECK (tipo IN ('gasto', 'receita')),
+  nome TEXT NOT NULL CHECK (btrim(nome) <> ''),
+  ordem INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS categorias_usuario_unicas
+  ON categorias_usuario (user_id, tipo, lower(btrim(nome)));
+CREATE INDEX IF NOT EXISTS categorias_usuario_por_tipo
+  ON categorias_usuario (user_id, tipo, ordem);
+
+ALTER TABLE categorias_usuario ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own categorias" ON categorias_usuario;
+CREATE POLICY "Users manage own categorias" ON categorias_usuario
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+
+-- =====================================================
+-- 14. FUNÇÃO: delete_user_account
 -- Permite que o próprio usuário exclua sua conta
 -- e todos os dados associados.
 -- =====================================================
@@ -335,6 +362,7 @@ BEGIN
   DELETE FROM receitas WHERE user_id = auth.uid();
   DELETE FROM cartoes_credito WHERE user_id = auth.uid();
   DELETE FROM contas_bancarias WHERE user_id = auth.uid();
+  DELETE FROM categorias_usuario WHERE user_id = auth.uid();
   DELETE FROM pessoas WHERE user_id = auth.uid();
 
   -- Deletar o usuário da tabela auth.users

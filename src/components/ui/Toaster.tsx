@@ -28,7 +28,7 @@ export function Toaster() {
         <div
           key={t.id}
           /* ds-ok: toast flutua sobre a tela — sombra elevada e borda própria, não é a superfície assentada do Card */
-          className="animate-in slide-in-from-right-full fade-in duration-500 ease-out fill-mode-forwards bg-white dark:bg-zinc-900 text-zinc-800 dark:text-white shadow-xl shadow-black/10 dark:shadow-black/40 rounded-2xl p-4 flex items-center gap-3 min-w-[280px] max-w-sm pointer-events-auto border border-zinc-100 dark:border-zinc-800 relative z-50 overflow-hidden"
+          className="animate-in slide-in-from-right-full fade-in duration-500 ease-out fill-mode-forwards bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-50 shadow-xl shadow-black/10 dark:shadow-black/60 rounded-2xl p-4 flex items-center gap-3 min-w-[280px] max-w-sm pointer-events-auto border border-zinc-100 dark:border-white/[0.06] relative z-50 overflow-hidden"
         >
           {t.type === 'success' ? (
             <div className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-1.5 rounded-full shrink-0">

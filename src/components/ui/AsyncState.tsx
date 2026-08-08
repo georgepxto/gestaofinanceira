@@ -97,7 +97,7 @@ export function PageEmptyState({ title, description, compact }: BaseProps) {
 export function PageErrorState({ title, description, compact, actionLabel, onAction }: BaseProps & ActionProps) {
   return (
     <StateCard
-      icon={<AlertCircle className="w-6 h-6 text-red-500" />}
+      icon={<AlertCircle className="w-6 h-6 text-red-500 dark:text-red-400" />}
       title={title}
       description={description}
       colorClass="bg-red-100 dark:bg-red-900/30"
@@ -111,7 +111,7 @@ export function PageErrorState({ title, description, compact, actionLabel, onAct
 export function PageSuccessState({ title, description, compact }: BaseProps) {
   return (
     <StateCard
-      icon={<CheckCircle2 className="w-6 h-6 text-emerald-500" />}
+      icon={<CheckCircle2 className="w-6 h-6 text-emerald-500 dark:text-emerald-400" />}
       title={title}
       description={description}
       colorClass="bg-emerald-100 dark:bg-emerald-900/30"

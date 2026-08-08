@@ -205,7 +205,7 @@ export const PessoasPage = () => {
             <button
               onClick={() => setShowAddForm(true)}
               data-tour="devedores-btn-novo"
-              className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+              className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:ring-offset-app-dark"
             >
               <Plus className="w-[18px] h-[18px]" />
               Novo devedor
@@ -251,7 +251,7 @@ export const PessoasPage = () => {
               value={novaPessoa}
               onChange={(e) => setNovaPessoa(e.target.value)}
               placeholder="Nome do devedor"
-              className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
+              className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
               autoFocus
             />
@@ -309,7 +309,7 @@ export const PessoasPage = () => {
                 const larguraDivida = (stats.dividaAberta / escalaS) * 100;
 
                 return (
-                  <div key={pessoa} className="border-b border-zinc-100 dark:border-zinc-800 last:border-b-0">
+                  <div key={pessoa} className="border-b border-zinc-100 dark:border-white/[0.05] last:border-b-0">
                     <div className="grid [grid-template-columns:190px_minmax(120px,1fr)_132px_116px_34px] gap-4 items-center py-3.5 hover:bg-app-row dark:hover:bg-white/[0.02] transition-colors">
                       {/* Pessoa */}
                       <div className="flex items-center gap-3 min-w-0">
@@ -378,7 +378,7 @@ export const PessoasPage = () => {
                                   const pago = Math.max(d.valor_original - d.valor_atual, 0);
                                   const pctPago = d.valor_original > 0 ? (pago / d.valor_original) * 100 : 0;
                                   return (
-                                    <div key={d.id} className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] rounded-xl p-3.5">
+                                    <div key={d.id} className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.05] rounded-xl p-3.5">
                                       <div className="flex items-center justify-between gap-3">
                                         <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{d.descricao}</p>
                                         <p className="font-mono valor text-sm font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">{formatCurrency(d.valor_atual)}</p>
@@ -402,7 +402,7 @@ export const PessoasPage = () => {
                             ) : (
                               <div className="space-y-2">
                                 {parcelasPessoa.map(({ gasto, parcela_atual, valor_parcela }) => (
-                                  <div key={gasto.id} className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] rounded-xl p-3.5 flex items-center justify-between gap-3">
+                                  <div key={gasto.id} className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.05] rounded-xl p-3.5 flex items-center justify-between gap-3">
                                     <div className="min-w-0">
                                       <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{gasto.descricao}</p>
                                       <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
