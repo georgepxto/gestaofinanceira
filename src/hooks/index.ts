@@ -1,5 +1,6 @@
 export { useAuth } from "./useAuth";
 export { useFocusTrap } from "./useFocusTrap";
+export { useEsperaLonga } from "./useEsperaLonga";
 export { useModals } from "./useModals";
 export { usePessoas } from "./usePessoas";
 export { useObservacoes } from "./useObservacoes";
@@ -8,6 +9,7 @@ export { useGastos } from "./useGastos";
 export { useSaldosDevedores } from "./useSaldosDevedores";
 export { useMeusGastos } from "./useMeusGastos";
 export { useCartoes } from "./useCartoes";
+export { useCategorias, carregarCategorias, limparCategorias, contarUsosCategoria } from "./useCategorias";
 export { useFeatureFlags } from "./useFeatureFlags";
 export { useAdmin } from "./useAdmin";
 export { useGuidedTour } from "./useGuidedTour";

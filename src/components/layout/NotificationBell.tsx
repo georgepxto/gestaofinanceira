@@ -14,25 +14,30 @@ import {
 } from "lucide-react";
 import { useAlertas, type Alerta } from "../../hooks/useAlertas";
 
+// A cadeia de `if` decide por substring do título — a ordem é significativa,
+// reordenar troca qual ícone aparece.
 const AlertIcon = ({ alerta }: { alerta: Alerta }) => {
   const baseClass = "w-4 h-4 flex-shrink-0";
+  const alerta_ = "text-amber-600 dark:text-amber-400";
+  const perigo = "text-red-600 dark:text-red-400";
+  const positivo = "text-emerald-600 dark:text-emerald-400";
 
   if (alerta.titulo.includes("subiu"))
-    return <TrendingUp className={`${baseClass} text-amber-600`} />;
+    return <TrendingUp className={`${baseClass} ${alerta_}`} />;
   if (alerta.titulo.includes("receita") || alerta.titulo.includes("gastou"))
-    return <DollarSign className={`${baseClass} text-amber-600`} />;
+    return <DollarSign className={`${baseClass} ${alerta_}`} />;
   if (alerta.titulo.includes("parcela"))
-    return <PartyPopper className={`${baseClass} text-emerald-600`} />;
+    return <PartyPopper className={`${baseClass} ${positivo}`} />;
   if (alerta.titulo.includes("Meta"))
-    return <ShieldAlert className={`${baseClass} text-red-600`} />;
+    return <ShieldAlert className={`${baseClass} ${perigo}`} />;
   if (alerta.titulo.includes("superam"))
-    return <Flame className={`${baseClass} text-red-600`} />;
+    return <Flame className={`${baseClass} ${perigo}`} />;
 
   if (alerta.tipo === "danger")
-    return <AlertTriangle className={`${baseClass} text-red-500`} />;
+    return <AlertTriangle className={`${baseClass} ${perigo}`} />;
   if (alerta.tipo === "warning")
-    return <AlertCircle className={`${baseClass} text-amber-500`} />;
-  return <Info className={`${baseClass} text-emerald-600`} />;
+    return <AlertCircle className={`${baseClass} ${alerta_}`} />;
+  return <Info className={`${baseClass} ${positivo}`} />;
 };
 
 export const NotificationBell = () => {
@@ -124,8 +129,8 @@ export const NotificationBell = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-white/[0.04]">
+        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.06] rounded-xl shadow-xl dark:shadow-black/60 z-50 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-white/[0.05] bg-zinc-50 dark:bg-white/[0.04]">
             <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
               <Bell className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
               Notificações
@@ -167,7 +172,7 @@ export const NotificationBell = () => {
               alertasVisiveis.map((alerta, i) => (
                 <div
                   key={i}
-                  className={`px-4 py-3 border-b border-zinc-100 dark:border-zinc-800 flex items-start gap-3 hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors ${
+                  className={`px-4 py-3 border-b border-zinc-100 dark:border-white/[0.05] flex items-start gap-3 hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors ${
                     alerta.tipo === "danger"
                       ? "bg-red-50/50 dark:bg-red-950/20"
                       : alerta.tipo === "warning"

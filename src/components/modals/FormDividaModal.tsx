@@ -47,16 +47,16 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="form-divida-title"
-        className="w-full max-w-[460px] max-h-[88vh] overflow-y-auto"
+        className="w-full max-w-[460px] max-h-[88vh] overflow-y-auto shadow-xl dark:shadow-black/60"
       >
         {/* Header do Modal */}
-        <div className="sticky top-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur px-6 py-5 border-b border-zinc-100 dark:border-white/[0.05] flex items-center justify-between z-10">
           <div>
             <Rotulo>
               Cobranças
             </Rotulo>
             <h2 id="form-divida-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-amber-500" />
+              <Clock className="w-5 h-5 text-amber-500 dark:text-amber-400" />
               Nova Cobrança em Aberto
             </h2>
           </div>
@@ -72,7 +72,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
         {/* Formulário */}
         <div className="p-4 space-y-4">
           <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg p-3">
-            <p className="text-sm text-amber-700 dark:text-amber-500">
+            <p className="text-sm text-amber-700 dark:text-amber-400">
               Use esta seção para registrar valores a receber que não são
               empréstimos do mês atual. Ex: alguém te deve e vai pagar aos poucos.
             </p>
@@ -89,7 +89,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
               onChange={(e) =>
                 onFormChange({ ...formData, pessoa: e.target.value })
               }
-              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
+              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
             >
               <option value="">Selecione...</option>
               {pessoas.map((pessoa) => (
@@ -113,7 +113,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
                 onFormChange({ ...formData, descricao: e.target.value })
               }
               placeholder="Ex: Empréstimo de Janeiro, Dívida do carro..."
-              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400"
+              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400"
             />
           </div>
 
@@ -137,7 +137,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
                   })
                 }
                 placeholder="0,00"
-                className="w-full h-11 pl-12 pr-3.5 font-mono tabular-nums border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400"
+                className="w-full h-11 pl-12 pr-3.5 font-mono tabular-nums border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400"
                 inputMode="numeric"
               />
             </div>
@@ -158,8 +158,8 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
               disabled={saving}
               className={`flex-1 px-4 py-3 border text-zinc-600 dark:text-zinc-400 rounded-xl transition-colors ${
                 saving
-                  ? "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-white/[0.04] cursor-not-allowed"
-                  : "border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-white/[0.06]"
+                  ? "border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.04] cursor-not-allowed"
+                  : "border-zinc-200 dark:border-white/[0.06] hover:bg-zinc-50 dark:hover:bg-white/[0.06]"
               }`}
             >
               Cancelar

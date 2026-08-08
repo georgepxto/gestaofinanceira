@@ -11,7 +11,8 @@ import {
   PARCELAS_PRESET_MAX,
   PARCELAS_MAX,
 } from "../../utils/constants";
-import { CATEGORIAS } from "../../utils/categories";
+import { comCategoriaAtual } from "../../utils/categories";
+import { useCategorias } from "../../hooks/useCategorias";
 import { useFocusTrap } from "../../hooks";
 import { Rotulo } from "../ui/Rotulo";
 import { Card } from "../ui/Card";
@@ -50,6 +51,11 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
     String(formData.num_parcelas)
   );
   const dialogRef = useFocusTrap(onClose, show);
+  const { categorias } = useCategorias("gasto");
+  // Gasto gravado numa categoria que a pessoa excluiu depois continua listado —
+  // sem isto o select abriria vazio e o próximo salvamento trocaria a categoria
+  // dele sem ninguém pedir.
+  const categoriasDoSelect = comCategoriaAtual(categorias, formData.categoria);
 
   React.useEffect(() => {
     if (show) {
@@ -119,10 +125,10 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="form-gasto-title"
-        className="w-full max-w-[460px] max-h-[88vh] overflow-y-auto"
+        className="w-full max-w-[460px] max-h-[88vh] overflow-y-auto shadow-xl dark:shadow-black/60"
       >
         {/* Header do Modal */}
-        <div className="sticky top-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur px-6 py-5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur px-6 py-5 border-b border-zinc-100 dark:border-white/[0.05] flex items-center justify-between z-10">
           <div>
             <Rotulo>
               Lançamentos
@@ -185,7 +191,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                 name="cartao_id"
                 value={formData.cartao_id}
                 onChange={handleInputChange}
-                className="w-full h-11 px-3.5 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
+                className="w-full h-11 px-3.5 border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
               >
                 <option value="">Selecione um cartão</option>
                 {cartoes.map((c) => (
@@ -207,7 +213,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                 name="conta_id"
                 value={formData.conta_id}
                 onChange={handleInputChange}
-                className="w-full h-11 px-3.5 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
+                className="w-full h-11 px-3.5 border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
               >
                 <option value="">Selecione uma conta (opcional)</option>
                 {contas.map((c) => (
@@ -235,7 +241,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               value={formData.descricao}
               onChange={handleInputChange}
               placeholder="Ex: iPhone 15, Supermercado..."
-              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400"
+              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400"
               required
             />
           </div>
@@ -253,7 +259,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               name="pessoa"
               value={formData.pessoa}
               onChange={handleInputChange}
-              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
+              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
               required
             >
               <option value="">Selecione</option>
@@ -281,15 +287,18 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               name="categoria"
               value={formData.categoria}
               onChange={handleInputChange}
-              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
+              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
               required
             >
-              {CATEGORIAS.map((cat) => (
+              {categoriasDoSelect.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat}
                 </option>
               ))}
             </select>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              Crie ou renomeie categorias em Configurações
+            </p>
           </div>
 
           {/* Valor */}
@@ -311,7 +320,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                 value={formData.valor_total}
                 onChange={handleInputChange}
                 placeholder="0,00"
-                className="w-full h-11 pl-12 pr-3.5 font-mono tabular-nums border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400"
+                className="w-full h-11 pl-12 pr-3.5 font-mono tabular-nums border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400"
                 inputMode="numeric"
                 required
               />
@@ -319,7 +328,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
           </div>
 
           {/* Toggle Gasto Fixo Mensal */}
-          <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-white/[0.04] rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-white/[0.04] rounded-lg border border-zinc-200 dark:border-white/[0.06]">
             <div>
               <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Gasto Fixo Mensal</span>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">Este gasto se repete todo mês</p>
@@ -362,7 +371,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               }
               onChange={handleInputChange}
               disabled={formData.recorrente}
-              className={`w-full h-11 px-3.5 font-mono tabular-nums border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100 ${
+              className={`w-full h-11 px-3.5 font-mono tabular-nums border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100 ${
                 formData.recorrente ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
@@ -385,7 +394,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
                   value={customParcelasInput}
                   onChange={handleCustomParcelasChange}
                   onBlur={handleCustomParcelasBlur}
-                  className="w-full h-11 px-3.5 font-mono tabular-nums border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
+                  className="w-full h-11 px-3.5 font-mono tabular-nums border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
                 />
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                   Informe entre 1x e {PARCELAS_MAX}x.
@@ -414,7 +423,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               name="data_inicio"
               value={formData.data_inicio}
               onChange={handleInputChange}
-              className="w-full h-11 px-3.5 font-mono tabular-nums border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
+              className="w-full h-11 px-3.5 font-mono tabular-nums border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
               required
             />
           </div>
@@ -446,7 +455,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors"
+              className="flex-1 px-4 py-3 border border-zinc-200 dark:border-white/[0.06] text-zinc-600 dark:text-zinc-400 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors"
             >
               Cancelar
             </button>

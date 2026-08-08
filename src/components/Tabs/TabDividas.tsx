@@ -90,7 +90,7 @@ export function TabDividas({
             {filtroPessoaDivida && (
               <button
                 onClick={() => setFiltroPessoaDivida("")}
-                className="ml-2 underline text-emerald-600 hover:text-emerald-700"
+                className="ml-2 underline text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300"
               >
                 Ver todos
               </button>
@@ -212,7 +212,7 @@ export function TabDividas({
               <div className="text-center mt-2">
                 <button
                   onClick={() => setFiltroPessoaDivida("")}
-                  className="text-emerald-600 hover:underline text-sm"
+                  className="text-emerald-600 dark:text-emerald-400 hover:underline text-sm"
                 >
                   Limpar filtro
                 </button>
@@ -229,7 +229,7 @@ export function TabDividas({
               const dataQuitacao = quitada && ultimoPagamento ? ultimoPagamento.data : null;
 
               return (
-                <li key={divida.id} className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] rounded-xl p-3.5">
+                <li key={divida.id} className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.05] rounded-xl p-3.5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
@@ -268,7 +268,7 @@ export function TabDividas({
                           <summary className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300">
                             ver histórico ({divida.historico.length} {divida.historico.length === 1 ? "pagamento" : "pagamentos"})
                           </summary>
-                          <ul className="mt-2 space-y-1.5 pl-3 border-l-2 border-zinc-100 dark:border-zinc-800">
+                          <ul className="mt-2 space-y-1.5 pl-3 border-l-2 border-zinc-100 dark:border-white/[0.05]">
                             {divida.historico.map((pag) => (
                               <li
                                 key={pag.id}

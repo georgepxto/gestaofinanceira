@@ -9,7 +9,8 @@ import {
 import type { MeuGasto, MeuGastoForm, CartaoCredito } from "../types";
 import { formatCurrencyValue, parseCurrency } from "../utils/calculations";
 import { PARCELAS_MAX } from "../utils/constants";
-import { CATEGORIA_PADRAO, normalizarCategoria } from "../utils/categories";
+import { normalizarCategoria } from "../utils/categories";
+import { categoriaPadraoAtual } from "./useCategorias";
 
 // (helper gerarId removed - not needed)
 
@@ -60,8 +61,8 @@ async function criarLancamentoEmprestimoDoMes(
     data_inicio: dataInicio,
     tipo: "credito",
     // O empréstimo em si já é a entidade (Dívidas / Saldos Devedores); sem
-    // categoria escolhida, o gasto espelhado cai no padrão.
-    categoria: categoriaGasto || CATEGORIA_PADRAO,
+    // categoria escolhida, o gasto espelhado cai no padrão da lista da pessoa.
+    categoria: categoriaGasto || categoriaPadraoAtual("gasto"),
     recorrente: false,
     cartao_id: undefined,
     conta_id: undefined,

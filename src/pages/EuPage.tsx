@@ -225,7 +225,7 @@ export const EuPage = () => {
             <button
               onClick={() => setShowFormMeuGasto(true)}
               data-tour="eu-btn-novo"
-              className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+              className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:ring-offset-app-dark"
             >
               <Plus className="w-[18px] h-[18px]" />
               Novo gasto

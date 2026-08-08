@@ -195,6 +195,20 @@ export const DashboardPage = () => {
   const chartGrid = isDark ? "rgba(255,255,255,0.07)" : "#F4F4F5";
   const chartAxis = isDark ? "#71717A" : "#A1A1AA";
 
+  // A série secundária é neutra: precisa recuar do fundo, e "recuar" troca de
+  // direção entre os temas — zinc-300 sobre branco, zinc-600 sobre preto. Com o
+  // valor claro fixo ela ficava mais chamativa que a série principal em
+  // esmeralda, invertendo a hierarquia do gráfico.
+  const chartNeutro = isDark ? "#52525B" : "#D4D4D8";
+
+  // Esmeralda também sobe um degrau no escuro: emerald-700 sobre preto vira
+  // verde barroso e o destaque do mês corrente se perde.
+  const chartBarra = isDark ? "#10B981" : "#059669";       // emerald-500 / 600
+  const chartBarraAtual = isDark ? "#34D399" : "#047857";  // emerald-400 / 700
+
+  // 18% de esmeralda quase não aparece sobre preto.
+  const chartAreaTopo = isDark ? 0.28 : 0.18;
+
   const tooltipStyle = useMemo(() => isDark
     ? { backgroundColor: "#18181B", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 4px 24px -4px rgba(0,0,0,0.5)", fontSize: "12px", color: "#FAFAFA" }
     : { backgroundColor: "#FFFFFF", border: "1px solid #E4E4E7", borderRadius: "10px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", fontSize: "12px" },
@@ -614,7 +628,7 @@ export const DashboardPage = () => {
               {/* Piso de 172px: em Geist Mono 22px o valor mede ~158, e `.valor`
                   não quebra linha — a 140 ele vazava por cima do vizinho na largura
                   em que cabiam exatamente três colunas. */}
-              <div className="border-t border-zinc-100 dark:border-zinc-800 mt-5 pt-5 grid gap-x-6 gap-y-4 [grid-template-columns:repeat(auto-fit,minmax(172px,1fr))]">
+              <div className="border-t border-zinc-100 dark:border-white/[0.05] mt-5 pt-5 grid gap-x-6 gap-y-4 [grid-template-columns:repeat(auto-fit,minmax(172px,1fr))]">
                 <div className="min-w-0" data-tour="card-saldo-total-mini">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Saldo total</p>
                   <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.saldoTotal)}</Valor>
@@ -662,7 +676,7 @@ export const DashboardPage = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex justify-between items-center mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex justify-between items-center mt-5 pt-4 border-t border-zinc-100 dark:border-white/[0.05]">
                 <span className="text-zinc-500 dark:text-zinc-400 text-sm">Sobra mensal</span>
                 <Valor porte="medio" className={sobraMensal >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
                   {sobraMensal >= 0 ? '+' : ''}{formatCurrency(sobraMensal)}
@@ -698,7 +712,7 @@ export const DashboardPage = () => {
                   />
                   <Bar dataKey="meusGastos" radius={[6, 6, 0, 0]}>
                     {data.tendenciaMensal.map((_, index) => (
-                      <Cell key={`cell-mes-${index}`} fill={index === data.tendenciaMensal.length - 1 ? "#047857" : "#059669"} />
+                      <Cell key={`cell-mes-${index}`} fill={index === data.tendenciaMensal.length - 1 ? chartBarraAtual : chartBarra} />
                     ))}
                     {/* Valor do mês atual acima da barra */}
                     <LabelList
@@ -712,7 +726,7 @@ export const DashboardPage = () => {
                             x={x + width / 2}
                             y={y - 6}
                             textAnchor="middle"
-                            fill="#047857"
+                            fill={chartBarraAtual}
                             fontSize={11}
                             fontFamily="Geist Mono, monospace"
                             fontWeight={600}
@@ -742,7 +756,7 @@ export const DashboardPage = () => {
             <>
               <div>
                 {data.top5MeusGastos.slice(0, 5).map((gasto, i) => (
-                  <div key={i} className="flex items-center gap-3 py-3 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0">
+                  <div key={i} className="flex items-center gap-3 py-3 border-b border-zinc-100 dark:border-white/[0.05] last:border-b-0">
                     <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
                       gasto.categoria.toLowerCase().includes('fixo') ? 'bg-zinc-300' : 'bg-emerald-500'
                     }`} />
@@ -756,7 +770,7 @@ export const DashboardPage = () => {
                   </div>
                 ))}
               </div>
-              <Link to="/gastos/lancamentos" className="inline-block text-[13px] font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 mt-3">
+              <Link to="/gastos/lancamentos" className="inline-block text-[13px] font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 mt-3">
                 Ver todos os gastos →
               </Link>
             </>
@@ -875,11 +889,11 @@ export const DashboardPage = () => {
               <AreaChart data={data.tendenciaMensal}>
                 <defs>
                   <linearGradient id="colorMeus" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.18}/>
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={chartAreaTopo}/>
                     <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />
                 <XAxis dataKey="mes" stroke={chartAxis} fontSize={11} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
                 <YAxis stroke={chartAxis} fontSize={10} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
                 <Tooltip
@@ -888,8 +902,8 @@ export const DashboardPage = () => {
                   itemStyle={tooltipItemStyle}
                   formatter={(value: unknown, name: unknown) => [formatCurrency(Number(value) || 0), name === 'meusGastos' ? 'Meus gastos' : 'Compartilhados']}
                 />
-                <Area type="monotone" dataKey="meusGastos" stroke="#059669" fillOpacity={1} fill="url(#colorMeus)" strokeWidth={2.5} dot={{ r: 3, fill: '#059669' }} />
-                <Area type="monotone" dataKey="compartilhados" stroke="#D4D4D8" strokeDasharray="5 4" fill="none" strokeWidth={2} dot={{ r: 3, fill: '#D4D4D8' }} />
+                <Area type="monotone" dataKey="meusGastos" stroke={chartBarra} fillOpacity={1} fill="url(#colorMeus)" strokeWidth={2.5} dot={{ r: 3, fill: chartBarra }} />
+                <Area type="monotone" dataKey="compartilhados" stroke={chartNeutro} strokeDasharray="5 4" fill="none" strokeWidth={2} dot={{ r: 3, fill: chartNeutro }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

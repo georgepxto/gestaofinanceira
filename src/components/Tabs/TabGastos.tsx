@@ -209,7 +209,7 @@ export function TabGastos({
                 )}
 
                 {/* Rodapé: nota + ações */}
-                <div className="border-t border-zinc-100 dark:border-zinc-800 mt-4 pt-3 flex items-center justify-between gap-3">
+                <div className="border-t border-zinc-100 dark:border-white/[0.05] mt-4 pt-3 flex items-center justify-between gap-3">
                   {/* A frase é montada como string, então quebra em duas linhas em vez de
                       truncar — esconder metade de um valor é pior que ganhar altura. */}
                   <p
@@ -342,9 +342,9 @@ export function TabGastos({
                     onChange={(e) => setFiltroDiaGasto(e.target.value)}
                     max={format(mesVisualizacao, "yyyy-MM") + "-31"}
                     min={format(mesVisualizacao, "yyyy-MM") + "-01"}
-                    className="h-11 px-3.5 pl-9 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-[13px] font-mono tabular-nums text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] dark:[color-scheme:dark]"
+                    className="h-11 px-3.5 pl-9 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-[13px] font-mono tabular-nums text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] dark:[color-scheme:dark]"
                   />
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600 dark:text-emerald-500 pointer-events-none" />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600 dark:text-emerald-400 pointer-events-none" />
                 </div>
                 {filtroDiaGasto && (
                   <button onClick={() => setFiltroDiaGasto("")} className={chipClasse(false)}>
@@ -401,7 +401,7 @@ export function TabGastos({
                         ({ gasto, parcela_atual, valor_parcela }) => (
                           <li
                             key={gasto.id}
-                            className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] rounded-xl p-3.5"
+                            className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.05] rounded-xl p-3.5"
                           >
                             <div className="flex items-center justify-between gap-4">
                               <div className="flex-1 min-w-0">

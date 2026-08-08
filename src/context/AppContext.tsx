@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { addMonths, subMonths } from "date-fns";
 import {
   useAuth,
@@ -10,6 +10,8 @@ import {
   useSaldosDevedores,
   useMeusGastos,
   useCartoes,
+  carregarCategorias,
+  limparCategorias,
 } from "../hooks";
 import { useFeatureFlags } from "../hooks/useFeatureFlags";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -192,6 +194,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { user, authLoading, handleLogin, handleSignUp, handleLogout } = useAuth();
 
   const { isAdmin, isActive, features, loading: featuresLoading } = useFeatureFlags({ userId: user?.id });
+
+  // As categorias personalizadas vivem num store de módulo (useCategorias) —
+  // formulários, metas e configurações assinam direto, sem prop drilling. Aqui
+  // só amarramos o ciclo de vida ao login: carrega ao entrar, limpa ao sair
+  // para a lista de um usuário não aparecer na sessão do próximo.
+  useEffect(() => {
+    if (!user) {
+      limparCategorias();
+      return;
+    }
+    carregarCategorias();
+  }, [user]);
 
   const { modalFeedback, setModalFeedback, modalConfirm, setModalConfirm } = useModals();
 

@@ -211,9 +211,9 @@ export function TabMeuGasto({
                     onChange={(e) => setFiltroDiaMeuGasto(e.target.value)}
                     max={format(mesVisualizacao, "yyyy-MM") + "-31"}
                     min={format(mesVisualizacao, "yyyy-MM") + "-01"}
-                    className="w-full h-11 px-3.5 pl-10 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-mono tabular-nums text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] dark:[color-scheme:dark]"
+                    className="w-full h-11 px-3.5 pl-10 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm font-mono tabular-nums text-zinc-800 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] dark:[color-scheme:dark]"
                   />
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600 dark:text-emerald-500 pointer-events-none" />
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600 dark:text-emerald-400 pointer-events-none" />
                 </div>
                 {filtroDiaMeuGasto && (
                   <button onClick={() => setFiltroDiaMeuGasto("")} className={chipClasse(false)}>
@@ -245,7 +245,7 @@ export function TabMeuGasto({
                       // empilhar `opacity` por cima derrubaria o contraste.
                       <div
                         key={gasto.id}
-                        className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.06] rounded-xl p-3.5 flex items-center gap-3"
+                        className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.05] rounded-xl p-3.5 flex items-center gap-3"
                       >
                         <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
                           <Repeat className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -327,7 +327,7 @@ export function TabMeuGasto({
 
           {gastosFiltrados.length === 0 ? (
             <div className="text-center py-8">
-              <DollarSign className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-600 mb-3" />
+              <DollarSign className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-500 mb-3" />
               <p className="text-zinc-500 dark:text-zinc-400">
                 Nenhum gasto registrado
                 {filtroCategoriaMeuGasto ? ` (${filtroCategoriaMeuGasto})` : ""}
@@ -356,7 +356,7 @@ export function TabMeuGasto({
                   <div key={dia}>
                     {/* Cabeçalho do dia */}
                     <div className="flex items-center gap-2 mb-2.5">
-                      <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-500">
+                      <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                         Dia {parseInt(dia, 10)}
                       </span>
                       <div className="flex-1 h-px bg-zinc-100 dark:bg-white/[0.04]"></div>
@@ -388,7 +388,7 @@ export function TabMeuGasto({
                             className={`rounded-xl border p-3.5 transition-colors ${
                               gasto.categoria === "divida"
                                 ? "bg-amber-50/60 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50"
-                                : "bg-app-row dark:bg-white/[0.03] border-zinc-100 dark:border-white/[0.06]"
+                                : "bg-app-row dark:bg-white/[0.03] border-zinc-100 dark:border-white/[0.05]"
                             }`}
                           >
                             <div className="flex items-center gap-3">
@@ -406,7 +406,7 @@ export function TabMeuGasto({
                                   <span className={`block w-[26px] h-[26px] rounded-lg border-2 transition-colors ${
                                     gasto.categoria === "divida"
                                       ? "border-amber-400 hover:border-amber-500"
-                                      : "border-zinc-300 dark:border-zinc-600 hover:border-emerald-400"
+                                      : "border-zinc-300 dark:border-white/[0.09] hover:border-emerald-400"
                                   }`} />
                                 )}
                               </button>

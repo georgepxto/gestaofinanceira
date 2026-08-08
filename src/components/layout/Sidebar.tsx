@@ -159,7 +159,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   return (
     <>
       {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-white/[0.06] z-40 flex items-center justify-between px-4 shadow-sm">
+      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-white/[0.06] z-40 flex items-center justify-between px-4 shadow-sm dark:shadow-none">
         <div className="flex items-center">
           <button
             onClick={() => setIsOpen(true)}
@@ -181,7 +181,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
               data-tour={helpButton.dataTour}
               title={helpButton.title}
               aria-label={helpButton.ariaLabel}
-              className="flex w-8 h-8 rounded-full border border-zinc-300 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.04] text-zinc-500 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-400 dark:hover:border-emerald-500 items-center justify-center shadow-sm transition-colors"
+              className="flex w-8 h-8 rounded-full border border-zinc-300 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.04] text-zinc-500 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-400 dark:hover:border-emerald-500 items-center justify-center shadow-sm dark:shadow-none transition-colors"
             >
               ?
             </button>
@@ -277,7 +277,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
 
           {/* Cartão do usuário (logout embutido) */}
           <div
-            className={`flex items-center gap-3 p-2.5 mt-1.5 bg-white dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.06] rounded-xl ${
+            className={`flex items-center gap-3 p-2.5 mt-1.5 bg-white dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.05] rounded-xl ${
               isCollapsed ? "md:justify-center md:p-2" : ""
             }`}
           >

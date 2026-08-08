@@ -1,6 +1,7 @@
-// Categorias de receitas/ganhos
+// Categorias de receitas/ganhos — o PADRÃO. Personalizáveis em Configurações;
+// quem decide qual lista está valendo é `useCategorias`.
 
-export const CATEGORIAS_RECEITA = [
+export const CATEGORIAS_RECEITA_PADRAO = [
   "Salário",
   "Freelancer",
   "Investimentos",

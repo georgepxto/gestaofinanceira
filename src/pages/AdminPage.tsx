@@ -411,7 +411,7 @@ export const AdminPage = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por nome ou email..."
-                className="w-full h-11 pl-10 pr-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
+                className="w-full h-11 pl-10 pr-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
               />
             </div>
             <div className="flex items-center gap-3 flex-wrap">
@@ -451,7 +451,7 @@ export const AdminPage = () => {
               <div className="overflow-x-auto">
                 <div className="min-w-[820px]">
                   {/* Cabeçalho */}
-                  <div className="grid [grid-template-columns:minmax(200px,1fr)_120px_120px_128px_150px] gap-3 items-center pb-2 border-b border-zinc-200 dark:border-zinc-800">
+                  <div className="grid [grid-template-columns:minmax(200px,1fr)_120px_120px_128px_150px] gap-3 items-center pb-2 border-b border-zinc-200 dark:border-white/[0.06]">
                     <Rotulo as="span">Usuário</Rotulo>
                     <Rotulo as="span">Criada</Rotulo>
                     <Rotulo as="span">Último acesso</Rotulo>
@@ -461,7 +461,7 @@ export const AdminPage = () => {
                   {filteredUsers.map((user) => (
                     <div
                       key={user.id}
-                      className={`grid [grid-template-columns:minmax(200px,1fr)_120px_120px_128px_150px] gap-3 items-center py-3 border-b border-zinc-100 dark:border-zinc-800 last:border-b-0 hover:bg-app-row dark:hover:bg-white/[0.02] transition-colors ${
+                      className={`grid [grid-template-columns:minmax(200px,1fr)_120px_120px_128px_150px] gap-3 items-center py-3 border-b border-zinc-100 dark:border-white/[0.05] last:border-b-0 hover:bg-app-row dark:hover:bg-white/[0.02] transition-colors ${
                         expandedUser === user.id ? "bg-emerald-50/40 dark:bg-emerald-950/10" : ""
                       }`}
                     >
@@ -576,7 +576,7 @@ export const AdminPage = () => {
                 const user = users.find((u) => u.id === expandedUser);
                 if (!user || user.role === "admin") return null;
                 return (
-                  <div className="mt-4 border-t border-zinc-100 dark:border-zinc-800 pt-4">
+                  <div className="mt-4 border-t border-zinc-100 dark:border-white/[0.05] pt-4">
                     <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
                       <h3 className="font-display font-bold text-zinc-900 dark:text-zinc-100">
                         Permissões de {user.nome || user.email}
@@ -644,7 +644,7 @@ export const AdminPage = () => {
                         </div>
 
                         {/* Rodapé */}
-                        <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                        <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-zinc-100 dark:border-white/[0.05]">
                           <button
                             onClick={() => setExpandedUser(null)}
                             className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors"
@@ -722,7 +722,7 @@ export const AdminPage = () => {
                 {/* Novos Usuários */}
                 <Card>
                   <h3 className="font-display font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
-                    <TrendingUp className="w-5 h-5 text-emerald-500" />
+                    <TrendingUp className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
                     Novos Cadastros
                   </h3>
                   <div className="space-y-3">
@@ -791,7 +791,7 @@ export const AdminPage = () => {
               {/* Gráfico de Cadastros por Dia */}
               <Card>
                 <h3 className="font-display font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
-                  <Calendar className="w-5 h-5 text-emerald-500" />
+                  <Calendar className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
                   Novos Cadastros por Dia (últimos 30 dias)
                 </h3>
 
@@ -867,7 +867,7 @@ export const AdminPage = () => {
 
           {loadingInactive ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+              <Loader2 className="w-8 h-8 animate-spin text-amber-500 dark:text-amber-400" />
             </div>
           ) : inactiveUsers.length === 0 ? (
             <PageSuccessState
@@ -877,14 +877,14 @@ export const AdminPage = () => {
           ) : (
             <div className="space-y-2">
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                <AlertTriangle className="w-4 h-4 inline mr-1 text-amber-500" />
+                <AlertTriangle className="w-4 h-4 inline mr-1 text-amber-500 dark:text-amber-400" />
                 {inactiveUsers.length} usuário{inactiveUsers.length > 1 ? "s" : ""} inativo{inactiveUsers.length > 1 ? "s" : ""} há mais de {inactiveDays} dias
               </p>
               {inactiveUsers.map((iu) => (
                 <div
                   key={iu.id}
                   /* ds-ok: card de cor própria — a borda âmbar comunica estado, é a exceção prevista no Card */
-                  className="bg-white dark:bg-zinc-900 rounded-2xl border border-amber-200 dark:border-amber-900/50 shadow-sm p-4 flex items-center gap-4"
+                  className="bg-white dark:bg-zinc-900 rounded-2xl border border-amber-200 dark:border-amber-900/50 shadow-sm dark:shadow-none p-4 flex items-center gap-4"
                 >
                   <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center flex-shrink-0">
                     <UserMinus className="w-5 h-5 text-amber-600 dark:text-amber-400" />
@@ -977,7 +977,7 @@ export const AdminPage = () => {
             />
           ) : (
             <Card padding="nenhum" className="overflow-hidden">
-              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              <div className="divide-y divide-zinc-100 dark:divide-white/[0.05]">
                 {activityLogs.map((log) => (
                   <LogRow key={log.id} log={log} formatDate={formatDate} />
                 ))}

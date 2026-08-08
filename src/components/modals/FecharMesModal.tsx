@@ -48,9 +48,9 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="fechar-mes-modal-title"
-        className="w-full max-w-[460px]"
+        className="w-full max-w-[460px] shadow-xl dark:shadow-black/60"
       >
-        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+        <div className="p-4 border-b border-zinc-200 dark:border-white/[0.06] flex items-center justify-between">
           <h2 id="fechar-mes-modal-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             Fechar Mês - {pessoa}
@@ -82,14 +82,14 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
             {jaPago > 0 && (
               <div className="flex justify-between">
                 <span className="text-emerald-600 dark:text-emerald-400">Já pago:</span>
-                <span className="font-mono valor text-emerald-700 dark:text-emerald-500 font-medium">
+                <span className="font-mono valor text-emerald-700 dark:text-emerald-400 font-medium">
                   {formatCurrency(jaPago)}
                 </span>
               </div>
             )}
-            <div className="flex justify-between border-t border-zinc-200 dark:border-zinc-800 pt-2">
-              <span className="text-amber-600">Falta pagar:</span>
-              <span className="font-mono valor text-amber-600 dark:text-amber-500 font-bold">
+            <div className="flex justify-between border-t border-zinc-200 dark:border-white/[0.06] pt-2">
+              <span className="text-amber-600 dark:text-amber-400">Falta pagar:</span>
+              <span className="font-mono valor text-amber-600 dark:text-amber-400 font-bold">
                 {formatCurrency(restanteReal)}
               </span>
             </div>
@@ -111,7 +111,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
                   onValorChange(formatCurrencyInput(e.target.value))
                 }
                 placeholder="0,00"
-                className="w-full h-11 pl-10 pr-3 font-mono tabular-nums bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
+                className="w-full h-11 pl-10 pr-3 font-mono tabular-nums bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
                 inputMode="numeric"
               />
             </div>
@@ -144,7 +144,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-zinc-500 dark:text-zinc-400">Pagando agora:</span>
-                  <span className="font-mono valor text-emerald-600 font-medium">
+                  <span className="font-mono valor text-emerald-600 dark:text-emerald-400 font-medium">
                     {formatCurrency(valorPago)}
                   </span>
                 </div>
@@ -153,7 +153,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
                     <span className="text-zinc-500 dark:text-zinc-400">
                       Vai para Dívidas em Aberto:
                     </span>
-                    <span className="font-mono valor text-amber-600 dark:text-amber-500 font-medium">
+                    <span className="font-mono valor text-amber-600 dark:text-amber-400 font-medium">
                       {formatCurrency(valorParaDebito)}
                     </span>
                   </div>
@@ -182,8 +182,8 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
               disabled={saving}
               className={`flex-1 px-4 py-3 text-zinc-800 dark:text-zinc-100 rounded-xl font-medium transition-colors ${
                 saving
-                  ? "bg-zinc-50 dark:bg-white/[0.04] cursor-not-allowed"
-                  : "bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:bg-white/[0.07] dark:hover:bg-white/[0.08]"
+                  ? "bg-zinc-100 dark:bg-white/[0.04] cursor-not-allowed"
+                  : "bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.10]"
               }`}
             >
               Cancelar

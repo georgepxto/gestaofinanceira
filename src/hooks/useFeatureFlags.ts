@@ -25,34 +25,33 @@ export function useFeatureFlags({ userId }: UseFeatureFlagsProps) {
     }
 
     try {
-      // Buscar role
-      const { data: roleData, error: roleError } = await supabase.rpc("get_my_role");
-      
-      if (!roleError && roleData && roleData.length > 0) {
+      // As duas RPCs não dependem uma da outra: em série, o boot do app pagava
+      // duas viagens de rede para não usar o resultado da primeira.
+      const [roleRes, featRes] = await Promise.all([
+        supabase.rpc("get_my_role"),
+        supabase.rpc("admin_get_user_features", { target_user_id: userId }),
+      ]);
+
+      if (!roleRes.error && roleRes.data && roleRes.data.length > 0) {
         setRole({
-          role: roleData[0].role || "user",
-          is_active: roleData[0].is_active ?? true,
+          role: roleRes.data[0].role || "user",
+          is_active: roleRes.data[0].is_active ?? true,
         });
       }
 
-      // Buscar features
-      const { data: featData, error: featError } = await supabase.rpc(
-        "admin_get_user_features",
-        { target_user_id: userId }
-      );
-
-      if (!featError && featData && featData.length > 0) {
+      if (!featRes.error && featRes.data && featRes.data.length > 0) {
+        const f = featRes.data[0];
         setFeatures({
-          dashboard: featData[0].dashboard ?? true,
-          meus_gastos: featData[0].meus_gastos ?? true,
-          gastos_compartilhados: featData[0].gastos_compartilhados ?? true,
-          saldo_devedor: featData[0].saldo_devedor ?? true,
-          pessoas: featData[0].pessoas ?? true,
-          contas_bancarias: featData[0].contas_bancarias ?? true,
-          cartoes_credito: featData[0].cartoes_credito ?? true,
-          metas: featData[0].metas ?? true,
-          exportar_pdf: featData[0].exportar_pdf ?? true,
-          configuracoes: featData[0].configuracoes ?? true,
+          dashboard: f.dashboard ?? true,
+          meus_gastos: f.meus_gastos ?? true,
+          gastos_compartilhados: f.gastos_compartilhados ?? true,
+          saldo_devedor: f.saldo_devedor ?? true,
+          pessoas: f.pessoas ?? true,
+          contas_bancarias: f.contas_bancarias ?? true,
+          cartoes_credito: f.cartoes_credito ?? true,
+          metas: f.metas ?? true,
+          exportar_pdf: f.exportar_pdf ?? true,
+          configuracoes: f.configuracoes ?? true,
         });
       }
     } catch (err) {
