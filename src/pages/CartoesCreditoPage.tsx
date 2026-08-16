@@ -1016,7 +1016,7 @@ export const CartoesCreditoPage = () => {
               <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Dívida Inicial (se houver)</label><input type="text" value={formCartao.divida_inicial} onChange={e => setFormCartao({...formCartao, divida_inicial: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
               <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Cor</label><div className="flex gap-2 flex-wrap">{CORES_CARTAO.map(cor => (<button key={cor} type="button" onClick={() => setFormCartao({...formCartao, cor})} className={`w-8 h-8 rounded-lg ${formCartao.cor === cor ? "ring-2 ring-emerald-500" : ""}`} style={{ backgroundColor: cor }} />))}</div></div>
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={resetFormCartao} className="flex-1 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:bg-white/[0.07] dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
+                <button type="button" onClick={resetFormCartao} className="flex-1 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.10] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
                 <button type="submit" disabled={saving} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}{editandoCartao ? "Salvar" : "Criar"}</button>
               </div>
             </form>
@@ -1036,7 +1036,7 @@ export const CartoesCreditoPage = () => {
             </div>
             <div className="flex flex-col gap-2 mt-4">
               <button onClick={handlePagarFatura} disabled={saving} className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}Confirmar Pagamento</button>
-              <button onClick={() => setShowPagarFatura(false)} className="w-full py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:bg-white/[0.07] dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
+              <button onClick={() => setShowPagarFatura(false)} className="w-full py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.10] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
             </div>
           </div>
         </div>

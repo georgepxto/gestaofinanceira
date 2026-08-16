@@ -675,7 +675,7 @@ export const ContasBancariasPage = () => {
                 <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Saldo Atual</label><input type="text" value={formConta.saldo_atual} onChange={e => setFormConta({...formConta, saldo_atual: formatCurrencyInput(e.target.value)})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /><p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Edite para corrigir manualmente o saldo</p></div>
               )}
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={resetFormConta} className="flex-1 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:bg-white/[0.07] dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
+                <button type="button" onClick={resetFormConta} className="flex-1 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.10] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
                 <button type="submit" disabled={saving} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}{editandoConta ? "Salvar" : "Criar"}</button>
               </div>
             </form>
@@ -708,7 +708,7 @@ export const ContasBancariasPage = () => {
                 <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Conta (opcional)</label><select value={formReceita.conta_id} onChange={e => setFormReceita({...formReceita, conta_id: e.target.value})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"><option value="">Sem conta vinculada</option>{contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>
               )}
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={resetFormReceita} className="flex-1 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:bg-white/[0.07] dark:hover:bg-white/[0.08] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
+                <button type="button" onClick={resetFormReceita} className="flex-1 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.10] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
                 <button type="submit" disabled={saving} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}{editandoReceita ? "Salvar" : "Criar"}</button>
               </div>
             </form>

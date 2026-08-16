@@ -209,6 +209,12 @@ export const DashboardPage = () => {
   // 18% de esmeralda quase não aparece sobre preto.
   const chartAreaTopo = isDark ? 0.28 : 0.18;
 
+  // ds-ok: o hex abaixo aparece citado, não usado — é o padrão do recharts.
+  // O cursor do recharts é `#ccc` por padrão — no escuro, uma laje branca atrás
+  // da barra apontada, mais forte que o dado que ela realça. Realce afunda:
+  // escurece sobre o cartão em vez de clarear.
+  const chartCursor = isDark ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.04)";
+
   const tooltipStyle = useMemo(() => isDark
     ? { backgroundColor: "#18181B", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 4px 24px -4px rgba(0,0,0,0.5)", fontSize: "12px", color: "#FAFAFA" }
     : { backgroundColor: "#FFFFFF", border: "1px solid #E4E4E7", borderRadius: "10px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", fontSize: "12px" },
@@ -708,6 +714,8 @@ export const DashboardPage = () => {
                   <Tooltip
                     contentStyle={tooltipStyle}
                     labelStyle={tooltipLabelStyle}
+                    itemStyle={tooltipItemStyle}
+                    cursor={{ fill: chartCursor }}
                     formatter={(value: unknown) => [formatCurrency(Number(value) || 0), 'Meus Gastos']}
                   />
                   <Bar dataKey="meusGastos" radius={[6, 6, 0, 0]}>
@@ -900,6 +908,7 @@ export const DashboardPage = () => {
                   contentStyle={tooltipStyle}
                   labelStyle={tooltipLabelStyle}
                   itemStyle={tooltipItemStyle}
+                  cursor={{ stroke: chartCursor, strokeWidth: 1 }}
                   formatter={(value: unknown, name: unknown) => [formatCurrency(Number(value) || 0), name === 'meusGastos' ? 'Meus gastos' : 'Compartilhados']}
                 />
                 <Area type="monotone" dataKey="meusGastos" stroke={chartBarra} fillOpacity={1} fill="url(#colorMeus)" strokeWidth={2.5} dot={{ r: 3, fill: chartBarra }} />
