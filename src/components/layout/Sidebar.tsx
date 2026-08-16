@@ -1,64 +1,17 @@
 import { useState, useRef, useLayoutEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import {
-  Menu,
-  X,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  Wallet,
-  Receipt,
-  Coins,
-} from "lucide-react";
+import { X, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import { useTutorialHelpContext } from "./TutorialHelpContext";
+import { gruposVisiveis } from "./navGroups";
 import { useAppContext } from "../../context";
-import type { UserFeatures } from "../../types/admin";
 
 interface SidebarProps {
   onLogout: () => void;
   userName?: string;
   userEmail?: string;
 }
-
-interface NavChild {
-  path: string;
-  label: string;
-  feature: keyof UserFeatures;
-}
-
-/**
- * Grupos da navegação — os itens apontam para as sub-rotas reais que já
- * existem. Ícone só no rótulo do grupo; os itens são texto puro.
- */
-const NAV_GROUPS: { label: string; icon: LucideIcon; items: NavChild[] }[] = [
-  {
-    label: "Carteira",
-    icon: Wallet,
-    items: [
-      { path: "/carteira/contas", label: "Contas e receitas", feature: "contas_bancarias" },
-      { path: "/carteira/cartoes", label: "Cartões", feature: "cartoes_credito" },
-    ],
-  },
-  {
-    label: "Gastos",
-    icon: Receipt,
-    items: [
-      { path: "/gastos/lancamentos", label: "Lançamentos", feature: "meus_gastos" },
-      { path: "/gastos/metas", label: "Metas", feature: "metas" },
-    ],
-  },
-  {
-    label: "A receber",
-    icon: Coins,
-    items: [
-      { path: "/a-receber/pessoas", label: "Por pessoa", feature: "pessoas" },
-      { path: "/a-receber/aberto", label: "Em aberto", feature: "saldo_devedor" },
-      { path: "/a-receber/mes", label: "Do mês", feature: "gastos_compartilhados" },
-    ],
-  },
-];
 
 export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -67,11 +20,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
   const { helpButton } = useTutorialHelpContext();
   const { isAdmin, features } = useAppContext();
 
-  // Admin vê tudo; usuário comum só vê os itens cujas features estão ativas.
-  const visibleGroups = NAV_GROUPS.map((group) => ({
-    ...group,
-    items: isAdmin ? group.items : group.items.filter((item) => features[item.feature]),
-  })).filter((group) => group.items.length > 0);
+  const visibleGroups = gruposVisiveis(isAdmin, features);
 
   const showConfiguracoes = features.configuracoes || isAdmin;
 
@@ -160,16 +109,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
     <>
       {/* Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-white/[0.06] z-40 flex items-center justify-between px-4 shadow-sm dark:shadow-none">
+        {/* O hambúrguer saiu: os destinos moraram nele até virarem barra
+            inferior. O que resta atrás da gaveta é conta — por isso o gatilho
+            agora é o avatar, do lado do polegar. */}
         <div className="flex items-center">
-          <button
-            onClick={() => setIsOpen(true)}
-            aria-label="Abrir menu de navegação"
-            className="p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors"
-          >
-            <Menu className="w-6 h-6 text-zinc-700 dark:text-zinc-300" />
-          </button>
-          <img src="/favicon-light.png" alt="Hedge" className="w-4 h-4 ml-3 dark:hidden" />
-          <img src="/favicon-dark.png" alt="Hedge" className="w-4 h-4 ml-3 hidden dark:block" />
+          <img src="/favicon-light.png" alt="Hedge" className="w-4 h-4 dark:hidden" />
+          <img src="/favicon-dark.png" alt="Hedge" className="w-4 h-4 hidden dark:block" />
           <h1 className="ml-2 font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             Hedge
           </h1>
@@ -187,6 +132,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
             </button>
           )}
           <NotificationBell />
+          <button
+            onClick={() => setIsOpen(true)}
+            aria-label="Abrir conta e configurações"
+            className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0"
+          >
+            <span className="font-display font-bold text-emerald-700 dark:text-emerald-400">
+              {(userName || userEmail || "U").charAt(0).toUpperCase()}
+            </span>
+          </button>
         </div>
       </header>
 
@@ -226,7 +180,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
                 isCollapsed ? "md:hidden" : ""
               }`}
             >
-              Hedge
+              {/* No mobile a gaveta não é mais o menu do app, é a conta — e o
+                  título tem que dizer o que ela guarda. */}
+              <span className="md:hidden">Conta</span>
+              <span className="hidden md:inline">Hedge</span>
             </h2>
           </div>
 
@@ -251,8 +208,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
           </button>
         </div>
 
-        {/* Navegação */}
-        <nav className="relative flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-0.5">
+        {/* Navegação — desktop só. No mobile os destinos vivem na barra
+            inferior; repetir a lista aqui é o que faz app de celular parecer
+            painel de administração. */}
+        <nav className="relative hidden md:flex md:flex-1 min-h-0 overflow-y-auto p-3 flex-col gap-0.5">
           <Indicador area="nav" />
           {(isAdmin || features.dashboard) && (
             <NavItem path="/" label="Dashboard" />
@@ -268,7 +227,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         </nav>
 
         {/* Rodapé */}
-        <div className="relative shrink-0 p-3 border-t border-zinc-100 dark:border-white/[0.05] bg-app-row dark:bg-white/[0.03] flex flex-col gap-0.5">
+        <div className="relative shrink-0 mt-auto md:mt-0 p-3 border-t border-zinc-100 dark:border-white/[0.05] bg-app-row dark:bg-white/[0.03] flex flex-col gap-0.5">
           <Indicador area="rodape" />
           {isAdmin && <NavItem path="/admin" label="Admin" />}
           {showConfiguracoes && (

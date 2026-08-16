@@ -1,7 +1,9 @@
 import { useState, Suspense } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { NotificationBell } from "./NotificationBell";
+import { BottomBar } from "./BottomBar";
+import { SubPills } from "./SubPills";
 import { AparecerSeDemorar } from "./BootSplash";
 import { PageLoadingState } from "../ui/AsyncState";
 import {
@@ -17,6 +19,12 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail }) => {
   const [helpButton, setHelpButton] = useState<TutorialHelpButtonConfig | null>(null);
+  const navigate = useNavigate();
+
+  // Contrato pequeno de propósito: o botão de lançar leva à tela de Lançamentos
+  // com o modal que ela já tem aberto. Quando a folha nativa do mobile chegar,
+  // ela substitui o modal e o botão continua chamando a mesma rota.
+  const abrirLancamento = () => navigate("/gastos/lancamentos?novo=1");
 
   return (
     <TutorialHelpContext.Provider value={{ helpButton, setHelpButton }}>
@@ -27,6 +35,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
         <main className="
           md:ml-64 /* Desktop: offset for sidebar */
           pt-16 md:pt-0 /* Mobile: offset for header */
+          pb-24 md:pb-0 /* Mobile: espaço da barra inferior, senão o último item da lista fica embaixo dela */
           min-h-screen
           transition-all duration-300
         ">
@@ -49,6 +58,8 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
           </header>
 
           <div className="max-w-6xl mx-auto">
+            <SubPills />
+
             {/* Fronteira de suspense DENTRO do layout: ao carregar o chunk de
                 uma tela, só o conteúdo suspende — a sidebar permanece montada
                 e o indicador consegue viajar em vez de teleportar.
@@ -65,6 +76,8 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
             </Suspense>
           </div>
         </main>
+
+        <BottomBar onLancar={abrirLancamento} />
       </div>
     </TutorialHelpContext.Provider>
   );

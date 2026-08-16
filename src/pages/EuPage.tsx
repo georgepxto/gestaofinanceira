@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Plus, FileText, Loader2, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -131,6 +132,16 @@ export const EuPage = () => {
   } = useAppContext();
 
   const [exportingPDF, setExportingPDF] = useState(false);
+
+  // O botão de lançar da barra inferior chega aqui por rota, com `?novo=1`.
+  // O parâmetro é consumido uma vez e apagado do histórico: sem isso o modal
+  // reabriria toda vez que o usuário voltasse para esta tela.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("novo") !== "1") return;
+    setShowFormMeuGasto(true);
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams, setShowFormMeuGasto]);
   const {
     viewportSize,
     showTutorial,
