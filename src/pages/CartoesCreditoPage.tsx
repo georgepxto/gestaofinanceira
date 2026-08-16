@@ -19,6 +19,7 @@ import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import type { CartaoCredito, CartaoCreditoForm, TransacaoCartao, ContaBancaria, MeuGasto, Gasto } from "../types";
 import { Rotulo } from "../components/ui/Rotulo";
 import { Card } from "../components/ui/Card";
+import { LinhaLista, LISTA_CLASSES } from "../components/ui/LinhaLista";
 
 /**
  * Cor do cartão = identidade do banco (dado do usuário): vive no dot e na
@@ -850,13 +851,13 @@ export const CartoesCreditoPage = () => {
               </Card>
 
               {/* Transações da fatura */}
-              <Card className="min-w-0" data-tour="cartoes-detalhes-transacoes">
-                <div className="flex items-center justify-between gap-3 mb-3">
+              <Card padding="nenhum" sangra className="min-w-0" data-tour="cartoes-detalhes-transacoes">
+                <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 md:px-5 md:pt-5">
                   <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Transações da fatura</h2>
                   <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">{itens.length} {itens.length === 1 ? "item" : "itens"}</span>
                 </div>
                 {cartaoSelecionado.divida_inicial && cartaoSelecionado.divida_inicial > 0 ? (
-                  <div className="flex items-center justify-between gap-3 p-3 mb-2 bg-zinc-50 dark:bg-white/[0.04] rounded-xl">
+                  <div className="flex items-center justify-between gap-3 p-3 mb-2 mx-4 md:mx-5 bg-zinc-50 dark:bg-white/[0.04] rounded-xl">
                     <div className="flex items-center gap-2 min-w-0">
                       <Clock className="w-4 h-4 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
                       <span className="text-sm text-zinc-500 dark:text-zinc-400 truncate">Saldo anterior</span>
@@ -865,39 +866,37 @@ export const CartoesCreditoPage = () => {
                   </div>
                 ) : null}
                 {itens.length === 0 ? (
-                  <PageEmptyState
-                    compact
-                    title="Nenhuma transação neste mês"
-                    description="Quando houver compras no período da fatura, elas aparecerão aqui."
-                  />
+                  <div className="px-4 pb-6 md:px-5">
+                    <PageEmptyState
+                      compact
+                      title="Nenhuma transação neste mês"
+                      description="Quando houver compras no período da fatura, elas aparecerão aqui."
+                    />
+                  </div>
                 ) : (
-                  <div className="space-y-1 max-h-80 overflow-y-auto">
+                  <div className={`${LISTA_CLASSES} max-h-80 overflow-y-auto`}>
                     {itens.map((t: any) => {
                       const fixo = t.origem === "gasto" && isGastoFixo(t.id);
                       const dotClasse = t.pagoParcial ? "bg-amber-500" : fixo ? "bg-zinc-300 dark:bg-zinc-600" : "bg-emerald-500";
                       return (
-                        <div key={`${t.origem}-${t.id}`} className="flex items-center gap-3 py-2.5 border-b border-zinc-100 dark:border-white/[0.05] last:border-b-0">
-                          {/* Estado atenuado é um recurso só: zinc-500 + line-through, check no lugar do dot. */}
-                          {t.pago ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                          ) : (
-                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClasse}`} />
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <p className={`text-sm font-medium ${t.pago ? "text-zinc-500 dark:text-zinc-400 line-through" : "text-zinc-800 dark:text-zinc-100"}`}>{t.descricao}</p>
-                              {t.pago && (
-                                <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">
-                                  <Check className="w-[11px] h-[11px]" /> Pago
-                                </span>
-                              )}
+                        <LinhaLista
+                          key={`${t.origem}-${t.id}`}
+                          icone={
+                            /* Estado atenuado é um recurso só: zinc-500 + line-through, check no lugar do dot. */
+                            t.pago ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                            ) : (
+                              <span className={`w-2 h-2 rounded-full ${dotClasse}`} />
+                            )
+                          }
+                          titulo={t.descricao}
+                          atenuado={t.pago}
+                          meta={
+                            <span className="flex items-center gap-1.5">
                               {t.pagoParcial && (
                                 <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 whitespace-nowrap">
                                   Pago {formatCurrency(t.valorPago || 0)}
                                 </span>
-                              )}
-                              {t.origem === "gasto" && !fixo && !t.pago && (
-                                <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-zinc-100 dark:bg-white/[0.07] text-zinc-600 dark:text-zinc-300">Gasto</span>
                               )}
                               {fixo && (
                                 <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400">Fixo</span>
@@ -907,18 +906,32 @@ export const CartoesCreditoPage = () => {
                                   Emprestado · {t.pessoa}
                                 </span>
                               )}
-                            </div>
-                            <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
-                              {t.categoria} · {format(new Date(t.data + (t.data.length === 7 ? "-01" : "") + "T00:00:00"), "dd/MM")}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            {t.pagoParcial ? (
-                              <span className="font-mono valor text-sm font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">Falta {formatCurrency(t.valorRestante || 0)}</span>
+                              <span className="truncate">
+                                {t.categoria} · {format(new Date(t.data + (t.data.length === 7 ? "-01" : "") + "T00:00:00"), "dd/MM")}
+                              </span>
+                            </span>
+                          }
+                          valor={
+                            t.pagoParcial ? (
+                              <span className="text-amber-700 dark:text-amber-400">Falta {formatCurrency(t.valorRestante || 0)}</span>
                             ) : (
-                              <span className={`font-mono valor text-sm font-semibold whitespace-nowrap ${t.pago ? "text-zinc-500 dark:text-zinc-400 line-through" : "text-zinc-900 dark:text-zinc-50"}`}>{formatCurrency(t.valor)}</span>
-                            )}
-                            {t.origem === "transacao" && (
+                              formatCurrency(t.valor)
+                            )
+                          }
+                          acoes={
+                            t.origem === "transacao"
+                              ? [
+                                  {
+                                    rotulo: "Excluir",
+                                    icone: <Trash2 className="w-5 h-5" />,
+                                    onClick: () => handleDeleteTransacao(t.id),
+                                    tom: "perigo" as const,
+                                  },
+                                ]
+                              : undefined
+                          }
+                          acoesDesktop={
+                            t.origem === "transacao" ? (
                               <button
                                 onClick={() => handleDeleteTransacao(t.id)}
                                 aria-label={`Excluir ${t.descricao}`}
@@ -926,9 +939,9 @@ export const CartoesCreditoPage = () => {
                               >
                                 <Trash2 className="w-[15px] h-[15px]" />
                               </button>
-                            )}
-                          </div>
-                        </div>
+                            ) : undefined
+                          }
+                        />
                       );
                     })}
                   </div>

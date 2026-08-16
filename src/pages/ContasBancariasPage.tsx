@@ -20,6 +20,7 @@ import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import type { ContaBancaria, Receita, ContaBancariaForm, ReceitaForm } from "../types";
 import { Rotulo } from "../components/ui/Rotulo";
 import { Card } from "../components/ui/Card";
+import { LinhaLista, LISTA_CLASSES } from "../components/ui/LinhaLista";
 import { Resumo, ResumoItem } from "../components/ui/Resumo";
 
 interface ContasTutorialStep {
@@ -510,45 +511,58 @@ export const ContasBancariasPage = () => {
       <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(340px,1fr))]">
 
       {/* Card Minhas contas */}
-      <Card as="section" className="min-w-0" data-tour="contas-section-contas">
-        <div className="flex items-center justify-between gap-3">
+      <Card as="section" padding="nenhum" sangra className="min-w-0" data-tour="contas-section-contas">
+        <div className="flex items-center justify-between gap-3 px-4 pt-4 md:px-5 md:pt-5">
           <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Minhas contas</h2>
           <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">{contas.length} {contas.length === 1 ? "conta" : "contas"}</span>
         </div>
-        <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-4">barra = participação no saldo total</p>
+        <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-3 px-4 md:px-5">barra = participação no saldo total</p>
         {contas.length === 0 ? (
-          <PageEmptyState compact title="Nenhuma conta cadastrada" description="Clique em Nova conta para começar e acompanhar seu saldo total." />
+          <div className="px-4 pb-6 md:px-5">
+            <PageEmptyState compact title="Nenhuma conta cadastrada" description="Clique em Nova conta para começar e acompanhar seu saldo total." />
+          </div>
         ) : (
-          <div className="space-y-4">
+          <div className={LISTA_CLASSES}>
             {contas.map((c, i) => {
               const saldoConta = calcularSaldoConta(c);
               const participacao = saldoTotal > 0 ? Math.max((saldoConta / saldoTotal) * 100, 0) : 0;
               const tomBarra = i === 0 ? "bg-emerald-600" : i === 1 ? "bg-emerald-500" : "bg-emerald-400";
               return (
-                <div key={c.id} className="grid [grid-template-columns:minmax(150px,1fr)_132px_68px] gap-3.5 items-center">
-                  <div className="min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{c.nome}</p>
-                      <span className="font-mono valor text-[11px] text-zinc-500 dark:text-zinc-400">{participacao.toFixed(0)}%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-zinc-100 dark:bg-white/[0.04] overflow-hidden mt-1.5">
-                      <div className={`h-full rounded-full ${tomBarra}`} style={{ width: `${Math.min(participacao, 100)}%` }} />
-                    </div>
-                    {/* O nome do banco trunca; o valor nunca — cortar centavos é perder dado sem avisar. */}
-                    <p className="font-mono text-[10px] text-zinc-500 dark:text-zinc-400 mt-1 flex items-baseline gap-1 min-w-0">
-                      <span className="truncate">{c.banco || "sem banco"}</span>
-                      <span className="shrink-0">· inicial</span>
-                      <span className="valor shrink-0">{formatCurrency(c.saldo_inicial)}</span>
-                    </p>
-                  </div>
-                  <p className={`font-mono valor font-semibold whitespace-nowrap text-right ${saldoConta < 0 ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-100"}`}>
-                    {formatCurrency(saldoConta)}
-                  </p>
-                  <div className="flex gap-0.5 justify-end">
-                    <button onClick={() => handleEditConta(c)} aria-label={`Editar conta ${c.nome}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"><Edit2 className="w-[15px] h-[15px]" /></button>
-                    <button onClick={() => handleDeleteConta(c.id, c.nome)} aria-label={`Excluir conta ${c.nome}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"><Trash2 className="w-[15px] h-[15px]" /></button>
-                  </div>
-                </div>
+                <LinhaLista
+                  key={c.id}
+                  titulo={c.nome}
+                  meta={
+                    <span className="block">
+                      {/* A barra de participação entra como meta, não como uma
+                          segunda linha de lista — mesmo tratamento das metas. */}
+                      <span className="block h-1.5 rounded-full bg-zinc-100 dark:bg-white/[0.04] overflow-hidden mb-1">
+                        <span className={`block h-full rounded-full ${tomBarra}`} style={{ width: `${Math.min(participacao, 100)}%` }} />
+                      </span>
+                      {/* O nome do banco trunca; o valor nunca — cortar centavos é perder dado sem avisar. */}
+                      <span className="flex items-baseline gap-1 min-w-0">
+                        <span className="truncate">{c.banco || "sem banco"}</span>
+                        <span className="shrink-0">· {participacao.toFixed(0)}% · inicial</span>
+                        <span className="valor shrink-0">{formatCurrency(c.saldo_inicial)}</span>
+                      </span>
+                    </span>
+                  }
+                  valor={
+                    <span className={saldoConta < 0 ? "text-red-600 dark:text-red-400" : ""}>
+                      {formatCurrency(saldoConta)}
+                    </span>
+                  }
+                  onAbrir={() => handleEditConta(c)}
+                  acoes={[
+                    { rotulo: "Editar", icone: <Edit2 className="w-5 h-5" />, onClick: () => handleEditConta(c) },
+                    { rotulo: "Excluir", icone: <Trash2 className="w-5 h-5" />, onClick: () => handleDeleteConta(c.id, c.nome), tom: "perigo" },
+                  ]}
+                  acoesDesktop={
+                    <>
+                      <button onClick={() => handleEditConta(c)} aria-label={`Editar conta ${c.nome}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"><Edit2 className="w-[15px] h-[15px]" /></button>
+                      <button onClick={() => handleDeleteConta(c.id, c.nome)} aria-label={`Excluir conta ${c.nome}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"><Trash2 className="w-[15px] h-[15px]" /></button>
+                    </>
+                  }
+                />
               );
             })}
           </div>
@@ -556,8 +570,8 @@ export const ContasBancariasPage = () => {
       </Card>
 
       {/* Card Entradas do mês — recebidas e previstas na mesma lista */}
-      <Card as="section" className="min-w-0" data-tour="contas-section-receitas">
-        <div className="flex items-center justify-between gap-3">
+      <Card as="section" padding="nenhum" sangra className="min-w-0" data-tour="contas-section-receitas">
+        <div className="flex items-center justify-between gap-3 px-4 pt-4 md:px-5 md:pt-5">
           <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 capitalize">
             Entradas de {format(mesVisualizacao, "MMMM", { locale: ptBR })}
           </h2>
@@ -568,40 +582,54 @@ export const ContasBancariasPage = () => {
             <Plus className="w-4 h-4" /> Nova receita
           </button>
         </div>
-        <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-4">recebidas e previstas na mesma lista, ordenadas por dia</p>
+        <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-3 px-4 md:px-5">recebidas e previstas na mesma lista, ordenadas por dia</p>
         {entradasDoMes.length === 0 ? (
-          <PageEmptyState compact title="Sem entradas neste mês" description="Cadastre receitas fixas, recorrentes ou avulsas para acompanhar o que entra." />
+          <div className="px-4 pb-6 md:px-5">
+            <PageEmptyState compact title="Sem entradas neste mês" description="Cadastre receitas fixas, recorrentes ou avulsas para acompanhar o que entra." />
+          </div>
         ) : (
-          <div className="space-y-1">
+          <div className={LISTA_CLASSES}>
             {entradasDoMes.map(({ receita: r, dia, recebida }) => {
               const contaNome = contas.find(c => c.id === r.conta_id)?.nome || "sem conta";
               const tipoLabel = r.tipo === "avulso" ? "avulso" : r.tipo === "fixo" ? "fixo" : `recorrente ${r.num_meses}x`;
               return (
-                <div key={r.id} className="flex items-center gap-3 py-2.5 border-b border-zinc-100 dark:border-white/[0.05] last:border-b-0">
-                  {recebida ? (
-                    <span className="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <LinhaLista
+                  key={r.id}
+                  icone={
+                    <span className="flex items-center gap-2">
+                      {recebida ? (
+                        <span className="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center">
+                          <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        </span>
+                      ) : (
+                        <span className="w-6 h-6 rounded-lg border-[1.5px] border-dashed border-zinc-300 dark:border-white/[0.09]" />
+                      )}
                     </span>
-                  ) : (
-                    <span className="w-6 h-6 rounded-lg border-[1.5px] border-dashed border-zinc-300 dark:border-white/[0.09] flex-shrink-0" />
-                  )}
-                  <span className={`font-mono valor text-xs font-semibold w-7 flex-shrink-0 ${recebida ? "text-zinc-600 dark:text-zinc-300" : "text-amber-600 dark:text-amber-400"}`}>
-                    {String(dia).padStart(2, "0")}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{r.descricao}</p>
-                    <p className={`font-mono text-[11px] truncate ${recebida ? "text-zinc-500 dark:text-zinc-400" : "text-amber-600 dark:text-amber-400"}`}>
+                  }
+                  titulo={r.descricao}
+                  meta={
+                    <span className={recebida ? "" : "text-amber-600 dark:text-amber-400"}>
+                      dia {String(dia).padStart(2, "0")} ·{" "}
                       {recebida ? `${contaNome} · ${tipoLabel}` : "prevista · ainda não caiu"}
-                    </p>
-                  </div>
-                  <span className={`font-mono valor text-sm font-semibold whitespace-nowrap ${recebida ? "text-emerald-700 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
-                    {recebida ? "+" : ""}{formatCurrency(r.valor)}
-                  </span>
-                  <div className="flex gap-0.5 flex-shrink-0">
-                    <button onClick={() => handleEditReceita(r)} aria-label={`Editar receita ${r.descricao}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"><Edit2 className="w-[15px] h-[15px]" /></button>
-                    <button onClick={() => handleDeleteReceita(r.id, r.descricao)} aria-label={`Excluir receita ${r.descricao}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"><Trash2 className="w-[15px] h-[15px]" /></button>
-                  </div>
-                </div>
+                    </span>
+                  }
+                  valor={
+                    <span className={recebida ? "text-emerald-700 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
+                      {recebida ? "+" : ""}{formatCurrency(r.valor)}
+                    </span>
+                  }
+                  onAbrir={() => handleEditReceita(r)}
+                  acoes={[
+                    { rotulo: "Editar", icone: <Edit2 className="w-5 h-5" />, onClick: () => handleEditReceita(r) },
+                    { rotulo: "Excluir", icone: <Trash2 className="w-5 h-5" />, onClick: () => handleDeleteReceita(r.id, r.descricao), tom: "perigo" },
+                  ]}
+                  acoesDesktop={
+                    <>
+                      <button onClick={() => handleEditReceita(r)} aria-label={`Editar receita ${r.descricao}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"><Edit2 className="w-[15px] h-[15px]" /></button>
+                      <button onClick={() => handleDeleteReceita(r.id, r.descricao)} aria-label={`Excluir receita ${r.descricao}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"><Trash2 className="w-[15px] h-[15px]" /></button>
+                    </>
+                  }
+                />
               );
             })}
           </div>

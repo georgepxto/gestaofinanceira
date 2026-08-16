@@ -185,8 +185,13 @@ export function TabDividas({
       )}
 
       {/* Card lista */}
-      <Card data-tour="dividas-lista">
-        <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">
+      {/* Sangra no mobile, mas o item continua sendo cartão de conteúdo, não
+          LinhaLista: tem barra de progresso, histórico de pagamentos expansível
+          e a ação primária de registrar pagamento. Espremer isso em título +
+          meta significaria jogar fora o histórico — e não existe tela de
+          detalhe de cobrança para onde ele iria. */}
+      <Card padding="nenhum" sangra data-tour="dividas-lista">
+        <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 px-4 pt-4 pb-3 md:px-5 md:pt-5">
           {pendentes ? "Cobranças em aberto" : "Cobranças quitadas"}
           {filtroPessoaDivida && (
             <span className="text-sm font-normal font-sans text-zinc-500 dark:text-zinc-400"> — {filtroPessoaDivida}</span>
@@ -194,7 +199,7 @@ export function TabDividas({
         </h2>
 
         {dividasFiltradas.length === 0 ? (
-          <div>
+          <div className="px-4 pb-6 md:px-5">
             <PageEmptyState
               compact
               title={
@@ -220,7 +225,7 @@ export function TabDividas({
             ) : null}
           </div>
         ) : (
-          <ul className="space-y-2.5">
+          <ul className="space-y-2.5 px-4 pb-4 md:px-5 md:pb-5">
             {dividasFiltradas.map((divida) => {
               const quitada = divida.valor_atual === 0;
               const pago = divida.valor_original - divida.valor_atual;

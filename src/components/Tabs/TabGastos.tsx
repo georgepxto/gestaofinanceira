@@ -20,6 +20,7 @@ import { formatCurrency } from "../../utils/calculations";
 import { toActionableErrorMessage } from "../../utils/feedbackMessages";
 import { Rotulo } from "../ui/Rotulo";
 import { Card } from "../ui/Card";
+import { LinhaLista, LISTA_CLASSES } from "../ui/LinhaLista";
 import { Resumo, ResumoItem } from "../ui/Resumo";
 
 /** CHIP dos filtros. */
@@ -298,13 +299,13 @@ export function TabGastos({
 
       {/* Card Lançamentos do mês */}
       {!loading && (
-        <Card data-tour="gastos-lista">
-          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">
+        <Card padding="nenhum" sangra data-tour="gastos-lista">
+          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 px-4 pt-4 pb-3 md:px-5 md:pt-5">
             Lançamentos do mês
           </h2>
 
-          {/* Filtros */}
-          <div className="space-y-3.5 mb-5" data-tour="gastos-filtros">
+          {/* Filtros — continuam no padding normal do cartão. */}
+          <div className="space-y-3.5 mb-5 px-4 md:px-5" data-tour="gastos-filtros">
             <div>
               <Rotulo className="mb-2">
                 Devedor
@@ -366,7 +367,7 @@ export function TabGastos({
               }`}
             />
           ) : (
-            <div className="space-y-5">
+            <div className="space-y-5 pb-2 md:pb-0">
               {(() => {
                 // parcelasAtivas já vem filtrado do hook
                 const parcelasFiltradas = parcelasAtivas;
@@ -388,24 +389,24 @@ export function TabGastos({
 
                 return diasOrdenados.map((dia) => (
                   <div key={dia}>
-                    {/* Cabeçalho do dia */}
-                    <div className="flex items-center gap-2 mb-2.5">
+                    {/* Cabeçalho do dia — fica no padding normal do cartão:
+                        sangrar é para a lista, não para o cabeçalho. */}
+                    <div className="flex items-center gap-2 mb-2.5 px-4 md:px-5">
                       <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                         Dia {parseInt(dia, 10)}
                       </span>
                       <div className="flex-1 h-px bg-zinc-100 dark:bg-white/[0.04]"></div>
                     </div>
                     {/* Lista de parcelas do dia */}
-                    <ul className="space-y-2.5">
+                    <ul className={LISTA_CLASSES}>
                       {parcelasPorDia[dia].map(
                         ({ gasto, parcela_atual, valor_parcela }) => (
-                          <li
-                            key={gasto.id}
-                            className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.05] rounded-xl p-3.5"
-                          >
-                            <div className="flex items-center justify-between gap-4">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                          <li key={gasto.id}>
+                            <LinhaLista
+                              dataTour="gastos-item-acoes"
+                              titulo={gasto.descricao}
+                              meta={
+                                <span className="flex items-center gap-1.5">
                                   <span className={BADGE_NEUTRA}>
                                     {gasto.tipo === "credito" ? (
                                       <CreditCard className="w-3 h-3" />
@@ -420,25 +421,32 @@ export function TabGastos({
                                       Fixo
                                     </span>
                                   )}
-                                  <span className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
-                                    {gasto.pessoa}
+                                  <span className="inline-flex items-center gap-1">
+                                    <Hash className="w-3 h-3" />
+                                    {gasto.pessoa} ·{" "}
+                                    {gasto.recorrente
+                                      ? `mensal · ${formatCurrency(gasto.valor_total)}`
+                                      : `parcela ${parcela_atual}/${gasto.num_parcelas}`}
                                   </span>
-                                </div>
-                                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                                  {gasto.descricao}
-                                </p>
-                                <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 flex items-center gap-1">
-                                  <Hash className="w-3 h-3" />
-                                  {gasto.recorrente
-                                    ? `mensal · valor ${formatCurrency(gasto.valor_total)}`
-                                    : `parcela ${parcela_atual}/${gasto.num_parcelas} · total ${formatCurrency(gasto.valor_total)}`}
-                                </p>
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
-                                  {formatCurrency(valor_parcela)}
-                                </p>
-                                <div className="flex items-center justify-end gap-0.5 mt-1.5" data-tour="gastos-item-acoes">
+                                </span>
+                              }
+                              valor={formatCurrency(valor_parcela)}
+                              onAbrir={() => handleEditGasto(gasto)}
+                              acoes={[
+                                {
+                                  rotulo: "Editar",
+                                  icone: <Edit3 className="w-5 h-5" />,
+                                  onClick: () => handleEditGasto(gasto),
+                                },
+                                {
+                                  rotulo: "Excluir",
+                                  icone: <Trash2 className="w-5 h-5" />,
+                                  onClick: () => handleDelete(gasto.id),
+                                  tom: "perigo",
+                                },
+                              ]}
+                              acoesDesktop={
+                                <>
                                   <button
                                     onClick={() => handleEditGasto(gasto)}
                                     className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
@@ -453,9 +461,9 @@ export function TabGastos({
                                   >
                                     <Trash2 className="w-[15px] h-[15px]" />
                                   </button>
-                                </div>
-                              </div>
-                            </div>
+                                </>
+                              }
+                            />
                           </li>
                         )
                       )}

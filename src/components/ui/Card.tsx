@@ -11,9 +11,20 @@ const PADDING: Record<Padding, string> = {
   nenhum: "",
 };
 
+/**
+ * No mobile o cartão vai de borda a borda: some a margem lateral da página, o
+ * raio e as bordas verticais. Numa tela de 390px, página + cartão + caixa de
+ * linha comem 76px em moldura aninhada antes de qualquer conteúdo — e um
+ * cartão que já ocupa a largura toda não precisa de moldura para agrupar.
+ * A partir de `md:` volta a ser exatamente o cartão de sempre.
+ */
+const SANGRA = "-mx-4 rounded-none border-x-0 md:mx-0 md:rounded-2xl md:border-x";
+
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   padding?: Padding;
   as?: "div" | "section";
+  /** Sangra até as bordas da tela no mobile. Para listas. */
+  sangra?: boolean;
   children: ReactNode;
 }
 
@@ -37,10 +48,10 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
  * o fundo e a borda deles comunicam estado, não a superfície padrão.
  */
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ padding = "conteudo", as: Tag = "div", className = "", children, ...rest }, ref) => (
+  ({ padding = "conteudo", as: Tag = "div", sangra = false, className = "", children, ...rest }, ref) => (
     <Tag
       ref={ref}
-      className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.06] rounded-2xl shadow-sm dark:shadow-none ${PADDING[padding]} ${className}`}
+      className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.06] rounded-2xl shadow-sm dark:shadow-none ${PADDING[padding]} ${sangra ? SANGRA : ""} ${className}`}
       {...rest}
     >
       {children}

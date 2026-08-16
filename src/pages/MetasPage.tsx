@@ -18,6 +18,7 @@ import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import type { MetaGasto } from "../types";
 import { Rotulo } from "../components/ui/Rotulo";
 import { Card } from "../components/ui/Card";
+import { LinhaLista, LISTA_CLASSES } from "../components/ui/LinhaLista";
 
 interface MetasTutorialStep {
   target: string;
@@ -332,11 +333,11 @@ export const MetasPage = () => {
       {/* Grid: Suas metas + coluna direita */}
       <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(330px,1fr))]">
         {/* Card Suas metas */}
-        <Card as="section" className="min-w-0" data-tour="metas-lista">
-          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Suas metas</h2>
-          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-4">ordenadas por risco de estouro</p>
+        <Card as="section" padding="nenhum" sangra className="min-w-0" data-tour="metas-lista">
+          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 px-4 pt-4 md:px-5 md:pt-5">Suas metas</h2>
+          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-3 px-4 md:px-5">ordenadas por risco de estouro</p>
           {linhas.length > 0 ? (
-            <div className="space-y-4">
+            <div className={LISTA_CLASSES}>
               {linhas.map((linha) => {
                 const estourou = linha.pct > 100;
                 const quase = linha.pct >= 80 && linha.pct <= 100;
@@ -346,13 +347,38 @@ export const MetasPage = () => {
                   ? "text-amber-700 dark:text-amber-400"
                   : "text-zinc-900 dark:text-zinc-100";
                 return (
-                  <div key={linha.id}>
-                    <div className="flex items-center justify-between gap-3 mb-1.5">
-                      <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 capitalize truncate">{linha.categoria}</span>
-                      <span className="flex items-center gap-1 flex-shrink-0">
-                        <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-                          <span className={corGasto}>{formatCurrency(linha.gasto)}</span> / {formatCurrency(linha.limite)}
+                  <LinhaLista
+                    key={linha.id}
+                    titulo={linha.categoria}
+                    meta={
+                      <span className="block">
+                        {/* A barra entra como meta: a etapa 35 não cria uma
+                            segunda linha de lista só por causa dela. */}
+                        <span className={`block h-1.5 rounded-full overflow-hidden mb-1 ${estourou ? "bg-red-50 dark:bg-red-950/30" : "bg-zinc-100 dark:bg-white/[0.04]"}`}>
+                          <span
+                            className={`block h-full rounded-full transition-all duration-700 ${estourou ? "bg-red-500" : quase ? "bg-amber-500" : "bg-emerald-500"}`}
+                            style={{ width: `${Math.min(linha.pct, 100)}%` }}
+                          />
                         </span>
+                        <span className={estourou ? "text-red-600 dark:text-red-400" : ""}>
+                          {linha.pct.toFixed(0)}% · {estourou
+                            ? `estourou ${formatCurrency(linha.gasto - linha.limite)}`
+                            : `restam ${formatCurrency(linha.limite - linha.gasto)}`}
+                        </span>
+                      </span>
+                    }
+                    valor={
+                      <span className="text-[13px] font-normal text-zinc-500 dark:text-zinc-400">
+                        <span className={corGasto}>{formatCurrency(linha.gasto)}</span> / {formatCurrency(linha.limite)}
+                      </span>
+                    }
+                    onAbrir={() => handleEditarMeta(linha)}
+                    acoes={[
+                      { rotulo: "Editar meta", icone: <Edit2 className="w-5 h-5" />, onClick: () => handleEditarMeta(linha) },
+                      { rotulo: "Remover meta", icone: <X className="w-5 h-5" />, onClick: () => handleDeleteMeta(linha), tom: "perigo" },
+                    ]}
+                    acoesDesktop={
+                      <>
                         <button
                           onClick={() => handleEditarMeta(linha)}
                           className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
@@ -370,29 +396,20 @@ export const MetasPage = () => {
                         >
                           <X className="w-[15px] h-[15px]" />
                         </button>
-                      </span>
-                    </div>
-                    <div className={`h-2 rounded-full overflow-hidden ${estourou ? "bg-red-50 dark:bg-red-950/30" : "bg-zinc-100 dark:bg-white/[0.04]"}`}>
-                      <div
-                        className={`h-full rounded-full transition-all duration-700 ${estourou ? "bg-red-500" : quase ? "bg-amber-500" : "bg-emerald-500"}`}
-                        style={{ width: `${Math.min(linha.pct, 100)}%` }}
-                      />
-                    </div>
-                    <p className={`font-mono text-[11px] mt-1 ${estourou ? "text-red-600 dark:text-red-400" : "text-zinc-500 dark:text-zinc-400"}`}>
-                      {linha.pct.toFixed(0)}% · {estourou
-                        ? `estourou ${formatCurrency(linha.gasto - linha.limite)}`
-                        : `restam ${formatCurrency(linha.limite - linha.gasto)}`}
-                    </p>
-                  </div>
+                      </>
+                    }
+                  />
                 );
               })}
             </div>
           ) : (
-            <PageEmptyState
-              compact
-              title="Nenhuma meta cadastrada"
-              description="Crie uma meta por categoria para acompanhar limites e evitar estouro de orçamento."
-            />
+            <div className="px-4 pb-6 md:px-5">
+              <PageEmptyState
+                compact
+                title="Nenhuma meta cadastrada"
+                description="Crie uma meta por categoria para acompanhar limites e evitar estouro de orçamento."
+              />
+            </div>
           )}
         </Card>
 

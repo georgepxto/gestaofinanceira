@@ -19,6 +19,7 @@ import type { MeuGasto, CartaoCredito } from "../../types";
 import { formatCurrency, getMesFaturaCartao } from "../../utils/calculations";
 import { Rotulo } from "../ui/Rotulo";
 import { Card } from "../ui/Card";
+import { LinhaLista, LISTA_CLASSES, type Acao } from "../ui/LinhaLista";
 import { Resumo, ResumoItem } from "../ui/Resumo";
 import { Valor } from "../ui/Valor";
 
@@ -226,14 +227,14 @@ export function TabMeuGasto({
 
           {/* Card Gastos fixos */}
           {gastosFixos.length > 0 && (
-            <Card data-tour="eu-gastos-fixos">
-              <div className="flex items-center justify-between gap-3 mb-4">
+            <Card padding="nenhum" sangra data-tour="eu-gastos-fixos">
+              <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 md:px-5 md:pt-5">
                 <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Gastos fixos</h2>
                 <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">
                   {gastosFixosAtivos} {gastosFixosAtivos === 1 ? "ativo" : "ativos"}
                 </span>
               </div>
-              <div className="space-y-2.5">
+              <div className={LISTA_CLASSES}>
                 {[...gastosFixos]
                   .sort((a, b) => (b.dia_vencimento || 0) - (a.dia_vencimento || 0))
                   .map((gasto) => {
@@ -241,74 +242,83 @@ export function TabMeuGasto({
                     const atenuado = isSuspenso || gasto.ativo === false;
 
                     return (
-                      // Atenuar é um recurso só (zinc-500 + line-through);
-                      // empilhar `opacity` por cima derrubaria o contraste.
-                      <div
+                      <LinhaLista
                         key={gasto.id}
-                        className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.05] rounded-xl p-3.5 flex items-center gap-3"
-                      >
-                        <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
-                          <Repeat className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-sm font-semibold truncate ${
-                            atenuado
-                              ? "text-zinc-500 dark:text-zinc-400 line-through"
-                              : "text-zinc-900 dark:text-zinc-100"
-                          }`}>
-                            {gasto.descricao}
-                          </p>
-                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                            <span className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
-                              vence dia {gasto.dia_vencimento}
-                            </span>
+                        icone={
+                          <span className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center">
+                            <Repeat className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          </span>
+                        }
+                        titulo={gasto.descricao}
+                        atenuado={atenuado}
+                        meta={
+                          <span className="flex items-center gap-1.5">
+                            <span>vence dia {gasto.dia_vencimento}</span>
                             {gasto.dividido_com && (
                               <span className={BADGE_NEUTRA}>c/ {formatarDivididoCom(gasto)}</span>
                             )}
-                            {isSuspenso && (
-                              <span className={BADGE_AMBAR}>pausado</span>
-                            )}
-                            {gasto.ativo === false && (
-                              <span className={BADGE_NEUTRA}>inativo</span>
-                            )}
-                          </div>
-                        </div>
-
-                        <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
-                          {formatCurrency(gasto.valor)}
-                        </p>
-                        <div className="flex items-center gap-0.5 flex-shrink-0">
-                          <button
-                            onClick={() => handleClickSuspender(gasto, !!isSuspenso)}
-                            className={ghostClasse(isSuspenso ? "reativar" : "pausar")}
-                            title={isSuspenso ? "Reativar neste mês" : "Suspender neste mês"}
-                          >
-                            {isSuspenso ? <PlayCircle className="w-[15px] h-[15px]" /> : <PauseCircle className="w-[15px] h-[15px]" />}
-                          </button>
-                          <button
-                            onClick={() => handleEditMeuGasto(gasto)}
-                            className={ghostClasse("neutro")}
-                            title="Editar"
-                          >
-                            <Edit3 className="w-[15px] h-[15px]" />
-                          </button>
-                          <button
-                            onClick={() => handleToggleGastoFixo(gasto.id)}
-                            className={ghostClasse(gasto.ativo !== false ? "pausar" : "reativar")}
-                            title={gasto.ativo !== false ? "Desativar" : "Ativar"}
-                          >
-                            {gasto.ativo !== false ? <CheckCircle className="w-[15px] h-[15px]" /> : <MinusCircle className="w-[15px] h-[15px]" />}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteMeuGasto(gasto.id)}
-                            className={ghostClasse("excluir")}
-                            title="Excluir"
-                          >
-                            <Trash2 className="w-[15px] h-[15px]" />
-                          </button>
-                        </div>
-                      </div>
+                            {isSuspenso && <span className={BADGE_AMBAR}>pausado</span>}
+                            {gasto.ativo === false && <span className={BADGE_NEUTRA}>inativo</span>}
+                          </span>
+                        }
+                        valor={formatCurrency(gasto.valor)}
+                        onAbrir={() => handleEditMeuGasto(gasto)}
+                        acoes={[
+                          {
+                            rotulo: isSuspenso ? "Reativar neste mês" : "Pausar neste mês",
+                            icone: isSuspenso ? <PlayCircle className="w-5 h-5" /> : <PauseCircle className="w-5 h-5" />,
+                            onClick: () => handleClickSuspender(gasto, !!isSuspenso),
+                          },
+                          {
+                            rotulo: "Editar",
+                            icone: <Edit3 className="w-5 h-5" />,
+                            onClick: () => handleEditMeuGasto(gasto),
+                          },
+                          {
+                            rotulo: gasto.ativo !== false ? "Desativar" : "Ativar",
+                            icone: gasto.ativo !== false ? <CheckCircle className="w-5 h-5" /> : <MinusCircle className="w-5 h-5" />,
+                            onClick: () => handleToggleGastoFixo(gasto.id),
+                          },
+                          {
+                            rotulo: "Excluir",
+                            icone: <Trash2 className="w-5 h-5" />,
+                            onClick: () => handleDeleteMeuGasto(gasto.id),
+                            tom: "perigo",
+                          },
+                        ]}
+                        acoesDesktop={
+                          <>
+                            <button
+                              onClick={() => handleClickSuspender(gasto, !!isSuspenso)}
+                              className={ghostClasse(isSuspenso ? "reativar" : "pausar")}
+                              title={isSuspenso ? "Reativar neste mês" : "Suspender neste mês"}
+                            >
+                              {isSuspenso ? <PlayCircle className="w-[15px] h-[15px]" /> : <PauseCircle className="w-[15px] h-[15px]" />}
+                            </button>
+                            <button
+                              onClick={() => handleEditMeuGasto(gasto)}
+                              className={ghostClasse("neutro")}
+                              title="Editar"
+                            >
+                              <Edit3 className="w-[15px] h-[15px]" />
+                            </button>
+                            <button
+                              onClick={() => handleToggleGastoFixo(gasto.id)}
+                              className={ghostClasse(gasto.ativo !== false ? "pausar" : "reativar")}
+                              title={gasto.ativo !== false ? "Desativar" : "Ativar"}
+                            >
+                              {gasto.ativo !== false ? <CheckCircle className="w-[15px] h-[15px]" /> : <MinusCircle className="w-[15px] h-[15px]" />}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMeuGasto(gasto.id)}
+                              className={ghostClasse("excluir")}
+                              title="Excluir"
+                            >
+                              <Trash2 className="w-[15px] h-[15px]" />
+                            </button>
+                          </>
+                        }
+                      />
                     );
                   })}
               </div>
@@ -317,8 +327,8 @@ export function TabMeuGasto({
         </div>
 
         {/* Card Lançamentos do mês */}
-        <Card className="min-w-0" data-tour="eu-lista-gastos">
-          <div className="flex items-center justify-between gap-3 mb-4">
+        <Card padding="nenhum" sangra className="min-w-0" data-tour="eu-lista-gastos">
+          <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 md:px-5 md:pt-5">
             <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Lançamentos do mês</h2>
             <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">
               {gastosFiltrados.length} {gastosFiltrados.length === 1 ? "item" : "itens"}
@@ -326,7 +336,7 @@ export function TabMeuGasto({
           </div>
 
           {gastosFiltrados.length === 0 ? (
-            <div className="text-center py-8">
+            <div className="px-4 py-10 text-center">
               <DollarSign className="w-12 h-12 mx-auto text-zinc-300 dark:text-zinc-500 mb-3" />
               <p className="text-zinc-500 dark:text-zinc-400">
                 Nenhum gasto registrado
@@ -335,7 +345,7 @@ export function TabMeuGasto({
               </p>
             </div>
           ) : (
-            <div className="space-y-5">
+            <div className="space-y-5 pb-2 md:pb-0">
               {(() => {
                 // Agrupar gastos por dia
                 const gastosPorDia: Record<string, typeof gastosFiltrados> = {};
@@ -354,15 +364,16 @@ export function TabMeuGasto({
 
                 return diasOrdenados.map((dia) => (
                   <div key={dia}>
-                    {/* Cabeçalho do dia */}
-                    <div className="flex items-center gap-2 mb-2.5">
+                    {/* Cabeçalho do dia — fica no padding normal do cartão:
+                        sangrar é para a lista, não para o cabeçalho. */}
+                    <div className="flex items-center gap-2 mb-2.5 px-4 md:px-5">
                       <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                         Dia {parseInt(dia, 10)}
                       </span>
                       <div className="flex-1 h-px bg-zinc-100 dark:bg-white/[0.04]"></div>
                     </div>
                     {/* Lista de gastos do dia */}
-                    <ul className="space-y-2.5">
+                    <ul className={LISTA_CLASSES}>
                       {gastosPorDia[dia].map((gasto) => {
                         let nomeFatura = "";
                         if (gasto.tipo === "credito" && gasto.cartao_id) {
@@ -380,54 +391,67 @@ export function TabMeuGasto({
                         const isSuspenso = gasto.categoria === "fixo" && gasto.meses_suspensos?.includes(format(mesVisualizacao, "yyyy-MM"));
                         const atenuado = gasto.pago || isSuspenso;
 
-                        return (
-                          <li
-                            key={gasto.id}
-                            // Atenuação vem do texto (zinc-500 + line-through), não
-                            // de `opacity`/`grayscale` — uma atenuação só.
-                            className={`rounded-xl border p-3.5 transition-colors ${
-                              gasto.categoria === "divida"
-                                ? "bg-amber-50/60 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/50"
-                                : "bg-app-row dark:bg-white/[0.03] border-zinc-100 dark:border-white/[0.05]"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              {/* Checkbox pago */}
-                              <button
-                                onClick={() => handleTogglePagoMeuGasto(gasto.id)}
-                                aria-label={gasto.pago ? `Desmarcar ${gasto.descricao} como pago` : `Marcar ${gasto.descricao} como pago`}
-                                className="flex-shrink-0"
-                              >
-                                {gasto.pago ? (
-                                  <span className="w-[26px] h-[26px] rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center">
-                                    <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                                  </span>
-                                ) : (
-                                  <span className={`block w-[26px] h-[26px] rounded-lg border-2 transition-colors ${
-                                    gasto.categoria === "divida"
-                                      ? "border-amber-400 hover:border-amber-500"
-                                      : "border-zinc-300 dark:border-white/[0.09] hover:border-emerald-400"
-                                  }`} />
-                                )}
-                              </button>
+                        const acoesDoGasto: Acao[] = [
+                          ...(gasto.categoria === "fixo"
+                            ? [
+                                {
+                                  rotulo: isSuspenso ? "Reativar neste mês" : "Pausar neste mês",
+                                  icone: isSuspenso ? <PlayCircle className="w-5 h-5" /> : <PauseCircle className="w-5 h-5" />,
+                                  onClick: () => handleClickSuspender(gasto, !!isSuspenso),
+                                } as Acao,
+                              ]
+                            : []),
+                          {
+                            rotulo: "Editar",
+                            icone: <Edit3 className="w-5 h-5" />,
+                            onClick: () => handleEditMeuGasto(gasto),
+                          },
+                          {
+                            rotulo: "Excluir",
+                            icone: <Trash2 className="w-5 h-5" />,
+                            onClick: () => handleDeleteMeuGasto(gasto.id),
+                            tom: "perigo",
+                          },
+                        ];
 
-                              <div className="min-w-0 flex-1">
-                                <p className={`text-sm font-medium truncate ${
-                                  atenuado
-                                    ? "text-zinc-500 dark:text-zinc-400 line-through"
-                                    : "text-zinc-900 dark:text-zinc-100"
-                                }`}>
-                                  {gasto.descricao}
-                                </p>
-                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        return (
+                          <li key={gasto.id}>
+                            <LinhaLista
+                              dataTour="eu-item-acoes"
+                              classeCaixa={
+                                gasto.categoria === "divida"
+                                  ? "md:bg-amber-50/60 md:dark:bg-amber-900/10 md:border-amber-200 md:dark:border-amber-800/50"
+                                  : ""
+                              }
+                              prefixo={
+                                <button
+                                  onClick={() => handleTogglePagoMeuGasto(gasto.id)}
+                                  aria-label={gasto.pago ? `Desmarcar ${gasto.descricao} como pago` : `Marcar ${gasto.descricao} como pago`}
+                                  className="w-11 h-11 -ml-2 flex items-center justify-center flex-shrink-0"
+                                >
+                                  {gasto.pago ? (
+                                    <span className="w-[26px] h-[26px] rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center">
+                                      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                    </span>
+                                  ) : (
+                                    <span className={`block w-[26px] h-[26px] rounded-lg border-2 transition-colors ${
+                                      gasto.categoria === "divida"
+                                        ? "border-amber-400 hover:border-amber-500"
+                                        : "border-zinc-300 dark:border-white/[0.09] hover:border-emerald-400"
+                                    }`} />
+                                  )}
+                                </button>
+                              }
+                              titulo={gasto.descricao}
+                              atenuado={atenuado}
+                              meta={
+                                <span className="flex items-center gap-1.5">
                                   <span className={BADGE_NEUTRA}>
                                     {gasto.tipo === "credito"
                                       ? (nomeFatura ? `Crédito · fatura de ${nomeFatura}` : "Crédito")
                                       : "Débito"}
                                   </span>
-                                  {gasto.categoria === "divida" && (
-                                    <span className={BADGE_AMBAR}>Dívida</span>
-                                  )}
+                                  {gasto.categoria === "divida" && <span className={BADGE_AMBAR}>Dívida</span>}
                                   {isSuspenso && (
                                     <span className={BADGE_AMBAR}>pausado · volta em {getMesReativacao(gasto)}</span>
                                   )}
@@ -437,54 +461,52 @@ export function TabMeuGasto({
                                       {formatarDivididoCom(gasto)}
                                     </span>
                                   )}
-                                </div>
-                              </div>
-
-                              <div className="text-right flex-shrink-0">
-                                <p className={`font-mono valor text-sm font-semibold whitespace-nowrap ${
-                                  gasto.pago
-                                    ? "text-zinc-500 dark:text-zinc-400 line-through"
-                                    : "text-zinc-900 dark:text-zinc-100"
-                                }`}>
+                                </span>
+                              }
+                              valor={
+                                <span className="block text-right">
                                   −{formatCurrency(
                                     !!gasto.dividido_com && gasto.minha_parte
                                       ? gasto.minha_parte
                                       : gasto.valor
                                   )}
-                                </p>
-                                {!!gasto.dividido_com && gasto.minha_parte && (
-                                  <p className="font-mono valor text-[11px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-                                    total {formatCurrency(gasto.valor)}
-                                  </p>
-                                )}
-                              </div>
-
-                              <div className="flex items-center gap-0.5 flex-shrink-0" data-tour="eu-item-acoes">
-                                {gasto.categoria === "fixo" && (
+                                  {!!gasto.dividido_com && gasto.minha_parte && (
+                                    <span className="block font-mono valor text-[11px] font-normal text-zinc-500 dark:text-zinc-400">
+                                      total {formatCurrency(gasto.valor)}
+                                    </span>
+                                  )}
+                                </span>
+                              }
+                              onAbrir={() => handleEditMeuGasto(gasto)}
+                              acoes={acoesDoGasto}
+                              acoesDesktop={
+                                <>
+                                  {gasto.categoria === "fixo" && (
+                                    <button
+                                      onClick={() => handleClickSuspender(gasto, !!isSuspenso)}
+                                      className={ghostClasse(isSuspenso ? "reativar" : "pausar")}
+                                      title={isSuspenso ? "Reativar neste mês" : "Suspender neste mês"}
+                                    >
+                                      {isSuspenso ? <PlayCircle className="w-[15px] h-[15px]" /> : <PauseCircle className="w-[15px] h-[15px]" />}
+                                    </button>
+                                  )}
                                   <button
-                                    onClick={() => handleClickSuspender(gasto, !!isSuspenso)}
-                                    className={ghostClasse(isSuspenso ? "reativar" : "pausar")}
-                                    title={isSuspenso ? "Reativar neste mês" : "Suspender neste mês"}
+                                    onClick={() => handleEditMeuGasto(gasto)}
+                                    className={ghostClasse("neutro")}
+                                    title="Editar"
                                   >
-                                    {isSuspenso ? <PlayCircle className="w-[15px] h-[15px]" /> : <PauseCircle className="w-[15px] h-[15px]" />}
+                                    <Edit3 className="w-[15px] h-[15px]" />
                                   </button>
-                                )}
-                                <button
-                                  onClick={() => handleEditMeuGasto(gasto)}
-                                  className={ghostClasse("neutro")}
-                                  title="Editar"
-                                >
-                                  <Edit3 className="w-[15px] h-[15px]" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteMeuGasto(gasto.id)}
-                                  className={ghostClasse("excluir")}
-                                  title="Excluir"
-                                >
-                                  <Trash2 className="w-[15px] h-[15px]" />
-                                </button>
-                              </div>
-                            </div>
+                                  <button
+                                    onClick={() => handleDeleteMeuGasto(gasto.id)}
+                                    className={ghostClasse("excluir")}
+                                    title="Excluir"
+                                  >
+                                    <Trash2 className="w-[15px] h-[15px]" />
+                                  </button>
+                                </>
+                              }
+                            />
                           </li>
                         );
                       })}
