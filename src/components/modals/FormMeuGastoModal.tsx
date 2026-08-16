@@ -10,11 +10,10 @@ import {
   Repeat,
 } from "lucide-react";
 import type { MeuGastoForm, CartaoCredito, ContaBancaria } from "../../types";
-import { useFocusTrap } from "../../hooks";
+import { useFocusTrap, useMinhaParteAutomatica } from "../../hooks";
 import {
   formatCurrency,
   formatCurrencyInput,
-  formatCurrencyValue,
   parseCurrency,
 } from "../../utils/calculations";
 import { comCategoriaAtual } from "../../utils/categories";
@@ -61,8 +60,10 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
   const [customParcelasInput, setCustomParcelasInput] = React.useState(
     formData.num_parcelas
   );
-  const ultimaMinhaParteAutomaticaRef = React.useRef<string>("");
   const dialogRef = useFocusTrap(onClose, show);
+  // A divisão automática da minha parte é regra do formulário, não deste
+  // diálogo: a folha do mobile usa o mesmo hook.
+  useMinhaParteAutomatica(formData, onFormChange);
   const { categorias } = useCategorias("gasto");
   // Categoria excluída depois do lançamento continua listada: sem isto o select
   // abriria vazio e o próximo salvamento trocaria a categoria do gasto.
@@ -77,36 +78,6 @@ export const FormMeuGastoModal: React.FC<FormMeuGastoModalProps> = ({
     // o modo custom enquanto o usuário digita.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [show]);
-
-  React.useEffect(() => {
-    if (formData.categoria !== "dividido") return;
-
-    const pessoasSelecionadas = formData.dividido_com_pessoas || [];
-    if (pessoasSelecionadas.length === 0) return;
-
-    const valorTotal = parseCurrency(formData.valor);
-    if (valorTotal <= 0) return;
-
-    const totalParticipantes = pessoasSelecionadas.length + 1;
-    const minhaParteAutomatica = valorTotal / totalParticipantes;
-    const minhaParteFormatada = formatCurrencyValue(minhaParteAutomatica);
-
-    if (
-      formData.minha_parte.trim() === "" ||
-      formData.minha_parte === ultimaMinhaParteAutomaticaRef.current
-    ) {
-      ultimaMinhaParteAutomaticaRef.current = minhaParteFormatada;
-      onFormChange({
-        ...formData,
-        minha_parte: minhaParteFormatada,
-      });
-    }
-    // `formData` inteiro e `onFormChange` ficam fora de propósito: o efeito chama
-    // `onFormChange` com um `formData` novo, então listá-lo criaria loop. A escrita já
-    // é protegida por `ultimaMinhaParteAutomaticaRef`, que impede sobrescrever valor
-    // digitado à mão.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.categoria, formData.dividido_com_pessoas, formData.valor]);
 
   const handleCustomParcelasChange = (
     e: React.ChangeEvent<HTMLInputElement>

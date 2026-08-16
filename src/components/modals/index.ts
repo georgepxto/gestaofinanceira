@@ -1,6 +1,7 @@
 export * from "./FormGastoModal";
 export * from "./FormDividaModal";
 export * from "./FormMeuGastoModal";
+export * from "./FolhaLancamento";
 export * from "./ConfirmModal";
 export * from "./FeedbackModal";
 export * from "./ObservacaoModal";

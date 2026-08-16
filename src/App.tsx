@@ -9,11 +9,12 @@ import { Toaster } from "./components/ui/Toaster";
 // Layout, e um import estático dele arrastaria a casca inteira para o chunk de
 // entrada — justamente o que o `lazy` acima evita.
 import { BootSplash, AparecerSeDemorar } from "./components/layout/BootSplash";
-import { useEsperaLonga } from "./hooks";
+import { useEsperaLonga, useIsMobile } from "./hooks";
 import {
   FormGastoModal,
   FormDividaModal,
   FormMeuGastoModal,
+  FolhaLancamento,
   ConfirmModal,
   FeedbackModal,
   ObservacaoModal,
@@ -198,6 +199,7 @@ function AppContent() {
   // `return`: hook depois de saída condicional quebra a ordem entre renders.
   const mostrarBootAuth = useEsperaLonga(authLoading);
   const mostrarBootFeatures = useEsperaLonga(featuresLoading);
+  const isMobile = useIsMobile();
 
   // Loading de autenticação
   if (authLoading) {
@@ -324,19 +326,38 @@ function AppContent() {
       </Suspense>
 
       {/* Modals - rendered at app level */}
-      <FormMeuGastoModal
-        show={showFormMeuGasto}
-        isEditing={!!editandoMeuGasto}
-        formData={formMeuGasto}
-        saving={saving}
-        error={error}
-        cartoes={cartoes}
-        contas={contas}
-        pessoas={pessoas}
-        onClose={() => resetFormMeuGasto()}
-        onFormChange={setFormMeuGasto}
-        onSubmit={handleSaveMeuGasto}
-      />
+      {/* Duas apresentações do mesmo formulário: a folha no celular, o diálogo
+          no desktop. Props idênticas — o estado, a validação e o `handleSave`
+          são um só. */}
+      {isMobile ? (
+        <FolhaLancamento
+          show={showFormMeuGasto}
+          isEditing={!!editandoMeuGasto}
+          formData={formMeuGasto}
+          saving={saving}
+          error={error}
+          cartoes={cartoes}
+          contas={contas}
+          pessoas={pessoas}
+          onClose={() => resetFormMeuGasto()}
+          onFormChange={setFormMeuGasto}
+          onSubmit={handleSaveMeuGasto}
+        />
+      ) : (
+        <FormMeuGastoModal
+          show={showFormMeuGasto}
+          isEditing={!!editandoMeuGasto}
+          formData={formMeuGasto}
+          saving={saving}
+          error={error}
+          cartoes={cartoes}
+          contas={contas}
+          pessoas={pessoas}
+          onClose={() => resetFormMeuGasto()}
+          onFormChange={setFormMeuGasto}
+          onSubmit={handleSaveMeuGasto}
+        />
+      )}
 
       <FeedbackModal
         modal={modalFeedback}

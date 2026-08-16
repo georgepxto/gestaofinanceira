@@ -1,6 +1,8 @@
 export { useAuth } from "./useAuth";
 export { useFocusTrap } from "./useFocusTrap";
 export { useEsperaLonga } from "./useEsperaLonga";
+export { useIsMobile } from "./useIsMobile";
+export { useMinhaParteAutomatica } from "./useMinhaParteAutomatica";
 export { useModals } from "./useModals";
 export { usePessoas } from "./usePessoas";
 export { useObservacoes } from "./useObservacoes";

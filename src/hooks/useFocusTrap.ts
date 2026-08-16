@@ -18,8 +18,14 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
     const prev = document.activeElement as HTMLElement | null;
 
     const getFocusables = () => Array.from(el.querySelectorAll<HTMLElement>(FOCUSABLE));
+
+    // `data-autofocus` ganha do primeiro focável. Sem isso o foco cai sempre no
+    // botão de fechar do cabeçalho — e numa folha cujo assunto é um campo (o
+    // valor do lançamento), o `autoFocus` do JSX era engolido por este efeito.
+    const preferido = el.querySelector<HTMLElement>("[data-autofocus]");
     const initial = getFocusables();
-    if (initial.length) initial[0].focus();
+    if (preferido) preferido.focus();
+    else if (initial.length) initial[0].focus();
 
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") { onEscapeRef.current?.(); return; }

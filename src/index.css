@@ -69,6 +69,14 @@ textarea {
   font-size: 16px !important;
 }
 
+/* Exceção única à regra acima: a entrada de valor da folha de lançamento é o
+   herói da tela, no degrau de 44px. A regra dos 16px existe para impedir o zoom
+   que o iOS dá em campo com fonte MENOR que 16px — acima disso o motivo não se
+   aplica, e sem esta linha o `!important` acima achataria o valor. */
+input.valor-entrada {
+  font-size: 44px !important;
+}
+
 @media screen and (max-width: 768px) {
   input,
   select,
