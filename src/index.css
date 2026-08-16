@@ -25,6 +25,43 @@ html.dark body {
   color: #FAFAFA; /* zinc-50 */
 }
 
+/* Controles nativos seguem o tema do app.
+   Sem isto o navegador pinta o popup de <select>, o autofill, o caret e a
+   scrollbar nativa no esquema claro — e o texto das <option>, que herda
+   dark:text-zinc-100 do select, fica branco sobre branco. É a causa dos
+   dropdowns ilegíveis no escuro. */
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* Fallback e marca no popup nativo. O macOS ignora estas cores (o popup é
+   desenhado pelo SO); Windows e Linux as respeitam. */
+html.dark select option {
+  background-color: #18181B; /* zinc-900 */
+  color: #F4F4F5;            /* zinc-100 */
+}
+
+/* O seletor do escuro precisa repetir `html.dark`: sem isso
+   `html.dark select option` (0,1,3) vence `select option:checked` (0,1,2) por
+   especificidade e a linha atual sai zinc-900 em vez de esmeralda. */
+select option:checked,
+html.dark select option:checked {
+  background-color: #059669; /* emerald-600 — o azul do SO não é da marca */
+  color: #FFFFFF;
+}
+
+select option:disabled {
+  color: #A1A1AA; /* zinc-400 */
+}
+
+html.dark select option:disabled {
+  color: #71717A; /* zinc-500 */
+}
+
 /* Previne zoom no iOS ao focar em inputs */
 input,
 select,
@@ -56,7 +93,6 @@ input[type="date"],
 input[type="datetime-local"],
 input[type="month"],
 input[type="time"] {
-  color-scheme: light;
   -webkit-appearance: none;
   appearance: none;
   min-height: 2.5rem;
@@ -69,7 +105,6 @@ html.dark input[type="date"],
 html.dark input[type="datetime-local"],
 html.dark input[type="month"],
 html.dark input[type="time"] {
-  color-scheme: dark;
   color: #F4F4F5 !important; /* zinc-100 */
 }
 

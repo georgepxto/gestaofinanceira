@@ -259,7 +259,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               name="pessoa"
               value={formData.pessoa}
               onChange={handleInputChange}
-              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
+              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
               required
             >
               <option value="">Selecione</option>
@@ -287,7 +287,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               name="categoria"
               value={formData.categoria}
               onChange={handleInputChange}
-              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
+              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
               required
             >
               {categoriasDoSelect.map((cat) => (
@@ -371,7 +371,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
               }
               onChange={handleInputChange}
               disabled={formData.recorrente}
-              className={`w-full h-11 px-3.5 font-mono tabular-nums border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100 ${
+              className={`w-full h-11 px-3.5 font-mono tabular-nums border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100 ${
                 formData.recorrente ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >

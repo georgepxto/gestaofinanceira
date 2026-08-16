@@ -89,7 +89,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
               onChange={(e) =>
                 onFormChange({ ...formData, pessoa: e.target.value })
               }
-              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] appearance-none bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
+              className="w-full h-11 px-3.5 border border-zinc-200 dark:border-white/[0.09] rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06] bg-zinc-50 dark:bg-white/[0.04] text-zinc-900 dark:text-zinc-100"
             >
               <option value="">Selecione...</option>
               {pessoas.map((pessoa) => (
