@@ -1,58 +1,59 @@
-# 💰 Gestão Financeira - Controle de Finanças Parceladas
+# Hedge — Controlador Financeiro Pessoal e Colaborativo
 
-Uma aplicação web moderna para controlar gastos parcelados, saldos devedores e despesas pessoais com múltiplos usuários. Construída com **React**, **Vite**, **TypeScript** e **Tailwind CSS**.
+Hedge registra gastos pessoais, divide contas entre amigos com rastreio de quem pagou, gerencia cartões de crédito, contas bancárias e metas de gasto, e entrega dashboards e relatórios em PDF. Construído com **React**, **Vite**, **TypeScript**, **Tailwind CSS** e **Supabase**.
 
-## 🎯 Características Principais
+> Ver [`PRODUCT.md`](PRODUCT.md) para o produto (público-alvo, princípios de design, tom de voz).
 
-### 📊 Aba Gastos (Gastos Conjuntos)
+## 🎯 Funcionalidades
 
-- **Navegação por mês** - Veja os gastos de qualquer mês
-- **Resumo mensal** - Total de gastos e por pessoa
-- **Lançamentos com parcelas** - Registre gastos com até 24 parcelas
-- **Tipos de gasto** - Crédito (parcelado) ou Débito (à vista)
-- **Pagamento parcial** - Registre pagamentos parciais antes de fechar o mês
-- **Observações de mês** - Adicione notas para cada mês
-- **Modo demo** - Funciona sem Supabase (dados em localStorage)
+### 📊 Dashboard
+Visão geral do mês: saldo, gastos por categoria, evolução, alertas (parcelas acabando, gasto fora do padrão).
 
-### 💳 Aba Saldo Devedor
+### 💰 Orçamento
+- **Lançamentos** — gastos pessoais, crédito ou débito, parcelados em até 24x, com categorias personalizáveis.
+- **Gastos fixos** — despesas recorrentes, com toggle de habilitar/desabilitar.
+- **Metas de gasto** — limite mensal por categoria, comparado ao realizado.
 
-- **Rastreamento de dívidas** - Mantenha controle de dívidas antigas
-- **Histórico de pagamentos** - Veja todos os pagamentos realizados
-- **Registrar pagamento** - Clique no botão ➖ para registrar novos pagamentos
-- **Desfazer pagamentos** - Reverta pagamentos acidentais
-- **Filtro por status** - Veja pendentes ou já quitadas
-- **Filtro por pessoa** - Filtre dívidas por usuário
-- **Barra de progresso** - Visualize o andamento do pagamento
-- **Observações de pagamento** - Adicione notas ao registrar pagamentos
+### 🤝 A Receber
+- **Pessoas** — cadastro de quem divide gastos com você.
+- **Gastos Compartilhados (por mês)** — lançamentos parcelados divididos entre pessoas, com fechamento de mês por pessoa (o que não foi pago vira saldo devedor).
+- **Saldo Devedor (em aberto)** — dívidas em aberto, histórico de pagamentos (inclusive parciais), reversão de pagamento, filtro por status e por pessoa.
 
-### 👤 Aba Meus Gastos (Despesas Pessoais)
+### 💳 Carteira
+- **Contas bancárias** — saldo por conta, histórico.
+- **Cartões de crédito** — fatura por cartão, limite consolidado, transações por categoria.
 
-- **Gastos pessoais** - Registre suas próprias despesas
-- **Tipos de gasto** - Crédito ou Débito
-- **Categorias** - Pessoal ou Dividido com outros
-- **Gastos fixos** - Configure despesas recorrentes
-- **Habilitar/desabilitar fixos** - Ative ou desative gastos fixos
-- **Resumo de gastos** - Veja totais de crédito, débito, pagos e fixos
-- **Marcar como pago** - Indique quais gastos já foram quitados
+### ⚙️ Configurações
+- **Categorias personalizáveis** — cada usuário cria, renomeia e exclui suas próprias categorias de gasto e receita; renomear/excluir propaga para os lançamentos já gravados.
+- **Tema claro/escuro**.
+- **Exportar para PDF**.
+- **Notificações push**.
+- **Exclusão de conta** — apaga a conta e todos os dados associados.
 
-### ⏹️ Fechar Mês
+### 🔐 Admin
+Papéis de usuário e feature flags por conta (habilitar/desabilitar abas individualmente por usuário).
 
-- **Botão por pessoa** - Feche o mês de cada pessoa individualmente
-- **Transferência automática** - Gastos não pagos viram saldo devedor
-- **Confirmação visual** - Veja quanto fica de dívida antes de confirmar
+## 🛠️ Tecnologias Utilizadas
 
-### 👥 Gerenciamento de Pessoas
-
-- **Pessoas dinâmicas** - Adicione pessoas
-- **Adicionar novos usuários** - Crie usuários conforme necessário
-- **Remover usuários** - Delete usuários que não precisa mais
+- **React 18** + **React Router 7** — UI e navegação por rotas
+- **Vite 5** — build tool e dev server
+- **TypeScript** — tipagem estática
+- **Tailwind CSS** — estilização (`Syne` para títulos, `Geist Mono` para valores, `Switzer` para corpo — ver `design_handoff_hedge_visual_revision/`)
+- **Supabase** — banco de dados, autenticação e Row Level Security (**obrigatório**, ver abaixo)
+- **Recharts** — gráficos do Dashboard
+- **jsPDF** — exportação de relatórios em PDF
+- **lucide-react** — ícones
+- **date-fns** — manipulação de datas
+- **web-vitals** — Core Web Vitals no cliente
+- **Playwright** — testes E2E visuais
 
 ## 🚀 Instalação
 
 ### Pré-requisitos
 
-- Node.js 16+
-- npm ou yarn
+- Node.js 18+
+- npm
+- Um projeto Supabase (o app **não funciona sem ele** — ver [Banco de dados](#-banco-de-dados))
 
 ### Passos
 
@@ -60,7 +61,7 @@ Uma aplicação web moderna para controlar gastos parcelados, saldos devedores e
 
 ```bash
 git clone https://github.com/georgepxto/gestaofinanceira.git
-cd gestao
+cd gestaofinanceira
 ```
 
 2. **Instale as dependências**
@@ -69,13 +70,15 @@ cd gestao
 npm install
 ```
 
-3. **Configure o Supabase (opcional)**
-   Crie um arquivo `.env.local` na raiz do projeto:
+3. **Configure o Supabase**
+   Copie `.env.local.example` para `.env.local` e preencha:
 
 ```env
-VITE_SUPABASE_URL=sua_url_aqui
-VITE_SUPABASE_ANON_KEY=sua_chave_aqui
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua-chave-anonima
 ```
+
+Sem essas duas variáveis o app exibe a tela "Configuração Necessária" e não carrega — não há mais modo demo/localStorage.
 
 4. **Inicie o servidor de desenvolvimento**
 
@@ -83,183 +86,16 @@ VITE_SUPABASE_ANON_KEY=sua_chave_aqui
 npm run dev
 ```
 
-A aplicação abrirá em `http://localhost:5174`
+## 🗄️ Banco de dados
 
-## 📱 Como Usar
+O Supabase é obrigatório: autenticação, dados e Row Level Security (cada usuário só vê o que é seu) vivem lá.
 
-### Registrando um Gasto Conjunto
+- **`supabase_schema.sql`** — schema principal (gastos, pessoas, saldos devedores, meus gastos, contas bancárias, cartões, categorias personalizadas, etc.).
+- **`supabase_admin_schema.sql`**, **`supabase_admin_v2.sql`** — papéis de usuário e feature flags (usados pelo Admin).
+- **`supabase_web_vitals.sql`** — tabela de Core Web Vitals (opcional, ver [Performance](#-performance-em-produção)).
+- **`supabase/migrations/`** — migrations incrementais mais recentes, aplicadas por cima do schema acima.
 
-1. Na aba **Gastos**, clique em **"+ Novo Lançamento"**
-2. Preencha os dados:
-   - **Descrição** - Nome do item
-   - **Pessoa** - Quem vai pagar
-   - **Valor** - Valor total do gasto
-   - **Parcelas** - Quantas parcelas (1-24)
-   - **Data** - Quando começa
-   - **Tipo** - Crédito (parcelado) ou Débito (à vista)
-3. Clique em **"Salvar"**
-
-### Fechando o Mês
-
-1. Na aba **Gastos**, clique no botão ✓ no card da pessoa
-2. Digite quanto a pessoa **pagou**
-3. Clique em **"Tudo"** para preencher com o valor total
-4. Veja o resumo:
-   - Se pagou tudo → "Quitado"
-   - Se pagou parcial → mostra quanto vai para Saldo Devedor
-5. Clique em **"Fechar Mês"**
-
-### Pagando uma Dívida
-
-1. Na aba **Saldo Devedor**, clique no botão ➖ na dívida
-2. Digite o valor que quer pagar
-3. Clique em **"Tudo"** para pagar a dívida completa (opcional)
-4. Adicione observação (opcional)
-5. Clique em **"Confirmar Pagamento"**
-
-### Registrando Gastos Pessoais
-
-1. Na aba **Meus Gastos**, clique em **"+ Novo Lançamento"**
-2. Preencha os dados:
-   - **Descrição** - Nome do gasto
-   - **Valor** - Valor do gasto
-   - **Tipo** - Crédito ou Débito
-   - **Categoria** - Pessoal ou Dividido
-   - **Data** - Quando foi o gasto
-3. Clique em **"Salvar"**
-
-### Gerenciando Gastos Fixos
-
-1. Na aba **Meus Gastos**, veja a seção "Gastos Fixos"
-2. Use o botão **toggle** para habilitar/desabilitar cada gasto fixo
-3. Os gastos fixos habilitados aparecem no topo da lista
-
-### Desfazendo um Pagamento
-
-1. Na dívida, clique em **"Ver histórico"**
-2. Clique no botão ↩️ ao lado do pagamento
-3. Confirme a reversão no modal
-4. O valor volta para a dívida
-
-### Filtrando Dívidas
-
-**Por Status:**
-
-- **Pendentes** - Dívidas ativas (mostradas por padrão)
-- **Pagos** - Dívidas já quitadas (histórico)
-
-**Por Pessoa:**
-
-- Use o filtro "Filtrar por pessoa" para ver apenas de uma pessoa
-- Clique em "Todos" para remover o filtro
-
-## 🛠️ Tecnologias Utilizadas
-
-- **React 18** - Biblioteca UI
-- **Vite 5** - Build tool e dev server
-- **TypeScript** - Tipagem estática
-- **Tailwind CSS** - Estilização (tema escuro)
-- **Supabase** - Backend opcional
-- **lucide-react** - Ícones
-- **date-fns** - Manipulação de datas
-
-## 📁 Estrutura do Projeto
-
-```
-src/
-├── App.tsx                         # Componente principal com lógica
-├── main.tsx                        # Entry point
-├── index.css                       # Estilos globais
-├── components/
-│   ├── modals/                     # 8 componentes de modais
-│   │   ├── FormGastoModal.tsx
-│   │   ├── FormDividaModal.tsx
-│   │   ├── FormMeuGastoModal.tsx
-│   │   ├── PagamentoModal.tsx      # Novo: modal de pagamento de dívida
-│   │   ├── PagamentoParcialModal.tsx
-│   │   ├── ConfirmModal.tsx
-│   │   ├── FeedbackModal.tsx
-│   │   ├── ObservacaoModal.tsx
-│   │   └── FecharMesModal.tsx
-│   └── Tabs/                       # 3 componentes de abas
-│       ├── TabGastos.tsx           # Aba de gastos conjuntos
-│       ├── TabDividas.tsx          # Aba de saldo devedor
-│       └── TabMeuGasto.tsx         # Aba de gastos pessoais
-├── types/
-│   └── index.ts                    # Tipos TypeScript
-├── lib/
-│   └── supabase.ts                 # Cliente Supabase
-└── utils/
-    └── calculations.ts             # Funções de cálculo
-```
-
-### Arquitetura
-
-- **App.tsx**: Gerencia todo o estado e lógica da aplicação (~1,800 linhas)
-- **Components/Tabs**: Componentes apresentacionais reutilizáveis
-- **Components/Modals**: Modais isolados e reutilizáveis
-- **Separação de preocupações**: Lógica em App.tsx, apresentação nos componentes
-
-## 🎨 Design
-
-- **Tema escuro** - Confortável para os olhos
-- **Responsivo** - Funciona em mobile e desktop
-- **Modais intuitivos** - Confirmações e feedbacks visuais
-- **Ícones informativos** - Lucide icons para melhor UX
-- **Componentes reutilizáveis** - Modais e abas bem estruturados
-
-## 🔄 Melhorias Recentes (Refatoração)
-
-A aplicação passou por uma refatoração completa para melhor organização e manutenibilidade:
-
-### ✅ Componentes de Modais (8 total)
-
-- `FormGastoModal` - Criar/editar gastos conjuntos
-- `FormDividaModal` - Criar dívidas
-- `FormMeuGastoModal` - Criar gastos pessoais
-- `PagamentoModal` - **NOVO**: Registrar pagamentos de dívidas
-- `PagamentoParcialModal` - Registrar pagamentos parciais antes de fechar mês
-- `ConfirmModal` - Confirmações genéricas
-- `FeedbackModal` - Mensagens de sucesso/info
-- `ObservacaoModal` - Adicionar notas/observações
-- `FecharMesModal` - Fechar mês com confirmação
-
-### ✅ Componentes de Abas (3 total)
-
-- `TabGastos` - Gastos conjuntos com navegação por mês (~520 linhas)
-- `TabDividas` - Saldo devedor com histórico de pagamentos (~420 linhas)
-- `TabMeuGasto` - Gastos pessoais com categorias e fixos (~530 linhas)
-
-### 📊 Redução de Código
-
-- **App.tsx**: Reduzido de 4,352 linhas para ~1,800 linhas (59% de redução)
-- **Melhor legibilidade** - Componentes focados em uma responsabilidade
-- **Mais reutilizável** - Componentes podem ser usados em outras partes
-
-## 💾 Armazenamento
-
-### Sem Supabase
-
-- Dados salvos em **localStorage** do navegador
-- Dados persistem após fechar o navegador
-
-### Com Supabase
-
-- Gastos salvos na tabela `gastos`
-- Saldos devedores e pessoas em localStorage
-
-## 🔧 Configuração
-
-### Variáveis de Ambiente
-
-```env
-# Opcional - Para usar Supabase
-VITE_SUPABASE_URL=https://seu-projeto.supabase.co
-VITE_SUPABASE_ANON_KEY=sua-chave-anonima
-
-# Opcional - Para coletar Core Web Vitals em um endpoint seu
-VITE_WEB_VITALS_ENDPOINT=https://seu-endpoint.com/web-vitals
-```
+> ⚠️ **Conhecido:** o schema ainda está espalhado entre esses arquivos soltos na raiz e a pasta `supabase/migrations/`, sem um fluxo único de setup. Ao provisionar um projeto novo, rode os arquivos na raiz primeiro (nas versões `_v2`/`fix_*` mais recentes) e depois as migrations em ordem cronológica pelo nome do arquivo. Consolidar isso em um histórico de migrations único é uma pendência conhecida.
 
 ### Segredo da Edge Function de Push
 
@@ -273,6 +109,47 @@ Ao invocar a função (cron/manual), envie **um** dos headers abaixo:
 
 - `Authorization: Bearer <seu-segredo-forte>`
 - `x-cron-secret: <seu-segredo-forte>`
+
+## 📁 Estrutura do Projeto
+
+```
+src/
+├── App.tsx                  # Rotas, portões de auth/feature-flags, boot splash
+├── main.tsx                 # Entry point
+├── index.css                # Estilos globais e tokens de design
+├── context/
+│   └── AppContext.tsx       # Estado compartilhado (mês em visualização, pessoas, modais)
+├── hooks/                   # Um hook por domínio (useGastos, useMeusGastos,
+│                             # useCategorias, useCartoes, useContasBancarias,
+│                             # useSaldosDevedores, useFeatureFlags, useAuth, ...)
+├── lib/
+│   └── supabase.ts          # Cliente Supabase + funções de acesso a dados por domínio
+├── pages/                   # Uma página por rota (DashboardPage, GastosPage,
+│                             # MetasPage, DividasPage, PessoasPage,
+│                             # ContasBancariasPage, CartoesCreditoPage,
+│                             # ConfiguracoesPage, AdminPage, ...)
+├── components/
+│   ├── modals/               # Modais de formulário e confirmação
+│   ├── Tabs/                 # Componentes de abas legadas (gastos/dívidas/meus gastos)
+│   ├── layout/                # Sidebar, Layout, NotificationBell, BootSplash
+│   └── ui/                    # Primitivos (Card, Toaster, AsyncState, Valor, PageHeader, ...)
+├── types/
+│   └── index.ts              # Tipos TypeScript
+└── utils/                   # Cálculos, categorias, PDF, formatação
+```
+
+### Arquitetura
+
+- **Roteamento por página**, agrupado em 4 abas-mãe com sub-navegação: Dashboard · Orçamento · A Receber · Carteira.
+- **Estado por domínio em hooks**, não em um componente central — cada página consome os hooks de que precisa.
+- **`AppContext`** guarda apenas o que é realmente compartilhado entre páginas (mês em visualização, lista de pessoas, modais globais).
+- **Feature flags por usuário** controlam quais rotas existem para cada conta (`useFeatureFlags`), geridas no Admin.
+
+## 🎨 Design
+
+Sistema de design com um único acento (`emerald`), paleta `zinc`, tipografia `Syne`/`Geist Mono`/`Switzer` e suporte completo a modo claro/escuro. Documentado em detalhe em [`design_handoff_hedge_visual_revision/README.md`](design_handoff_hedge_visual_revision/README.md).
+
+Um script de guarda (`npm run check:ds`, rodado no `prebuild` e no CI) varre o código em busca de violações do sistema visual (cores fora da paleta, texto sem par `dark:`, etc.).
 
 ## ⚡ Performance em Produção
 
@@ -288,6 +165,11 @@ Ao invocar a função (cron/manual), envie **um** dos headers abaixo:
 - Os valores são exibidos no console com o prefixo `[web-vitals]`.
 - Se `VITE_WEB_VITALS_ENDPOINT` estiver configurado, os dados também são enviados via `sendBeacon/fetch`.
 
+```env
+# Opcional — para coletar Core Web Vitals em um endpoint seu
+VITE_WEB_VITALS_ENDPOINT=https://seu-endpoint.com/web-vitals
+```
+
 ### Coleta no Supabase (produção)
 
 1. Execute o SQL em `supabase_web_vitals.sql` no SQL Editor do Supabase.
@@ -297,7 +179,7 @@ Ao invocar a função (cron/manual), envie **um** dos headers abaixo:
 supabase functions deploy collect-web-vitals
 ```
 
-3. Configure a variável de ambiente no frontend:
+3. Configure `VITE_WEB_VITALS_ENDPOINT` apontando para a function:
 
 ```env
 VITE_WEB_VITALS_ENDPOINT=https://<seu-projeto>.supabase.co/functions/v1/collect-web-vitals
@@ -314,34 +196,28 @@ limit 100;
 
 ### Lazy loading por rota
 
-- As rotas principais foram migradas para `React.lazy` + `Suspense` em `src/App.tsx`.
-- Isso reduz JS inicial sem separar React/Recharts em chunks manuais arriscados.
+As rotas principais usam `React.lazy` + `Suspense` em `src/App.tsx`. `Layout` e `DashboardPage` (a casca e a rota de entrada de todo mundo) são pré-carregados assim que o boot começa, para que download e verificação de sessão corram em paralelo.
+
+## 🧪 Scripts Disponíveis
+
+```bash
+npm run dev            # Servidor de desenvolvimento
+npm run build          # Checagem de tipos + guarda de design + build de produção
+npm run lint           # ESLint
+npm run preview        # Preview do build local
+npm run check:ds       # Guarda do sistema visual (roda sozinho, sem build)
+
+npm run test:e2e       # Testes E2E (Playwright) — landing e login
+npm run test:e2e:headed
+npm run test:e2e:ui
+npm run test:e2e:auth  # Requer E2E_EMAIL e E2E_PASSWORD no ambiente
+```
 
 ## 🧪 Testes E2E Visuais (Playwright)
 
-Esta configuração abre navegador real e gera evidências visuais (screenshots, trace e relatório HTML).
+Abre navegador real e gera evidências visuais (screenshots, trace e relatório HTML).
 
-### Rodar testes públicos (landing/login)
-
-```bash
-npm run test:e2e
-```
-
-### Rodar vendo o navegador
-
-```bash
-npm run test:e2e:headed
-```
-
-### Rodar no modo UI do Playwright
-
-```bash
-npm run test:e2e:ui
-```
-
-### Testar páginas internas autenticadas (opcional)
-
-Defina credenciais válidas antes de executar:
+Para testar páginas internas autenticadas, defina credenciais válidas antes de executar:
 
 ```bash
 export E2E_EMAIL="seu-email"
@@ -351,38 +227,13 @@ npm run test:e2e:auth
 
 Se `E2E_EMAIL` e `E2E_PASSWORD` não estiverem definidos, o teste autenticado é ignorado automaticamente.
 
-### Ver relatório
-
-Após executar os testes:
+Ver relatório após executar os testes:
 
 ```bash
 npx playwright show-report
 ```
 
-Se não configurado, a app usa modo demo com localStorage.
-
-## 📊 Dados de Demonstração
-
-Quando sem Supabase, a app vem com dados de exemplo:
-
-- iPhone 15 Pro (Pai) - 12 parcelas
-- Geladeira (Mãe) - 10 parcelas
-- Curso de Inglês (Mãe) - 6 parcelas
-- TV 55" (Pai) - 5 parcelas
-- Supermercado (Pai) - à vista
-
-## 🧪 Scripts Disponíveis
-
-```bash
-# Inicia servidor de desenvolvimento
-npm run dev
-
-# Build para produção
-npm run build
-
-# Preview do build local
-npm run preview
-```
+> Não há suíte de testes unitários no momento — a cobertura automatizada é só E2E (Playwright) + checagem de tipos (`tsc`) + guarda de design (`check:ds`).
 
 ## 📄 Licença
 

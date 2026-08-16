@@ -119,13 +119,15 @@ Cada arquivo em `prompts/` é autossuficiente: cole no Claude Code na raiz de `g
 | # | Prompt | O que faz | Status |
 |---|---|---|---|
 | 01 | `01-base-compartilhada.md` | `gray→zinc` global, body, scrollbar, primitivos (Skeleton/Toaster/AsyncState), foco esmeralda | ✅ aplicado |
-| 02 | `02-modais.md` | ConfirmModal, Novo empréstimo, Nova dívida + 6 modais menores | ⬜ |
-| 03 | `03-telas-legadas.md` | `TabGastos` (Por mês) e `TabDividas` (Em aberto) | ⬜ |
-| 04 | `04-sistemicos-onboarding.md` | Tour guiado e sino de notificações | ⬜ |
-| 05 | `05-paginas-utilitarias.md` | Reset de senha, Configurações, Admin | ⬜ |
-| 06 | `06-sistematizar.md` | Mês único, `MonthNav`, `StatCard`/`SummaryStrip`, slot de ação | ⬜ |
-| 07 | `07-dark-mode.md` | Dark em todo o app + base neutralizada `#0A0A0B` | ⬜ |
-| 08 | `08-pageheader-dark.md` | `PageHeader`, `Pista`, `SegmentedTabs`, `MonthNav` no dark | ⬜ |
+| 02 | `02-modais.md` | ConfirmModal, Novo empréstimo, Nova dívida + 6 modais menores | ✅ aplicado |
+| 03 | `03-telas-legadas.md` | `TabGastos` (Por mês) e `TabDividas` (Em aberto) | ✅ aplicado |
+| 04 | `04-sistemicos-onboarding.md` | Tour guiado e sino de notificações | ✅ aplicado |
+| 05 | `05-paginas-utilitarias.md` | Reset de senha, Configurações, Admin | ✅ aplicado |
+| 06 | `06-sistematizar.md` | Mês único, `MonthNav`, `StatCard`/`SummaryStrip`, slot de ação | ✅ aplicado |
+| 07 | `07-dark-mode.md` | Dark em todo o app + base neutralizada `#0A0A0B` | ✅ aplicado |
+| 08 | `08-pageheader-dark.md` | `PageHeader`, `Pista`, `SegmentedTabs`, `MonthNav` no dark | ✅ aplicado — `SegmentedTabs` foi removido (órfão) quando a navegação migrou para a sidebar; `PageHeader`/`Pista`/`MonthNav` seguem o dark spec |
+
+> Status verificado lendo o código atual em 2026-08-08, não só o histórico de commits: os bugs do inventário abaixo (contraste, classes quebradas, mês dessincronizado, acessibilidade, Recharts) foram checados um a um contra os arquivos hoje e não reproduzem mais.
 
 **Referências (já aplicadas, mantidas para consulta):** `ref-dashboard.md` e `ref-meus-gastos.md` documentam a conversão do Dashboard e da tela de Lançamentos — que são hoje o padrão de qualidade do app.
 
