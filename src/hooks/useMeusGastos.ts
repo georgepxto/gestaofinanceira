@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { format, addMonths, subMonths } from "date-fns";
+import { format, addMonths, subMonths, parseISO } from "date-fns";
 import {
   supabase,
   isSupabaseConfigured,
@@ -247,11 +247,12 @@ export function useMeusGastos({
     setSaving(true);
     try {
       if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
-        const dataInicio = new Date(formMeuGasto.data);
+        const dataInicio = parseISO(formMeuGasto.data);
 
         for (let i = 0; i < numParcelas; i++) {
-          const dataParcela = new Date(dataInicio);
-          dataParcela.setMonth(dataParcela.getMonth() + i);
+          // `parseISO` lê a data no fuso local; `new Date("aaaa-mm-dd")` a lê em UTC,
+          // o que no Brasil vira a véspera — e, no dia 1º, o mês anterior.
+          const dataParcela = addMonths(dataInicio, i);
 
           const novoGasto: MeuGasto = {
             id: `${Date.now()}-${i}`,
@@ -467,7 +468,7 @@ export function useMeusGastos({
         });
 
         const indiceParcelaEditada = (editandoMeuGasto.parcela_atual || 1) - 1;
-        const dataAtualSelecionada = new Date(formMeuGasto.data);
+        const dataAtualSelecionada = parseISO(formMeuGasto.data);
         const dataInicioReal = subMonths(
           dataAtualSelecionada,
           indiceParcelaEditada
