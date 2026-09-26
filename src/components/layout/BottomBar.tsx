@@ -91,6 +91,7 @@ export const BottomBar = ({ onLancar }: BottomBarProps) => {
             <button
               onClick={onLancar}
               aria-label="Novo lançamento"
+              data-tour="barra-btn-novo"
               /* O anel na cor da barra é o que recorta o botão dela. A sombra é
                  neutra de propósito: o botão sobe acima da barra, então ganha
                  elevação, mas sombra colorida em botão vira halo (a guarda tem

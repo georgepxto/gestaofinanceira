@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, FileText, Loader2, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
-import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
+import { useGuidedTour, usePageTutorialHelpButton, useIsMobile } from "../hooks";
 import { TabMeuGasto } from "../components/Tabs";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { supabase } from "../lib/supabase";
@@ -48,6 +48,9 @@ const MEUS_GASTOS_TUTORIAL_STEPS: MeuGastoTutorialStep[] = [
       "Use este botão para lançar um novo gasto pessoal, fixo, dividido ou dívida.",
     placement: "below",
   },
+  // No mobile este passo é substituído pelo do `+` da barra inferior — ver
+  // `passosDoTutorial` no componente. Sem a troca, o tour apontaria para o
+  // botão do header, que ali está escondido.
   {
     target: "[data-tour='eu-navegacao-mes']",
     alvo: "Navegação de mês",
@@ -132,6 +135,25 @@ export const EuPage = () => {
   } = useAppContext();
 
   const [exportingPDF, setExportingPDF] = useState(false);
+  const isMobile = useIsMobile();
+
+  // O botão "Novo gasto" do header não existe no mobile (o `+` da barra faz o
+  // mesmo). O passo do tour aponta para o gatilho que está na tela.
+  const passosDoTutorial = useMemo(
+    () =>
+      MEUS_GASTOS_TUTORIAL_STEPS.map((passo) =>
+        isMobile && passo.target === "[data-tour='eu-btn-novo']"
+          ? {
+              ...passo,
+              target: "[data-tour='barra-btn-novo']",
+              alvo: "Botão de lançar",
+              descricao:
+                "Use o botão verde da barra de baixo para lançar um gasto pessoal, fixo, dividido ou dívida.",
+            }
+          : passo
+      ),
+    [isMobile]
+  );
 
   // O botão de lançar da barra inferior chega aqui por rota, com `?novo=1`.
   // O parâmetro é consumido uma vez e apagado do histórico: sem isso o modal
@@ -157,7 +179,7 @@ export const EuPage = () => {
     nextTutorialStep,
     previousTutorialStep,
   } = useGuidedTour<MeuGastoTutorialStep>({
-    steps: MEUS_GASTOS_TUTORIAL_STEPS,
+    steps: passosDoTutorial,
     storageKey: MEUS_GASTOS_TUTORIAL_KEY,
   });
 
@@ -233,10 +255,15 @@ export const EuPage = () => {
                 <span className="hidden sm:inline">Pagar fatura</span>
               </button>
             )}
+            {/* No mobile o `+` da barra inferior faz exatamente isto, a 40px do
+                polegar: manter os dois é dar dois gatilhos para a mesma ação,
+                um deles no canto mais distante da tela. O elemento continua no
+                DOM porque o passo do tour ancora nele — ver o filtro dos passos
+                no mobile, logo acima. */}
             <button
               onClick={() => setShowFormMeuGasto(true)}
               data-tour="eu-btn-novo"
-              className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:ring-offset-app-dark"
+              className="hidden md:inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:ring-offset-app-dark"
             >
               <Plus className="w-[18px] h-[18px]" />
               Novo gasto

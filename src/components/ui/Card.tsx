@@ -6,7 +6,9 @@ type Padding = "conteudo" | "resumo" | "compacto" | "nenhum";
 const PADDING: Record<Padding, string> = {
   compacto: "p-4",
   conteudo: "p-5",
-  resumo: "p-6 md:p-7",
+  // No mobile 24px de cada lado é o dobro do que o conteúdo precisa — e são
+  // 8px que voltam para o valor herói, que é quem disputa a largura.
+  resumo: "p-5 md:p-7",
   // Tabela e empty state: quem manda no espaçamento é o filho.
   nenhum: "",
 };

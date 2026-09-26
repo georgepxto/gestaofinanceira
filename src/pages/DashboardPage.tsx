@@ -10,7 +10,7 @@ import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/
 import { Valor } from "../components/ui/Valor";
 import { PageHeader } from "../components/ui/PageHeader";
 import { SeletorMes } from "../components/ui/SeletorMes";
-import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
+import { useGuidedTour, usePageTutorialHelpButton, useIsMobile } from "../hooks";
 import { supabase } from "../lib/supabase";
 import { chaveMesPagamentoParcial, formatCurrency, isGastoAtivoNoMes } from "../utils/calculations";
 import { categoriaDeGasto } from "../utils/categories";
@@ -192,6 +192,7 @@ export const DashboardPage = () => {
   // Recharts não lê classes do Tailwind — os neutros da marca entram como hex,
   // trocados pelo tema para a grade não gritar mais que os dados no dark.
   const isDark = theme === "dark";
+  const isMobile = useIsMobile();
   const chartGrid = isDark ? "rgba(255,255,255,0.07)" : "#F4F4F5";
   const chartAxis = isDark ? "#71717A" : "#A1A1AA";
 
@@ -617,7 +618,10 @@ export const DashboardPage = () => {
             {/* Esquerda: Saldo livre */}
             <div className="min-w-0" data-tour="saldo-livre">
               <Rotulo>Saldo livre · Disponível agora</Rotulo>
-              <div className="flex items-center gap-3 flex-wrap mt-2">
+              {/* No mobile o badge de variação desce para a própria linha:
+                  enquanto fica ao lado, é ele que empurra o número contra a
+                  borda do cartão. */}
+              <div className="flex flex-col items-start gap-2 mt-2 md:flex-row md:items-center md:gap-3 md:flex-wrap">
                 <Valor porte="heroi" className={data.saldoLivre >= 0 ? 'text-zinc-900 dark:text-zinc-50' : 'text-red-600 dark:text-red-400'}>
                   {formatCurrency(data.saldoLivre)}
                 </Valor>
@@ -631,27 +635,38 @@ export const DashboardPage = () => {
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-3">
                 É o que sobra do seu saldo depois dos gastos fixos do mês.
               </p>
-              {/* Piso de 172px: em Geist Mono 22px o valor mede ~158, e `.valor`
-                  não quebra linha — a 140 ele vazava por cima do vizinho na largura
-                  em que cabiam exatamente três colunas. */}
-              <div className="border-t border-zinc-100 dark:border-white/[0.05] mt-5 pt-5 grid gap-x-6 gap-y-4 [grid-template-columns:repeat(auto-fit,minmax(172px,1fr))]">
-                <div className="min-w-0" data-tour="card-saldo-total-mini">
+              {/* No mobile, três linhas rótulo–valor separadas por fio — a mesma
+                  forma que o "Fluxo do mês" logo abaixo já usa, então não é
+                  padrão novo. Com o valor à direita na própria linha, o piso de
+                  172px deixa de ser necessário; ele continua valendo no desktop,
+                  onde resolveu o vazamento: em Geist Mono 22px o valor mede ~158
+                  e `.valor` não quebra linha, então a 140 ele passava por cima
+                  do vizinho na largura em que cabiam exatamente três colunas. */}
+              <div className="border-t border-zinc-100 dark:border-white/[0.05] mt-5 pt-5 divide-y divide-zinc-100 dark:divide-white/[0.05] md:divide-y-0 md:grid md:gap-x-6 md:gap-y-4 md:[grid-template-columns:repeat(auto-fit,minmax(172px,1fr))]">
+                <div className="min-w-0 flex items-baseline justify-between gap-3 py-2.5 md:block md:py-0" data-tour="card-saldo-total-mini">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Saldo total</p>
-                  <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.saldoTotal)}</Valor>
+                  <Valor porte="medio" className="block md:mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.saldoTotal)}</Valor>
                 </div>
-                <div className="min-w-0" data-tour="card-a-receber">
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">A receber</p>
-                  <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.totalEmprestimosMesAtual)}</Valor>
-                  {/* Sem ninguém com gasto compartilhado no mês, "0 de 0" é ruído: a linha some. */}
+                <div className="min-w-0 flex items-baseline justify-between gap-3 py-2.5 md:block md:py-0" data-tour="card-a-receber">
+                  <div className="min-w-0">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">A receber</p>
+                    {/* Sem ninguém com gasto compartilhado no mês, "0 de 0" é ruído: a linha some. */}
+                    {data.totalPessoas > 0 && (
+                      <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 md:hidden">
+                        {data.pessoasQuitadas} de {data.totalPessoas} {data.totalPessoas === 1 ? "acertou" : "acertaram"}
+                      </p>
+                    )}
+                  </div>
+                  <Valor porte="medio" className="block md:mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.totalEmprestimosMesAtual)}</Valor>
                   {data.totalPessoas > 0 && (
-                    <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    <p className="hidden md:block font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
                       {data.pessoasQuitadas} de {data.totalPessoas} {data.totalPessoas === 1 ? "acertou" : "acertaram"}
                     </p>
                   )}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex items-baseline justify-between gap-3 py-2.5 md:block md:py-0">
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">Meus gastos</p>
-                  <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.totalGastosMesAtual)}</Valor>
+                  <Valor porte="medio" className="block md:mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.totalGastosMesAtual)}</Valor>
                 </div>
               </div>
             </div>
@@ -702,15 +717,21 @@ export const DashboardPage = () => {
             <Rotulo as="span">Últimos 6 meses</Rotulo>
           </div>
           {data.tendenciaMensal.length > 0 ? (
-            <div className="h-44">
+            <div className="h-40 md:h-44">
               {/* initialDimension: o ResponsiveContainer da v3 nasce com -1×-1 e só mede
                   um quadro depois, o que dispara um aviso de tamanho no console (recharts
                   #6716). A altura vem do pai; a largura é chute de desktop, vale um quadro. */}
               <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 600, height: 176 }}>
-                <BarChart data={data.tendenciaMensal} margin={{ top: 16 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />
+                {/* Sem eixo Y no mobile, `margin` zero manda as barras até as
+                    bordas do cartão; `top: 16` continua para caber o rótulo. */}
+                <BarChart data={data.tendenciaMensal} margin={{ top: 16, left: 0, right: 0 }}>
+                  {/* O eixo Y custa ~40px fixos — 13% da largura útil de um
+                      gráfico de 310px — para dizer "R$2k, R$4k". O número que
+                      interessa já está escrito acima da barra pelo LabelList.
+                      Junto com a grade, o fundo tinha mais tinta que os dados. */}
+                  {!isMobile && <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />}
                   <XAxis dataKey="mes" stroke={chartAxis} fontSize={11} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
-                  <YAxis stroke={chartAxis} fontSize={10} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                  {!isMobile && <YAxis stroke={chartAxis} fontSize={10} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />}
                   <Tooltip
                     contentStyle={tooltipStyle}
                     labelStyle={tooltipLabelStyle}
@@ -891,19 +912,21 @@ export const DashboardPage = () => {
               </span>
             </div>
           </div>
-          <div className="h-64">
+          <div className="h-52 md:h-64">
             {/* Mesmo motivo do gráfico de barras acima — ver recharts #6716. */}
             <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 900, height: 256 }}>
-              <AreaChart data={data.tendenciaMensal}>
+              <AreaChart data={data.tendenciaMensal} margin={{ left: 0, right: 0 }}>
                 <defs>
                   <linearGradient id="colorMeus" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10B981" stopOpacity={chartAreaTopo}/>
                     <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />
+                {/* Sem eixo Y e sem grade no mobile — a legenda acima é quem
+                    nomeia as séries, e o tooltip dá o valor no toque. */}
+                {!isMobile && <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />}
                 <XAxis dataKey="mes" stroke={chartAxis} fontSize={11} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
-                <YAxis stroke={chartAxis} fontSize={10} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                {!isMobile && <YAxis stroke={chartAxis} fontSize={10} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />}
                 <Tooltip
                   contentStyle={tooltipStyle}
                   labelStyle={tooltipLabelStyle}
