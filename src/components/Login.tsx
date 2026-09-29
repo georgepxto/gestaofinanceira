@@ -1,18 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  Mail,
-  Lock,
-  Loader2,
-  Eye,
-  EyeOff,
-  User,
-  ArrowLeft,
-  ArrowRight,
-  ShieldAlert,
-} from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Check, Eye, EyeOff, Loader2, ShieldAlert } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { CursorDot } from "./CursorDot";
+import "./landing/landing.css";
+import { LiveBalanceCard } from "./landing/LiveBalanceCard";
 
 interface LoginProps {
   onLogin: (email: string, password: string) => Promise<{ error?: string }>;
@@ -71,105 +62,7 @@ function loadGisScript(): Promise<void> {
   return gisScriptPromise;
 }
 
-/* Mesmas pistas de gasto fantasma do hero da landing — aqui reveladas pelo
-   cursor agindo como lanterna, igual ao efeito original */
-const GHOST_TRACES = [
-  { t: "iFood · R$ 34,90",         c: "Alimentação", x: 6,  y: 14, r: -1.2 },
-  { t: "Netflix · R$ 44,90",       c: "Streaming",   x: 40, y: 8,  r: 1 },
-  { t: "Mercado · R$ 212,07",      c: "Alimentação", x: 22, y: 26, r: -0.6 },
-  { t: "Pix recebido · R$ 350,00", c: "Renda",        x: 52, y: 18, r: 0.8 },
-  { t: "Aluguel · R$ 1.400,00",    c: "Moradia",      x: 10, y: 62, r: 0.6 },
-  { t: "Academia · R$ 89,90",      c: "Saúde",        x: 38, y: 70, r: -0.9 },
-  { t: "Spotify · R$ 21,90",       c: "Streaming",   x: 24, y: 84, r: 1.1 },
-  { t: "Cinema · R$ 52,00",        c: "Lazer",        x: 68, y: 12, r: -0.7 },
-  { t: "Farmácia · R$ 67,30",      c: "Saúde",        x: 80, y: 32, r: 0.5 },
-  { t: "Internet · R$ 99,90",      c: "Moradia",      x: 64, y: 52, r: -1.1 },
-  { t: "Café · R$ 8,50",           c: "Alimentação", x: 86, y: 66, r: 1.3 },
-  { t: "Gasolina · R$ 180,00",     c: "Transporte",   x: 70, y: 84, r: -0.5 },
-  { t: "Uber · R$ 18,50",          c: "Transporte",   x: 90, y: 90, r: 0.9 },
-];
-
-const HEDGE_STATS = [
-  { value: "100%", label: "Gratuito para sempre" },
-  { value: "5min", label: "Para começar" },
-  { value: "Zero", label: "Anúncios ou cobranças" },
-];
-
-/* Camada fantasma mostra só o gasto; a lanterna (cursor) revela a categoria
-   por baixo — mesmo gesto do hero, recriado aqui sem depender do GSAP */
-function LoginGhostTrace() {
-  const rootRef = useRef<HTMLDivElement>(null);
-  const litRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const root = rootRef.current;
-    const lit = litRef.current;
-    if (!root || !lit) return;
-    const host = root.parentElement ?? root;
-
-    const setMask = (x: number, y: number) => {
-      const m = `radial-gradient(circle 170px at ${x}px ${y}px, black 0%, rgba(0,0,0,0.35) 60%, transparent 100%)`;
-      lit.style.opacity = "1";
-      lit.style.webkitMaskImage = m;
-      lit.style.maskImage = m;
-    };
-
-    let rafId = 0;
-    const onMove = (e: PointerEvent) => {
-      const r = host.getBoundingClientRect();
-      const x = e.clientX - r.left;
-      const y = e.clientY - r.top;
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => setMask(x, y));
-    };
-    const onLeave = () => { lit.style.opacity = "0"; };
-
-    host.addEventListener("pointermove", onMove);
-    host.addEventListener("pointerleave", onLeave);
-    return () => {
-      host.removeEventListener("pointermove", onMove);
-      host.removeEventListener("pointerleave", onLeave);
-      cancelAnimationFrame(rafId);
-    };
-  }, []);
-
-  return (
-    <div ref={rootRef} className="absolute inset-0 pointer-events-none select-none" aria-hidden="true">
-      <div className="absolute inset-0">
-        {GHOST_TRACES.map((g, i) => (
-          <span
-            key={g.t}
-            className={`absolute font-mono text-xs whitespace-nowrap text-zinc-900/[0.06] dark:text-zinc-50/[0.06] trace-drift-${i % 4}`}
-            style={{
-              left: `${g.x}%`,
-              top: `${g.y}%`,
-              "--r": `${g.r}deg`,
-              animationDuration: `${8 + (i % 5) * 1.7}s`,
-              animationDelay: `${-((i % 7) * 1.6)}s`,
-            } as React.CSSProperties}
-          >
-            {g.t}
-          </span>
-        ))}
-      </div>
-      <div ref={litRef} className="absolute inset-0" style={{ opacity: 0, transition: "opacity 0.3s" }}>
-        {GHOST_TRACES.map((g) => (
-          <span
-            key={g.t}
-            className="absolute font-mono text-xs font-semibold whitespace-nowrap text-emerald-600 dark:text-emerald-400"
-            style={{ left: `${g.x}%`, top: `${g.y}%`, transform: `rotate(${g.r}deg)` }}
-          >
-            {g.t}
-            <span className="text-emerald-500/70 dark:text-emerald-400/70">{" → "}{g.c}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export function Login({ onLogin, onSignUp }: LoginProps) {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>(
     searchParams.get("mode") === "signup" ? "signup" : "login"
@@ -183,6 +76,8 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
   const [success, setSuccess] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  // Campo que causou o erro de validação: recebe o foco e aria-invalid.
+  const [errorField, setErrorField] = useState<string | null>(null);
   const [showEmailForm, setShowEmailForm] = useState(
     searchParams.get("mode") === "signup"
   );
@@ -220,6 +115,8 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
   /* Callback do GIS vive num ref para o initialize (executado uma vez)
      sempre enxergar o viewMode/estado atuais */
   const credentialHandlerRef = useRef<(token: string) => void>(() => {});
+  const authPollRef = useRef(0);
+  useEffect(() => () => window.clearInterval(authPollRef.current), []);
   credentialHandlerRef.current = async (token: string) => {
     if (!supabase) {
       setError("Serviço indisponível");
@@ -244,7 +141,8 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
       // bloqueado (conta Google inexistente em modo login), o useAuth grava
       // auth_error no localStorage sem reload — vigiar por alguns segundos.
       const started = Date.now();
-      const timer = window.setInterval(() => {
+      window.clearInterval(authPollRef.current);
+      const timer = (authPollRef.current = window.setInterval(() => {
         const authError = localStorage.getItem("auth_error");
         if (authError) {
           localStorage.removeItem("auth_error");
@@ -254,7 +152,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
         } else if (Date.now() - started > 10000) {
           window.clearInterval(timer);
         }
-      }, 400);
+      }, 400));
     } catch {
       setError("Erro ao conectar com Google");
       setLoading(false);
@@ -309,14 +207,21 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
     }
   }, []);
 
+  const fail = (msg: string, field: string) => {
+    setError(msg);
+    setErrorField(field);
+    document.getElementById(field)?.focus();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setErrorField(null);
 
     if (viewMode === "forgot") {
       if (!email) {
-        setError("Informe seu email");
+        fail("Informe seu email", "login-email");
         return;
       }
       if (!supabase) {
@@ -341,23 +246,28 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
       return;
     }
 
-    if (!email || !password) {
-      setError("Preencha todos os campos");
-      return;
-    }
-
     if (viewMode === "signup" && !nome.trim()) {
-      setError("Preencha seu nome");
+      fail("Preencha seu nome", "login-nome");
       return;
     }
 
-    if (viewMode === "signup" && password !== confirmPassword) {
-      setError("As senhas não coincidem");
+    if (!email) {
+      fail("Informe seu email", "login-email");
+      return;
+    }
+
+    if (!password) {
+      fail("Informe sua senha", "login-senha");
       return;
     }
 
     if (viewMode === "signup" && password.length < 6) {
-      setError("A senha deve ter pelo menos 6 caracteres");
+      fail("A senha deve ter pelo menos 6 caracteres", "login-senha");
+      return;
+    }
+
+    if (viewMode === "signup" && password !== confirmPassword) {
+      fail("As senhas não coincidem", "login-confirma");
       return;
     }
 
@@ -397,162 +307,72 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
   const switchView = (newView: ViewMode, openEmailForm = false) => {
     setViewMode(newView);
     setError(null);
+    setErrorField(null);
     setSuccess(null);
     setIsBlocked(false);
     setShowEmailForm(openEmailForm);
   };
 
+  // A tela é sempre escura, como o hero: barra do navegador e fundo da página
+  // acompanham enquanto ela está aberta.
+  useEffect(() => {
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    const prevMeta = meta?.getAttribute("content") ?? null;
+    const prevBg = document.documentElement.style.backgroundColor;
+    meta?.setAttribute("content", "#0B0B0C");
+    document.documentElement.style.backgroundColor = "#0B0B0C";
+    return () => {
+      if (prevMeta !== null) meta?.setAttribute("content", prevMeta);
+      document.documentElement.style.backgroundColor = prevBg;
+    };
+  }, []);
+
+  const TITLES: Record<ViewMode, { h: string; p: string }> = {
+    login: { h: "Entrar", p: "Continue de onde parou." },
+    signup: { h: "Criar conta", p: "Leva menos de um minuto. Não pede cartão." },
+    forgot: { h: "Recuperar senha", p: "Enviamos um link para você criar uma senha nova." },
+  };
+  const d = (ms: number) => ({ "--lp-d": `${ms}ms` }) as React.CSSProperties;
+  const fieldA11y = (id: string) => ({
+    "aria-invalid": errorField === id || undefined,
+    "aria-describedby": error && showForm ? "login-erro" : undefined,
+  });
+  const showForm = viewMode === "forgot" || showEmailForm;
+  const linkBtn = "inline-flex min-h-[44px] items-center underline decoration-lp-line decoration-1 underline-offset-4 transition-colors hover:decoration-lp-fg";
+
   return (
-    <div className="login-root relative min-h-screen bg-white dark:bg-app-dark flex overflow-hidden">
-      <CursorDot />
-      <style>{`
-        @keyframes pista-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-        .pista-underline-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: pista-draw 0.7s 1.3s cubic-bezier(0.65,0,0.35,1) forwards; }
-        @keyframes reveal-in { from { opacity: 0; transform: translateY(28px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .reveal-up { opacity: 0; animation: reveal-in 1.2s cubic-bezier(0.22,1,0.36,1) forwards; }
+    <div className="lp min-h-[100svh] lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]" data-theme="dark">
+      {/* ── Formulário ─────────────────────────────────────────────── */}
+      <div className="flex min-h-[100svh] flex-col pb-[max(24px,env(safe-area-inset-bottom))] pl-[max(20px,env(safe-area-inset-left))] pr-[max(20px,env(safe-area-inset-right))] pt-[env(safe-area-inset-top)] sm:px-10 lg:px-14">
+        <header className="flex h-16 items-center justify-between">
+          <Link to="/" className="inline-flex min-h-[44px] items-center text-[19px] font-medium">
+            Hedge
+          </Link>
+          <Link to="/" className="lp-navlink text-[15px]">
+            Voltar ao site
+          </Link>
+        </header>
 
-        /* Pistas "embaralhadas" — só em touch (sem mouse pra revelar com a lanterna) */
-        @keyframes trace-drift-0 { 0% { transform: translate(0,0) rotate(var(--r)); } 50% { transform: translate(7px,-9px) rotate(var(--r)); } 100% { transform: translate(-6px,6px) rotate(var(--r)); } }
-        @keyframes trace-drift-1 { 0% { transform: translate(0,0) rotate(var(--r)); } 50% { transform: translate(-8px,7px) rotate(var(--r)); } 100% { transform: translate(6px,-7px) rotate(var(--r)); } }
-        @keyframes trace-drift-2 { 0% { transform: translate(0,0) rotate(var(--r)); } 50% { transform: translate(9px,5px) rotate(var(--r)); } 100% { transform: translate(-7px,-5px) rotate(var(--r)); } }
-        @keyframes trace-drift-3 { 0% { transform: translate(0,0) rotate(var(--r)); } 50% { transform: translate(-5px,-8px) rotate(var(--r)); } 100% { transform: translate(8px,8px) rotate(var(--r)); } }
-        @media (hover: none) {
-          .trace-drift-0 { animation-name: trace-drift-0; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
-          .trace-drift-1 { animation-name: trace-drift-1; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
-          .trace-drift-2 { animation-name: trace-drift-2; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
-          .trace-drift-3 { animation-name: trace-drift-3; animation-timing-function: ease-in-out; animation-iteration-count: infinite; animation-direction: alternate; }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .pista-underline-draw { animation: none; stroke-dashoffset: 0; }
-          .reveal-up { animation: none; opacity: 1; transform: none; }
-          .trace-drift-0, .trace-drift-1, .trace-drift-2, .trace-drift-3 { animation: none; transform: rotate(var(--r)); }
-        }
-        @media (hover: hover) and (pointer: fine) { .login-root, .login-root * { cursor: none !important; } }
-      `}</style>
-      {/* Jogo de luzes — vários focos esverdeados de intensidade e posição
-          diferentes, espalhados pela página inteira.
-          Os alfas são calibrados para branco; sobre preto viram manchas
-          cinza-esverdeadas, então o conjunto inteiro recua no escuro. */}
-      <div className="absolute inset-0 pointer-events-none select-none dark:opacity-45" aria-hidden="true">
-        <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 10% 10%, rgba(110,231,183,0.20), transparent 45%)" }} />
-        <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 85% 30%, rgba(16,185,129,0.16), transparent 50%)" }} />
-        <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 25% 90%, rgba(4,120,87,0.14), transparent 50%)" }} />
-        <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 95% 95%, rgba(110,231,183,0.12), transparent 45%)" }} />
-      </div>
-
-      {/* Pistas fantasma — agora por cima de toda a página, não só do painel
-          de marca; o cursor revela a categoria em qualquer lugar da tela */}
-      <LoginGhostTrace />
-
-      {/* ══════════════════════════════════════
-          PAINEL DE MARCA — visível a partir de lg, mesma linguagem da landing
-          ══════════════════════════════════════ */}
-      <div className="hidden lg:flex lg:w-[46%] relative flex-col justify-between px-14 py-12 overflow-hidden">
-        <a href="/" className="reveal-up relative z-10 flex items-center gap-2.5 w-fit rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
-          <img src="/favicon-light.png" alt="Hedge" className="w-7 h-7" />
-          <span className="font-display text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Hedge</span>
-        </a>
-
-        <div className="reveal-up relative z-10 max-w-lg" style={{ animationDelay: "70ms" }}>
-          <h2 className="font-display font-bold leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50 text-balance mb-6" style={{ fontSize: "clamp(2.75rem, 4.4vw, 3.75rem)" }}>
-            Seu dinheiro deixa{" "}
-            <span className="relative inline-block" style={{ isolation: "isolate" }}>
-              <svg
-                aria-hidden="true"
-                className="absolute left-0 w-full overflow-visible pointer-events-none"
-                style={{ bottom: "-0.1em", height: "0.3em", zIndex: 0 }}
-                viewBox="0 0 100 8"
-                preserveAspectRatio="none"
-              >
-                <path
-                  d="M0,6 C12,4 22,7 35,5 C48,3 58,6 72,4 C82,3 92,5 100,2"
-                  stroke="#10b981"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  fill="none"
-                  pathLength={1}
-                  className="pista-underline-draw"
-                />
-              </svg>
-              <span style={{ position: "relative", zIndex: 1 }}>pistas</span>
-            </span>
-            .<br />
-            <span className="text-emerald-500 dark:text-emerald-400">Nós revelamos o caminho.</span>
-          </h2>
-          <p className="text-zinc-600 dark:text-zinc-300 text-lg leading-relaxed max-w-md">
-            Entenda para onde seu dinheiro vai, identifique padrões e construa hábitos que fazem diferença.
-          </p>
-        </div>
-
-        <div className="reveal-up relative z-10 grid grid-cols-3 gap-6 pt-8 border-t border-zinc-200/70" style={{ animationDelay: "240ms" }}>
-          {HEDGE_STATS.map((s) => (
-            <div key={s.label}>
-              <p className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-0.5">{s.value}</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-snug">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════
-          PAINEL DO FORMULÁRIO — cartão em vidro sobre os focos de luz
-          ══════════════════════════════════════ */}
-      <div className="relative z-10 flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
-        <div className="w-full max-w-sm">
-          <button
-            onClick={() => navigate("/")}
-            className="reveal-up flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 mb-6 transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 lg:hidden"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
-          </button>
-
-          <div className="reveal-up bg-white/70 dark:bg-white/[0.05] backdrop-blur-xl border border-white/60 dark:border-white/[0.09] shadow-xl shadow-emerald-900/5 dark:shadow-black/50 rounded-3xl p-5 sm:p-7 lg:p-9" style={{ animationDelay: "80ms" }}>
-            {/* Logo — só aparece sem o painel de marca (mobile/tablet) */}
-            <div className="text-center mb-7 lg:hidden">
-              <div className="inline-flex items-center justify-center w-9 h-9 mb-3">
-                <img src="/favicon-light.png" alt="Hedge" className="w-9 h-9" />
-              </div>
-              <h1 className="font-display text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Hedge</h1>
+        <main className="flex flex-1 items-center py-10">
+          <div className="w-full max-w-[380px]">
+            <div key={viewMode} className="lp-rise" style={d(0)}>
+              <h1 className="lp-h2">{TITLES[viewMode].h}</h1>
+              <p className="lp-lede mt-3 text-[16px]">{TITLES[viewMode].p}</p>
             </div>
 
-            <div className="reveal-up mb-6" style={{ animationDelay: "150ms" }}>
-              {viewMode === "forgot" && (
-                <button
-                  type="button"
-                  onClick={() => switchView("login")}
-                  className="flex items-center gap-1 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 text-sm mb-4 transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Voltar ao login
-                </button>
-              )}
-              <h2 className="font-display text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                {viewMode === "login" && "Bem-vindo de volta"}
-                {viewMode === "signup" && "Crie sua conta"}
-                {viewMode === "forgot" && "Recuperar senha"}
-              </h2>
-              <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-2">
-                {viewMode === "login" && "Entre para continuar ao seu dashboard."}
-                {viewMode === "signup" && "Leva menos de um minuto, sem cartão de crédito."}
-                {viewMode === "forgot" && "Informe seu email para receber o link de redefinição."}
-              </p>
-            </div>
-
-            {/* Google — primeiro, como atalho rápido */}
+            {/* Google primeiro, como atalho */}
             {viewMode !== "forgot" && (
-              <>
-                <div className="reveal-up relative" style={{ animationDelay: "220ms" }}>
+              <div className="lp-rise mt-9" style={d(90)}>
+                <div className="lp-google-wrap relative">
                   <button
                     type="button"
                     onClick={gisReady ? undefined : handleGoogleLogin}
                     disabled={loading}
                     tabIndex={gisReady ? -1 : 0}
                     aria-hidden={gisReady || undefined}
-                    className="w-full py-3 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] text-zinc-700 dark:text-zinc-200 font-medium rounded-xl hover:bg-zinc-50 dark:hover:bg-white/[0.08] hover:border-zinc-300 dark:hover:border-white/[0.14] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                    className="lp-google flex h-12 w-full items-center justify-center gap-3 rounded-[3px] text-[15px] disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
                       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
                       <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
@@ -560,17 +380,14 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                     </svg>
                     Continuar com Google
                   </button>
-                  {/* Botão oficial do Google, invisível por cima do custom:
-                      o clique real cai no iframe do GIS (abre popup no domínio
-                      do app), mantendo o visual do botão desenhado acima */}
+                  {/* Botão oficial do Google, invisível por cima do desenhado:
+                      o clique real cai no iframe do GIS (popup no domínio do
+                      app), mantendo o visual do botão acima */}
                   {gisReady && !loading && (
-                    <div
-                      className="absolute inset-0 overflow-hidden rounded-xl"
-                      style={{ opacity: 0.001 }}
-                    >
+                    <div className="absolute inset-0 overflow-hidden rounded-[3px]" style={{ opacity: 0.001 }}>
                       <div
                         ref={gisContainerRef}
-                        className="w-full h-full flex items-center justify-center"
+                        className="flex h-full w-full items-center justify-center"
                         style={{ transform: "scaleY(1.25)" }}
                       />
                     </div>
@@ -578,189 +395,179 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
                 </div>
 
                 {showEmailForm ? (
-                  <div className="flex items-center gap-3 my-5">
-                    <div className="flex-1 h-px bg-zinc-200" />
-                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Ou continue com email</span>
-                    <div className="flex-1 h-px bg-zinc-200" />
+                  <div className="mt-7 flex items-center gap-4 text-[13px] text-lp-muted">
+                    <span className="h-px flex-1 bg-lp-line" />
+                    ou com email
+                    <span className="h-px flex-1 bg-lp-line" />
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowEmailForm(true)}
-                    className="reveal-up w-full text-center text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors mt-5"
-                    style={{ animationDelay: "220ms" }}
-                  >
+                  <button type="button" onClick={() => setShowEmailForm(true)} className="lp-link mt-5 w-full justify-center text-[15px]">
                     Continuar com email
                   </button>
                 )}
-              </>
+              </div>
             )}
 
-            <form
-              onSubmit={handleSubmit}
-              className={`reveal-up space-y-4 ${viewMode !== "forgot" && !showEmailForm ? "hidden" : ""}`}
-              style={{ animationDelay: "290ms" }}
-            >
-              {/* Nome (apenas signup) */}
-              {viewMode === "signup" && (
-                <div>
-                  <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
-                    Nome
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+            {showForm && (
+              <form
+                key={`form-${viewMode}`}
+                onSubmit={handleSubmit}
+                noValidate
+                className={`lp-rise flex flex-col gap-6 ${viewMode === "forgot" ? "mt-9" : "mt-7"}`}
+                style={d(viewMode === "forgot" ? 90 : 0)}
+              >
+                {viewMode === "signup" && (
+                  <div>
+                    <label htmlFor="login-nome" className="text-[13px] text-lp-muted">Nome</label>
                     <input
+                      id="login-nome" {...fieldA11y("login-nome")}
                       type="text"
+                      autoComplete="name"
                       value={nome}
                       onChange={(e) => setNome(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-white/80 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                      placeholder="Seu nome"
+                      placeholder="Como quer ser chamado"
+                      className="lp-input lp-field mt-1 w-full bg-transparent pb-3 pt-2 text-[16px]"
                     />
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                <div>
+                  <label htmlFor="login-email" className="text-[13px] text-lp-muted">Email</label>
                   <input
+                    id="login-email" {...fieldA11y("login-email")}
                     type="email"
+                    autoComplete="email"
+                    inputMode="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/80 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                     placeholder="seu@email.com"
+                    className="lp-input lp-field mt-1 w-full bg-transparent pb-3 pt-2 text-[16px]"
                   />
                 </div>
-              </div>
 
-              {/* Senha */}
-              {viewMode !== "forgot" && (
-                <div>
-                  <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
-                    Senha
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-12 py-3 bg-white/80 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
+                {viewMode !== "forgot" && (
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="login-senha" className="text-[13px] text-lp-muted">Senha</label>
+                      {viewMode === "login" && (
+                        <button type="button" onClick={() => switchView("forgot")} className={`-my-3 text-[13px] ${linkBtn} text-lp-muted hover:text-lp-fg`}>
+                          Esqueceu a senha?
+                        </button>
                       )}
-                    </button>
+                    </div>
+                    <div className="lp-field mt-1 flex items-center">
+                      <input
+                        id="login-senha" {...fieldA11y("login-senha")}
+                        type={showPassword ? "text" : "password"}
+                        autoComplete={viewMode === "signup" ? "new-password" : "current-password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder={viewMode === "signup" ? "Pelo menos 6 caracteres" : ""}
+                        className="lp-input w-full min-w-0 bg-transparent pb-3 pt-2 text-[16px]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
+                        aria-pressed={showPassword}
+                        className="-mr-2 mb-1 flex h-11 w-11 shrink-0 items-center justify-center text-lp-muted transition-colors hover:text-lp-fg"
+                      >
+                        {showPassword ? <EyeOff className="h-[18px] w-[18px]" strokeWidth={1.5} /> : <Eye className="h-[18px] w-[18px]" strokeWidth={1.5} />}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Confirmar Senha (apenas signup) */}
-              {viewMode === "signup" && (
-                <div>
-                  <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
-                    Confirmar Senha
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+                {viewMode === "signup" && (
+                  <div>
+                    <label htmlFor="login-confirma" className="text-[13px] text-lp-muted">Confirmar senha</label>
                     <input
+                      id="login-confirma" {...fieldA11y("login-confirma")}
                       type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-white/80 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                      placeholder="••••••••"
+                      className="lp-input lp-field mt-1 w-full bg-transparent pb-3 pt-2 text-[16px]"
                     />
                   </div>
-                </div>
-              )}
-
-              {/* Esqueceu a senha (apenas login) */}
-              {viewMode === "login" && (
-                <div className="text-right">
-                  <button
-                    type="button"
-                    onClick={() => switchView("forgot")}
-                    className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
-                  >
-                    Esqueceu a senha?
-                  </button>
-                </div>
-              )}
-
-              {/* Erro */}
-              {error && (
-                <div className={`rounded-xl p-3 text-sm flex items-start gap-2 ${
-                  isBlocked
-                    ? "bg-red-100 dark:bg-red-500/15 border border-red-300 dark:border-red-500/30 text-red-700 dark:text-red-400"
-                    : "bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/25 text-red-600 dark:text-red-400"
-                }`}>
-                  {isBlocked && <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5" />}
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {/* Sucesso */}
-              {success && (
-                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/25 rounded-xl p-3 text-emerald-600 dark:text-emerald-400 text-sm">
-                  {success}
-                </div>
-              )}
-
-              {/* Botão Submit */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="group w-full py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:ring-offset-app-dark"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Processando...
-                  </>
-                ) : viewMode === "login" ? (
-                  <>Entrar <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" /></>
-                ) : viewMode === "signup" ? (
-                  <>Criar conta <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" /></>
-                ) : (
-                  "Enviar email"
                 )}
-              </button>
-            </form>
 
-            {/* Alternar entre Login e Signup */}
-            {viewMode !== "forgot" && (
-              <div className="reveal-up mt-6 text-center" style={{ animationDelay: "360ms" }}>
-                <p className="text-zinc-500 dark:text-zinc-400 text-sm">
-                  {viewMode === "login" ? "Não tem uma conta?" : "Já tem uma conta?"}
-                  <button
-                    onClick={() =>
-                      switchView(
-                        viewMode === "login" ? "signup" : "login",
-                        viewMode === "login"
-                      )
-                    }
-                    className="ml-2 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-semibold"
-                  >
-                    {viewMode === "login" ? "Cadastre-se" : "Fazer login"}
-                  </button>
-                </p>
+                {error && (
+                  <div id="login-erro" role="alert" className="lp-swap flex items-start gap-3 rounded-[3px] bg-lp-surface px-4 py-3 text-[14px] leading-snug">
+                    {isBlocked ? (
+                      <ShieldAlert className="mt-px h-[18px] w-[18px] shrink-0 text-lp-acc" strokeWidth={1.5} aria-hidden="true" />
+                    ) : (
+                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-lp-acc" aria-hidden="true" />
+                    )}
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                {success && (
+                  <div role="status" className="lp-swap flex items-start gap-3 rounded-[3px] bg-lp-surface px-4 py-3 text-[14px] leading-snug">
+                    <Check className="mt-px h-[18px] w-[18px] shrink-0 text-lp-muted" strokeWidth={1.75} aria-hidden="true" />
+                    <span>{success}</span>
+                  </div>
+                )}
+
+                <button type="submit" disabled={loading} className="lp-btn lp-btn-lg mt-1 w-full gap-2 disabled:cursor-not-allowed disabled:opacity-60">
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-[18px] w-[18px] animate-spin" aria-hidden="true" />
+                      {viewMode === "forgot" ? "Enviando" : viewMode === "signup" ? "Criando conta" : "Entrando"}
+                    </>
+                  ) : viewMode === "login" ? "Entrar" : viewMode === "signup" ? "Criar conta" : "Enviar link"}
+                </button>
+              </form>
+            )}
+
+            {/* Mensagem fora do formulário (ex.: erro do Google antes de abrir o email) */}
+            {!showForm && (error || success) && (
+              <div role={error ? "alert" : "status"} className="lp-swap mt-6 flex items-start gap-3 rounded-[3px] bg-lp-surface px-4 py-3 text-[14px] leading-snug">
+                <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-lp-acc" aria-hidden="true" />
+                <span>{error ?? success}</span>
               </div>
             )}
+
+            <p className="lp-rise mt-9 text-[15px] text-lp-muted" style={d(180)}>
+              {viewMode === "forgot" ? (
+                <>
+                  Lembrou?{" "}
+                  <button type="button" onClick={() => switchView("login", true)} className={`${linkBtn} text-lp-fg`}>
+                    Voltar para entrar
+                  </button>
+                </>
+              ) : (
+                <>
+                  {viewMode === "login" ? "Ainda não tem conta?" : "Já tem conta?"}{" "}
+                  <button
+                    type="button"
+                    onClick={() => switchView(viewMode === "login" ? "signup" : "login", viewMode === "login")}
+                    className={`${linkBtn} text-lp-fg`}
+                  >
+                    {viewMode === "login" ? "Criar conta" : "Entrar"}
+                  </button>
+                </>
+              )}
+            </p>
           </div>
-        </div>
+        </main>
+
+        <footer className="text-[13px] text-lp-muted">Gratuito, sem anúncios. Seus dados nunca são vendidos.</footer>
       </div>
+
+      {/* ── O app, ao vivo (só no desktop) ────────────────────────────── */}
+      <aside
+        aria-label="Exemplo do Hedge"
+        className="relative hidden items-center justify-center overflow-hidden lg:flex"
+        style={{ borderLeft: "1px solid var(--lp-line)" }}
+      >
+        <div aria-hidden="true" className="lp-hero-grid pointer-events-none absolute inset-0" />
+        <div className="lp-rise relative w-full max-w-[540px] px-10" style={d(240)}>
+          <LiveBalanceCard />
+          <p className="mt-2 text-center text-[13px] text-lp-muted">A casa de exemplo "Apê 302". A sua começa vazia.</p>
+        </div>
+      </aside>
     </div>
   );
 }

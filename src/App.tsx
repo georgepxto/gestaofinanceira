@@ -40,8 +40,21 @@ const DashboardPage = lazy(() => import("./pages/DashboardPage").then((m) => ({ 
 //
 // Só estes dois. Pré-carregar as outras telas trocaria boot rápido por download
 // que ninguém pediu.
-void import("./components/layout");
-void import("./pages/DashboardPage");
+//
+// E só para quem tem sessão salva: sem ela, "/" é a landing, e baixar o
+// Dashboard ali só disputa banda com o hero. A chave é a padrão do supabase-js
+// (sb-<ref>-auth-token). Na dúvida (storage bloqueado), pré-carrega.
+const temSessaoSalva = (() => {
+  try {
+    return Object.keys(localStorage).some((k) => k.startsWith("sb-") && k.endsWith("-auth-token"));
+  } catch {
+    return true;
+  }
+})();
+if (temSessaoSalva) {
+  void import("./components/layout");
+  void import("./pages/DashboardPage");
+}
 
 const OrcamentoPage = lazy(() => import("./pages/OrcamentoPage").then((m) => ({ default: m.OrcamentoPage })));
 const EuPage = lazy(() => import("./pages/EuPage").then((m) => ({ default: m.EuPage })));

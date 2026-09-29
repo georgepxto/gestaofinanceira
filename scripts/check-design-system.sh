@@ -22,11 +22,11 @@ cd "$(dirname "$0")/.." || exit 1
 SRC="src"
 CSS="src/index.css"
 
-# Peças de marca: hero da landing, login e o ponteiro. Vivem noutra gramática
+# Peças de marca: a landing (página e src/components/landing/) e o login. Vivem noutra gramática
 # visual (degradê, raio grande, corpo fora da escala) porque a pessoa ali está
 # sendo convencida, não lendo o saldo. As regras de dinheiro e de acessibilidade
 # valem para elas do mesmo jeito.
-MARCA='(LandingPage|Login|CursorDot)\.tsx'
+MARCA='(LandingPage|Login)\.tsx|src/components/landing/|src/content/'
 
 RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[0;33m'
 DIM=$'\033[2m'; BOLD=$'\033[1m'; OFF=$'\033[0m'

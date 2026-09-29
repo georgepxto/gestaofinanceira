@@ -8,6 +8,19 @@ export default {
         // Os dois neutros da marca que não existem na escala zinc.
         'app-dark': '#0A0A0B', // fundo de tela no dark
         'app-row':  '#FCFCFC', // painel/linha quase-branco no light
+        // Landing: aponta para as variáveis com escopo em .lp (landing.css).
+        // Fora da landing essas variáveis não existem, então nada no app muda.
+        lp: {
+          bg: 'var(--lp-bg)',
+          fg: 'var(--lp-fg)',
+          muted: 'var(--lp-muted)',
+          line: 'var(--lp-line)',
+          surface: 'var(--lp-surface)',
+          track: 'var(--lp-track)',
+          acc: 'var(--lp-acc)',
+          hi: 'var(--lp-hi)',
+          ink: 'var(--lp-ink)',
+        },
       },
       zIndex: {
         dropdown: '10',

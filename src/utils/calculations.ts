@@ -94,6 +94,19 @@ export function formatCurrency(value: number): string {
 }
 
 /**
+ * Moeda sem centavos, arredondada: "R$ 1.400". Para rótulos de limite e
+ * orçamento, onde os centavos só atrapalham a leitura.
+ */
+export function formatCurrencyInteiro(value: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+  }).format(Math.round(value));
+}
+
+/**
  * Converte string monetária (ex: "1.500,00") para número
  */
 export function parseCurrency(value: string): number {

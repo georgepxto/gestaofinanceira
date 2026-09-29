@@ -1,0 +1,536 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Landing — tokens com escopo em .lp
+   Nada aqui vaza para o app: as variáveis só existem dentro do wrapper, e o
+   Tailwind as lê pelas cores `lp-*` (tailwind.config.js).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Registradas para que a troca de tema interpole a cor em vez de saltar.
+   Como herdam, basta a transição no wrapper: fundo, texto e linhas de toda a
+   página mudam no mesmo quadro. Navegador sem @property troca na hora. */
+@property --lp-bg      { syntax: "<color>"; inherits: true; initial-value: #0B0B0C; }
+@property --lp-fg      { syntax: "<color>"; inherits: true; initial-value: #F2F2F0; }
+@property --lp-muted   { syntax: "<color>"; inherits: true; initial-value: #9A9A97; }
+@property --lp-line    { syntax: "<color>"; inherits: true; initial-value: #232325; }
+@property --lp-surface { syntax: "<color>"; inherits: true; initial-value: #111113; }
+@property --lp-track   { syntax: "<color>"; inherits: true; initial-value: #1D1D20; }
+@property --lp-btn-bg  { syntax: "<color>"; inherits: true; initial-value: #FF6B35; }
+@property --lp-btn-fg  { syntax: "<color>"; inherits: true; initial-value: #0B0B0C; }
+@property --lp-bar     { syntax: "<color>"; inherits: true; initial-value: #FF6B35; }
+@property --lp-hi      { syntax: "<color>"; inherits: true; initial-value: #F2F2F0; }
+@property --lp-ink     { syntax: "<color>"; inherits: true; initial-value: #F2F2F0; }
+@property --lp-nav-bg  { syntax: "<color>"; inherits: true; initial-value: #0B0B0C; }
+
+.lp {
+  --lp-bg: #0B0B0C;
+  --lp-fg: #F2F2F0;
+  --lp-muted: #9A9A97;
+  --lp-line: #232325;
+  --lp-surface: #111113;
+  --lp-track: #1D1D20;
+  --lp-acc: #FF6B35;
+  /* Botão principal e preenchimento da barra de rolagem. Separados do acento
+     porque no tema laranja eles precisam virar preto para continuar visíveis. */
+  --lp-btn-bg: #FF6B35;
+  --lp-btn-fg: #0B0B0C;
+  --lp-bar: #FF6B35;
+  /* Destaque: igual ao texto nos temas claro e escuro; branco no laranja. */
+  --lp-hi: #F2F2F0;
+  /* Tinta de destaque: igual ao texto fora do laranja; lá, um marrom quase preto. */
+  --lp-ink: #F2F2F0;
+  --lp-nav-h: 64px;
+  /* Fundo da barra do topo: o mesmo da página, menos no laranja. */
+  --lp-nav-bg: #0B0B0C;
+  /* Troca de tema: sai devagar, acelera no meio e pousa devagar. */
+  --lp-ease-theme: cubic-bezier(0.45, 0, 0.2, 1);
+
+  background-color: var(--lp-bg);
+  color: var(--lp-fg);
+  color-scheme: dark;
+  font-family: "Switzer", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 400;
+  overflow-x: clip;
+  transition:
+    --lp-bg 0.9s var(--lp-ease-theme),
+    --lp-fg 0.9s var(--lp-ease-theme),
+    --lp-muted 0.9s var(--lp-ease-theme),
+    --lp-line 0.9s var(--lp-ease-theme),
+    --lp-surface 0.9s var(--lp-ease-theme),
+    --lp-track 0.9s var(--lp-ease-theme),
+    --lp-btn-bg 0.9s var(--lp-ease-theme),
+    --lp-btn-fg 0.9s var(--lp-ease-theme),
+    --lp-bar 0.9s var(--lp-ease-theme),
+    --lp-hi 0.9s var(--lp-ease-theme),
+    --lp-ink 0.9s var(--lp-ease-theme),
+    --lp-nav-bg 0.9s var(--lp-ease-theme);
+}
+
+.lp[data-theme="light"] {
+  --lp-nav-bg: #F2F2F0;
+  --lp-bg: #F2F2F0;
+  --lp-fg: #0B0B0C;
+  --lp-hi: #0B0B0C;
+  --lp-ink: #0B0B0C;
+  --lp-muted: #5E5E5B;
+  --lp-line: #D9D9D5;
+  --lp-surface: #FFFFFF;
+  --lp-track: #E4E4E0;
+  color-scheme: light;
+}
+
+/* Tema laranja: a quebra de expectativa da página (#acerto). Todo o texto
+   é branco. O fundo é um tom um pouco mais profundo que o acento (#FF6B35)
+   para o branco passar do mínimo de texto grande (3,25:1); por isso todo
+   texto da seção tem 24 px ou mais. Botão: branco com laranja queimado. */
+.lp[data-theme="acc"] {
+  /* barra do topo num laranja queimado: o texto branco de 15 px passa em
+     5,1:1 (sobre o laranja da seção seria 3,3:1) */
+  --lp-nav-bg: #BF4611;
+  --lp-bg: #F25F2A;
+  --lp-fg: #FFFFFF;
+  --lp-hi: #FFFFFF;
+  /* destaque escuro puxado para o laranja: 6,0:1 */
+  --lp-ink: #1F0A02;
+  --lp-muted: #FFFFFF;
+  --lp-line: #F9A583;
+  --lp-surface: #FF7B4B;
+  --lp-track: #E85D29;
+  --lp-btn-bg: #FFFFFF;
+  --lp-btn-fg: #B8420F;
+  --lp-bar: #FFFFFF;
+  color-scheme: light;
+}
+/* A seção laranja acesa guarda as próprias cores (as mesmas do tema acc),
+   seja qual for o tema da página em volta. */
+.lp section.is-lit {
+  /* barra do topo num laranja queimado: o texto branco de 15 px passa em
+     5,1:1 (sobre o laranja da seção seria 3,3:1) */
+  --lp-nav-bg: #BF4611;
+  --lp-bg: #F25F2A;
+  --lp-fg: #FFFFFF;
+  --lp-hi: #FFFFFF;
+  /* destaque escuro puxado para o laranja: 6,0:1 */
+  --lp-ink: #1F0A02;
+  --lp-muted: #FFFFFF;
+  --lp-line: #F9A583;
+  --lp-surface: #FF7B4B;
+  --lp-track: #E85D29;
+  --lp-btn-bg: #FFFFFF;
+  --lp-btn-fg: #B8420F;
+  --lp-bar: #FFFFFF;
+  color-scheme: light;
+  background-color: var(--lp-bg);
+  color: var(--lp-fg);
+}
+
+.lp ::selection { background: var(--lp-fg); color: var(--lp-bg); }
+.lp :focus-visible { outline: 2px solid var(--lp-fg); outline-offset: 3px; border-radius: 2px; }
+
+/* Números: Geist Mono, sempre tabular. */
+.lp-num {
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ── Tipografia ────────────────────────────────────────────────────────── */
+.lp-h1 {
+  font-weight: 400;
+  font-size: clamp(2.75rem, 7.4vw + 0.5rem, 5.75rem);
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.lp-h2 {
+  font-weight: 450;
+  font-size: clamp(2rem, 3.6vw + 0.75rem, 3.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.lp-h3 {
+  font-weight: 500;
+  font-size: 1.25rem;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+}
+.lp-lede {
+  font-size: 1.125rem;
+  line-height: 1.55;
+  color: var(--lp-muted);
+  text-wrap: pretty;
+}
+
+/* ── Controles ─────────────────────────────────────────────────────────── */
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 3px;
+  background: var(--lp-btn-bg);
+  color: var(--lp-btn-fg);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, filter 0.2s ease, transform 0.15s ease;
+}
+.lp-btn:hover { filter: brightness(1.08); }
+.lp-btn:active { transform: translateY(1px); }
+.lp-btn-lg { min-height: 52px; padding: 12px 24px; font-size: 1rem; }
+
+.lp-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--lp-fg);
+  text-decoration: underline;
+  text-decoration-color: var(--lp-line);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+  transition: text-decoration-color 0.2s ease;
+}
+.lp-link:hover { text-decoration-color: var(--lp-fg); }
+
+.lp-navlink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--lp-muted);
+  transition: color 0.2s ease;
+}
+.lp-navlink:hover { color: var(--lp-fg); }
+/* Link de ação na barra (Entrar): cor cheia. Classe própria porque um
+   text-lp-fg do Tailwind perde para .lp-navlink, que vem depois no CSS. */
+.lp-navlink.is-strong { color: var(--lp-fg); }
+
+/* ── Layout ────────────────────────────────────────────────────────────── */
+.lp-wrap {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
+}
+@media (min-width: 768px) {
+  .lp-wrap { padding-left: max(40px, env(safe-area-inset-left)); padding-right: max(40px, env(safe-area-inset-right)); }
+}
+.lp section[id] { scroll-margin-top: calc(var(--lp-nav-h) + env(safe-area-inset-top)); }
+
+.lp-nav {
+  padding-top: env(safe-area-inset-top);
+  background-color: var(--lp-nav-bg);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s ease;
+}
+.lp-nav[data-scrolled="true"] { border-bottom-color: var(--lp-line); }
+
+/* ── Hero ──────────────────────────────────────────────────────────────── */
+.lp-hero-grid {
+  background-image:
+    linear-gradient(to right, rgba(242, 242, 240, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(242, 242, 240, 0.035) 1px, transparent 1px);
+  background-size: 56px 56px;
+  background-position: -1px -1px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
+}
+
+@keyframes lp-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+.lp-rise {
+  animation: lp-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--lp-d, 0ms);
+}
+/* Até as fontes chegarem (ou 900 ms, ver index.html), a entrada fica parada
+   no primeiro quadro, invisível: o texto nunca aparece na fonte do sistema
+   para depois trocar. */
+html:not(.fonts-ready) .lp-rise { animation-play-state: paused; }
+
+/* A tela do app sem aparelho: as bordas se dissolvem no fundo. */
+.lp-screen {
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0, #000 7%, #000 82%, transparent 100%),
+    linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0, #000 7%, #000 82%, transparent 100%),
+    linear-gradient(to right, transparent 0, #000 9%, #000 91%, transparent 100%);
+  mask-composite: intersect;
+}
+
+@keyframes lp-live { 50% { opacity: 0.25; } }
+.lp-live { animation: lp-live 2.4s ease-in-out infinite; }
+
+.lp-bar-fill {
+  transition: transform 1.8s cubic-bezier(0.22, 0.8, 0.2, 1), background-color 0.4s ease, opacity 0.4s ease;
+}
+
+/* Recortes de tela nas seções claras: sem caixa, só diferença de superfície. */
+.lp-crop {
+  -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+}
+
+/* ── CTA: campos e categorias ──────────────────────────────────────────── */
+.lp-field { border-bottom: 1px solid var(--lp-line); transition: border-color 0.2s ease; }
+.lp-field:focus-within, .lp-field:focus { border-bottom-color: var(--lp-fg); }
+.lp-input { color: var(--lp-fg); caret-color: var(--lp-acc); }
+.lp-input::placeholder { color: var(--lp-muted); }
+.lp .lp-input:focus-visible { outline: none; }
+/* O index.css força 16px em todo input (zoom do iOS). Acima de 16px o motivo
+   não se aplica, e o valor é o herói do formulário — mesma exceção que o app
+   faz para input.valor-entrada. */
+.lp input.lp-amount { font-size: 40px !important; }
+
+/* Seleção discreta: borda e texto acendem, sem preencher a pílula. */
+.lp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--lp-line);
+  border-radius: 3px;
+  color: var(--lp-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1), transform 0.2s ease;
+}
+.lp-chip:active { transform: scale(0.97); }
+.lp-chip:hover { color: var(--lp-fg); }
+.lp-chip.is-on { color: var(--lp-fg); border-color: var(--lp-fg); }
+.lp-chip:has(:focus-visible) { outline: 2px solid var(--lp-fg); outline-offset: 2px; }
+
+/* ── Login ─────────────────────────────────────────────────────────────── */
+.lp-google {
+  background-color: var(--lp-surface);
+  border: 1px solid var(--lp-line);
+  color: var(--lp-fg);
+  font-weight: 500;
+  transition: border-color 0.3s ease;
+}
+.lp-google:hover:not(:disabled) { border-color: var(--lp-muted); }
+/* Com o GIS carregado, o Tab cai no iframe invisível do Google por cima do
+   botão; o anel de foco vai no invólucro para quem navega pelo teclado ver. */
+.lp-google-wrap:focus-within { outline: 2px solid var(--lp-fg); outline-offset: 3px; border-radius: 3px; }
+.lp-google-wrap:focus-within .lp-google { border-color: var(--lp-muted); }
+
+/* ── Demo: movimento ───────────────────────────────────────────────────── */
+/* Abas empilhadas: a ativa entra deslizando do lado certo enquanto a outra
+   sai para o lado oposto. A inativa fica invisível para o leitor de tela e
+   para o Tab (visibility), mas só depois de terminar de sair. */
+.lp-panel {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(var(--lp-panel-x, 0));
+  transition:
+    opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.55s;
+}
+.lp-panel[data-on="true"] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0.06s, 0.06s, 0s;
+}
+.lp-tab-ink { transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1); }
+.lp-tab { transition: color 0.35s ease; }
+.lp-tab:active svg { transform: scale(0.9); }
+.lp-tab svg { transition: transform 0.2s ease; }
+
+.lp-restart { transition: opacity 0.32s ease, transform 0.32s ease; }
+.lp-restart[data-fading="true"] { opacity: 0; transform: scale(0.985); }
+
+/* Interruptor (Dividir com Ana e Bruno) */
+.lp-switch {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid var(--lp-muted);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.lp-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--lp-muted);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.3s ease;
+}
+.lp-switch.is-on { background: var(--lp-fg); border-color: var(--lp-fg); }
+.lp-switch.is-on::after { transform: translateX(12px); background: var(--lp-bg); }
+
+/* Cor que muda de estado (ex.: dívida quitada) esmaece em vez de trocar. */
+.lp-fade-color { transition: color 0.6s ease; }
+
+/* Texto que troca (Quitar → Quitado, avisos): o novo sobe e aparece. */
+@keyframes lp-swap {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.lp-swap { animation: lp-swap 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* ── Barra de rolagem como barra de carregamento ──────────────────────── */
+html.lp-no-scrollbar { scrollbar-width: none; }
+html.lp-no-scrollbar::-webkit-scrollbar { display: none; }
+
+.lp-progress {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  justify-content: flex-end;
+  width: 14px;
+  cursor: pointer;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.lp-progress.is-ready { opacity: 1; }
+.lp-progress-rail {
+  position: relative;
+  height: 100%;
+  width: 3px;
+  overflow: hidden;
+  background-color: var(--lp-line);
+  transform-origin: right;
+  transition: transform 0.2s ease;
+}
+.lp-progress:hover .lp-progress-rail { transform: scaleX(1.67); }
+.lp-progress-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: top;
+  transform: scaleY(0);
+  background-color: var(--lp-bar);
+}
+/* No toque o trilho só informa; arrastar ali brigaria com o scroll nativo. */
+@media (pointer: coarse) {
+  .lp-progress { pointer-events: none; width: 3px; }
+}
+
+/* Número gigante do momento laranja. */
+.lp-giant {
+  font-size: clamp(3.25rem, 14.5vw, 12.5rem);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  /* Ao lado do celular a coluna é mais estreita. */
+  .lp-giant { font-size: clamp(4rem, 6.8vw, 7.5rem); }
+}
+
+/* ── Como funciona: passos ─────────────────────────────────────────────── */
+.hw-step { color: var(--lp-muted); transition: color 0.5s ease; }
+.hw-step.is-on { color: var(--lp-fg); }
+.hw-step p { color: var(--lp-muted); }
+
+/* ── Objetos da Segurança ──────────────────────────────────────────────── */
+/* Estado inicial = antes do gesto; .is-in (posto ao aparecer) leva ao final. */
+.lp-obj-shackle { transform: translateY(-12px); }
+.lp-obj-file { transform: translateY(26px); }
+.lp-obj-strike { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 0.8s cubic-bezier(0.65, 0, 0.35, 1) 0.3s; }
+.is-in .lp-obj-shackle, .is-in .lp-obj-file { transform: none; }
+.is-in .lp-obj-strike { stroke-dashoffset: 0; }
+
+/* Movimento contínuo, lento; pausa fora da tela. */
+@keyframes lp-cipher { from { transform: translateX(0); } to { transform: translateX(-26px); } }
+@keyframes lp-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes lp-sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+.lp-obj-cipher { animation: lp-cipher 8s linear infinite alternate; }
+.lp-obj-float { animation: lp-float 3.6s ease-in-out infinite; }
+.lp-obj-sway { transform-box: view-box; transform-origin: 96px 88px; animation: lp-sway 4.2s ease-in-out infinite; }
+.lp-obj-panel .lp-obj-cipher, .lp-obj-panel .lp-obj-float, .lp-obj-panel .lp-obj-sway { animation-play-state: paused; }
+.lp-obj-panel.is-visible .lp-obj-cipher, .lp-obj-panel.is-visible .lp-obj-float, .lp-obj-panel.is-visible .lp-obj-sway { animation-play-state: running; }
+
+/* Ao passar o mouse, cada objeto reage. */
+.lp-obj-shackle, .lp-obj-file { transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (hover: hover) {
+  .lp-obj-panel.is-in:hover .lp-obj-shackle { transform: translateY(-9px); }
+  .lp-obj-panel.is-in:hover .lp-obj-file { transform: translateY(-10px); }
+  .lp-obj-panel:hover .lp-obj-sway { animation-duration: 1.6s; }
+}
+
+/* No celular, cada tela de funcionalidade fica mais baixa: a página inteira
+   passava de 20 telas de altura. */
+@media (max-width: 639px) {
+  .lp-feat-screen .lp-crop { max-height: 380px !important; }
+}
+
+/* ── Fotos ─────────────────────────────────────────────────────────────── */
+/* Preto e branco: o laranja continua sendo só do app. */
+.lp-photo { filter: grayscale(1) contrast(1.06); transition: filter 0.9s cubic-bezier(0.22, 1, 0.36, 1); }
+/* A cor volta ao passar o mouse; no toque, no bloco que está no meio da tela. */
+@media (hover: hover) { .lp-feat:hover .lp-photo { filter: grayscale(0) contrast(1); } }
+@media (hover: none) { .is-center .lp-photo { filter: grayscale(0) contrast(1); } }
+/* Foto de fundo branco que se funde à cor da seção. */
+/* Só o braço, abaixo e à esquerda do aparelho, se dissolve, na direção em
+   que ele sai da foto (para baixo e para a esquerda). O canto inferior
+   esquerdo do aparelho fica em 22% dessa diagonal, fora do degradê. */
+.lp-hand {
+  -webkit-mask-image:
+    linear-gradient(to top right, transparent 2%, #000 19%),
+    linear-gradient(to bottom, #000 90%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to top right, transparent 2%, #000 19%),
+    linear-gradient(to bottom, #000 90%, transparent 100%);
+  mask-composite: intersect;
+}
+
+/* A tela do app só aparece dentro da forma real da tela da foto. */
+.lp-phone-screen {
+  -webkit-mask: url(/landing/celular-tela.png) 0 0 / 100% 100% no-repeat;
+  mask: url(/landing/celular-tela.png) 0 0 / 100% 100% no-repeat;
+}
+.lp-strip { scrollbar-width: none; }
+.lp-strip::-webkit-scrollbar { display: none; }
+
+/* A tela do app dentro de uma foto é sempre escura, em qualquer tema. */
+.lp .lp-force-dark {
+  --lp-bg: #0B0B0C;
+  --lp-fg: #F2F2F0;
+  --lp-muted: #9A9A97;
+  --lp-line: #232325;
+  --lp-surface: #111113;
+  --lp-track: #1D1D20;
+  color: var(--lp-fg);
+  color-scheme: dark;
+}
+
+/* Linha de atividade do card de saldo: a frase nova sobe de baixo. */
+@keyframes lp-activity {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: none; }
+}
+.lp-activity { animation: lp-activity 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Lenis: o scroll-behavior global do app brigaria com a inércia. */
+html.lenis, html.lenis body { height: auto; }
+html.lenis.lenis-smooth { scroll-behavior: auto !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp { transition: none; }
+  .lp-rise, .lp-live, .lp-activity, .lp-swap { animation: none; }
+  .lp-panel, .lp-tab-ink, .lp-fade-color, .lp-chip, .lp-restart { transition: none; }
+  .lp-obj-shackle, .lp-obj-file { transform: none; transition: none; }
+  .lp-obj-strike { stroke-dashoffset: 0; transition: none; }
+  .lp-obj-cipher, .lp-obj-float, .lp-obj-sway { animation: none; }
+  .lp-bar-fill { transition: none; }
+  .lp [data-lp-fade] { opacity: 1 !important; transform: none !important; }
+}
