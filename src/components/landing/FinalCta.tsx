@@ -4,6 +4,8 @@ import type { LucideIcon } from "lucide-react";
 import { Bus, Home, Popcorn, ShoppingBasket, UtensilsCrossed } from "lucide-react";
 import { formatCurrencyInput, parseCurrency } from "../../utils/calculations";
 import { Fade } from "./Fade";
+import { Footer } from "./Footer";
+import { MarkBackdrop } from "./MarkGhost";
 import { QrCode } from "./QrCode";
 import { signed } from "./format";
 
@@ -42,8 +44,16 @@ export function FinalCta() {
 
   return (
     <>
-      <section id="comecar" data-lp-theme="dark" className="py-24 lg:py-36">
-        <div className="lp-wrap grid items-center gap-14 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:gap-20">
+      {/* No desktop, seção + rodapé ocupam exatamente uma tela: a última
+          composição se vê inteira. Atrás dela, o monograma gigante. */}
+      <section id="comecar" data-lp-theme="dark" className="relative overflow-hidden py-24 lg:flex lg:min-h-[calc(100svh-var(--lp-foot-h))] lg:flex-col lg:justify-center lg:pb-10 lg:pt-[calc(var(--lp-nav-h)+32px)]">
+        {/* A ponta de cima fica logo abaixo da barra do topo quando a página
+            chega ao fim; a base passa da borda de baixo e sai cortada. A
+            largura vai do vão entre título e formulário até a margem (o bojo
+            do D fica inteiro). Só no desktop: no celular o formulário ocupa
+            a largura e sobrariam linhas soltas. */}
+        <MarkBackdrop className="right-[3%] top-[calc(var(--lp-nav-h)+16px)] hidden w-[calc(47%-44px)] lg:block" />
+        <div className="lp-wrap relative grid items-center gap-14 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:gap-20">
           <Fade>
             <h2 className="lp-h1 max-w-[12ch]">Comece pelo gasto de hoje.</h2>
             <p className="lp-lede mt-6 max-w-[40ch]">
@@ -55,20 +65,20 @@ export function FinalCta() {
               <li>Sozinho ou dividindo com quem mora com você</li>
             </ul>
 
-            {/* No computador: o caminho até o celular, onde o Hedge é usado. */}
-            <div className="mt-12 hidden items-center gap-5 lg:flex">
-              <QrCode value={signupUrl} size={112} label="QR code para criar a conta no celular" />
-              <div>
-                <div className="text-[15px]">Abra no celular</div>
-                <p className="mt-1 max-w-[26ch] text-[14px] leading-relaxed text-lp-muted">
-                  Aponte a câmera para criar a conta por lá. É onde você vai lançar no dia a dia.
-                </p>
-              </div>
+          {/* No computador: o caminho até o celular, onde o Hedge é usado. */}
+          <div className="mt-12 hidden items-center gap-5 lg:flex">
+            <QrCode value={signupUrl} size={112} label="QR code para criar a conta no celular" />
+            <div>
+              <div className="text-[15px]">Abra no celular</div>
+              <p className="mt-1 max-w-[26ch] text-[14px] leading-relaxed text-lp-muted">
+                Aponte a câmera para criar a conta por lá. É onde você vai lançar no dia a dia.
+              </p>
             </div>
+          </div>
           </Fade>
 
           <Fade delay={0.08} className="-mx-5 sm:mx-0">
-            <form onSubmit={onSubmit} className="bg-lp-surface px-6 py-7 sm:rounded sm:px-8 sm:py-8" aria-label="Seu primeiro lançamento">
+            <form onSubmit={onSubmit} className="bg-lp-surface px-6 py-7 sm:rounded sm:px-8 sm:py-8 lg:py-7" aria-label="Seu primeiro lançamento">
               <label htmlFor="lp-valor" className="text-[13px] text-lp-muted">
                 Quanto você gastou hoje?
               </label>
@@ -85,7 +95,7 @@ export function FinalCta() {
                 />
               </div>
 
-              <label htmlFor="lp-desc" className="mt-6 block text-[13px] text-lp-muted">
+              <label htmlFor="lp-desc" className="lp-cta-gap mt-6 block text-[13px] text-lp-muted">
                 Com o quê?
               </label>
               <input
@@ -97,7 +107,7 @@ export function FinalCta() {
                 className="lp-input lp-field mt-1 w-full bg-transparent pb-3 pt-2 text-[16px]"
               />
 
-              <fieldset className="mt-6">
+              <fieldset className="lp-cta-gap mt-6">
                 <legend className="text-[13px] text-lp-muted">Categoria</legend>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {CATS.map((c) => {
@@ -126,7 +136,7 @@ export function FinalCta() {
               {/* Como o lançamento aparece no app */}
               {/* Sem aria-live: é o eco do que a pessoa acabou de digitar, e
                   anunciaria a prévia inteira a cada tecla. */}
-              <div className="mt-8 bg-lp-bg px-4 py-4 sm:rounded-sm">
+              <div className="mt-8 bg-lp-bg px-4 py-4 sm:rounded-sm lg:mt-6">
                 <div className="text-[12px] text-lp-muted">Assim ele entra no seu mês</div>
                 <div className="mt-3 flex items-center gap-3.5">
                   <atual.Icon className="h-[18px] w-[18px] shrink-0 text-lp-muted" strokeWidth={1.5} aria-hidden="true" />
@@ -138,15 +148,15 @@ export function FinalCta() {
                     {numero > 0 ? signed(-numero) : "R$ 0,00"}
                   </span>
                 </div>
-                <div className="mt-3 text-[12px] text-lp-muted">
+                <div className="lp-cta-note mt-3 text-[12px] text-lp-muted">
                   Primeiro gasto de {MES} em {atual.label.toLowerCase()}.
                 </div>
               </div>
 
-              <button type="submit" className="lp-btn lp-btn-lg mt-8 w-full">
+              <button type="submit" className="lp-btn lp-btn-lg mt-8 w-full lg:mt-6">
                 Criar conta grátis
               </button>
-              <p className="mt-4 text-center text-[14px] text-lp-muted">
+              <p className="lp-cta-login mt-4 text-center text-[14px] text-lp-muted lg:mt-2">
                 Já tem conta?{" "}
                 <Link to="/login" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-lp-fg underline decoration-1 underline-offset-4">
                   Entrar
@@ -154,21 +164,13 @@ export function FinalCta() {
               </p>
             </form>
           </Fade>
+
+          {/* Base da coluna: o monograma subindo e, ao lado, o QR. No
+              celular vem depois do formulário, sem o QR. */}
         </div>
       </section>
 
-      <footer
-        className="pb-[max(32px,env(safe-area-inset-bottom))] pt-8"
-        style={{ borderTop: "1px solid var(--lp-line)" }}
-      >
-        <div className="lp-wrap flex flex-col gap-2 text-[14px] sm:flex-row sm:items-baseline sm:justify-between">
-          <div className="flex items-baseline gap-4">
-            <span className="text-[17px] font-medium">Hedge</span>
-            <span className="text-lp-muted">Suas contas na régua.</span>
-          </div>
-          <span className="text-lp-muted">© <span className="lp-num">2026</span></span>
-        </div>
-      </footer>
+      <Footer />
     </>
   );
 }

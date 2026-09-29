@@ -79,6 +79,14 @@
             document.documentElement.style.backgroundColor = "#0B0B0C";
             var mt = document.querySelector('meta[name="theme-color"]');
             if (mt) mt.setAttribute("content", "#0B0B0C");
+            // Aba com o monograma (o app ainda usa o escudo): os links do
+            // escudo saem e ficam guardados para o useBrandFavicon devolver.
+            var icons = [].slice.call(document.querySelectorAll('link[rel="icon"]'));
+            icons.forEach(function (l) { l.parentNode.removeChild(l); });
+            window.__hedgeAppIcons = icons;
+            var bi = document.createElement("link");
+            bi.id = "brand-icon"; bi.rel = "icon"; bi.type = "image/svg+xml"; bi.href = "/hedge-mark.svg";
+            document.head.appendChild(bi);
           }
         } catch (e) {}
         try {

@@ -1,13 +1,16 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { LiveBalanceCard } from "./LiveBalanceCard";
+import { MarkGhost } from "./MarkGhost";
 
 const d = (ms: number) => ({ "--lp-d": `${ms}ms` }) as CSSProperties;
 
 export function Hero() {
   return (
     <section id="topo" data-lp-theme="dark" className="relative overflow-hidden">
-      <div aria-hidden="true" className="lp-hero-grid pointer-events-none absolute inset-0" />
+      {/* O monograma inteiro atrás do card, só no desktop: no celular o card
+          fica embaixo do título e as linhas cruzariam o texto. */}
+      <MarkGhost className="right-[6%] top-1/2 hidden h-[80%] -translate-y-[46%] lg:block" />
 
       <div className="lp-wrap relative grid items-center gap-12 pb-10 pt-[calc(64px+env(safe-area-inset-top)+48px)] lg:min-h-[100svh] lg:grid-cols-[55fr_45fr] lg:gap-10 lg:pb-16 lg:pt-[calc(64px+56px)]">
         <div className="max-w-[640px]">

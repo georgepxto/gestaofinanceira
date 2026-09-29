@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import { Bus, Check, ShoppingBasket, UtensilsCrossed } from "lucide-react";
 import { Fade } from "./Fade";
 import { brl, signed } from "./format";
+import { HedgeLogo } from "./HedgeMark";
 import { ScrollTrigger, gsap } from "./useLandingMotion";
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -226,7 +227,7 @@ export function HowItWorks() {
             <div aria-hidden="true">
               {/* Estado 1: cadastro */}
               <div className="hw-s1 invisible absolute inset-0 px-6 pt-7 opacity-0">
-                <div className="text-[15px] font-medium">Hedge</div>
+                <HedgeLogo className="text-[15px] font-medium" />
                 <div className="lp-h3 mt-8">Criar conta</div>
                 {[
                   { l: "Nome", c: "hw-nome", v: "Ana" },

@@ -19,6 +19,7 @@
 @property --lp-hi      { syntax: "<color>"; inherits: true; initial-value: #F2F2F0; }
 @property --lp-ink     { syntax: "<color>"; inherits: true; initial-value: #F2F2F0; }
 @property --lp-nav-bg  { syntax: "<color>"; inherits: true; initial-value: #0B0B0C; }
+@property --lp-logo    { syntax: "<color>"; inherits: true; initial-value: #FF6B35; }
 
 .lp {
   --lp-bg: #0B0B0C;
@@ -38,8 +39,11 @@
   /* Tinta de destaque: igual ao texto fora do laranja; lá, um marrom quase preto. */
   --lp-ink: #F2F2F0;
   --lp-nav-h: 64px;
+  --lp-foot-h: 80px;
   /* Fundo da barra do topo: o mesmo da página, menos no laranja. */
   --lp-nav-bg: #0B0B0C;
+  /* Monograma do cabeçalho: laranja em todo tema, menos no laranja. */
+  --lp-logo: #FF6B35;
   /* Troca de tema: sai devagar, acelera no meio e pousa devagar. */
   --lp-ease-theme: cubic-bezier(0.45, 0, 0.2, 1);
 
@@ -61,7 +65,8 @@
     --lp-bar 0.9s var(--lp-ease-theme),
     --lp-hi 0.9s var(--lp-ease-theme),
     --lp-ink 0.9s var(--lp-ease-theme),
-    --lp-nav-bg 0.9s var(--lp-ease-theme);
+    --lp-nav-bg 0.9s var(--lp-ease-theme),
+    --lp-logo 0.9s var(--lp-ease-theme);
 }
 
 .lp[data-theme="light"] {
@@ -97,6 +102,7 @@
   --lp-btn-bg: #FFFFFF;
   --lp-btn-fg: #B8420F;
   --lp-bar: #FFFFFF;
+  --lp-logo: #FFFFFF;
   color-scheme: light;
 }
 /* A seção laranja acesa guarda as próprias cores (as mesmas do tema acc),
@@ -225,15 +231,42 @@
 }
 .lp-nav[data-scrolled="true"] { border-bottom-color: var(--lp-line); }
 
-/* ── Hero ──────────────────────────────────────────────────────────────── */
-.lp-hero-grid {
-  background-image:
-    linear-gradient(to right, rgba(242, 242, 240, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(242, 242, 240, 0.035) 1px, transparent 1px);
-  background-size: 56px 56px;
-  background-position: -1px -1px;
-  -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
+/* ── Monograma ─────────────────────────────────────────────────────────── */
+/* Contorno de cenário (hero e login): traço fino que se desenha na entrada,
+   H primeiro e o D logo depois. Cor tirada do texto, bem apagada. */
+.lp-ghost path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--lp-fg) 16%, transparent);
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: lp-ghost-draw 2.6s cubic-bezier(0.65, 0, 0.35, 1) 0.35s forwards;
+}
+.lp-ghost path + path { animation-delay: 0.85s; }
+@keyframes lp-ghost-draw { to { stroke-dashoffset: 0; } }
+html:not(.fonts-ready) .lp-ghost path { animation-play-state: paused; }
+
+/* Fundo da última tela: o monograma inteiro em traço laranja apagado, e o
+   laranja que o enche de baixo para cima com o scroll. */
+.lp-backdrop > path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--lp-acc) 42%, transparent);
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+}
+.lp-backdrop-fill { fill: var(--lp-acc); }
+
+/* Tela de notebook (pouca altura): a última composição ainda cabe inteira.
+   O formulário é o que limita; "Já tem conta?" sai porque o Entrar está
+   sempre na barra do topo. */
+@media (min-width: 1024px) and (max-height: 840px) {
+  #comecar { padding-top: calc(var(--lp-nav-h) + 20px); }
+  #comecar .lp-h1 { font-size: clamp(3.25rem, 9svh, 5.75rem); }
+  #comecar form { padding-top: 22px; padding-bottom: 22px; }
+  #comecar .lp-cta-gap { margin-top: 16px; }
+  #comecar .lp-cta-note, #comecar .lp-cta-login { display: none; }
+  #comecar input.lp-amount { font-size: 34px !important; }
 }
 
 @keyframes lp-rise {
@@ -527,6 +560,7 @@ html.lenis.lenis-smooth { scroll-behavior: auto !important; }
 @media (prefers-reduced-motion: reduce) {
   .lp { transition: none; }
   .lp-rise, .lp-live, .lp-activity, .lp-swap { animation: none; }
+  .lp-ghost path { animation: none; stroke-dashoffset: 0; }
   .lp-panel, .lp-tab-ink, .lp-fade-color, .lp-chip, .lp-restart { transition: none; }
   .lp-obj-shackle, .lp-obj-file { transform: none; transition: none; }
   .lp-obj-strike { stroke-dashoffset: 0; transition: none; }

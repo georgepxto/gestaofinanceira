@@ -110,8 +110,11 @@ export function BalanceView({ group, month, balance, delta, txs, spent, hot, seq
             limit={LIMITS[k]}
             dim={k !== hot}
             animated
-            // o alerta não depende só da cor da barra
-            note={spent[k] / LIMITS[k] >= 0.8 ? <>Restam <span className="lp-num text-lp-fg">{brl(Math.max(0, LIMITS[k] - spent[k]))}</span></> : undefined}
+            // o alerta não depende só da cor da barra. O lugar da linha fica
+            // sempre reservado: se ela entrasse e saísse do fluxo, o card
+            // mudaria de altura e o hero inteiro se reajustaria.
+            note={<>Restam <span className="lp-num text-lp-fg">{brl(Math.max(0, LIMITS[k] - spent[k]))}</span></>}
+            noteOn={spent[k] / LIMITS[k] >= 0.8}
           />
         ))}
       </div>

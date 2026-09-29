@@ -4,6 +4,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./landing/landing.css";
 import { LiveBalanceCard } from "./landing/LiveBalanceCard";
+import { HedgeLogo } from "./landing/HedgeMark";
+import { MarkGhost } from "./landing/MarkGhost";
+import { useBrandFavicon } from "./landing/useBrandFavicon";
 
 interface LoginProps {
   onLogin: (email: string, password: string) => Promise<{ error?: string }>;
@@ -81,6 +84,8 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
   const [showEmailForm, setShowEmailForm] = useState(
     searchParams.get("mode") === "signup"
   );
+
+  useBrandFavicon();
 
   const gisContainerRef = useRef<HTMLDivElement>(null);
   const [gisReady, setGisReady] = useState(false);
@@ -345,8 +350,8 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
       {/* ── Formulário ─────────────────────────────────────────────── */}
       <div className="flex min-h-[100svh] flex-col pb-[max(24px,env(safe-area-inset-bottom))] pl-[max(20px,env(safe-area-inset-left))] pr-[max(20px,env(safe-area-inset-right))] pt-[env(safe-area-inset-top)] sm:px-10 lg:px-14">
         <header className="flex h-16 items-center justify-between">
-          <Link to="/" className="inline-flex min-h-[44px] items-center text-[19px] font-medium">
-            Hedge
+          <Link to="/" aria-label="Hedge, página inicial" className="inline-flex min-h-[44px] items-center text-[19px] font-medium">
+            <HedgeLogo accent />
           </Link>
           <Link to="/" className="lp-navlink text-[15px]">
             Voltar ao site
@@ -562,7 +567,7 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
         className="relative hidden items-center justify-center overflow-hidden lg:flex"
         style={{ borderLeft: "1px solid var(--lp-line)" }}
       >
-        <div aria-hidden="true" className="lp-hero-grid pointer-events-none absolute inset-0" />
+        <MarkGhost className="left-1/2 top-1/2 h-[84%] -translate-x-1/2 -translate-y-1/2" />
         <div className="lp-rise relative w-full max-w-[540px] px-10" style={d(240)}>
           <LiveBalanceCard />
           <p className="mt-2 text-center text-[13px] text-lp-muted">A casa de exemplo "Apê 302". A sua começa vazia.</p>

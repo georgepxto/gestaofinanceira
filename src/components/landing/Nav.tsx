@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { HedgeLogo } from "./HedgeMark";
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
@@ -14,8 +15,8 @@ export function Nav() {
   return (
     <header className="lp-nav fixed inset-x-0 top-0 z-50" data-scrolled={scrolled}>
       <nav aria-label="Principal" className="lp-wrap flex h-16 items-center justify-between gap-3">
-        <a href="#topo" className="inline-flex min-h-[44px] items-center text-[19px] font-medium">
-          Hedge
+        <a href="#topo" aria-label="Hedge, voltar ao topo" className="inline-flex min-h-[44px] items-center text-[19px] font-medium">
+          <HedgeLogo accent />
         </a>
 
         <div className="hidden items-center gap-8 text-[15px] lg:flex">

@@ -119,6 +119,7 @@ export function Budget({
   dim = false,
   animated = false,
   note,
+  noteOn,
 }: {
   label: string;
   spent: number;
@@ -126,6 +127,9 @@ export function Budget({
   dim?: boolean;
   animated?: boolean;
   note?: ReactNode;
+  /** Com isto definido, a linha da nota tem lugar sempre reservado e só
+      aparece/some (a altura não muda, então nada em volta se mexe). */
+  noteOn?: boolean;
 }) {
   const pct = spent / limit;
   return (
@@ -137,7 +141,17 @@ export function Budget({
         </span>
       </div>
       <Bar pct={pct} alert={pct >= ALERT_AT} dim={dim} animated={animated} />
-      {note && <div className="mt-2 text-[12px] text-lp-muted">{note}</div>}
+      {noteOn !== undefined ? (
+        <div
+          aria-hidden={!noteOn}
+          className="mt-2 h-[18px] text-[12px] leading-[18px] text-lp-muted transition-opacity duration-500"
+          style={{ opacity: noteOn ? 1 : 0 }}
+        >
+          {note}
+        </div>
+      ) : (
+        note && <div className="mt-2 text-[12px] text-lp-muted">{note}</div>
+      )}
     </div>
   );
 }
