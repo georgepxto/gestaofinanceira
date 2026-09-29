@@ -21,7 +21,9 @@ export { prefersReducedMotion };
  * Movimento da página inteira:
  *  - Lenis só em ponteiro fino (no toque, o scroll nativo é melhor que qualquer inércia);
  *  - troca de tema por seção: cada <section data-lp-theme> vira o tema ativo
- *    quando cruza o meio da tela, e o meta theme-color acompanha;
+ *    quando cruza o meio da tela, e o meta theme-color acompanha. A troca é
+ *    da página inteira (as cores interpolam no wrapper): nenhuma seção pinta
+ *    o próprio fundo, então não aparece divisa entre elas, nem no laranja;
  *  - âncoras internas passam pelo Lenis quando ele existe.
  * Tudo o que é criado aqui é desfeito no unmount.
  */
@@ -62,26 +64,13 @@ export function useLandingMotion(rootRef: RefObject<HTMLElement>) {
 
     const ctx = gsap.context(() => {
       const sections = [...root.querySelectorAll<HTMLElement>("[data-lp-theme]")];
-      sections.forEach((el, i) => {
+      sections.forEach((el) => {
         const theme = el.dataset.lpTheme as LpTheme;
-        const next = sections[i + 1]?.dataset.lpTheme as LpTheme | undefined;
-        // O laranja é uma seção de impacto e não pode vazar: ele sai assim
-        // que a próxima seção aparece pela base da tela (e não quando ela
-        // chega ao meio), entregando o tema para ela na hora.
-        const acc = theme === "acc";
         ScrollTrigger.create({
           trigger: el,
           start: "top 50%",
-          end: acc ? "bottom 88%" : "bottom 50%",
-          onToggle: (self) => {
-            if (!self.isActive) return;
-            apply(theme);
-            // Depois de acesa, a seção laranja pinta o próprio fundo: quando a
-            // página volta ao escuro, ela termina com borda limpa, sem vazar.
-            if (acc) el.classList.add("is-lit");
-          },
-          onLeave: () => { if (acc && next) apply(next); },
-          onLeaveBack: () => { if (acc) el.classList.remove("is-lit"); },
+          end: "bottom 50%",
+          onToggle: (self) => { if (self.isActive) apply(theme); },
         });
       });
     }, root);

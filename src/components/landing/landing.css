@@ -105,29 +105,6 @@
   --lp-logo: #FFFFFF;
   color-scheme: light;
 }
-/* A seção laranja acesa guarda as próprias cores (as mesmas do tema acc),
-   seja qual for o tema da página em volta. */
-.lp section.is-lit {
-  /* barra do topo num laranja queimado: o texto branco de 15 px passa em
-     5,1:1 (sobre o laranja da seção seria 3,3:1) */
-  --lp-nav-bg: #BF4611;
-  --lp-bg: #F25F2A;
-  --lp-fg: #FFFFFF;
-  --lp-hi: #FFFFFF;
-  /* destaque escuro puxado para o laranja: 6,0:1 */
-  --lp-ink: #1F0A02;
-  --lp-muted: #FFFFFF;
-  --lp-line: #F9A583;
-  --lp-surface: #FF7B4B;
-  --lp-track: #E85D29;
-  --lp-btn-bg: #FFFFFF;
-  --lp-btn-fg: #B8420F;
-  --lp-bar: #FFFFFF;
-  color-scheme: light;
-  background-color: var(--lp-bg);
-  color: var(--lp-fg);
-}
-
 .lp ::selection { background: var(--lp-fg); color: var(--lp-bg); }
 .lp :focus-visible { outline: 2px solid var(--lp-fg); outline-offset: 3px; border-radius: 2px; }
 

@@ -17,8 +17,10 @@ const CATS: { id: string; label: string; Icon: LucideIcon }[] = [
   { id: "lazer", label: "Lazer", Icon: Popcorn },
 ];
 
-/** Cadastro no endereço onde a página está aberta (produção, prévia ou local). */
-const signupUrl = typeof window === "undefined" ? "/login?mode=signup" : `${window.location.origin}/login?mode=signup`;
+/** Cadastro no site oficial: o QR é lido por outro aparelho, então aponta
+    sempre para produção (aberta em localhost ou numa prévia, a página
+    mandaria o celular para um endereço que ele não alcança). */
+const signupUrl = "https://gethedge.vercel.app/login?mode=signup";
 
 const MES = new Intl.DateTimeFormat("pt-BR", { month: "long" }).format(new Date());
 
