@@ -10,6 +10,5 @@ src/pages/AdminPage.tsx
 src/pages/ConfiguracoesPage.tsx
 src/pages/DividasPage.tsx
 src/pages/GastosPage.tsx
-src/pages/MetasPage.tsx
 src/pages/PessoasPage.tsx
 src/pages/ResetPasswordPage.tsx

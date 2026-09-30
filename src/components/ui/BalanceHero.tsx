@@ -11,6 +11,8 @@ interface BalanceHeroProps {
   complemento?: ReactNode;
   /** Abaixo de zero, o número vai para --danger. Desligue onde negativo não é alarme. */
   perigoSeNegativo?: boolean;
+  /** Força o número em --danger (orçamento estourado, por exemplo). */
+  perigo?: boolean;
   /** Algo à direita do rótulo (o mês, uma pílula). */
   aoLado?: ReactNode;
   children?: ReactNode;
@@ -31,12 +33,13 @@ export function BalanceHero({
   contexto,
   complemento,
   perigoSeNegativo = true,
+  perigo = false,
   aoLado,
   children,
   className = "",
   "data-tour": dataTour,
 }: BalanceHeroProps) {
-  const negativo = perigoSeNegativo && valor < 0;
+  const negativo = perigo || (perigoSeNegativo && valor < 0);
   return (
     <section className={`min-w-0 ${className}`} data-tour={dataTour}>
       <div className="flex items-center justify-between gap-3">
