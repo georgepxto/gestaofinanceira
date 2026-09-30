@@ -67,7 +67,9 @@ export function ListRow({
         (icone && (
           <span
             aria-hidden="true"
-            className="w-9 h-9 shrink-0 rounded-sm bg-surface-2 flex items-center justify-center text-fg-2"
+            // Com checkbox à esquerda, no celular o bloco sai: são 48px que o
+            // título precisa para não quebrar em três linhas.
+            className={`w-9 h-9 shrink-0 rounded-sm bg-surface-2 items-center justify-center text-fg-2 ${prefixo ? "hidden md:flex" : "flex"}`}
           >
             {icone}
           </span>
@@ -81,7 +83,7 @@ export function ListRow({
       {valor !== undefined && (
         <span className="shrink-0 text-right">
           <span className={`flex items-center justify-end gap-1.5 valor text-[15px] md:text-sm ${pago ? "text-fg-2" : "text-fg"}`}>
-            {pago && <Check className="w-3.5 h-3.5 text-fg-2" strokeWidth={2} aria-label="pago" />}
+            {pago && !prefixo && <Check className="w-3.5 h-3.5 text-fg-2" strokeWidth={2} aria-label="pago" />}
             {valor}
           </span>
           {subvalor && <span className="block valor text-xs text-fg-3 mt-0.5">{subvalor}</span>}

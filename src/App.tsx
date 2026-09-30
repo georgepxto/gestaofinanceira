@@ -2,19 +2,18 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense, useState, useEffect, useCallback } from "react";
 import { AlertCircle, ShieldAlert, LogOut } from "lucide-react";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
-import { formatCurrency } from "./utils/calculations";
+import { formatCurrencyValue } from "./utils/calculations";
 import type { CartaoCredito, ContaBancaria } from "./types";
 import { Toaster } from "./components/ui/Toaster";
 // Import direto do arquivo, não do index de `layout`: o index reexporta o
 // Layout, e um import estático dele arrastaria a casca inteira para o chunk de
 // entrada — justamente o que o `lazy` acima evita.
 import { BootSplash, AparecerSeDemorar } from "./components/layout/BootSplash";
-import { useEsperaLonga, useIsMobile } from "./hooks";
+import { useEsperaLonga } from "./hooks";
 import {
   FormGastoModal,
   FormDividaModal,
-  FormMeuGastoModal,
-  FolhaLancamento,
+  FormGasto,
   ConfirmModal,
   FeedbackModal,
   ObservacaoModal,
@@ -212,7 +211,6 @@ function AppContent() {
   // `return`: hook depois de saída condicional quebra a ordem entre renders.
   const mostrarBootAuth = useEsperaLonga(authLoading);
   const mostrarBootFeatures = useEsperaLonga(featuresLoading);
-  const isMobile = useIsMobile();
 
   // Loading de autenticação
   if (authLoading) {
@@ -339,38 +337,21 @@ function AppContent() {
       </Suspense>
 
       {/* Modals - rendered at app level */}
-      {/* Duas apresentações do mesmo formulário: a folha no celular, o diálogo
-          no desktop. Props idênticas — o estado, a validação e o `handleSave`
-          são um só. */}
-      {isMobile ? (
-        <FolhaLancamento
-          show={showFormMeuGasto}
-          isEditing={!!editandoMeuGasto}
-          formData={formMeuGasto}
-          saving={saving}
-          error={error}
-          cartoes={cartoes}
-          contas={contas}
-          pessoas={pessoas}
-          onClose={() => resetFormMeuGasto()}
-          onFormChange={setFormMeuGasto}
-          onSubmit={handleSaveMeuGasto}
-        />
-      ) : (
-        <FormMeuGastoModal
-          show={showFormMeuGasto}
-          isEditing={!!editandoMeuGasto}
-          formData={formMeuGasto}
-          saving={saving}
-          error={error}
-          cartoes={cartoes}
-          contas={contas}
-          pessoas={pessoas}
-          onClose={() => resetFormMeuGasto()}
-          onFormChange={setFormMeuGasto}
-          onSubmit={handleSaveMeuGasto}
-        />
-      )}
+      {/* Um formulário de gasto para celular e desktop: o <FormSheet> sobe de
+          baixo num e entra pela direita no outro. */}
+      <FormGasto
+        show={showFormMeuGasto}
+        isEditing={!!editandoMeuGasto}
+        formData={formMeuGasto}
+        saving={saving}
+        error={error}
+        cartoes={cartoes}
+        contas={contas}
+        pessoas={pessoas}
+        onClose={() => resetFormMeuGasto()}
+        onFormChange={setFormMeuGasto}
+        onSubmit={handleSaveMeuGasto}
+      />
 
       <FeedbackModal
         modal={modalFeedback}
@@ -498,7 +479,7 @@ function AppContent() {
         }}
         onValorChange={setValorPagamento}
         onObsChange={setObsPagamento}
-        onTudo={(valor) => setValorPagamento(formatCurrency(valor))}
+        onTudo={(valor) => setValorPagamento(formatCurrencyValue(valor))}
         onSubmit={handlePagamento}
       />
       <Toaster />

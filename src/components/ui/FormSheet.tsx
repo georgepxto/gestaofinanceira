@@ -323,3 +323,110 @@ export function MaisOpcoes({
     </div>
   );
 }
+
+/**
+ * Parcelas em chips: 1x a 12x, e "Mais" para digitar até `maximo` (48). O
+ * preview "3x de R$ 70,80" fica abaixo quando há valor.
+ */
+export function EscolhaParcelas({
+  valor,
+  onChange,
+  presets,
+  maximo,
+  total,
+  formatar,
+  disabled = false,
+}: {
+  valor: number;
+  onChange: (parcelas: number) => void;
+  /** Os chips fixos (PARCELAS_OPTIONS). */
+  presets: number[];
+  maximo: number;
+  /** Valor total, para o preview por parcela. */
+  total: number;
+  formatar: (v: number) => string;
+  disabled?: boolean;
+}) {
+  const maiorPreset = Math.max(...presets);
+  const [livre, setLivre] = useState(valor > maiorPreset);
+  const [texto, setTexto] = useState(valor > maiorPreset ? String(valor) : "");
+
+  const confirmarTexto = () => {
+    if (!texto) return;
+    const n = Math.min(Math.max(parseInt(texto, 10) || 1, 1), maximo);
+    setTexto(String(n));
+    onChange(n);
+  };
+
+  return (
+    <Campo rotulo="Parcelas">
+      <Chips>
+        {presets.map((n) => (
+          <Chip
+            key={n}
+            disabled={disabled}
+            ativo={!livre && valor === n}
+            onClick={() => {
+              setLivre(false);
+              onChange(n);
+            }}
+          >
+            {n}x
+          </Chip>
+        ))}
+        <Chip disabled={disabled} ativo={livre} onClick={() => setLivre(true)}>
+          Mais
+        </Chip>
+      </Chips>
+      {livre && !disabled && (
+        <input
+          type="text"
+          inputMode="numeric"
+          value={texto}
+          onChange={(e) => {
+            if (!/^\d*$/.test(e.target.value)) return;
+            setTexto(e.target.value);
+            const n = parseInt(e.target.value, 10);
+            if (n >= 1 && n <= maximo) onChange(n);
+          }}
+          onBlur={confirmarTexto}
+          placeholder={`De 1 a ${maximo}`}
+          aria-label={`Número de parcelas, de 1 a ${maximo}`}
+          className={`${campoClasse} mt-2 valor`}
+        />
+      )}
+      {valor > 1 && total > 0 && (
+        <p className="mt-2 text-sm text-fg-2">
+          <span className="valor">
+            {valor}x de {formatar(total / valor)}
+          </span>
+        </p>
+      )}
+    </Campo>
+  );
+}
+
+/**
+ * Pequeno extrato dentro do formulário ("Total do mês", "Já pago", "Restante"):
+ * rótulo à esquerda, valor em mono à direita. A última linha pode vir em
+ * destaque, separada por um fio.
+ */
+export function Extrato({
+  linhas,
+}: {
+  linhas: { rotulo: ReactNode; valor: ReactNode; destaque?: boolean; tom?: "normal" | "atencao" }[];
+}) {
+  return (
+    <dl className="bg-surface-2 rounded-sm px-4 py-1">
+      {linhas.map((l, i) => (
+        <div
+          key={i}
+          className={`flex items-baseline justify-between gap-4 py-2.5 ${l.destaque ? "border-t border-line" : ""}`}
+        >
+          <dt className={`text-sm ${l.destaque ? "text-fg" : "text-fg-2"}`}>{l.rotulo}</dt>
+          <dd className={`valor text-sm ${l.tom === "atencao" ? "text-accent-ink" : "text-fg"}`}>{l.valor}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}

@@ -47,9 +47,18 @@ async function contexto(largura, tema, estado) {
     reducedMotion: "reduce",
     storageState: estado,
   });
-  await ctx.addInitScript((t) => {
-    try { localStorage.setItem("theme", t); } catch { /* sem storage */ }
-  }, tema);
+  // Tema escolhido e tutoriais marcados como vistos: o tour abre sozinho em
+  // perfil novo e cobriria a tela. PRINTS_TUTORIAL=1 deixa ele abrir.
+  await ctx.addInitScript(({ t, tutorial }) => {
+    try {
+      localStorage.setItem("theme", t);
+      if (!tutorial) {
+        for (const k of ["cartoes_credito", "contas_bancarias", "dashboard", "devedores", "dividas", "gastos", "metas_gasto", "meus_gastos"]) {
+          localStorage.setItem(`${k}_tutorial_seen_v1`, "true");
+        }
+      }
+    } catch { /* sem storage */ }
+  }, { t: tema, tutorial: !!process.env.PRINTS_TUTORIAL });
   return ctx;
 }
 
@@ -79,7 +88,7 @@ for (const largura of LARGURAS) {
     for (const rota of ROTAS) {
       await page.goto(`${BASE}${rota}`, { waitUntil: "networkidle" }).catch(() => {});
       await page.waitForTimeout(900);
-      const nome = (rota === "/" ? "dashboard" : rota.slice(1).replaceAll("/", "-")) || "raiz";
+      const nome = (rota === "/" ? "dashboard" : rota.slice(1).replace(/[/?=&]/g, "-")) || "raiz";
       await page.screenshot({ path: join(saida, `${nome}_${largura.nome}_${tema}.png`), fullPage: true });
     }
     await ctx.close();
