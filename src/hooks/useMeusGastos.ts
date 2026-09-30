@@ -807,6 +807,21 @@ export function useMeusGastos({
           for (const parcela of parcelasRelacionadas) {
             if (isSupabaseConfigured && supabase) {
               await meusGastosFunctions.delete(parcela.id);
+              // Espelho da criação: débito com conta saiu do saldo_atual quando
+              // foi lançado, então volta quando é excluído.
+              if (parcela.tipo === "debito" && parcela.conta_id) {
+                const { data: conta } = await supabase
+                  .from("contas_bancarias")
+                  .select("saldo_atual")
+                  .eq("id", parcela.conta_id)
+                  .single();
+                if (conta) {
+                  await supabase
+                    .from("contas_bancarias")
+                    .update({ saldo_atual: (conta.saldo_atual || 0) + (parcela.valor || 0) })
+                    .eq("id", parcela.conta_id);
+                }
+              }
             }
           }
 

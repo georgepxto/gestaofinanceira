@@ -147,8 +147,8 @@ export const GastosPage = () => {
 
   usePageTutorialHelpButton({
     onClick: openTutorial,
-    title: "Ver tutorial da aba Empréstimos do Mês",
-    ariaLabel: "Ver tutorial da aba Empréstimos do Mês",
+    title: "Ver tutorial de Do mês",
+    ariaLabel: "Ver tutorial de Do mês",
     dataTour: "gastos-help-button",
   });
 

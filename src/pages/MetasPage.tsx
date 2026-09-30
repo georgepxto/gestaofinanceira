@@ -148,8 +148,8 @@ export const MetasPage = () => {
 
   usePageTutorialHelpButton({
     onClick: openTutorial,
-    title: "Ver tutorial da aba Metas de Gasto",
-    ariaLabel: "Ver tutorial da aba Metas de Gasto",
+    title: "Ver tutorial de Metas",
+    ariaLabel: "Ver tutorial de Metas",
     dataTour: "metas-help-button",
   });
 
@@ -361,7 +361,7 @@ export const MetasPage = () => {
                 <ListRow
                   key={linha.id}
                   icone={<PontoCategoria cor={corDaCategoria(linha.categoria, categoriasGasto)} />}
-                  titulo={<span className="capitalize">{linha.categoria}</span>}
+                  titulo={linha.categoria.charAt(0).toUpperCase() + linha.categoria.slice(1)}
                   meta={
                     estourou ? (
                       <Pill tom="perigo">estourou {formatCurrency(linha.gasto - linha.limite)}</Pill>

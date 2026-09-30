@@ -236,8 +236,8 @@ export const DashboardPage = () => {
 
   usePageTutorialHelpButton({
     onClick: openTutorial,
-    title: "Ver tutorial da dashboard",
-    ariaLabel: "Ver tutorial da dashboard",
+    title: "Ver tutorial do Início",
+    ariaLabel: "Ver tutorial do Início",
     dataTour: "help-button",
   });
 

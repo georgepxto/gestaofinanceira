@@ -227,8 +227,8 @@ export const CartoesCreditoPage = () => {
 
   usePageTutorialHelpButton({
     onClick: openTutorial,
-    title: "Ver tutorial da aba Cartões de Crédito",
-    ariaLabel: "Ver tutorial da aba Cartões de Crédito",
+    title: "Ver tutorial de Cartões",
+    ariaLabel: "Ver tutorial de Cartões",
     dataTour: "cartoes-help-button",
   });
 

@@ -18,10 +18,34 @@ interface MoneyInputProps
  * formato que os formulários já gravam e que `parseCurrency` lê.
  */
 export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(function MoneyInput(
-  { value, onChange, tamanho = "campo", placeholder = "0,00", className = "", ...rest },
+  { value, onChange, tamanho = "campo", placeholder = "0,00", className = "", onFocus, onClick, onSelect, ...rest },
   ref,
 ) {
   const aoDigitar = (e: React.ChangeEvent<HTMLInputElement>) => onChange(formatCurrencyInput(e.target.value));
+
+  // Maquininha só funciona com o cursor no fim. Com o campo já em "0,00", tocar
+  // punha o cursor no meio ("0,|00") e digitar 1 dava 1,00 em vez de 0,01.
+  const cursorNoFim = (el: HTMLInputElement) => {
+    const fim = el.value.length;
+    if (el.selectionStart !== fim || el.selectionEnd !== fim) el.setSelectionRange(fim, fim);
+  };
+  const eventos = {
+    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
+      onFocus?.(e);
+      const el = e.currentTarget;
+      requestAnimationFrame(() => cursorNoFim(el));
+    },
+    onClick: (e: React.MouseEvent<HTMLInputElement>) => {
+      onClick?.(e);
+      cursorNoFim(e.currentTarget);
+    },
+    onSelect: (e: React.SyntheticEvent<HTMLInputElement>) => {
+      onSelect?.(e);
+      // Selecionar tudo (para apagar de uma vez) continua valendo.
+      const el = e.currentTarget;
+      if (el.selectionStart === el.selectionEnd) cursorNoFim(el);
+    },
+  };
 
   if (tamanho === "heroi") {
     // Largura em `ch` acompanha o número: a Geist Mono tem todos os dígitos da
@@ -39,6 +63,7 @@ export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(function
           autoComplete="off"
           value={value}
           onChange={aoDigitar}
+          {...eventos}
           placeholder={placeholder}
           style={{ width: `${largura}ch` }}
           // `valor-entrada` existe porque o index.css força 16px em todo input
@@ -64,6 +89,7 @@ export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(function
         autoComplete="off"
         value={value}
         onChange={aoDigitar}
+        {...eventos}
         placeholder={placeholder}
         className="valor flex-1 min-w-0 h-full bg-transparent border-0 pr-3 outline-none text-fg placeholder:text-fg-3 focus-visible:outline-none"
         {...rest}

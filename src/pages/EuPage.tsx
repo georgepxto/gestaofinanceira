@@ -188,8 +188,8 @@ export const EuPage = () => {
 
   usePageTutorialHelpButton({
     onClick: openTutorial,
-    title: "Ver tutorial da aba Meus Gastos",
-    ariaLabel: "Ver tutorial da aba Meus Gastos",
+    title: "Ver tutorial de Lançamentos",
+    ariaLabel: "Ver tutorial de Lançamentos",
     dataTour: "eu-help-button",
   });
 

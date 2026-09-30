@@ -172,8 +172,8 @@ export const ContasBancariasPage = () => {
 
   usePageTutorialHelpButton({
     onClick: openTutorial,
-    title: "Ver tutorial da aba Contas Bancárias",
-    ariaLabel: "Ver tutorial da aba Contas Bancárias",
+    title: "Ver tutorial de Contas e receitas",
+    ariaLabel: "Ver tutorial de Contas e receitas",
     dataTour: "contas-help-button",
   });
 
@@ -346,15 +346,34 @@ export const ContasBancariasPage = () => {
     setShowModalReceita(true);
   };
 
-  const handleDeleteReceita = (id: string, desc: string) => {
+  const handleDeleteReceita = (r: Receita) => {
+    // A avulsa entrou direto no saldo_atual da conta ao ser criada: excluir tem
+    // que tirar de volta, senão a receita some e o dinheiro fica.
+    const conta = r.tipo === "avulso" && r.conta_id ? contas.find((c) => c.id === r.conta_id) : undefined;
     setModalConfirm({
-      show: true, titulo: "Excluir receita", mensagem: `Excluir "${desc}"?`,
+      show: true,
+      titulo: "Excluir receita",
+      mensagem: conta
+        ? `Excluir "${r.descricao}"? ${formatCurrency(r.valor)} saem do saldo de ${conta.nome}.`
+        : `Excluir "${r.descricao}"?`,
       onConfirm: async () => {
         if (!supabase) return;
-        const { error } = await supabase.from("receitas").delete().eq("id", id);
+        const { error } = await supabase.from("receitas").delete().eq("id", r.id);
         if (error) {
           toast.error(toActionableErrorMessage(error, "Não foi possível excluir a receita."));
           throw error;
+        }
+        if (conta) {
+          const { data: atual } = await supabase
+            .from("contas_bancarias")
+            .select("saldo_atual, saldo_inicial")
+            .eq("id", conta.id)
+            .single();
+          if (atual) {
+            const base = atual.saldo_atual ?? atual.saldo_inicial ?? 0;
+            await supabase.from("contas_bancarias").update({ saldo_atual: base - r.valor }).eq("id", conta.id);
+          }
+          await fetchContas();
         }
         await fetchReceitas();
       },
@@ -599,7 +618,7 @@ export const ContasBancariasPage = () => {
                       {
                         rotulo: "Excluir",
                         icone: <Trash2 className="w-4 h-4" strokeWidth={1.5} />,
-                        onClick: () => handleDeleteReceita(r.id, r.descricao),
+                        onClick: () => handleDeleteReceita(r),
                         tom: "perigo",
                       },
                     ]}

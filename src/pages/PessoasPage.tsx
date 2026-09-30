@@ -131,8 +131,8 @@ export const PessoasPage = () => {
 
   usePageTutorialHelpButton({
     onClick: openTutorial,
-    title: "Ver tutorial da aba Devedores",
-    ariaLabel: "Ver tutorial da aba Devedores",
+    title: "Ver tutorial de Por pessoa",
+    ariaLabel: "Ver tutorial de Por pessoa",
     dataTour: "devedores-help-button",
   });
 

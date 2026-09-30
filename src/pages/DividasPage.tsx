@@ -122,8 +122,8 @@ export const DividasPage = () => {
 
   usePageTutorialHelpButton({
     onClick: openTutorial,
-    title: "Ver tutorial da aba Dívidas em Aberto",
-    ariaLabel: "Ver tutorial da aba Dívidas em Aberto",
+    title: "Ver tutorial de Em aberto",
+    ariaLabel: "Ver tutorial de Em aberto",
     dataTour: "dividas-help-button",
   });
 
