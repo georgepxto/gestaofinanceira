@@ -10,6 +10,7 @@ import type { MeuGasto, MeuGastoForm, CartaoCredito } from "../types";
 import { formatCurrencyValue, parseCurrency } from "../utils/calculations";
 import { PARCELAS_MAX } from "../utils/constants";
 import { normalizarCategoria } from "../utils/categories";
+import { mesDoGasto } from "../utils/gastosDoMes";
 import { categoriaPadraoAtual } from "./useCategorias";
 
 // (helper gerarId removed - not needed)
@@ -188,21 +189,8 @@ export function useMeusGastos({
 
   // Valores derivados
   const meusGastosDoMes = cartoesLoading ? [] : meusGastos.filter((g) => {
-    let mesGasto = g.data.substring(0, 7);
-
-    // Lógica da fatura do cartão de crédito
-    if (g.tipo === "credito" && g.cartao_id) {
-      const cartao = cartoes.find((c) => c.id === g.cartao_id);
-      if (cartao && cartao.melhor_dia_compra) {
-        const diaCompra = parseInt(g.data.split("-")[2], 10);
-        if (diaCompra >= cartao.melhor_dia_compra) {
-          const [ano, mes] = g.data.split("-").map(Number);
-          const dateObj = new Date(ano, mes - 1, diaCompra);
-          const proxMes = addMonths(dateObj, 1);
-          mesGasto = format(proxMes, "yyyy-MM");
-        }
-      }
-    }
+    // No crédito, o mês da fatura (utils/gastosDoMes, a mesma regra do Início).
+    const mesGasto = mesDoGasto(g, cartoes);
 
     const mesAtual = format(mesVisualizacao, "yyyy-MM");
     const matchMes = mesGasto === mesAtual;

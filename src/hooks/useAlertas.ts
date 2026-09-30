@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { format, subMonths, startOfMonth, endOfMonth, getDaysInMonth, getDate, parseISO } from "date-fns";
+import { subMonths, startOfMonth, getDaysInMonth, getDate, parseISO } from "date-fns";
 import { supabase } from "../lib/supabase";
 import { useAppContext } from "../context";
 import { formatCurrency, isGastoAtivoNoMes } from "../utils/calculations";
 import { categoriaDeGasto } from "../utils/categories";
-import type { MeuGasto, Gasto, Receita, MetaGasto } from "../types";
+import type { CartaoCredito, MeuGasto, Gasto, Receita, MetaGasto } from "../types";
+import { gastosPessoaisDoMes, valorDaMinhaParte } from "../utils/gastosDoMes";
 
 export interface Alerta {
   tipo: "danger" | "warning" | "info";
@@ -25,9 +26,6 @@ export const useAlertas = () => {
       const agora = new Date();
       const mesAtual = startOfMonth(agora);
       const mesAnterior = subMonths(mesAtual, 1);
-      const mesAtualFiltro = format(agora, "yyyy-MM");
-      const inicioMesAnterior = startOfMonth(mesAnterior);
-      const fimMesAnterior = endOfMonth(mesAnterior);
 
       // Buscar dados em paralelo
       const [
@@ -35,12 +33,15 @@ export const useAlertas = () => {
         { data: gastosCompartilhados },
         { data: receitas },
         { data: metas },
+        { data: cartoesRaw },
       ] = await Promise.all([
         supabase.from("meus_gastos").select("*"),
         supabase.from("gastos").select("*"),
         supabase.from("receitas").select("*"),
         supabase.from("metas_gasto").select("*"),
+        supabase.from("cartoes_credito").select("*"),
       ]);
+      const cartoes = (cartoesRaw as CartaoCredito[]) || [];
 
       const todosGastos = (meusGastos as MeuGasto[]) || [];
       const todosCompartilhados = (gastosCompartilhados as Gasto[]) || [];
@@ -48,13 +49,9 @@ export const useAlertas = () => {
       const todasMetas = (metas as MetaGasto[]) || [];
 
       // Gastos pessoais do mês atual e anterior
-      const gastosDoMes = todosGastos.filter(
-        (g) => g.data.substring(0, 7) === mesAtualFiltro
-      );
-      const gastosDoMesAnterior = todosGastos.filter((g) => {
-        const d = parseISO(g.data);
-        return d >= inicioMesAnterior && d <= fimMesAnterior;
-      });
+      // Mesmas regras de Lançamentos e do Início (utils/gastosDoMes).
+      const gastosDoMes = gastosPessoaisDoMes(todosGastos, cartoes, mesAtual);
+      const gastosDoMesAnterior = gastosPessoaisDoMes(todosGastos, cartoes, mesAnterior);
 
       // Compartilhados do mês
       const compartilhadosDoMes = todosCompartilhados.filter((g) =>
@@ -67,7 +64,7 @@ export const useAlertas = () => {
         .reduce((acc, r) => acc + r.valor, 0);
 
       // Totais
-      const totalGastosMes = gastosDoMes.reduce((acc, g) => acc + g.valor, 0);
+      const totalGastosMes = gastosDoMes.reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
       const totalEmprestimosMes = compartilhadosDoMes.reduce(
         (acc, g) => acc + g.valor_total / g.num_parcelas,
         0
@@ -78,13 +75,9 @@ export const useAlertas = () => {
         .reduce((acc, g) => acc + g.valor, 0);
 
       // 3. Gastos Variáveis (apenas mês atual)
-      const gastosVariaveis = todosGastos
-        .filter(
-          (g) =>
-            g.categoria === "pessoal" &&
-            g.data.substring(0, 7) === mesAtualFiltro
-        )
-        .reduce((acc, g) => acc + g.valor, 0);
+      const gastosVariaveis = gastosDoMes
+        .filter((g) => g.categoria === "pessoal")
+        .reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
 
       const totalMeusGastos = gastosFixos + gastosVariaveis;
 
@@ -94,12 +87,12 @@ export const useAlertas = () => {
       const catMapAtual = new Map<string, number>();
       gastosDoMes.forEach((g) => {
         const cat = categoriaDeGasto(g);
-        catMapAtual.set(cat, (catMapAtual.get(cat) || 0) + g.valor);
+        catMapAtual.set(cat, (catMapAtual.get(cat) || 0) + valorDaMinhaParte(g));
       });
       const catMapAnterior = new Map<string, number>();
       gastosDoMesAnterior.forEach((g) => {
         const cat = categoriaDeGasto(g);
-        catMapAnterior.set(cat, (catMapAnterior.get(cat) || 0) + g.valor);
+        catMapAnterior.set(cat, (catMapAnterior.get(cat) || 0) + valorDaMinhaParte(g));
       });
       catMapAtual.forEach((valorAtual, cat) => {
         const valorAnterior = catMapAnterior.get(cat) || 0;
@@ -170,7 +163,7 @@ export const useAlertas = () => {
           .filter(
             (g) => categoriaDeGasto(g).toLowerCase() === meta.categoria.toLowerCase()
           )
-          .reduce((acc, g) => acc + g.valor, 0);
+          .reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
         if (gastoAtual > meta.limite) {
           novasAlertas.push({
             tipo: "danger",

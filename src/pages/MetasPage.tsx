@@ -10,6 +10,7 @@ import { supabase } from "../lib/supabase";
 import { formatCurrency, formatCurrencyValue, formatMesAno, parseCurrency } from "../utils/calculations";
 import { formatPercent } from "../utils/dinheiro";
 import { categoriaDeGasto, comCategoriaAtual, corDaCategoria } from "../utils/categories";
+import { valorDaMinhaParte } from "../utils/gastosDoMes";
 import { useCategorias } from "../hooks/useCategorias";
 import { toast } from "../components/ui/Toaster";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
@@ -252,7 +253,7 @@ export const MetasPage = () => {
           .filter(
             (g) => categoriaDeGasto(g).toLowerCase() === meta.categoria.toLowerCase()
           )
-          .reduce((soma, g) => soma + g.valor, 0);
+          .reduce((soma, g) => soma + valorDaMinhaParte(g), 0);
         const pct = meta.limite > 0 ? (gasto / meta.limite) * 100 : 0;
         return { ...meta, gasto, pct };
       })

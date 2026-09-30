@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { format, subMonths, startOfMonth, endOfMonth, parseISO } from "date-fns";
+import { format, subMonths, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Link, useLocation } from "react-router-dom";
 import { Plus, Users, Wallet, CreditCard, Receipt, Gauge, PieChart as IconePizza, BarChart3 } from "lucide-react";
 import { useAppContext } from "../context";
 import { fixosAindaPorSair, saldoDaConta } from "../utils/saldo";
+import { gastosPessoaisDoMes, valorDaMinhaParte } from "../utils/gastosDoMes";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
 import { SeletorMes } from "../components/ui/SeletorMes";
@@ -40,7 +41,7 @@ import {
   Bar,
   Cell,
 } from "recharts";
-import type { ContaBancaria, SaldoDevedor, MeuGasto, Receita, Gasto } from "../types";
+import type { CartaoCredito, ContaBancaria, SaldoDevedor, MeuGasto, Receita, Gasto } from "../types";
 
 interface DashboardData {
   saldoTotal: number;
@@ -253,14 +254,17 @@ export const DashboardPage = () => {
         { data: saldosDevedores },
         { data: meusGastos },
         { data: receitas },
-        { data: gastosCompartilhados }
+        { data: gastosCompartilhados },
+        { data: cartoesRaw },
       ] = await Promise.all([
         supabase.from("contas_bancarias").select("*"),
         supabase.from("saldos_devedores").select("*"),
         supabase.from("meus_gastos").select("*"),
         supabase.from("receitas").select("*"),
         supabase.from("gastos").select("*"),
+        supabase.from("cartoes_credito").select("*"),
       ]);
+      const cartoes = (cartoesRaw as CartaoCredito[]) || [];
 
       // Saldo de hoje, pela mesma conta que Contas usa (utils/saldo).
       const todosMeusGastos = (meusGastos as MeuGasto[]) || [];
@@ -304,18 +308,14 @@ export const DashboardPage = () => {
         saldoProjetado += fluxoMensal;
       }
       // Gastos por categoria (mês selecionado)
-      const mesAtualFiltro = format(mesVisualizacao, "yyyy-MM");
-      const gastosDoMes = (meusGastos as MeuGasto[] || [])
-        .filter(g => {
-          const mesGasto = g.data.substring(0, 7);
-          return mesGasto === mesAtualFiltro;
-        });
-
+      // Mesmas regras de Lançamentos (utils/gastosDoMes): sem fixos, crédito
+      // no mês da fatura e, no dividido, só a minha parte.
+      const gastosDoMes = gastosPessoaisDoMes(todosMeusGastos, cartoes, mesVisualizacao);
 
       const categoriaMap = new Map<string, number>();
       gastosDoMes.forEach(g => {
         const cat = categoriaDeGasto(g);
-        categoriaMap.set(cat, (categoriaMap.get(cat) || 0) + g.valor);
+        categoriaMap.set(cat, (categoriaMap.get(cat) || 0) + valorDaMinhaParte(g));
       });
       
       const gastosPorCategoria = Array.from(categoriaMap.entries())
@@ -354,24 +354,17 @@ export const DashboardPage = () => {
         .slice(0, 8);
 
       // Calcular totais para tendência
-      const totalGastosMesAtual = gastosDoMes.reduce((acc, g) => acc + g.valor, 0);
+      const totalGastosMesAtual = gastosDoMes.reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
       const totalEmprestimosMesAtual = gastosCompartilhadosDoMes.reduce((acc, g) => acc + g.valor_total / g.num_parcelas, 0);
 
       // Calcular gastos do mês anterior
       const mesAnterior = subMonths(mesVisualizacao, 1);
-      const inicioMesAnterior = startOfMonth(mesAnterior);
-      const fimMesAnterior = endOfMonth(mesAnterior);
-      
-      const gastosDoMesAnterior = (meusGastos as MeuGasto[] || [])
-        .filter(g => {
-          const dataGasto = parseISO(g.data);
-          return dataGasto >= inicioMesAnterior && dataGasto <= fimMesAnterior;
-        });
+      const gastosDoMesAnterior = gastosPessoaisDoMes(todosMeusGastos, cartoes, mesAnterior);
       
       const gastosCompartilhadosDoMesAnterior = (gastosCompartilhados as Gasto[] || [])
         .filter(g => isGastoAtivoNoMes(g, mesAnterior));
       
-      const totalGastosMesAnterior = gastosDoMesAnterior.reduce((acc, g) => acc + g.valor, 0);
+      const totalGastosMesAnterior = gastosDoMesAnterior.reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
       const totalEmprestimosMesAnterior = gastosCompartilhadosDoMesAnterior.reduce((acc, g) => acc + g.valor_total / g.num_parcelas, 0);
 
       // Calcular gastos fixos vs variáveis do mês (de "Meus Gastos")
@@ -383,7 +376,7 @@ export const DashboardPage = () => {
       // Gastos variáveis (pessoais) do mês atual
       const gastosVariaveisMes = gastosDoMes
         .filter(g => g.categoria === 'pessoal')
-        .reduce((acc, g) => acc + g.valor, 0);
+        .reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
 
       // NOVAS MÉTRICAS
 
@@ -434,13 +427,14 @@ export const DashboardPage = () => {
         .slice(0, 5);
 
       // Top 5 meus gastos pessoais do mês
-      const top5MeusGastos = gastosDoMes
+      // Os mais recentes do mês ("Últimos lançamentos"), com a minha parte.
+      const top5MeusGastos = [...gastosDoMes]
+        .sort((a, b) => b.data.localeCompare(a.data))
         .map(g => ({
           descricao: g.descricao || 'Sem descrição',
-          valor: g.valor,
+          valor: valorDaMinhaParte(g),
           categoria: categoriaDeGasto(g),
         }))
-        .sort((a, b) => b.valor - a.valor)
         .slice(0, 5);
 
       // 5. Parcelas próximas do fim (restam 1-3 parcelas)
@@ -469,12 +463,10 @@ export const DashboardPage = () => {
       const tendenciaMensal = [];
       for (let i = 5; i >= 0; i--) {
         const mesRef = subMonths(mesVisualizacao, i);
-        const mesKey = format(mesRef, "yyyy-MM");
         const mesLabel = format(mesRef, "MMM", { locale: ptBR });
         
-        const meusGastosMes = (meusGastos as MeuGasto[] || [])
-          .filter(g => g.data.substring(0, 7) === mesKey)
-          .reduce((acc, g) => acc + g.valor, 0);
+        const meusGastosMes = gastosPessoaisDoMes(todosMeusGastos, cartoes, mesRef)
+          .reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
         
         const compartilhadosMes = (gastosCompartilhados as Gasto[] || [])
           .filter(g => isGastoAtivoNoMes(g, mesRef))
@@ -497,7 +489,7 @@ export const DashboardPage = () => {
       const metasGasto = (metasRaw || []).map((meta: MetaGasto) => {
         const gastoAtual = gastosDoMes
           .filter(g => categoriaDeGasto(g).toLowerCase() === meta.categoria.toLowerCase())
-          .reduce((acc, g) => acc + g.valor, 0);
+          .reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
         return { ...meta, gastoAtual };
       });
 
