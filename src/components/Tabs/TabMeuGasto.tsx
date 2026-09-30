@@ -261,7 +261,7 @@ export function TabMeuGasto({
             titulo="Lançamentos do mês"
             className="mb-0"
             acao={
-              <span className="valor text-xs text-fg-3">
+              <span className="tabular-nums text-xs text-fg-3">
                 {gastosFiltrados.length} {gastosFiltrados.length === 1 ? "item" : "itens"}
               </span>
             }
@@ -374,7 +374,7 @@ export function TabMeuGasto({
           <section className="min-w-0" data-tour="eu-gastos-fixos">
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <h2 className="text-base font-medium text-fg">Fixos do mês</h2>
-              <span className="valor text-xs text-fg-3">
+              <span className="tabular-nums text-xs text-fg-3">
                 {gastosFixosAtivos} {gastosFixosAtivos === 1 ? "ativo" : "ativos"}
               </span>
             </div>

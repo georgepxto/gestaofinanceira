@@ -2,6 +2,11 @@ import { useState, type ReactNode } from "react";
 import { Check, MoreHorizontal } from "lucide-react";
 import { FolhaAcoes, type Acao } from "./FolhaAcoes";
 
+// Mono é para número. "em aberto" ou "2 itens" ficam na fonte do texto,
+// com algarismos tabulares; só dinheiro e percentual vão em Geist Mono.
+const fonteDe = (conteudo: ReactNode) =>
+  typeof conteudo === "string" && !/(R\$|%)/.test(conteudo) ? "tabular-nums" : "valor";
+
 export type { Acao };
 
 interface ListRowProps {
@@ -94,7 +99,7 @@ export function ListRow({
             )}
             {valor}
           </span>
-          {subvalor && <span className="block valor text-xs text-fg-3 mt-0.5">{subvalor}</span>}
+          {subvalor && <span className={`block ${fonteDe(subvalor)} text-xs text-fg-3 mt-0.5`}>{subvalor}</span>}
         </span>
       )}
     </>
@@ -177,7 +182,7 @@ export function ListGroup({ titulo, aoLado, children, className = "" }: ListGrou
       {titulo && (
         <div className="flex items-baseline justify-between gap-3 pt-4 pb-1">
           <h3 className="text-xs text-fg-3">{titulo}</h3>
-          {aoLado && <span className="valor text-xs text-fg-3">{aoLado}</span>}
+          {aoLado && <span className={`${fonteDe(aoLado)} text-xs text-fg-3`}>{aoLado}</span>}
         </div>
       )}
       <ul className="divide-y divide-line">{children}</ul>

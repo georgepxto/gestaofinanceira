@@ -15,12 +15,24 @@ import { SegmentedControl } from "../ui/SegmentedControl";
  * que ficou com um filho só depois do filtro de features: uma aba sozinha não
  * é escolha, é rótulo.
  */
-export const SubPills = () => {
+/** O grupo da tela atual, se ele tem abas (dois filhos ou mais). */
+function useGrupoComAbas() {
   const { pathname } = useLocation();
   const { isAdmin, features } = useAppContext();
-
   const grupo = gruposVisiveis(isAdmin, features).find((g) => pathname.startsWith(g.prefix));
-  if (!grupo || grupo.items.length < 2) return null;
+  return grupo && grupo.items.length >= 2 ? grupo : null;
+}
+
+/**
+ * Há abas de sub-tela no celular? Aí a aba já diz onde a pessoa está, e o
+ * `PageHeader` esconde o título repetido e a descrição (só no celular).
+ */
+export const useTemSubAbas = () => useGrupoComAbas() !== null;
+
+export const SubPills = () => {
+  const { pathname } = useLocation();
+  const grupo = useGrupoComAbas();
+  if (!grupo) return null;
 
   return (
     <div className="md:hidden sticky top-14 z-sticky bg-page px-4 pt-1 pb-3">

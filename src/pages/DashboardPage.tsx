@@ -65,7 +65,7 @@ interface DashboardData {
   top5Gastos: { descricao: string; valor: number; pessoa: string }[];
   top5MeusGastos: { descricao: string; valor: number; categoria: string }[];
   parcelasProximasFim: { descricao: string; pessoa: string; parcelasRestantes: number }[];
-  tendenciaMensal: { mes: string; meusGastos: number; compartilhados: number; total: number }[];
+  tendenciaMensal: { mes: string; nome: string; meusGastos: number; compartilhados: number; total: number }[];
   metasGasto: (MetaGasto & { gastoAtual: number })[];
 }
 
@@ -482,6 +482,7 @@ export const DashboardPage = () => {
         
         tendenciaMensal.push({
           mes: mesLabel.charAt(0).toUpperCase() + mesLabel.slice(1),
+          nome: format(mesRef, "MMMM", { locale: ptBR }),
           meusGastos: Number(meusGastosMes.toFixed(2)),
           compartilhados: Number(compartilhadosMes.toFixed(2)),
           total: Number((meusGastosMes + compartilhadosMes).toFixed(2)),
@@ -597,6 +598,8 @@ export const DashboardPage = () => {
   const totalCategorias = data.gastosPorCategoria.reduce((acc, c) => acc + c.valor, 0);
   const topCategorias = data.gastosPorCategoria.slice(0, 6);
   const maxCategoria = Math.max(...topCategorias.map((c) => c.valor), 1);
+  // Um mês só não é tendência: cinco colunas vazias e uma cheia não dizem nada.
+  const mesesComDado = data.tendenciaMensal.filter((m) => (Number(m[serie]) || 0) > 0);
   const { ticks, domain } = eixoDinheiro(data.tendenciaMensal.map((m) => Number(m[serie]) || 0));
 
   return (
@@ -802,7 +805,7 @@ export const DashboardPage = () => {
               </span>
             }
           />
-          {data.tendenciaMensal.length > 0 ? (
+          {mesesComDado.length >= 2 ? (
             <div className="h-48 md:h-56">
               {/* initialDimension: o ResponsiveContainer da v3 nasce com -1×-1 e
                   só mede um quadro depois (recharts #6716). */}
@@ -824,7 +827,16 @@ export const DashboardPage = () => {
               </ResponsiveContainer>
             </div>
           ) : (
-            <EmptyState Icone={BarChart3} frase="Sem gastos nos últimos meses." compacto />
+            <EmptyState
+              Icone={BarChart3}
+              frase={
+                mesesComDado.length === 1
+                  ? `Seu histórico começa em ${mesesComDado[0].nome}.`
+                  : "Sem gastos nos últimos meses."
+              }
+              detalhe={mesesComDado.length === 1 ? "A comparação aparece a partir do segundo mês." : undefined}
+              compacto
+            />
           )}
         </Surface>
       </div>

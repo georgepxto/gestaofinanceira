@@ -62,7 +62,7 @@ const DEVEDORES_TUTORIAL_STEPS: DevedoresTutorialStep[] = [
     alvo: "Resumo total",
     titulo: "Panorama geral",
     descricao:
-      "Dívidas em aberto (saldo acumulado), empréstimos do mês (fluxo) e o que já foi recebido — sem misturar estoque com fluxo.",
+      "O que te devem no total, o que você emprestou neste mês e o que já voltou. Cada número conta uma coisa: não some.",
   },
   {
     target: "[data-tour='devedores-lista']",
@@ -198,7 +198,7 @@ export const PessoasPage = () => {
         data-tour="devedores-header"
         title="Por pessoa"
         description="Quem deve o quê, de uma olhada."
-        nota="Empréstimos do mês são fluxo do período; dívida em aberto é saldo acumulado. Os dois não se somam."
+        nota="Dívida em aberto é o que te devem no total, somando todos os meses. Empréstimos do mês contam só este mês. Não some os dois."
         action={
           <>
             <SeletorMes data-tour="devedores-mes" />

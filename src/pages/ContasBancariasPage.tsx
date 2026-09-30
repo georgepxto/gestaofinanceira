@@ -510,7 +510,7 @@ export const ContasBancariasPage = () => {
             titulo="Minhas contas"
             className="mb-1"
             descricao="A barra é a parte de cada conta no saldo total."
-            acao={<span className="valor text-xs text-fg-3">{contas.length} {contas.length === 1 ? "conta" : "contas"}</span>}
+            acao={<span className="tabular-nums text-xs text-fg-3">{contas.length} {contas.length === 1 ? "conta" : "contas"}</span>}
           />
           {contas.length === 0 ? (
             <EmptyState

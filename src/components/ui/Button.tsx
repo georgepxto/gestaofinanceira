@@ -35,12 +35,18 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   ref,
 ) {
   const altura = tamanho === "sm" ? "h-11 md:h-9 px-3 text-sm" : "h-11 md:h-10 px-4 text-[15px] md:text-sm";
+  // Laranja desativado vira um laranja lavado ilegível: fica neutro até valer.
+  // Carregando segue laranja, porque a ação já foi disparada.
+  const cor =
+    variante === "principal" && disabled && !carregando
+      ? "bg-surface-2 text-fg-3"
+      : `${VARIANTE[variante]} disabled:opacity-50`;
   return (
     <button
       ref={ref}
       type={type}
       disabled={disabled || carregando}
-      className={`${altura} ${cheio ? "w-full" : ""} inline-flex items-center justify-center gap-2 rounded font-medium whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${VARIANTE[variante]} ${className}`}
+      className={`${altura} ${cheio ? "w-full" : ""} inline-flex items-center justify-center gap-2 rounded font-medium whitespace-nowrap transition-colors disabled:cursor-not-allowed ${cor} ${className}`}
       {...rest}
     >
       {carregando ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : icone}

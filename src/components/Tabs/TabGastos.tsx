@@ -251,7 +251,7 @@ export function TabGastos({
           <SurfaceHeader
             titulo="Lançamentos do mês"
             acao={
-              <span className="valor text-xs text-fg-3">
+              <span className="tabular-nums text-xs text-fg-3">
                 {parcelasAtivas.length} {parcelasAtivas.length === 1 ? "item" : "itens"}
               </span>
             }

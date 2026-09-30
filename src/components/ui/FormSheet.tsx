@@ -227,7 +227,7 @@ export function Chip({
       disabled={disabled}
       aria-pressed={ativo}
       className={`h-11 md:h-9 px-3 rounded-sm text-sm whitespace-nowrap transition-colors disabled:opacity-40 ${
-        ativo ? "bg-fg text-page" : "bg-surface-2 text-fg-2 hover:text-fg"
+        ativo ? "bg-surface-1 text-fg ring-1 ring-inset ring-fg-3" : "bg-surface-2 text-fg-2 hover:text-fg"
       }`}
     >
       {children}

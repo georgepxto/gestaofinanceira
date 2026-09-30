@@ -217,8 +217,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <Avatar nome={userName || userEmail} tamanho={32} />
             <div className={`flex-1 min-w-0 ${recolhida ? "md:hidden" : ""}`}>
               <p className="text-sm text-fg break-words">{userName || "Usuário"}</p>
-              {/* E-mail pode cortar: é identificação, não dado financeiro. */}
-              <p className="text-xs text-fg-3 truncate">{userEmail || ""}</p>
+              {/* E-mail pode cortar: é identificação, não dado financeiro. O title mostra inteiro. */}
+              <p className="text-xs text-fg-3 truncate" title={userEmail || undefined}>{userEmail || ""}</p>
             </div>
             <button
               onClick={onLogout}

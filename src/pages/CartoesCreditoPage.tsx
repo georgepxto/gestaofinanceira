@@ -668,6 +668,8 @@ export const CartoesCreditoPage = () => {
   ];
 
   const faturasEmAberto = cartoesState.reduce((sum, c) => sum + getFaturaCartao(c.id), 0);
+  // Estourar o limite é o número perigoso da tela: sobe para junto do destaque.
+  const acimaDoLimite = cartoesState.filter((c) => (c.limite || 0) > 0 && getLimiteUsado(c.id) > (c.limite || 0)).length;
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -702,7 +704,7 @@ export const CartoesCreditoPage = () => {
         }
       />
 
-      {/* Seletor de cartões: retângulos com a faixa do banco. No celular rola
+      {/* Seletor de cartões: retângulos com o ponto do banco. No celular rola
           na horizontal com snap, e o próximo cartão aparece pela metade. */}
       <div
         className="sem-barra -mx-4 px-4 md:mx-0 md:px-0 scroll-px-4 flex gap-2 overflow-x-auto snap-x snap-mandatory"
@@ -730,24 +732,18 @@ export const CartoesCreditoPage = () => {
             type="button"
             onClick={() => setCartaoSelecionado(c)}
             aria-pressed={cartaoSelecionado?.id === c.id}
-            className={`relative snap-start shrink-0 w-[168px] min-h-[104px] p-4 pl-5 rounded text-left overflow-hidden transition-colors ${
+            className={`snap-start shrink-0 w-[168px] min-h-[104px] p-4 rounded text-left transition-colors ${
               cartaoSelecionado?.id === c.id ? "bg-surface-1 ring-1 ring-inset ring-fg-3" : "bg-surface-1 hover:bg-surface-2"
             }`}
           >
-            <span className="absolute left-0 inset-y-0 w-[3px]" style={{ backgroundColor: corDoCartao(c.cor) }} aria-hidden="true" />
-            <span className="block text-sm text-fg break-words leading-snug">{c.nome}</span>
+            <span className="flex items-baseline gap-2 text-sm text-fg break-words leading-snug">
+              <PontoCategoria cor={corDoCartao(c.cor)} className="shrink-0 -translate-y-px" />
+              <span className="min-w-0">{c.nome}</span>
+            </span>
             <span className="block valor text-lg text-fg mt-1.5">{formatCurrency(getFaturaCartao(c.id))}</span>
             <span className="block text-xs text-fg-2 mt-1">vence dia {c.dia_vencimento}</span>
           </button>
         ))}
-        <button
-          type="button"
-          onClick={abrirNovoCartao}
-          className="snap-start shrink-0 w-[168px] min-h-[104px] p-4 rounded bg-surface-2 text-fg-2 hover:text-fg flex flex-col items-center justify-center gap-1.5 transition-colors"
-        >
-          <Plus className="w-5 h-5" strokeWidth={1.5} />
-          <span className="text-sm">Novo cartão</span>
-        </button>
       </div>
 
       {/* Todos: faturas em aberto e o limite somado de todos os cartões */}
@@ -756,6 +752,13 @@ export const CartoesCreditoPage = () => {
           <div className="space-y-6">
             <BalanceHero
               rotulo="Faturas em aberto"
+              aoLado={
+                acimaDoLimite > 0 ? (
+                  <Pill tom="perigo">
+                    {acimaDoLimite === 1 ? "1 cartão acima do limite" : `${acimaDoLimite} cartões acima do limite`}
+                  </Pill>
+                ) : undefined
+              }
               valor={faturasEmAberto}
               perigoSeNegativo={false}
               contexto={
@@ -855,13 +858,16 @@ export const CartoesCreditoPage = () => {
                       </span>
                     }
                     aoLado={
-                      quitada ? (
-                        <Pill>quitada</Pill>
-                      ) : mostraContagem && diasAteVencimento <= 5 ? (
-                        <Pill tom="atencao">
-                          {diasAteVencimento === 0 ? "vence hoje" : `vence em ${diasAteVencimento} ${diasAteVencimento === 1 ? "dia" : "dias"}`}
-                        </Pill>
-                      ) : undefined
+                      <span className="inline-flex flex-wrap gap-1.5">
+                        {limite > 0 && usado > limite && <Pill tom="perigo">acima do limite</Pill>}
+                        {quitada ? (
+                          <Pill>quitada</Pill>
+                        ) : mostraContagem && diasAteVencimento <= 5 ? (
+                          <Pill tom="atencao">
+                            {diasAteVencimento === 0 ? "vence hoje" : `vence em ${diasAteVencimento} ${diasAteVencimento === 1 ? "dia" : "dias"}`}
+                          </Pill>
+                        ) : null}
+                      </span>
                     }
                     valor={fatura}
                     perigoSeNegativo={false}
@@ -905,7 +911,7 @@ export const CartoesCreditoPage = () => {
                     titulo="Transações da fatura"
                     className="mb-0"
                     acao={
-                      <span className="valor text-xs text-fg-3">
+                      <span className="tabular-nums text-xs text-fg-3">
                         {itens.length} {itens.length === 1 ? "item" : "itens"}
                       </span>
                     }
