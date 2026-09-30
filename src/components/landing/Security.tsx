@@ -51,12 +51,17 @@ export function Security() {
           {POINTS.map(({ t, d, Obj }, i) => (
             <li key={t} style={{ borderTop: "1px solid var(--lp-line)" }}>
               <Fade delay={i * 0.08} className="grid items-center gap-6 py-8 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-10 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-16">
-                <div className="lp-obj-panel aspect-[3/2] bg-lp-surface px-5 py-3 sm:rounded">
+                {/* Celular: o ritmo das funcionalidades (número, título, texto e,
+                    embaixo, o objeto de borda a borda). */}
+                <div className="lp-obj-panel order-2 -mx-5 aspect-[3/2] bg-lp-surface px-5 py-3 sm:order-none sm:mx-0 sm:rounded">
                   <Obj />
                 </div>
-                <div>
-                  <h3 className="lp-h3 lg:text-[24px]">{t}</h3>
-                  <p className="mt-2 max-w-[46ch] text-[16px] leading-relaxed text-lp-muted">{d}</p>
+                <div className="order-1 sm:order-none">
+                  <div className="flex items-baseline gap-4">
+                    <span className="lp-num text-[13px] text-lp-muted sm:hidden">{String(i + 1).padStart(2, "0")}</span>
+                    <h3 className="lp-h3 lg:text-[24px]">{t}</h3>
+                  </div>
+                  <p className="mt-2 max-w-[46ch] pl-[calc(2ch+1rem)] text-[16px] leading-relaxed text-lp-muted sm:pl-0">{d}</p>
                 </div>
               </Fade>
             </li>

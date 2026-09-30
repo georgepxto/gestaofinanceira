@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { DashboardMock } from "./DashboardMock";
 import { Fade } from "./Fade";
 import { gsap } from "./useLandingMotion";
@@ -10,6 +10,8 @@ const PERGUNTAS = [
 ];
 
 export function DashboardSection() {
+  // Celular: a pergunta escolhida realça o número dela na tela.
+  const [q, setQ] = useState<0 | 1 | 2>(0);
   const sectionRef = useRef<HTMLElement>(null);
   const mockRef = useRef<HTMLDivElement>(null);
 
@@ -53,7 +55,29 @@ export function DashboardSection() {
           <Fade>
             <h2 className="lp-h2">Um dashboard que responde as perguntas certas.</h2>
           </Fade>
-          <dl className="mt-10 lg:mt-14">
+          {/* Celular: as três perguntas viram abas; a escolhida acende o
+              número dela na tela e mostra a resposta. */}
+          <Fade className="mt-8 lg:hidden">
+            <div role="tablist" aria-label="Perguntas" className="grid grid-cols-3 gap-2">
+              {PERGUNTAS.map((p, i) => (
+                <button
+                  key={p.q}
+                  type="button"
+                  role="tab"
+                  aria-selected={q === i}
+                  onClick={() => setQ(i as 0 | 1 | 2)}
+                  className={`lp-chip min-h-[56px] justify-center px-2 text-center text-[13px] leading-tight ${q === i ? "is-on" : ""}`}
+                >
+                  {p.q}
+                </button>
+              ))}
+            </div>
+            <p key={q} aria-live="polite" className="lp-swap mt-4 min-h-[3lh] text-[16px] leading-relaxed text-lp-muted">
+              {PERGUNTAS[q].a}
+            </p>
+          </Fade>
+
+          <dl className="mt-10 hidden lg:mt-14 lg:block">
             {PERGUNTAS.map((p, i) => (
               <Fade key={p.q} delay={i * 0.06} className={i > 0 ? "mt-7" : ""}>
                 <dt className="lp-h3">{p.q}</dt>
@@ -63,9 +87,10 @@ export function DashboardSection() {
           </dl>
         </div>
 
-        <div className="-mx-5 flex justify-center sm:mx-0">
+        <div className="-mx-5 -mt-4 flex justify-center sm:mx-0 lg:mt-0">
           <div ref={mockRef} data-lp-fade className="w-full max-w-[400px]">
-            <DashboardMock />
+            <div className="lg:hidden"><DashboardMock focus={q} /></div>
+            <div className="hidden lg:block"><DashboardMock /></div>
           </div>
         </div>
       </div>

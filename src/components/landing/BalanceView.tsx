@@ -72,11 +72,14 @@ export function BalanceView({ group, month, balance, delta, txs, spent, hot, seq
           <span className="lp-live h-1.5 w-1.5 rounded-full bg-lp-acc" />
           Saldo do mês
         </div>
-        <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <span ref={count.ref} className="lp-num text-[36px] leading-none sm:text-[40px]">
+        {/* Saldo e variação sempre na mesma linha: com quebra, a variação
+            descia ou subia conforme a largura do número e o card mudava de
+            altura. No celular o número encolhe com a tela para caber. */}
+        <div className="mt-2 flex items-baseline justify-between gap-3">
+          <span ref={count.ref} className="lp-num min-w-0 whitespace-nowrap text-[clamp(28px,9.2vw,40px)] leading-none">
             {count.initial}
           </span>
-          {delta !== null && <Amount v={delta} sign tone size="xs" />}
+          {delta !== null && <span className="shrink-0"><Amount v={delta} sign tone size="xs" /></span>}
         </div>
       </div>
 

@@ -47,7 +47,7 @@ export function DemoSection() {
           <ol className="flex flex-col gap-3">
             {TENTE.map((t, i) => (
               <li key={t} className="flex gap-4 text-[15px] leading-relaxed">
-                <span className="lp-num pt-[2px] text-[13px] text-lp-muted">{i + 1}</span>
+                <span className="lp-num pt-[2px] text-[13px] text-lp-muted">{String(i + 1).padStart(2, "0")}</span>
                 <span className="max-w-[40ch]">{t}</span>
               </li>
             ))}

@@ -207,6 +207,11 @@
   transition: border-color 0.3s ease;
 }
 .lp-nav[data-scrolled="true"] { border-bottom-color: var(--lp-line); }
+/* Abaixo de 360 px a barra não comporta nome + Entrar + botão: fica só o
+   monograma (o link já se chama "Hedge" para leitor de tela). */
+@media (max-width: 359px) {
+  .lp-nav .lp-logo-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
 
 /* ── Monograma ─────────────────────────────────────────────────────────── */
 /* Contorno de cenário (hero e login): traço fino que se desenha na entrada,
@@ -313,6 +318,11 @@ html:not(.fonts-ready) .lp-rise { animation-play-state: paused; }
 .lp-chip:hover { color: var(--lp-fg); }
 .lp-chip.is-on { color: var(--lp-fg); border-color: var(--lp-fg); }
 .lp-chip:has(:focus-visible) { outline: 2px solid var(--lp-fg); outline-offset: 2px; }
+/* No celular cada fileira de categorias ocupa a largura inteira: as pílulas
+   crescem até a borda em vez de deixar sobra à direita. */
+@media (max-width: 639px) {
+  .lp-chip-row > .lp-chip { flex: 1 1 auto; justify-content: center; }
+}
 
 /* ── Login ─────────────────────────────────────────────────────────────── */
 .lp-google {

@@ -164,7 +164,8 @@ export function DemoApp() {
 
   return (
     <div className="mx-auto w-full max-w-[420px]">
-      <div className="flex h-[620px] flex-col overflow-hidden bg-lp-surface sm:h-[680px] sm:rounded">
+      {/* Celular: ocupa a tela abaixo da barra do topo, como o app aberto. */}
+      <div className="flex h-[clamp(600px,calc(100svh-64px),720px)] flex-col overflow-hidden bg-lp-surface sm:h-[680px] sm:rounded">
         <div className="relative min-h-0 flex-1">
           {panel(
             "inicio",
@@ -272,7 +273,7 @@ function LancarForm({ onSave }: { onSave: (t: { name: string; cat: Budgeted; amt
 
       <fieldset className="mt-6">
         <legend className="text-[13px] text-lp-muted">Categoria</legend>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="lp-chip-row mt-3 flex flex-wrap gap-2">
           {(["mercado", "casa", "lazer"] as Budgeted[]).map((c) => {
             const { Icon, label } = CATS[c];
             return (

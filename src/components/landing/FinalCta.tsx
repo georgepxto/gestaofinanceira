@@ -79,8 +79,14 @@ export function FinalCta() {
           </div>
           </Fade>
 
-          <Fade delay={0.08} className="-mx-5 sm:mx-0">
-            <form onSubmit={onSubmit} className="bg-lp-surface px-6 py-7 sm:rounded sm:px-8 sm:py-8 lg:py-7" aria-label="Seu primeiro lançamento">
+          {/* Celular: o monograma laranja vira a placa (como a foto das
+              funcionalidades) e o formulário sobe sobre a base dela. */}
+          <div aria-hidden="true" className="relative -mx-5 aspect-[5/4] overflow-hidden sm:-mx-10 lg:hidden">
+            <MarkBackdrop ownScroll className="left-[7%] top-[9%] w-[78%]" />
+          </div>
+
+          <Fade delay={0.08} className="relative z-10 mx-0 -mt-[136px] sm:mt-0 lg:mt-0">
+            <form onSubmit={onSubmit} className="rounded bg-lp-surface px-6 py-7 sm:px-8 sm:py-8 lg:py-7" aria-label="Seu primeiro lançamento">
               <label htmlFor="lp-valor" className="text-[13px] text-lp-muted">
                 Quanto você gastou hoje?
               </label>
@@ -111,7 +117,7 @@ export function FinalCta() {
 
               <fieldset className="lp-cta-gap mt-6">
                 <legend className="text-[13px] text-lp-muted">Categoria</legend>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="lp-chip-row mt-3 flex flex-wrap gap-2">
                   {CATS.map((c) => {
                     const on = c.id === cat;
                     return (

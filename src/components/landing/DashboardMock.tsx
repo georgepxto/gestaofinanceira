@@ -1,7 +1,7 @@
 import { INICIO, InicioScreen } from "./app/screens";
 import { brl } from "./format";
 
-export function DashboardMock() {
+export function DashboardMock({ focus }: { focus?: 0 | 1 | 2 }) {
   return (
     <div
       role="img"
@@ -9,7 +9,7 @@ export function DashboardMock() {
       className="w-full max-w-[400px]"
     >
       <div aria-hidden="true">
-        <InicioScreen />
+        <InicioScreen focus={focus} />
       </div>
     </div>
   );

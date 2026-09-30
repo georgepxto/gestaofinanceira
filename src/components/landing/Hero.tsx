@@ -34,7 +34,10 @@ export function Hero() {
           </p>
         </div>
 
-        <div className="lp-rise -mx-5 sm:mx-0" style={d(180)}>
+        <div className="lp-rise relative -mx-5 sm:mx-0" style={d(180)}>
+          {/* Celular: o mesmo monograma do desktop, atrás do card (aqui ele
+              não cruza o título, que fica acima). */}
+          <MarkGhost className="left-1/2 top-[-5%] h-[110%] -translate-x-[42%] lg:hidden" />
           <LiveBalanceCard />
         </div>
       </div>

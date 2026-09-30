@@ -40,7 +40,7 @@ export function HedgeLogo({ className = "", accent = false }: { className?: stri
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <HedgeMark className="h-[22px] w-auto shrink-0" style={accent ? { color: "var(--lp-logo)" } : undefined} />
-      <span>Hedge</span>
+      <span className="lp-logo-name">Hedge</span>
     </span>
   );
 }

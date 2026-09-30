@@ -31,23 +31,29 @@ export const INICIO = {
   ],
 };
 
-export function InicioScreen() {
+/** `focus`: realça um dos três números (0 saldo total, 1 a receber, 2 saldo
+    livre) e apaga o resto do topo; sem ele, tudo aceso. */
+export function InicioScreen({ focus }: { focus?: 0 | 1 | 2 } = {}) {
   const d = INICIO;
+  const dim = (i: number) =>
+    `transition-opacity duration-500 ${focus !== undefined && focus !== i ? "opacity-30" : ""}`;
   const max = Math.max(...d.meses.map((m) => m.v));
   const atual = d.meses[d.meses.length - 1];
   return (
     <AppScreen>
       <AppHeader title="Início" meta="Setembro" />
 
-      <Label className="mt-7">Saldo total</Label>
-      <Amount v={d.saldoTotal} size="lg" className="mt-1.5 block" />
+      <div className={`mt-7 ${dim(0)}`}>
+        <Label>Saldo total</Label>
+        <Amount v={d.saldoTotal} size="lg" className="mt-1.5 block" />
+      </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4">
-        <div>
+        <div className={dim(1)}>
           <Label>A receber</Label>
           <Amount v={d.aReceber} size="md" className="mt-1 block" />
         </div>
-        <div>
+        <div className={dim(2)}>
           <Label>Saldo livre</Label>
           <Amount v={d.saldoLivre} size="md" className="mt-1 block" />
         </div>

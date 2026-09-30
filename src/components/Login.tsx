@@ -87,6 +87,18 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
 
   useBrandFavicon();
 
+  // Celular: o monograma só aparece se o espaço acima do formulário tiver
+  // altura para ele (numa tela baixa vira uma fresta). Medido, não por
+  // container query: a altura desse espaço vem do flex e a query a lê como 0.
+  const [markSpace, setMarkSpace] = useState<HTMLDivElement | null>(null);
+  const [roomForMark, setRoomForMark] = useState(false);
+  useEffect(() => {
+    if (!markSpace) return;
+    const ro = new ResizeObserver(([e]) => setRoomForMark(e.contentRect.height >= 160));
+    ro.observe(markSpace);
+    return () => ro.disconnect();
+  }, [markSpace]);
+
   const gisContainerRef = useRef<HTMLDivElement>(null);
   const [gisReady, setGisReady] = useState(false);
 
@@ -348,8 +360,8 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
   return (
     <div className="lp min-h-[100svh] lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]" data-theme="dark">
       {/* ── Formulário ─────────────────────────────────────────────── */}
-      <div className="flex min-h-[100svh] flex-col pb-[max(24px,env(safe-area-inset-bottom))] pl-[max(20px,env(safe-area-inset-left))] pr-[max(20px,env(safe-area-inset-right))] pt-[env(safe-area-inset-top)] sm:px-10 lg:px-14">
-        <header className="flex h-16 items-center justify-between">
+      <div className="relative flex min-h-[100svh] flex-col overflow-hidden pb-[max(24px,env(safe-area-inset-bottom))] pl-[max(20px,env(safe-area-inset-left))] pr-[max(20px,env(safe-area-inset-right))] pt-[env(safe-area-inset-top)] sm:px-10 lg:px-14">
+        <header className="relative flex h-16 items-center justify-between">
           <Link to="/" aria-label="Hedge, página inicial" className="inline-flex min-h-[44px] items-center text-[19px] font-medium">
             <HedgeLogo accent />
           </Link>
@@ -358,7 +370,17 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
           </Link>
         </header>
 
-        <main className="flex flex-1 items-center py-10">
+        {/* Celular: sem o painel do lado, o monograma ocupa o espaço que sobra
+            entre o topo e o formulário, e o formulário desce para perto do
+            polegar. O tamanho vem desse espaço, então ele nunca cruza o
+            texto. Com o formulário de email aberto, o espaço vai para ele. */}
+        {!showForm && (
+          <div ref={setMarkSpace} aria-hidden="true" className="pointer-events-none relative min-h-0 flex-1 lg:hidden">
+            {roomForMark && <MarkGhost className="-right-[10%] top-4 h-[calc(100%-16px)]" />}
+          </div>
+        )}
+
+        <main className={`relative flex py-10 lg:flex-1 lg:items-center ${showForm ? "flex-1 items-center" : "items-end"}`}>
           <div className="w-full max-w-[380px]">
             <div key={viewMode} className="lp-rise" style={d(0)}>
               <h1 className="lp-h2">{TITLES[viewMode].h}</h1>

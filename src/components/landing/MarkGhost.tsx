@@ -31,7 +31,7 @@ const [, VB_Y, , VB_H] = MARK_VIEWBOX.split(" ").map(Number);
  * cortada pela borda de baixo da seção. Com o scroll, o laranja enche o desenho de baixo
  * para cima; cheio quando a página chega ao fim. Sem movimento, já cheio.
  */
-export function MarkBackdrop({ className = "" }: { className?: string }) {
+export function MarkBackdrop({ className = "", ownScroll = false }: { className?: string; ownScroll?: boolean }) {
   const ref = useRef<SVGSVGElement>(null);
   const fillRef = useRef<SVGRectElement>(null);
   const clipId = useId();
@@ -39,7 +39,9 @@ export function MarkBackdrop({ className = "" }: { className?: string }) {
   useLayoutEffect(() => {
     const svg = ref.current;
     const fill = fillRef.current;
-    const section = svg?.closest("section");
+    // Por padrão enche no ritmo da seção (cheio no fim da página); com
+    // ownScroll, no ritmo do próprio bloco (a placa do celular, no meio).
+    const section = ownScroll ? svg?.parentElement : svg?.closest("section");
     if (!svg || !fill || !section) return;
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", () => {
@@ -47,11 +49,13 @@ export function MarkBackdrop({ className = "" }: { className?: string }) {
         attr: { y: VB_Y },
         ease: "none",
         // A base do desenho passa da seção: a conta usa a própria seção.
-        scrollTrigger: { trigger: section, start: "top 80%", end: "bottom bottom", scrub: 1 },
+        scrollTrigger: ownScroll
+          ? { trigger: section, start: "top 85%", end: "bottom 45%", scrub: 1 }
+          : { trigger: section, start: "top 80%", end: "bottom bottom", scrub: 1 },
       });
     });
     return () => mm.revert();
-  }, []);
+  }, [ownScroll]);
 
   return (
     <svg

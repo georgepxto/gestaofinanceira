@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Bus, Check, ShoppingBasket, UtensilsCrossed } from "lucide-react";
+import { Bus, Check, Home, Plus, ShoppingBasket, Users, UtensilsCrossed } from "lucide-react";
 import { Fade } from "./Fade";
 import { brl, signed } from "./format";
 import { HedgeLogo } from "./HedgeMark";
@@ -222,9 +222,11 @@ export function HowItWorks() {
           <div
             role="img"
             aria-label="Uma tela do Hedge: criar a conta, lançar três gastos (iFood, Uber e mercado) e ver o mês dividido por categoria, com Alimentação em 38% dos gastos."
-            className="relative h-[520px] overflow-hidden bg-lp-surface sm:h-[540px] sm:rounded"
+            className="relative flex h-[max(560px,min(640px,calc(100svh-150px)))] flex-col overflow-hidden bg-lp-surface sm:h-[540px] sm:rounded"
           >
-            <div aria-hidden="true">
+            {/* Celular: a tela presa ocupa a altura do aparelho e ganha a
+                barra de abas do app embaixo, como um app aberto. */}
+            <div aria-hidden="true" className="relative min-h-0 flex-1">
               {/* Estado 1: cadastro */}
               <div className="hw-s1 invisible absolute inset-0 px-6 pt-7 opacity-0">
                 <HedgeLogo className="text-[15px] font-medium" />
@@ -309,6 +311,29 @@ export function HowItWorks() {
                   <span className="text-lp-muted">Em agosto era <span className="lp-num">29%</span>.</span>
                 </div>
               </div>
+            </div>
+
+            {/* Abas do app: aparecem depois do cadastro; a tinta anda para
+                Lançar no passo 2 e para Início no passo 3. */}
+            <div
+              aria-hidden="true"
+              className="relative grid shrink-0 grid-cols-3 transition-opacity duration-500 lg:hidden"
+              style={{ borderTop: "1px solid var(--lp-line)", opacity: active === 0 ? 0 : 1 }}
+            >
+              <span
+                className="lp-tab-ink absolute left-0 top-[-1px] h-px w-1/3 bg-lp-fg"
+                style={{ transform: `translateX(${active === 1 ? 100 : 0}%)` }}
+              />
+              {[
+                { l: "Início", Icon: Home, on: active !== 1 },
+                { l: "Lançar", Icon: Plus, on: active === 1 },
+                { l: "Dividir", Icon: Users, on: false },
+              ].map(({ l, Icon, on }) => (
+                <div key={l} className={`lp-tab flex h-16 flex-col items-center justify-center gap-1 text-[12px] ${on ? "text-lp-fg" : "text-lp-muted"}`}>
+                  <Icon className="h-5 w-5" strokeWidth={on ? 1.75 : 1.5} />
+                  {l}
+                </div>
+              ))}
             </div>
           </div>
         </div>
