@@ -17,21 +17,11 @@
 -- É idempotente: rodar duas vezes não muda nada na segunda.
 -- ═══════════════════════════════════════════════════════════════════════════
 
-BEGIN;
-
-CREATE TEMP TABLE cat_map (antiga text PRIMARY KEY, nova text NOT NULL) ON COMMIT DROP;
-INSERT INTO cat_map (antiga, nova) VALUES
-  ('Aluguel',         'Moradia'),
-  ('Contas',          'Moradia'),
-  ('Delivery',        'Alimentação'),
-  ('Restaurante',     'Alimentação'),
-  ('Supermercado',    'Alimentação'),
-  ('Combustível',     'Transporte'),
-  ('Farmácia',        'Saúde'),
-  ('Compras Online',  'Outros'),
-  ('Roupas',          'Outros'),
-  ('Empréstimo',      'Outros'),
-  ('Outras Despesas', 'Outros');
+-- Sem tabela temporária nem BEGIN/COMMIT: o SQL Editor do Supabase não
+-- segura a transação entre comandos, e uma tabela ON COMMIT DROP sumia antes
+-- de ser usada ("relation cat_map does not exist"). Cada comando traz o mapa
+-- inteiro e é atômico sozinho.
+--
 -- Moradia, Alimentação, Transporte, Saúde, Lazer, Assinaturas e Educação já se
 -- chamam do jeito certo — não aparecem no mapa de propósito.
 --
@@ -48,55 +38,90 @@ INSERT INTO cat_map (antiga, nova) VALUES
 -- ─── 1. Gastos compartilhados ──────────────────────────────────────────────
 UPDATE gastos g
    SET categoria = m.nova
-  FROM cat_map m
+  FROM
+  (VALUES
+    ('Aluguel',         'Moradia'),
+    ('Contas',          'Moradia'),
+    ('Delivery',        'Alimentação'),
+    ('Restaurante',     'Alimentação'),
+    ('Supermercado',    'Alimentação'),
+    ('Combustível',     'Transporte'),
+    ('Farmácia',        'Saúde'),
+    ('Compras Online',  'Outros'),
+    ('Roupas',          'Outros'),
+    ('Empréstimo',      'Outros'),
+    ('Outras Despesas', 'Outros')
+  ) AS m(antiga, nova)
  WHERE g.categoria = m.antiga;
 
 -- ─── 2. Gastos pessoais ────────────────────────────────────────────────────
 UPDATE meus_gastos g
    SET categoria_gasto = m.nova
-  FROM cat_map m
+  FROM
+  (VALUES
+    ('Aluguel',         'Moradia'),
+    ('Contas',          'Moradia'),
+    ('Delivery',        'Alimentação'),
+    ('Restaurante',     'Alimentação'),
+    ('Supermercado',    'Alimentação'),
+    ('Combustível',     'Transporte'),
+    ('Farmácia',        'Saúde'),
+    ('Compras Online',  'Outros'),
+    ('Roupas',          'Outros'),
+    ('Empréstimo',      'Outros'),
+    ('Outras Despesas', 'Outros')
+  ) AS m(antiga, nova)
  WHERE g.categoria_gasto = m.antiga;
 
 -- ─── 3. Metas ──────────────────────────────────────────────────────────────
 -- Fundir categorias pode colidir: quem tinha meta de Delivery E de Alimentação
--- termina com duas metas de Alimentação. Consolidamos antes de renomear —
--- sobrevive uma linha por (usuário, categoria nova) com a SOMA dos limites,
--- que preserva o orçamento total que a pessoa tinha definido.
-
-CREATE TEMP TABLE meta_destino ON COMMIT DROP AS
-SELECT mg.id,
-       mg.user_id,
-       COALESCE(cm.nova, mg.categoria) AS nova,
-       mg.limite
-  FROM metas_gasto mg
-  LEFT JOIN cat_map cm ON cm.antiga = mg.categoria;
-
-CREATE TEMP TABLE meta_mantida ON COMMIT DROP AS
-SELECT user_id,
-       nova,
-       (array_agg(id ORDER BY id))[1] AS id_mantido,
-       sum(limite)                    AS limite_total
-  FROM meta_destino
- GROUP BY user_id, nova;
-
-DELETE FROM metas_gasto
- WHERE id IN (
-   SELECT d.id
-     FROM meta_destino d
-     JOIN meta_mantida k
-       ON k.user_id IS NOT DISTINCT FROM d.user_id
-      AND k.nova = d.nova
-    WHERE d.id <> k.id_mantido
- );
-
+-- termina com duas metas de Alimentação. Sobrevive uma linha por (usuário,
+-- categoria nova) com a SOMA dos limites, que preserva o orçamento total.
+-- Um comando só: o DELETE e o UPDATE enxergam a mesma foto da tabela.
+WITH destino AS (
+  SELECT mg.id, mg.user_id, COALESCE(m.nova, mg.categoria) AS nova, mg.limite
+    FROM metas_gasto mg
+    LEFT JOIN
+    (VALUES
+      ('Aluguel',         'Moradia'),
+      ('Contas',          'Moradia'),
+      ('Delivery',        'Alimentação'),
+      ('Restaurante',     'Alimentação'),
+      ('Supermercado',    'Alimentação'),
+      ('Combustível',     'Transporte'),
+      ('Farmácia',        'Saúde'),
+      ('Compras Online',  'Outros'),
+      ('Roupas',          'Outros'),
+      ('Empréstimo',      'Outros'),
+      ('Outras Despesas', 'Outros')
+    ) AS m(antiga, nova)
+      ON m.antiga = mg.categoria
+),
+mantida AS (
+  SELECT user_id, nova,
+         (array_agg(id ORDER BY id))[1] AS id_mantido,
+         sum(limite)                    AS limite_total
+    FROM destino
+   GROUP BY user_id, nova
+),
+removidas AS (
+  DELETE FROM metas_gasto
+   WHERE id IN (
+     SELECT d.id
+       FROM destino d
+       JOIN mantida k
+         ON k.user_id IS NOT DISTINCT FROM d.user_id
+        AND k.nova = d.nova
+      WHERE d.id <> k.id_mantido
+   )
+  RETURNING id
+)
 UPDATE metas_gasto mg
    SET categoria = k.nova,
        limite    = k.limite_total
-  FROM meta_mantida k
+  FROM mantida k
  WHERE mg.id = k.id_mantido
    AND (mg.categoria IS DISTINCT FROM k.nova OR mg.limite IS DISTINCT FROM k.limite_total);
-
-COMMIT;
 
 -- ─── Verificação depois ────────────────────────────────────────────────────
 -- Cada consulta abaixo tem que voltar VAZIA. Se voltar linha, é uma categoria
