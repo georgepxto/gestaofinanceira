@@ -4,6 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { Link, useLocation } from "react-router-dom";
 import { Plus, Users, Wallet, CreditCard, Receipt, Gauge, PieChart as IconePizza, BarChart3 } from "lucide-react";
 import { useAppContext } from "../context";
+import { fixosAindaPorSair, saldoDaConta } from "../utils/saldo";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
 import { SeletorMes } from "../components/ui/SeletorMes";
@@ -104,7 +105,7 @@ const DASHBOARD_TUTORIAL_STEPS: DashboardTutorialStep[] = [
     alvo: "Saldo livre",
     titulo: "Saldo livre",
     descricao:
-      "É o saldo das suas contas depois dos gastos fixos do mês. Fica vermelho quando o dinheiro não cobre os fixos.",
+      "O saldo das suas contas hoje, menos os gastos fixos que ainda vão sair neste mês. Fica vermelho quando o dinheiro não cobre os fixos.",
     placement: "below",
   },
   {
@@ -120,7 +121,7 @@ const DASHBOARD_TUTORIAL_STEPS: DashboardTutorialStep[] = [
     alvo: "Saldo total",
     titulo: "Saldo total",
     descricao:
-      "A soma do saldo de todas as suas contas, antes de descontar os fixos.",
+      "A soma do saldo de todas as suas contas hoje, o mesmo número de Contas e receitas.",
     placement: "below",
   },
   {
@@ -261,9 +262,12 @@ export const DashboardPage = () => {
         supabase.from("gastos").select("*"),
       ]);
 
-      // Calcular saldo total
-      const saldoTotal = (contas as ContaBancaria[] || []).reduce(
-        (acc, c) => acc + (c.saldo_atual || c.saldo_inicial || 0), 
+      // Saldo de hoje, pela mesma conta que Contas usa (utils/saldo).
+      const todosMeusGastos = (meusGastos as MeuGasto[]) || [];
+      const todosFixos = todosMeusGastos.filter((g) => g.categoria === "fixo");
+      const saldoTotal = ((contas as ContaBancaria[]) || []).reduce(
+        (acc, c) =>
+          acc + saldoDaConta(c, { receitas: (receitas as Receita[]) || [], gastosFixos: todosFixos, meusGastos: todosMeusGastos }),
         0
       );
 
@@ -282,8 +286,8 @@ export const DashboardPage = () => {
         .filter(r => r.tipo === "fixo" || r.tipo === "recorrente");
       const receitasFixasMensais = receitasFixas.reduce((acc, r) => acc + r.valor, 0);
 
-      // Saldo livre (saldo - gastos fixos do mês)
-      const saldoLivre = saldoTotal - gastosFixosMensais;
+      // Saldo livre: o saldo de hoje menos os fixos do mês que ainda vão sair.
+      const saldoLivre = saldoTotal - fixosAindaPorSair(todosFixos);
 
       // Projeção anual (próximos 12 meses)
       const mesAtual = new Date().getMonth();
@@ -609,7 +613,7 @@ export const DashboardPage = () => {
         valor={data.saldoLivre}
         contexto={
           <>
-            O que sobra depois dos fixos do mês · <span className="capitalize">{nomeDoMes}</span>
+            Seu saldo hoje, menos os fixos que ainda saem em {format(new Date(), "MMMM", { locale: ptBR })}
           </>
         }
         data-tour="saldo-livre"

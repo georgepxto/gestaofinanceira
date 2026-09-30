@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus, Trash2, Pencil, Landmark, ArrowDownLeft } from "lucide-react";
+import { fixoValeNoMes, saldoDaConta } from "../utils/saldo";
 import { useAppContext } from "../context";
 import { PageHeader } from "../components/ui/PageHeader";
 import { SeletorMes } from "../components/ui/SeletorMes";
@@ -189,52 +190,9 @@ export const ContasBancariasPage = () => {
     setSearchParams({}, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  // Calcular saldo
-  const calcularSaldoConta = (conta: ContaBancaria) => {
-    const hoje = new Date();
-    const diaAtual = hoje.getDate();
-    const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
-    const receitasDaConta = receitas.filter(r => r.conta_id === conta.id);
-    // Apenas receitas fixas e recorrentes que já venceram (avulso já está no saldo_atual)
-    // Se dia_recebimento > último dia do mês (ex: 31 em fev), considera o último dia
-    const receitasRecebidas = receitasDaConta.filter(r => {
-      if (r.tipo === "avulso") return false; // Avulso já foi adicionado diretamente ao saldo_atual
-      if (r.tipo === "fixo" || r.tipo === "recorrente") {
-        const diaEfetivo = Math.min(r.dia_recebimento, ultimoDiaMes);
-        return diaEfetivo <= diaAtual;
-      }
-      return false;
-    });
-    // Gastos fixos vinculados a esta conta que já venceram no mês atual (e não estão suspensos)
-    const mesAtualStr = format(mesVisualizacao, "yyyy-MM");
-    const gastosFixosDaConta = (gastosFixos || []).filter(g => {
-      if (g.conta_id !== conta.id) return false;
-      if (g.ativo === false) return false;
-      if (g.meses_suspensos?.includes(mesAtualStr)) return false;
-
-      const diaVencimento = g.dia_vencimento || 1;
-      const diaEfetivo = Math.min(diaVencimento, ultimoDiaMes);
-      return diaEfetivo <= diaAtual;
-    });
-
-    // Gastos tipo "divida" (conta a pagar) vinculados a esta conta cuja data já chegou
-    const hojeStr = format(hoje, "yyyy-MM-dd");
-    const gastosDividaDaConta = (meusGastosDoMes || []).filter(g => {
-      if (g.categoria !== "divida") return false;
-      if (g.conta_id !== conta.id) return false;
-      if (g.tipo !== "debito") return false;
-      return g.data <= hojeStr;
-    });
-
-    // Usar saldo_atual como base (que inclui pagamentos de fatura e receitas/gastos avulsos)
-    const saldoBase = conta.saldo_atual !== undefined && conta.saldo_atual !== null ? conta.saldo_atual : conta.saldo_inicial;
-
-    const totalReceitas = receitasRecebidas.reduce((sum, r) => sum + r.valor, 0);
-    const totalGastosFixos = gastosFixosDaConta.reduce((sum, g) => sum + g.valor, 0);
-    const totalGastosDivida = gastosDividaDaConta.reduce((sum, g) => sum + g.valor, 0);
-
-    return saldoBase + totalReceitas - totalGastosFixos - totalGastosDivida;
-  };
+  // Saldo de hoje, pela mesma conta que o Início usa (utils/saldo).
+  const calcularSaldoConta = (conta: ContaBancaria) =>
+    saldoDaConta(conta, { receitas, gastosFixos: gastosFixos || [], meusGastos: meusGastosDoMes || [] });
 
   // CRUD Conta
   const handleSubmitConta = async (e: React.FormEvent) => {
@@ -458,7 +416,7 @@ export const ContasBancariasPage = () => {
   // Gastos fixos ativos (não suspensos) do mês selecionado — para a previsão.
   const mesSelStr = format(mesVisualizacao, "yyyy-MM");
   const totalGastosFixosMes = (gastosFixos || [])
-    .filter((g) => g.ativo !== false && !g.meses_suspensos?.includes(mesSelStr))
+    .filter((g) => fixoValeNoMes(g, mesSelStr))
     .reduce((sum, g) => sum + g.valor, 0);
   const sobraPrevista = totalRecebidoMes + totalPrevistoMes - totalGastosFixosMes;
 
