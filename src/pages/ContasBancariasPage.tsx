@@ -1,27 +1,35 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Loader2, Trash2, Edit2, X, Check } from "lucide-react";
+import { Plus, Trash2, Pencil, Landmark, ArrowDownLeft } from "lucide-react";
 import { useAppContext } from "../context";
 import { PageHeader } from "../components/ui/PageHeader";
 import { SeletorMes } from "../components/ui/SeletorMes";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
-import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
+import { useGuidedTour, usePageTutorialHelpButton, useIsMobile } from "../hooks";
 import { supabase } from "../lib/supabase";
-import { formatCurrency, formatCurrencyInput, formatCurrencyValue, parseCurrency } from "../utils/calculations";
+import { formatCurrency, formatCurrencyValue, parseCurrency } from "../utils/calculations";
+import { formatDinheiro, formatPercent } from "../utils/dinheiro";
 import { TIPOS_RECEITA, CATEGORIA_RECEITA_PADRAO } from "../utils/receitas";
 import { chaveCategoria, comCategoriaAtual } from "../utils/categories";
 import { useCategorias } from "../hooks/useCategorias";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { toast } from "../components/ui/Toaster";
-import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
-import { Valor } from "../components/ui/Valor";
+import { PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import type { ContaBancaria, Receita, ContaBancariaForm, ReceitaForm } from "../types";
-import { Rotulo } from "../components/ui/Rotulo";
-import { Card } from "../components/ui/Card";
-import { LinhaLista, LISTA_CLASSES } from "../components/ui/LinhaLista";
-import { Resumo, ResumoItem } from "../components/ui/Resumo";
+import { Button } from "../components/ui/Button";
+import { KpiStrip, Kpi } from "../components/ui/KpiStrip";
+import { AnimatedNumber } from "../components/ui/AnimatedNumber";
+import { Surface, SurfaceHeader } from "../components/ui/Surface";
+import { ListGroup, ListRow } from "../components/ui/ListRow";
+import { ProgressBar } from "../components/ui/ProgressBar";
+import { Pill } from "../components/ui/Pill";
+import { EmptyState } from "../components/ui/EmptyState";
+import { MoneyInput } from "../components/ui/MoneyInput";
+import { FormSheet, Campo, Chip, Chips, MaisOpcoes, campoClasse } from "../components/ui/FormSheet";
+import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
 
 interface ContasTutorialStep {
   target: string;
@@ -166,6 +174,19 @@ export const ContasBancariasPage = () => {
     ariaLabel: "Ver tutorial da aba Contas Bancárias",
     dataTour: "contas-help-button",
   });
+
+  const isMobile = useIsMobile();
+  // "Nova conta" é o botão laranja desta tela no desktop.
+  useAcaoPrincipalDaPagina(!isMobile);
+
+  // O atalho "Nova receita" do Início chega aqui com `?receita=1`: abre o
+  // formulário uma vez e limpa o parâmetro, para não reabrir ao voltar.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("receita") !== "1") return;
+    setShowModalReceita(true);
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // Calcular saldo
   const calcularSaldoConta = (conta: ContaBancaria) => {
@@ -440,7 +461,7 @@ export const ContasBancariasPage = () => {
     .reduce((sum, g) => sum + g.valor, 0);
   const sobraPrevista = totalRecebidoMes + totalPrevistoMes - totalGastosFixosMes;
 
-  if (loading) return <PageLoadingState title="Carregando contas" description="Estamos atualizando contas bancárias e receitas." />;
+  if (loading) return <PageLoadingState title="Carregando contas" />;
 
   if (loadError) {
     return (
@@ -454,295 +475,363 @@ export const ContasBancariasPage = () => {
             .catch((err) => setLoadError(toActionableErrorMessage(err, "Não foi possível carregar contas e receitas.")))
             .finally(() => setLoading(false));
         }}
-        actionLabel="Tentar novamente"
+        actionLabel="Tentar de novo"
       />
     );
   }
 
+  const nomeDoMes = format(mesVisualizacao, "MMMM", { locale: ptBR });
+  const acoesDaConta = (c: ContaBancaria) => [
+    { rotulo: "Editar", icone: <Pencil className="w-4 h-4" strokeWidth={1.5} />, onClick: () => handleEditConta(c) },
+    {
+      rotulo: "Excluir",
+      icone: <Trash2 className="w-4 h-4" strokeWidth={1.5} />,
+      onClick: () => handleDeleteConta(c.id, c.nome),
+      tom: "perigo" as const,
+    },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-8">
       {/* HEADER_PAGINA */}
       <PageHeader
         data-tour="contas-header"
-        eyebrow="Carteira"
-        title="Contas bancárias"
+        title="Contas e receitas"
         description="Onde o dinheiro está e quando ele entra."
         action={
-          <div className="flex items-center gap-3 flex-wrap">
+          <>
             <SeletorMes data-tour="contas-mes" />
-            {/* CTA */}
-            <button
-              onClick={() => { resetFormConta(); setShowModalConta(true); }}
-              data-tour="contas-btn-nova-conta"
-              className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors"
+            <Button
+              onClick={() => {
+                resetFormReceita();
+                setShowModalReceita(true);
+              }}
+              icone={<Plus className="w-4 h-4" strokeWidth={1.75} />}
             >
-              <Plus className="w-[18px] h-[18px]" /> Nova conta
-            </button>
-          </div>
+              Nova receita
+            </Button>
+            <Button
+              variante={isMobile ? "secundario" : "principal"}
+              onClick={() => {
+                resetFormConta();
+                setShowModalConta(true);
+              }}
+              data-tour="contas-btn-nova-conta"
+              icone={<Plus className="w-4 h-4" strokeWidth={1.75} />}
+            >
+              Nova conta
+            </Button>
+          </>
         }
       />
 
       {/* FAIXA_RESUMO */}
-      <Resumo data-tour="contas-cards">
-        <ResumoItem
+      <KpiStrip data-tour="contas-cards">
+        <Kpi
           rotulo="Saldo total"
-          tomRotulo="acento"
-          apoio={`em ${contas.length} ${contas.length === 1 ? "conta" : "contas"}`}
-        >
-          <Valor porte="destaque" className={`block mt-1 ${saldoTotal < 0 ? "text-red-600 dark:text-red-400" : "text-zinc-900 dark:text-zinc-50"}`}>
-            {formatCurrency(saldoTotal)}
-          </Valor>
-        </ResumoItem>
-        <ResumoItem
+          valor={<AnimatedNumber valor={saldoTotal} className={`text-[20px] ${saldoTotal < 0 ? "text-danger-ink" : ""}`} />}
+          meta={`em ${contas.length} ${contas.length === 1 ? "conta" : "contas"}`}
+        />
+        <Kpi
           rotulo="Recebido no mês"
-          apoio={`${entradasRecebidas.length} ${entradasRecebidas.length === 1 ? "entrada" : "entradas"}`}
-        >
-          <Valor porte="medio" className="block mt-1.5 text-emerald-700 dark:text-emerald-400">{formatCurrency(totalRecebidoMes)}</Valor>
-        </ResumoItem>
-        <ResumoItem
+          valor={<AnimatedNumber valor={totalRecebidoMes} className="text-[20px]" />}
+          meta={`${entradasRecebidas.length} ${entradasRecebidas.length === 1 ? "entrada" : "entradas"}`}
+        />
+        <Kpi
           rotulo="Ainda a receber"
-          apoio={`${entradasPrevistas.length} ${entradasPrevistas.length === 1 ? "entrada prevista" : "entradas previstas"}`}
+          valor={<AnimatedNumber valor={totalPrevistoMes} className="text-[20px]" />}
+          meta={`${entradasPrevistas.length} ${entradasPrevistas.length === 1 ? "prevista" : "previstas"}`}
+        />
+      </KpiStrip>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 items-start">
+        {/* Minhas contas */}
+        <Surface as="section" className="lg:col-start-1" data-tour="contas-section-contas">
+          <SurfaceHeader
+            titulo="Minhas contas"
+            className="mb-1"
+            descricao="A barra é a parte de cada conta no saldo total."
+            acao={<span className="valor text-xs text-fg-3">{contas.length} {contas.length === 1 ? "conta" : "contas"}</span>}
+          />
+          {contas.length === 0 ? (
+            <EmptyState
+              Icone={Landmark}
+              frase="Nenhuma conta cadastrada."
+              detalhe="Cadastre uma conta para acompanhar o saldo total."
+              compacto
+            />
+          ) : (
+            <ListGroup>
+              {contas.map((c) => {
+                const saldoConta = calcularSaldoConta(c);
+                const participacao = saldoTotal > 0 ? Math.max(saldoConta / saldoTotal, 0) : 0;
+                return (
+                  <ListRow
+                    key={c.id}
+                    icone={<Landmark className="w-4 h-4" strokeWidth={1.5} />}
+                    titulo={c.nome}
+                    meta={
+                      <>
+                        {c.banco || "Sem banco"} · inicial <span className="valor">{formatCurrency(c.saldo_inicial)}</span>
+                      </>
+                    }
+                    valor={<span className={saldoConta < 0 ? "text-danger-ink" : ""}>{formatDinheiro(saldoConta)}</span>}
+                    subvalor={formatPercent(Math.min(participacao, 1))}
+                    rodape={
+                      <div className="pl-12">
+                        <ProgressBar
+                          neutra
+                          valor={Math.min(participacao, 1)}
+                          maximo={1}
+                          rotulo={`${c.nome}: ${formatPercent(participacao)} do saldo total`}
+                        />
+                      </div>
+                    }
+                    onAbrir={() => handleEditConta(c)}
+                    acoes={acoesDaConta(c)}
+                  />
+                );
+              })}
+            </ListGroup>
+          )}
+        </Surface>
+
+        {/* Entradas do mês — recebidas e previstas na mesma lista */}
+        <Surface
+          as="section"
+          className="lg:col-start-2 lg:row-start-1 lg:row-span-2"
+          data-tour="contas-section-receitas"
         >
-          <Valor porte="medio" className="block mt-1.5 text-amber-600 dark:text-amber-400">{formatCurrency(totalPrevistoMes)}</Valor>
-        </ResumoItem>
-      </Resumo>
-
-      {/* Grid de cards */}
-      <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(340px,1fr))]">
-
-      {/* Card Minhas contas */}
-      <Card as="section" padding="nenhum" sangra className="min-w-0" data-tour="contas-section-contas">
-        <div className="flex items-center justify-between gap-3 px-4 pt-4 md:px-5 md:pt-5">
-          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Minhas contas</h2>
-          <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">{contas.length} {contas.length === 1 ? "conta" : "contas"}</span>
-        </div>
-        <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-3 px-4 md:px-5">barra = participação no saldo total</p>
-        {contas.length === 0 ? (
-          <div className="px-4 pb-6 md:px-5">
-            <PageEmptyState compact title="Nenhuma conta cadastrada" description="Clique em Nova conta para começar e acompanhar seu saldo total." />
-          </div>
-        ) : (
-          <div className={LISTA_CLASSES}>
-            {contas.map((c, i) => {
-              const saldoConta = calcularSaldoConta(c);
-              const participacao = saldoTotal > 0 ? Math.max((saldoConta / saldoTotal) * 100, 0) : 0;
-              const tomBarra = i === 0 ? "bg-emerald-600" : i === 1 ? "bg-emerald-500" : "bg-emerald-400";
-              return (
-                <LinhaLista
-                  key={c.id}
-                  titulo={c.nome}
-                  meta={
-                    <span className="block">
-                      {/* A barra de participação entra como meta, não como uma
-                          segunda linha de lista — mesmo tratamento das metas. */}
-                      <span className="block h-1.5 rounded-full bg-zinc-100 dark:bg-white/[0.04] overflow-hidden mb-1">
-                        <span className={`block h-full rounded-full ${tomBarra}`} style={{ width: `${Math.min(participacao, 100)}%` }} />
-                      </span>
-                      {/* O nome do banco trunca; o valor nunca — cortar centavos é perder dado sem avisar. */}
-                      <span className="flex items-baseline gap-1 min-w-0">
-                        <span className="truncate">{c.banco || "sem banco"}</span>
-                        <span className="shrink-0">· {participacao.toFixed(0)}% · inicial</span>
-                        <span className="valor shrink-0">{formatCurrency(c.saldo_inicial)}</span>
-                      </span>
-                    </span>
-                  }
-                  valor={
-                    <span className={saldoConta < 0 ? "text-red-600 dark:text-red-400" : ""}>
-                      {formatCurrency(saldoConta)}
-                    </span>
-                  }
-                  onAbrir={() => handleEditConta(c)}
-                  acoes={[
-                    { rotulo: "Editar", icone: <Edit2 className="w-5 h-5" />, onClick: () => handleEditConta(c) },
-                    { rotulo: "Excluir", icone: <Trash2 className="w-5 h-5" />, onClick: () => handleDeleteConta(c.id, c.nome), tom: "perigo" },
-                  ]}
-                  acoesDesktop={
-                    <>
-                      <button onClick={() => handleEditConta(c)} aria-label={`Editar conta ${c.nome}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"><Edit2 className="w-[15px] h-[15px]" /></button>
-                      <button onClick={() => handleDeleteConta(c.id, c.nome)} aria-label={`Excluir conta ${c.nome}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"><Trash2 className="w-[15px] h-[15px]" /></button>
-                    </>
-                  }
-                />
-              );
-            })}
-          </div>
-        )}
-      </Card>
-
-      {/* Card Entradas do mês — recebidas e previstas na mesma lista */}
-      <Card as="section" padding="nenhum" sangra className="min-w-0" data-tour="contas-section-receitas">
-        <div className="flex items-center justify-between gap-3 px-4 pt-4 md:px-5 md:pt-5">
-          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 capitalize">
-            Entradas de {format(mesVisualizacao, "MMMM", { locale: ptBR })}
-          </h2>
-          <button
-            onClick={() => { resetFormReceita(); setShowModalReceita(true); }}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4" /> Nova receita
-          </button>
-        </div>
-        <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-3 px-4 md:px-5">recebidas e previstas na mesma lista, ordenadas por dia</p>
-        {entradasDoMes.length === 0 ? (
-          <div className="px-4 pb-6 md:px-5">
-            <PageEmptyState compact title="Sem entradas neste mês" description="Cadastre receitas fixas, recorrentes ou avulsas para acompanhar o que entra." />
-          </div>
-        ) : (
-          <div className={LISTA_CLASSES}>
-            {entradasDoMes.map(({ receita: r, dia, recebida }) => {
-              const contaNome = contas.find(c => c.id === r.conta_id)?.nome || "sem conta";
-              const tipoLabel = r.tipo === "avulso" ? "avulso" : r.tipo === "fixo" ? "fixo" : `recorrente ${r.num_meses}x`;
-              return (
-                <LinhaLista
-                  key={r.id}
-                  icone={
-                    <span className="flex items-center gap-2">
-                      {recebida ? (
-                        <span className="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center">
-                          <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          <SurfaceHeader
+            titulo={`Entradas de ${nomeDoMes}`}
+            className="mb-1"
+            descricao="Recebidas e previstas, na ordem do dia."
+          />
+          {entradasDoMes.length === 0 ? (
+            <EmptyState
+              Icone={ArrowDownLeft}
+              frase="Nenhuma entrada neste mês."
+              detalhe="Cadastre receitas fixas, recorrentes ou avulsas."
+              compacto
+            />
+          ) : (
+            <ListGroup>
+              {entradasDoMes.map(({ receita: r, dia, recebida }) => {
+                const contaNome = contas.find((c) => c.id === r.conta_id)?.nome || "Sem conta";
+                const tipoLabel = r.tipo === "avulso" ? "avulsa" : r.tipo === "fixo" ? "fixa" : `recorrente ${r.num_meses}x`;
+                return (
+                  <ListRow
+                    key={r.id}
+                    icone={<ArrowDownLeft className="w-4 h-4" strokeWidth={1.5} />}
+                    titulo={r.descricao}
+                    meta={
+                      <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                        <span>
+                          dia {String(dia).padStart(2, "0")} · {contaNome} · {tipoLabel}
                         </span>
-                      ) : (
-                        <span className="w-6 h-6 rounded-lg border-[1.5px] border-dashed border-zinc-300 dark:border-white/[0.09]" />
-                      )}
-                    </span>
-                  }
-                  titulo={r.descricao}
-                  meta={
-                    <span className={recebida ? "" : "text-amber-600 dark:text-amber-400"}>
-                      dia {String(dia).padStart(2, "0")} ·{" "}
-                      {recebida ? `${contaNome} · ${tipoLabel}` : "prevista · ainda não caiu"}
-                    </span>
-                  }
-                  valor={
-                    <span className={recebida ? "text-emerald-700 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
-                      {recebida ? "+" : ""}{formatCurrency(r.valor)}
-                    </span>
-                  }
-                  onAbrir={() => handleEditReceita(r)}
-                  acoes={[
-                    { rotulo: "Editar", icone: <Edit2 className="w-5 h-5" />, onClick: () => handleEditReceita(r) },
-                    { rotulo: "Excluir", icone: <Trash2 className="w-5 h-5" />, onClick: () => handleDeleteReceita(r.id, r.descricao), tom: "perigo" },
-                  ]}
-                  acoesDesktop={
-                    <>
-                      <button onClick={() => handleEditReceita(r)} aria-label={`Editar receita ${r.descricao}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"><Edit2 className="w-[15px] h-[15px]" /></button>
-                      <button onClick={() => handleDeleteReceita(r.id, r.descricao)} aria-label={`Excluir receita ${r.descricao}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"><Trash2 className="w-[15px] h-[15px]" /></button>
-                    </>
-                  }
+                        {!recebida && <Pill>prevista</Pill>}
+                      </span>
+                    }
+                    valor={formatDinheiro(r.valor, { positivo: true })}
+                    recebido={recebida}
+                    onAbrir={() => handleEditReceita(r)}
+                    acoes={[
+                      { rotulo: "Editar", icone: <Pencil className="w-4 h-4" strokeWidth={1.5} />, onClick: () => handleEditReceita(r) },
+                      {
+                        rotulo: "Excluir",
+                        icone: <Trash2 className="w-4 h-4" strokeWidth={1.5} />,
+                        onClick: () => handleDeleteReceita(r.id, r.descricao),
+                        tom: "perigo",
+                      },
+                    ]}
+                  />
+                );
+              })}
+            </ListGroup>
+          )}
+        </Surface>
+
+        {/* Previsão do mês: um extrato de cima para baixo. */}
+        <Surface as="section" className="lg:col-start-1">
+          <SurfaceHeader titulo="Previsão do mês" descricao="Se tudo entrar e sair como previsto." />
+          <dl className="text-[15px] md:text-sm">
+            {[
+              { rotulo: "Recebido", valor: formatDinheiro(totalRecebidoMes, { positivo: true }) },
+              { rotulo: "A receber", valor: formatDinheiro(totalPrevistoMes, { positivo: true }) },
+              { rotulo: "Gastos fixos", valor: formatDinheiro(-totalGastosFixosMes) },
+            ].map((l) => (
+              <div key={l.rotulo} className="flex items-baseline justify-between gap-4 py-2">
+                <dt className="text-fg-2">{l.rotulo}</dt>
+                <dd className="valor text-fg">{l.valor}</dd>
+              </div>
+            ))}
+            <div className="flex items-baseline justify-between gap-4 pt-4 mt-2 border-t border-line">
+              <dt className="text-fg">Sobra prevista</dt>
+              <dd>
+                <AnimatedNumber
+                  valor={sobraPrevista}
+                  positivo
+                  className={`text-[20px] ${sobraPrevista < 0 ? "text-danger-ink" : "text-fg"}`}
                 />
-              );
-            })}
+              </dd>
+            </div>
+          </dl>
+          <p className="mt-3 text-xs text-fg-3">Receitas do mês menos os fixos. Não inclui gastos variáveis.</p>
+        </Surface>
+      </div>
+
+      {/* Conta */}
+      <FormSheet
+        aberto={showModalConta}
+        titulo={editandoConta ? "Editar conta" : "Nova conta"}
+        onFechar={resetFormConta}
+        onEnviar={() => handleSubmitConta({ preventDefault() {} } as React.FormEvent)}
+        rotuloEnviar={editandoConta ? "Salvar alterações" : "Criar conta"}
+        enviando={saving}
+        podeEnviar={!!formConta.nome.trim()}
+        valor={
+          <div>
+            <MoneyInput
+              tamanho="heroi"
+              value={formConta.saldo_inicial}
+              onChange={(saldo_inicial) => setFormConta({ ...formConta, saldo_inicial })}
+              aria-label="Saldo inicial"
+            />
+            <p className="mt-2 text-center text-xs text-fg-3">Saldo inicial</p>
           </div>
+        }
+      >
+        <Campo rotulo="Nome da conta" htmlFor="conta-nome">
+          <input
+            id="conta-nome"
+            data-autofocus
+            type="text"
+            value={formConta.nome}
+            onChange={(e) => setFormConta({ ...formConta, nome: e.target.value })}
+            placeholder="Ex: conta corrente, poupança"
+            className={campoClasse}
+          />
+        </Campo>
+        <Campo rotulo="Banco (opcional)" htmlFor="conta-banco">
+          <input
+            id="conta-banco"
+            type="text"
+            value={formConta.banco}
+            onChange={(e) => setFormConta({ ...formConta, banco: e.target.value })}
+            placeholder="Ex: Nubank, Inter"
+            className={campoClasse}
+          />
+        </Campo>
+        {editandoConta && (
+          <Campo rotulo="Saldo atual" htmlFor="conta-saldo-atual" dica="Edite para corrigir o saldo à mão.">
+            <MoneyInput
+              id="conta-saldo-atual"
+              value={formConta.saldo_atual}
+              onChange={(saldo_atual) => setFormConta({ ...formConta, saldo_atual })}
+            />
+          </Campo>
         )}
-      </Card>
+      </FormSheet>
 
-      {/* Card Previsão do mês */}
-      <Card as="section" className="min-w-0">
-        <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Previsão do mês</h2>
-        <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-4">se tudo entrar e sair como previsto</p>
-        {(() => {
-          const maxPrevisao = Math.max(totalRecebidoMes, totalPrevistoMes, totalGastosFixosMes, 1);
-          return (
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-zinc-500 dark:text-zinc-400">Recebido</span>
-                  <span className="font-mono valor text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(totalRecebidoMes)}</span>
-                </div>
-                <div className="h-2 rounded-full bg-zinc-100 dark:bg-white/[0.04] overflow-hidden">
-                  <div className="h-full rounded-full bg-emerald-500" style={{ width: `${(totalRecebidoMes / maxPrevisao) * 100}%` }} />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-zinc-500 dark:text-zinc-400">A receber</span>
-                  <span className="font-mono valor text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(totalPrevistoMes)}</span>
-                </div>
-                <div className="h-2 rounded-full bg-zinc-100 dark:bg-white/[0.04] overflow-hidden">
-                  <div className="h-full rounded-full bg-amber-500" style={{ width: `${(totalPrevistoMes / maxPrevisao) * 100}%` }} />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-zinc-500 dark:text-zinc-400">Gastos fixos</span>
-                  <span className="font-mono valor text-zinc-900 dark:text-zinc-100 whitespace-nowrap">−{formatCurrency(totalGastosFixosMes)}</span>
-                </div>
-                <div className="h-2 rounded-full bg-zinc-100 dark:bg-white/[0.04] overflow-hidden">
-                  <div className="h-full rounded-full bg-zinc-300 dark:bg-white/25" style={{ width: `${(totalGastosFixosMes / maxPrevisao) * 100}%` }} />
-                </div>
-              </div>
-            </div>
-          );
-        })()}
-        <div className="border-t border-zinc-100 dark:border-white/[0.05] mt-4 pt-4">
-          <Rotulo>Sobra prevista</Rotulo>
-          <Valor porte="medio" className={`block mt-1 ${sobraPrevista >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
-            {formatCurrency(sobraPrevista)}
-          </Valor>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5">
-            receitas do mês menos os fixos — não inclui gastos variáveis.
-          </p>
-        </div>
-      </Card>
-
-      </div>{/* /grid de cards */}
-
-      {/* Modal Nova/Editar Conta */}
-      {showModalConta && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-md p-5 border border-zinc-200 dark:border-white/[0.06] shadow-xl dark:shadow-black/60">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">{editandoConta ? "Editar Conta" : "Nova Conta Bancária"}</h3>
-              <button onClick={resetFormConta} className="p-1 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded"><X className="w-5 h-5 text-zinc-400 dark:text-zinc-500" /></button>
-            </div>
-            <form onSubmit={handleSubmitConta} className="space-y-4">
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Nome da conta</label><input type="text" value={formConta.nome} onChange={e => setFormConta({...formConta, nome: e.target.value})} placeholder="Ex: Conta Corrente, Poupança..." className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Banco (opcional)</label><input type="text" value={formConta.banco} onChange={e => setFormConta({...formConta, banco: e.target.value})} placeholder="Ex: Nubank, Inter..." className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Saldo inicial</label><input type="text" value={formConta.saldo_inicial} onChange={e => setFormConta({...formConta, saldo_inicial: formatCurrencyInput(e.target.value)})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
-              {editandoConta && (
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Saldo Atual</label><input type="text" value={formConta.saldo_atual} onChange={e => setFormConta({...formConta, saldo_atual: formatCurrencyInput(e.target.value)})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /><p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Edite para corrigir manualmente o saldo</p></div>
-              )}
-              <div className="flex gap-2 pt-2">
-                <button type="button" onClick={resetFormConta} className="flex-1 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.10] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
-                <button type="submit" disabled={saving} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}{editandoConta ? "Salvar" : "Criar"}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Nova/Editar Receita */}
-      {showModalReceita && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-md p-5 border border-zinc-200 dark:border-white/[0.06] shadow-xl dark:shadow-black/60 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">{editandoReceita ? "Editar Receita" : "Nova Receita"}</h3>
-              <button onClick={resetFormReceita} className="p-1 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded"><X className="w-5 h-5 text-zinc-400 dark:text-zinc-500" /></button>
-            </div>
-            <form onSubmit={handleSubmitReceita} className="space-y-4">
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Descrição</label><input type="text" value={formReceita.descricao} onChange={e => setFormReceita({...formReceita, descricao: e.target.value})} placeholder="Ex: Salário, Freelance..." className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Valor</label><input type="text" value={formReceita.valor} onChange={e => setFormReceita({...formReceita, valor: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Categoria</label><select value={formReceita.categoria} onChange={e => setFormReceita({...formReceita, categoria: e.target.value})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]">{comCategoriaAtual(categoriasReceita, formReceita.categoria).map(c => <option key={c} value={c}>{c}</option>)}</select></div>
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Tipo</label><select value={formReceita.tipo} onChange={e => setFormReceita({...formReceita, tipo: e.target.value as any})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]">{TIPOS_RECEITA.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
-              </div>
-              {formReceita.tipo !== "avulso" && (
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Dia do recebimento (1-31)</label><input type="number" min="1" max="31" value={formReceita.dia_recebimento} onChange={e => setFormReceita({...formReceita, dia_recebimento: e.target.value})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
-              )}
-              {formReceita.tipo === "recorrente" && (
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Quantos meses?</label><input type="number" min="1" max="60" value={formReceita.num_meses} onChange={e => setFormReceita({...formReceita, num_meses: e.target.value})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
-              )}
-              {contas.length > 0 && (
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Conta (opcional)</label><select value={formReceita.conta_id} onChange={e => setFormReceita({...formReceita, conta_id: e.target.value})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"><option value="">Sem conta vinculada</option>{contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>
-              )}
-              <div className="flex gap-2 pt-2">
-                <button type="button" onClick={resetFormReceita} className="flex-1 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.10] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
-                <button type="submit" disabled={saving} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}{editandoReceita ? "Salvar" : "Criar"}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Receita */}
+      <FormSheet
+        aberto={showModalReceita}
+        titulo={editandoReceita ? "Editar receita" : "Nova receita"}
+        onFechar={resetFormReceita}
+        onEnviar={() => handleSubmitReceita({ preventDefault() {} } as React.FormEvent)}
+        rotuloEnviar={editandoReceita ? "Salvar alterações" : "Adicionar receita"}
+        enviando={saving}
+        podeEnviar={!!formReceita.descricao.trim() && !!formReceita.valor}
+        valor={
+          <MoneyInput
+            tamanho="heroi"
+            value={formReceita.valor}
+            onChange={(valor) => setFormReceita({ ...formReceita, valor })}
+            aria-label="Valor"
+            data-autofocus
+          />
+        }
+      >
+        <Campo rotulo="Descrição" htmlFor="receita-descricao">
+          <input
+            id="receita-descricao"
+            type="text"
+            value={formReceita.descricao}
+            onChange={(e) => setFormReceita({ ...formReceita, descricao: e.target.value })}
+            placeholder="Ex: salário, freelance"
+            className={campoClasse}
+          />
+        </Campo>
+        <Campo rotulo="Categoria">
+          <Chips>
+            {comCategoriaAtual(categoriasReceita, formReceita.categoria).map((c) => (
+              <Chip key={c} ativo={formReceita.categoria === c} onClick={() => setFormReceita({ ...formReceita, categoria: c })}>
+                {c}
+              </Chip>
+            ))}
+          </Chips>
+        </Campo>
+        <Campo rotulo="Tipo">
+          <Chips>
+            {TIPOS_RECEITA.map((t) => (
+              <Chip
+                key={t.value}
+                ativo={formReceita.tipo === t.value}
+                onClick={() => setFormReceita({ ...formReceita, tipo: t.value as ReceitaForm["tipo"] })}
+              >
+                {t.label}
+              </Chip>
+            ))}
+          </Chips>
+        </Campo>
+        {formReceita.tipo !== "avulso" && (
+          <Campo rotulo="Dia do recebimento" htmlFor="receita-dia" dica="De 1 a 31.">
+            <input
+              id="receita-dia"
+              type="number"
+              inputMode="numeric"
+              min="1"
+              max="31"
+              value={formReceita.dia_recebimento}
+              onChange={(e) => setFormReceita({ ...formReceita, dia_recebimento: e.target.value })}
+              className={`${campoClasse} valor`}
+            />
+          </Campo>
+        )}
+        {formReceita.tipo === "recorrente" && (
+          <Campo rotulo="Quantos meses" htmlFor="receita-meses" dica="De 1 a 60.">
+            <input
+              id="receita-meses"
+              type="number"
+              inputMode="numeric"
+              min="1"
+              max="60"
+              value={formReceita.num_meses}
+              onChange={(e) => setFormReceita({ ...formReceita, num_meses: e.target.value })}
+              className={`${campoClasse} valor`}
+            />
+          </Campo>
+        )}
+        {contas.length > 0 && (
+          <MaisOpcoes abertoInicial={!!formReceita.conta_id}>
+            <Campo rotulo="Conta" htmlFor="receita-conta">
+              <select
+                id="receita-conta"
+                value={formReceita.conta_id}
+                onChange={(e) => setFormReceita({ ...formReceita, conta_id: e.target.value })}
+                className={campoClasse}
+              >
+                <option value="">Sem conta vinculada</option>
+                {contas.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </select>
+            </Campo>
+          </MaisOpcoes>
+        )}
+      </FormSheet>
 
       <GuidedTourOverlay
         show={showTutorial}

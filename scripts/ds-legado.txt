@@ -7,9 +7,7 @@ src/components/modals/FeedbackModal.tsx
 src/components/Tabs/TabDividas.tsx
 src/components/Tabs/TabGastos.tsx
 src/pages/AdminPage.tsx
-src/pages/CartoesCreditoPage.tsx
 src/pages/ConfiguracoesPage.tsx
-src/pages/ContasBancariasPage.tsx
 src/pages/DividasPage.tsx
 src/pages/GastosPage.tsx
 src/pages/MetasPage.tsx

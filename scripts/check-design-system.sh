@@ -184,7 +184,7 @@ regra "rounded-full" \
 
 regra "sombra" \
   "Card não tem sombra nem borda: a separação é a diferença entre --bg e --surface-1." \
-  '\bshadow(-(sm|md|lg|xl|2xl|inner|\[))?\b' "visual" \
+  '(^|[^-a-z])shadow(-(sm|md|lg|xl|2xl|inner|\[))?\b' "visual" \
   'shadow-none'
 
 regra "desfoque e vidro" \

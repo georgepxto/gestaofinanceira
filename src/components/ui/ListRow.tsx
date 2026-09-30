@@ -23,6 +23,8 @@ interface ListRowProps {
   subvalor?: ReactNode;
   /** Pago/quitado: check pequeno e valor em --fg-2. Nunca riscado. */
   pago?: boolean;
+  /** Recebido (entrada que já caiu): o check, sem apagar o valor. */
+  recebido?: boolean;
   /** Ação primária — normalmente editar. Vira o alvo de toque da linha. */
   onAbrir?: () => void;
   /** Editar, excluir… No desktop aparecem no hover; no celular, no menu ⋯. */
@@ -50,6 +52,7 @@ export function ListRow({
   valor,
   subvalor,
   pago = false,
+  recebido = false,
   onAbrir,
   acoes,
   rodape,
@@ -83,7 +86,9 @@ export function ListRow({
       {valor !== undefined && (
         <span className="shrink-0 text-right">
           <span className={`flex items-center justify-end gap-1.5 valor text-[15px] md:text-sm ${pago ? "text-fg-2" : "text-fg"}`}>
-            {pago && !prefixo && <Check className="w-3.5 h-3.5 text-fg-2" strokeWidth={2} aria-label="pago" />}
+            {(pago || recebido) && !prefixo && (
+              <Check className="w-3.5 h-3.5 text-fg-2" strokeWidth={2} aria-label={recebido ? "recebido" : "pago"} />
+            )}
             {valor}
           </span>
           {subvalor && <span className="block valor text-xs text-fg-3 mt-0.5">{subvalor}</span>}

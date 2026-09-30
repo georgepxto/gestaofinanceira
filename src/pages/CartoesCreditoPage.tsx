@@ -1,45 +1,41 @@
 import { useState, useEffect, useCallback } from "react";
-import { Loader2, Trash2, Edit2, X, Calendar, CalendarDays, Check, Plus, History, Clock } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Trash2, Pencil, Check, Plus, CreditCard, Receipt, Users, Repeat } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAppContext } from "../context";
 import { PageHeader } from "../components/ui/PageHeader";
 import { SeletorMes } from "../components/ui/SeletorMes";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
-import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
+import { useGuidedTour, usePageTutorialHelpButton, useIsMobile } from "../hooks";
 import { supabase } from "../lib/supabase";
-import { formatCurrency, formatCurrencyInput, formatCurrencyValue, parseCurrency, getMesFaturaCartao } from "../utils/calculations";
+import { formatCurrency, formatCurrencyValue, parseCurrency, getMesFaturaCartao } from "../utils/calculations";
+import { formatDinheiro, formatPercent, rotuloDia } from "../utils/dinheiro";
+import { CORES_CARTAO, corDoCartao } from "../utils/cores";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { normalizarCategoria } from "../utils/categories";
 import { toast } from "../components/ui/Toaster";
-import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
-import { Valor } from "../components/ui/Valor";
+import { PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
-
 import type { CartaoCredito, CartaoCreditoForm, TransacaoCartao, ContaBancaria, MeuGasto, Gasto } from "../types";
-import { Rotulo } from "../components/ui/Rotulo";
-import { Card } from "../components/ui/Card";
-import { LinhaLista, LISTA_CLASSES } from "../components/ui/LinhaLista";
+import { Button } from "../components/ui/Button";
+import { BalanceHero } from "../components/ui/BalanceHero";
+import { ProgressBar } from "../components/ui/ProgressBar";
+import { Surface, SurfaceHeader } from "../components/ui/Surface";
+import { ListGroup, ListRow } from "../components/ui/ListRow";
+import { Pill } from "../components/ui/Pill";
+import { PontoCategoria } from "../components/ui/PontoCategoria";
+import { EmptyState } from "../components/ui/EmptyState";
+import { MenuAcoes } from "../components/ui/MenuAcoes";
+import { MoneyInput } from "../components/ui/MoneyInput";
+import { FormSheet, Campo, Chip, Chips, MaisOpcoes, campoClasse } from "../components/ui/FormSheet";
+import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
 
-/**
- * Cor do cartão = identidade do banco (dado do usuário): vive no dot e na
- * espinha do tile, nunca em barra ou valor. Tons profundos que não colidem com
- * os semânticos — esmeralda/âmbar/vermelho ficam reservados para ESTADO.
- */
-const CORES_CARTAO = [
-  // Ficam fora da paleta de estado justamente para não competir com ela.
-  // ds-ok: identidade do cartão escolhida pela pessoa — é dado, não cor de interface.
-  "#5B21B6", "#1E3A8A", "#155E75", "#9D174D", "#7C2D12", "#4A044E", "#3F3F46",
-];
-
-export const COR_CARTAO_PADRAO = CORES_CARTAO[0];
-
-/**
- * Barra de limite: a cor é estado, não decoração — esmeralda enquanto sobra
- * folga, âmbar a partir de 80%, vermelho ao estourar. Sem degradê.
- */
-const corLimite = (pct: number) =>
-  pct >= 100 ? "#EF4444" : pct >= 80 ? "#F59E0B" : "#10B981";
+/** "2026-09-29" como data local — `new Date(string)` leria em UTC e voltaria um dia. */
+const dataLocal = (iso: string) => {
+  const [ano, mes, dia] = iso.split("-").map(Number);
+  return new Date(ano, mes - 1, dia || 1);
+};
 
 interface CartoesTutorialStep {
   target: string;
@@ -604,10 +600,29 @@ export const CartoesCreditoPage = () => {
   };
 
   const consolidado = getTotalConsolidado();
-  const percentUsado = consolidado.limiteTotal > 0 ? (consolidado.usado / consolidado.limiteTotal) * 100 : 0;
+
+  const isMobile = useIsMobile();
+  // "Pagar fatura" ou "Novo cartão": o botão laranja desta tela no desktop.
+  useAcaoPrincipalDaPagina(!isMobile);
+
+  // O atalho "Pagar fatura" do Início chega com `?pagar=1`: abre o primeiro
+  // cartão com fatura em aberto já no formulário de pagamento.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (loading || searchParams.get("pagar") !== "1") return;
+    const comFatura = cartoesState.find((c) => getFaturaCartao(c.id) > 0 && !faturaQuitada(c.id));
+    if (comFatura) {
+      setCartaoSelecionado(comFatura);
+      setValorPagamento(formatCurrencyValue(getFaturaCartao(comFatura.id)));
+      setShowPagarFatura(true);
+    }
+    setSearchParams({}, { replace: true });
+    // Só reage ao parâmetro e ao fim do carregamento.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, searchParams]);
 
   if (loading) {
-    return <PageLoadingState title="Carregando cartões" description="Estamos buscando cartões, transações e faturas." />;
+    return <PageLoadingState title="Carregando cartões" />;
   }
 
   if (loadError) {
@@ -622,378 +637,381 @@ export const CartoesCreditoPage = () => {
             .catch((err) => setLoadError(toActionableErrorMessage(err, "Não foi possível carregar dados dos cartões.")))
             .finally(() => setLoading(false));
         }}
-        actionLabel="Tentar novamente"
+        actionLabel="Tentar de novo"
       />
     );
   }
 
-  const corDoCartao = (c: CartaoCredito) => c.cor || CORES_CARTAO[0];
+  const nomeDoMes = format(mesVisualizacao, "MMMM", { locale: ptBR });
+  const faturaAberta =
+    !!cartaoSelecionado && getFaturaCartao(cartaoSelecionado.id) > 0 && !faturaQuitada(cartaoSelecionado.id);
 
-  // Barra de limite: fill semântico + trilho vermelho claro quando estoura.
-  const barraLimite = (pct: number) => (
-    <div className={`h-2 rounded-full overflow-hidden ${pct > 100 ? "bg-red-50 dark:bg-red-950/30" : "bg-zinc-100 dark:bg-white/[0.04]"}`}>
-      <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: corLimite(pct) }} />
-    </div>
-  );
+  const abrirNovoCartao = () => {
+    resetFormCartao();
+    setShowFormCartao(true);
+  };
+  const abrirPagarFatura = () => {
+    if (!cartaoSelecionado) return;
+    setValorPagamento(formatCurrencyValue(getFaturaCartao(cartaoSelecionado.id)));
+    setShowPagarFatura(true);
+  };
 
-  // Card "Limite consolidado" — aparece na vista "Todos" e na coluna do cartão.
-  const renderLimiteConsolidado = () => (
-    <Card className="min-w-0" data-tour="cartoes-consolidado">
-      <div className="flex items-center justify-between gap-3 mb-2">
-        <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Limite consolidado</h2>
-        <Valor porte="medio" className="text-zinc-900 dark:text-zinc-50">{percentUsado.toFixed(0)}%</Valor>
-      </div>
-      {barraLimite(percentUsado)}
-      <div className="grid grid-cols-3 gap-3 mt-4 mb-4">
-        <div className="min-w-0">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">Disponível</p>
-          <p className="font-mono valor text-sm font-semibold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">{formatCurrency(consolidado.disponivel)}</p>
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">Usado</p>
-          <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(consolidado.usado)}</p>
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">Limite total</p>
-          <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(consolidado.limiteTotal)}</p>
-        </div>
-      </div>
-      <div className="space-y-3 border-t border-zinc-100 dark:border-white/[0.05] pt-4" data-tour="cartoes-limites-grid">
-        {cartoesState.map((c) => {
-          const usado = getLimiteUsado(c.id);
-          const limite = c.limite || 0;
-          const pct = limite > 0 ? (usado / limite) * 100 : 0;
-          return (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setCartaoSelecionado(c)}
-              className="w-full text-left rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="w-[7px] h-[7px] rounded-full flex-shrink-0" style={{ backgroundColor: corDoCartao(c) }} />
-                <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate flex-1">{c.nome}</span>
-                <span className="font-mono valor text-[11px] text-zinc-500 dark:text-zinc-400">{pct.toFixed(0)}%</span>
-              </div>
-              {barraLimite(pct)}
-            </button>
-          );
-        })}
-      </div>
-      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-4">
-        dot = banco · barra = estado (verde ok · âmbar ≥80% · vermelho estourado)
-      </p>
-    </Card>
-  );
+  const legendaLimite = (usado: number, limite: number) => [
+    { rotulo: "Usado", valor: formatCurrency(usado) },
+    {
+      rotulo: "Disponível",
+      valor: formatDinheiro(limite - usado),
+      tom: limite - usado < 0 ? ("perigo" as const) : ("normal" as const),
+    },
+    { rotulo: "Limite", valor: formatCurrency(limite) },
+  ];
+
+  const faturasEmAberto = cartoesState.reduce((sum, c) => sum + getFaturaCartao(c.id), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-8">
       {/* HEADER_PAGINA */}
       <PageHeader
         data-tour="cartoes-header"
-        eyebrow="Carteira"
-        title="Cartões de crédito"
+        title="Cartões"
         description="Faturas, limites e transações de cada cartão."
         action={
-          <div className="flex items-center gap-3 flex-wrap">
+          <>
             <SeletorMes />
-            <button
-              onClick={() => { resetFormCartao(); setShowFormCartao(true); }}
-              className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors"
+            {/* Um botão laranja: "Pagar fatura" quando o cartão aberto tem
+                fatura em aberto; senão, "Novo cartão". No celular o laranja é
+                o "+" da barra, e estes ficam neutros. */}
+            <Button
+              variante={faturaAberta || isMobile ? "secundario" : "principal"}
+              onClick={abrirNovoCartao}
+              icone={<Plus className="w-4 h-4" strokeWidth={1.75} />}
             >
-              <Plus className="w-[18px] h-[18px]" /> Novo cartão
-            </button>
-          </div>
+              Novo cartão
+            </Button>
+            {faturaAberta && (
+              <Button
+                variante={isMobile ? "secundario" : "principal"}
+                onClick={abrirPagarFatura}
+                icone={<Check className="w-4 h-4" strokeWidth={1.75} />}
+              >
+                Pagar fatura
+              </Button>
+            )}
+          </>
         }
       />
 
-      {/* Rail de tiles */}
-      <div className="flex gap-3 overflow-x-auto pb-2" data-tour="cartoes-lista">
-        {/* Tile Todos */}
+      {/* Seletor de cartões: retângulos com a faixa do banco. No celular rola
+          na horizontal com snap, e o próximo cartão aparece pela metade. */}
+      <div
+        className="sem-barra -mx-4 px-4 md:mx-0 md:px-0 scroll-px-4 flex gap-2 overflow-x-auto snap-x snap-mandatory"
+        data-tour="cartoes-lista"
+        role="group"
+        aria-label="Cartões"
+      >
         <button
           type="button"
           onClick={() => setCartaoSelecionado(null)}
           aria-pressed={cartaoSelecionado === null}
-          className={`relative overflow-hidden flex-shrink-0 w-44 p-3.5 rounded-xl border text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-            cartaoSelecionado === null
-              ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
-              : "border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.04] hover:bg-zinc-50 dark:hover:bg-white/[0.08]"
+          className={`snap-start shrink-0 w-[168px] min-h-[104px] p-4 rounded text-left transition-colors ${
+            cartaoSelecionado === null ? "bg-surface-1 ring-1 ring-inset ring-fg-3" : "bg-surface-1 hover:bg-surface-2"
           }`}
         >
-          <Rotulo className="mb-1.5">Todos</Rotulo>
-          <Valor porte="medio" className="block text-zinc-900 dark:text-zinc-50">
-            {formatCurrency(cartoesState.reduce((sum, c) => sum + getFaturaCartao(c.id), 0))}
-          </Valor>
-          <p className="font-mono text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">{cartoesState.length} {cartoesState.length === 1 ? "cartão" : "cartões"}</p>
+          <span className="block text-sm text-fg">Todos</span>
+          <span className="block valor text-lg text-fg mt-1.5">{formatCurrency(faturasEmAberto)}</span>
+          <span className="block text-xs text-fg-2 mt-1">
+            {cartoesState.length} {cartoesState.length === 1 ? "cartão" : "cartões"}
+          </span>
         </button>
-        {/* Tiles por cartão — espinha e dot = identidade do banco */}
         {cartoesState.map((c) => (
           <button
             key={c.id}
             type="button"
             onClick={() => setCartaoSelecionado(c)}
             aria-pressed={cartaoSelecionado?.id === c.id}
-            className={`relative overflow-hidden flex-shrink-0 w-44 p-3.5 pl-4 rounded-xl border text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-              cartaoSelecionado?.id === c.id
-                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
-                : "border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.04] hover:bg-zinc-50 dark:hover:bg-white/[0.08]"
+            className={`relative snap-start shrink-0 w-[168px] min-h-[104px] p-4 pl-5 rounded text-left overflow-hidden transition-colors ${
+              cartaoSelecionado?.id === c.id ? "bg-surface-1 ring-1 ring-inset ring-fg-3" : "bg-surface-1 hover:bg-surface-2"
             }`}
           >
-            <span className="absolute left-0 inset-y-0 w-1" style={{ backgroundColor: corDoCartao(c) }} aria-hidden="true" />
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="w-[7px] h-[7px] rounded-full flex-shrink-0" style={{ backgroundColor: corDoCartao(c) }} />
-              <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{c.nome}</span>
-            </div>
-            <Valor porte="medio" className="block text-zinc-900 dark:text-zinc-50">{formatCurrency(getFaturaCartao(c.id))}</Valor>
-            <p className="font-mono text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">vence dia {c.dia_vencimento}</p>
+            <span className="absolute left-0 inset-y-0 w-[3px]" style={{ backgroundColor: corDoCartao(c.cor) }} aria-hidden="true" />
+            <span className="block text-sm text-fg break-words leading-snug">{c.nome}</span>
+            <span className="block valor text-lg text-fg mt-1.5">{formatCurrency(getFaturaCartao(c.id))}</span>
+            <span className="block text-xs text-fg-2 mt-1">vence dia {c.dia_vencimento}</span>
           </button>
         ))}
-        {/* Tile Novo cartão */}
         <button
           type="button"
-          onClick={() => { resetFormCartao(); setShowFormCartao(true); }}
-          className="flex-shrink-0 w-44 p-3.5 rounded-xl border border-dashed border-zinc-300 dark:border-white/[0.09] bg-white dark:bg-white/[0.02] hover:border-emerald-400 hover:text-emerald-700 text-zinc-500 dark:text-zinc-400 flex flex-col items-center justify-center gap-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          onClick={abrirNovoCartao}
+          className="snap-start shrink-0 w-[168px] min-h-[104px] p-4 rounded bg-surface-2 text-fg-2 hover:text-fg flex flex-col items-center justify-center gap-1.5 transition-colors"
         >
-          <Plus className="w-5 h-5" />
-          <span className="text-sm font-medium">Novo cartão</span>
+          <Plus className="w-5 h-5" strokeWidth={1.5} />
+          <span className="text-sm">Novo cartão</span>
         </button>
       </div>
 
-      {/* Vista "Todos": limite consolidado */}
-      {cartaoSelecionado === null && renderLimiteConsolidado()}
-
-      {/* Cartão selecionado */}
-      {cartaoSelecionado && (() => {
-        const usado = getLimiteUsado(cartaoSelecionado.id);
-        const limite = cartaoSelecionado.limite || 0;
-        const pct = limite > 0 ? (usado / limite) * 100 : 0;
-        const fatura = getFaturaCartao(cartaoSelecionado.id);
-        const quitada = faturaQuitada(cartaoSelecionado.id);
-        const itens = getTodasTransacoesDoMes(cartaoSelecionado.id);
-
-        // Dias até o vencimento — só faz sentido olhando o mês corrente.
-        const hoje = new Date();
-        const hojeZero = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-        const ultimoDiaMes = new Date(mesVisualizacao.getFullYear(), mesVisualizacao.getMonth() + 1, 0).getDate();
-        const dataVencimento = new Date(mesVisualizacao.getFullYear(), mesVisualizacao.getMonth(), Math.min(cartaoSelecionado.dia_vencimento, ultimoDiaMes));
-        const diasAteVencimento = Math.round((dataVencimento.getTime() - hojeZero.getTime()) / 86400000);
-        const mostraContagem = format(mesVisualizacao, "yyyy-MM") === format(hoje, "yyyy-MM") && diasAteVencimento >= 0;
-
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 space-y-4 min-w-0">
-              {/* Card fatura (herói) */}
-              <Card padding="resumo" data-tour="cartoes-detalhes-fatura">
-                <div className="flex items-start justify-between gap-5 flex-wrap">
-                  <div className="min-w-0">
-                    <Rotulo className="flex items-center gap-2">
-                      <span className="w-[7px] h-[7px] rounded-full flex-shrink-0" style={{ backgroundColor: corDoCartao(cartaoSelecionado) }} />
-                      {cartaoSelecionado.nome} · fatura de {format(mesVisualizacao, "MMMM", { locale: ptBR })}
-                    </Rotulo>
-                    <div className="flex items-center gap-3 flex-wrap mt-2">
-                      <Valor porte="heroi" className="text-zinc-900 dark:text-zinc-50">
-                        {formatCurrency(fatura)}
-                      </Valor>
-                      {quitada && (
-                        <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">
-                          <Check className="w-[11px] h-[11px]" /> Quitada
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-2">
-                      vence dia {cartaoSelecionado.dia_vencimento}
-                      {mostraContagem && (
-                        <>
-                          {" · "}
-                          <span className={diasAteVencimento <= 5 ? "text-amber-600 dark:text-amber-400 font-semibold" : undefined}>
-                            em {diasAteVencimento} {diasAteVencimento === 1 ? "dia" : "dias"}
-                          </span>
-                        </>
-                      )}
-                    </p>
-                    {quitada && (
-                      <button onClick={handleDesfazerPagamento} className="mt-2 text-xs text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 underline">
-                        Desfazer pagamento
-                      </button>
-                    )}
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <Rotulo>Melhor dia p/ comprar</Rotulo>
-                    <Valor porte="medio" className="block mt-1 text-emerald-700 dark:text-emerald-400">
-                      {cartaoSelecionado.melhor_dia_compra || "—"}
-                    </Valor>
-                  </div>
-                </div>
-                <div className="border-t border-zinc-100 dark:border-white/[0.05] mt-5 pt-5">
-                  <div className="flex items-center justify-between gap-3 mb-1.5">
-                    <Rotulo>Limite usado</Rotulo>
-                    <span className="font-mono valor text-[11px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-                      {pct.toFixed(0)}% de {formatCurrency(limite)}
-                    </span>
-                  </div>
-                  {barraLimite(pct)}
-                  <div className="grid grid-cols-3 gap-3 mt-4">
-                    <div className="min-w-0">
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Disponível</p>
-                      {/* Folga é sempre esmeralda; vermelho só quando estoura. */}
-                      <p className={`font-mono valor text-sm font-semibold whitespace-nowrap ${limite - usado < 0 ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"}`}>{formatCurrency(limite - usado)}</p>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Usado</p>
-                      <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(usado)}</p>
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Limite total</p>
-                      <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(limite)}</p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Transações da fatura */}
-              <Card padding="nenhum" sangra className="min-w-0" data-tour="cartoes-detalhes-transacoes">
-                <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 md:px-5 md:pt-5">
-                  <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Transações da fatura</h2>
-                  <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">{itens.length} {itens.length === 1 ? "item" : "itens"}</span>
-                </div>
-                {cartaoSelecionado.divida_inicial && cartaoSelecionado.divida_inicial > 0 ? (
-                  <div className="flex items-center justify-between gap-3 p-3 mb-2 mx-4 md:mx-5 bg-zinc-50 dark:bg-white/[0.04] rounded-xl">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Clock className="w-4 h-4 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400 truncate">Saldo anterior</span>
-                    </div>
-                    <span className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-50 whitespace-nowrap">{formatCurrency(cartaoSelecionado.divida_inicial)}</span>
-                  </div>
-                ) : null}
-                {itens.length === 0 ? (
-                  <div className="px-4 pb-6 md:px-5">
-                    <PageEmptyState
-                      compact
-                      title="Nenhuma transação neste mês"
-                      description="Quando houver compras no período da fatura, elas aparecerão aqui."
-                    />
-                  </div>
-                ) : (
-                  <div className={`${LISTA_CLASSES} max-h-80 overflow-y-auto`}>
-                    {itens.map((t: any) => {
-                      const fixo = t.origem === "gasto" && isGastoFixo(t.id);
-                      const dotClasse = t.pagoParcial ? "bg-amber-500" : fixo ? "bg-zinc-300 dark:bg-zinc-600" : "bg-emerald-500";
-                      return (
-                        <LinhaLista
-                          key={`${t.origem}-${t.id}`}
-                          icone={
-                            /* Estado atenuado é um recurso só: zinc-500 + line-through, check no lugar do dot. */
-                            t.pago ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                            ) : (
-                              <span className={`w-2 h-2 rounded-full ${dotClasse}`} />
-                            )
-                          }
-                          titulo={t.descricao}
-                          atenuado={t.pago}
-                          meta={
-                            <span className="flex items-center gap-1.5">
-                              {t.pagoParcial && (
-                                <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 whitespace-nowrap">
-                                  Pago {formatCurrency(t.valorPago || 0)}
-                                </span>
-                              )}
-                              {fixo && (
-                                <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400">Fixo</span>
-                              )}
-                              {t.origem === "compartilhado" && !t.pago && !t.pagoParcial && (
-                                <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
-                                  Emprestado · {t.pessoa}
-                                </span>
-                              )}
-                              <span className="truncate">
-                                {t.categoria} · {format(new Date(t.data + (t.data.length === 7 ? "-01" : "") + "T00:00:00"), "dd/MM")}
-                              </span>
-                            </span>
-                          }
-                          valor={
-                            t.pagoParcial ? (
-                              <span className="text-amber-700 dark:text-amber-400">Falta {formatCurrency(t.valorRestante || 0)}</span>
-                            ) : (
-                              formatCurrency(t.valor)
-                            )
-                          }
-                          acoes={
-                            t.origem === "transacao"
-                              ? [
-                                  {
-                                    rotulo: "Excluir",
-                                    icone: <Trash2 className="w-5 h-5" />,
-                                    onClick: () => handleDeleteTransacao(t.id),
-                                    tom: "perigo" as const,
-                                  },
-                                ]
-                              : undefined
-                          }
-                          acoesDesktop={
-                            t.origem === "transacao" ? (
-                              <button
-                                onClick={() => handleDeleteTransacao(t.id)}
-                                aria-label={`Excluir ${t.descricao}`}
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"
-                              >
-                                <Trash2 className="w-[15px] h-[15px]" />
-                              </button>
-                            ) : undefined
-                          }
-                        />
-                      );
-                    })}
-                  </div>
-                )}
-              </Card>
-            </div>
-
-            {/* Coluna direita */}
-            <div className="space-y-4 min-w-0">
-              {/* Este cartão */}
-              <Card className="h-fit" data-tour="cartoes-detalhes-limite">
-                <div className="flex items-center justify-between gap-3 mb-4">
-                  <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Este cartão</h2>
-                  <div className="flex gap-0.5">
-                    <button onClick={() => handleEditCartao(cartaoSelecionado)} aria-label={`Editar cartão ${cartaoSelecionado.nome}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"><Edit2 className="w-[15px] h-[15px]" /></button>
-                    <button onClick={() => handleDeleteCartao(cartaoSelecionado.id, cartaoSelecionado.nome)} aria-label={`Excluir cartão ${cartaoSelecionado.nome}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"><Trash2 className="w-[15px] h-[15px]" /></button>
-                  </div>
-                </div>
-                <div className="space-y-2.5 text-sm mb-5">
-                  <div className="flex justify-between gap-3">
-                    <span className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 min-w-0"><Calendar className="w-4 h-4 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />Vencimento</span>
-                    <span className="font-mono valor text-zinc-900 dark:text-zinc-50 whitespace-nowrap">dia {cartaoSelecionado.dia_vencimento}</span>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <span className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 min-w-0"><CalendarDays className="w-4 h-4 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />Melhor dia de compra</span>
-                    <span className="font-mono valor text-zinc-900 dark:text-zinc-50 whitespace-nowrap">{cartaoSelecionado.melhor_dia_compra ? `dia ${cartaoSelecionado.melhor_dia_compra}` : "—"}</span>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <span className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 min-w-0"><History className="w-4 h-4 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />Dívida inicial</span>
-                    <span className="font-mono valor text-zinc-900 dark:text-zinc-50 whitespace-nowrap">{formatCurrency(cartaoSelecionado.divida_inicial || 0)}</span>
-                  </div>
-                </div>
-                {quitada ? (
-                  <button disabled className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 bg-zinc-200 dark:bg-white/[0.07] text-zinc-500 dark:text-zinc-400 rounded-xl text-sm font-semibold cursor-not-allowed">
-                    <Check className="w-4 h-4" /> Fatura quitada
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => { setValorPagamento(formatCurrencyValue(fatura)); setShowPagarFatura(true); }}
-                    className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors"
-                  >
-                    <Check className="w-4 h-4" /> Pagar fatura
-                  </button>
-                )}
-              </Card>
-
-              {/* Limite consolidado */}
-              {renderLimiteConsolidado()}
+      {/* Todos: faturas em aberto e o limite somado de todos os cartões */}
+      {cartaoSelecionado === null && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 items-start">
+          <div className="space-y-6">
+            <BalanceHero
+              rotulo="Faturas em aberto"
+              valor={faturasEmAberto}
+              perigoSeNegativo={false}
+              contexto={
+                <>
+                  Soma das faturas de <span>{nomeDoMes}</span> em {cartoesState.length}{" "}
+                  {cartoesState.length === 1 ? "cartão" : "cartões"}.
+                </>
+              }
+            />
+            <div data-tour="cartoes-consolidado">
+              <p className="text-sm text-fg-2 mb-3">Limite somado</p>
+              <ProgressBar
+                valor={consolidado.usado}
+                maximo={consolidado.limiteTotal}
+                rotulo={`Limite somado: ${formatPercent(consolidado.limiteTotal > 0 ? consolidado.usado / consolidado.limiteTotal : 0)} usado`}
+                legenda={legendaLimite(consolidado.usado, consolidado.limiteTotal)}
+              />
             </div>
           </div>
-        );
-      })()}
+
+          <Surface as="section" data-tour="cartoes-limites-grid">
+            <SurfaceHeader titulo="Por cartão" className="mb-1" />
+            {cartoesState.length === 0 ? (
+              <EmptyState
+                Icone={CreditCard}
+                frase="Nenhum cartão cadastrado."
+                acao={<Button onClick={abrirNovoCartao}>Novo cartão</Button>}
+                compacto
+              />
+            ) : (
+              <ListGroup>
+                {cartoesState.map((c) => {
+                  const usado = getLimiteUsado(c.id);
+                  const limite = c.limite || 0;
+                  return (
+                    <ListRow
+                      key={c.id}
+                      icone={<PontoCategoria cor={corDoCartao(c.cor)} />}
+                      titulo={c.nome}
+                      meta={`vence dia ${c.dia_vencimento} · ${formatPercent(limite > 0 ? usado / limite : 0)} do limite`}
+                      valor={formatCurrency(getFaturaCartao(c.id))}
+                      onAbrir={() => setCartaoSelecionado(c)}
+                      rodape={
+                        <div className="pl-12">
+                          <ProgressBar valor={usado} maximo={limite} rotulo={`${c.nome}: uso do limite`} />
+                        </div>
+                      }
+                    />
+                  );
+                })}
+              </ListGroup>
+            )}
+          </Surface>
+        </div>
+      )}
+
+      {/* Cartão selecionado */}
+      {cartaoSelecionado &&
+        (() => {
+          const usado = getLimiteUsado(cartaoSelecionado.id);
+          const limite = cartaoSelecionado.limite || 0;
+          const fatura = getFaturaCartao(cartaoSelecionado.id);
+          const quitada = faturaQuitada(cartaoSelecionado.id);
+          const itens = getTodasTransacoesDoMes(cartaoSelecionado.id);
+
+          // Dias até o vencimento — só faz sentido olhando o mês corrente.
+          const hoje = new Date();
+          const hojeZero = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+          const ultimoDiaMes = new Date(mesVisualizacao.getFullYear(), mesVisualizacao.getMonth() + 1, 0).getDate();
+          const dataVencimento = new Date(
+            mesVisualizacao.getFullYear(),
+            mesVisualizacao.getMonth(),
+            Math.min(cartaoSelecionado.dia_vencimento, ultimoDiaMes),
+          );
+          const diasAteVencimento = Math.round((dataVencimento.getTime() - hojeZero.getTime()) / 86400000);
+          const mostraContagem = format(mesVisualizacao, "yyyy-MM") === format(hoje, "yyyy-MM") && diasAteVencimento >= 0;
+
+          // Itens agrupados por dia, do mais recente para o mais antigo.
+          const porDia: { data: string; itens: typeof itens }[] = [];
+          itens.forEach((t) => {
+            const dia = t.data.length === 7 ? `${t.data}-01` : t.data;
+            const grupo = porDia.find((g) => g.data === dia);
+            if (grupo) grupo.itens.push(t);
+            else porDia.push({ data: dia, itens: [t] });
+          });
+
+          return (
+            <div className="grid grid-cols-1 lg:[grid-template-columns:minmax(0,1fr)_340px] gap-6 items-start">
+              <div className="space-y-6 min-w-0">
+                {/* Fatura em destaque */}
+                <div data-tour="cartoes-detalhes-fatura">
+                  <BalanceHero
+                    rotulo={
+                      <span className="inline-flex items-center gap-2">
+                        <PontoCategoria cor={corDoCartao(cartaoSelecionado.cor)} />
+                        {cartaoSelecionado.nome} · fatura de {nomeDoMes}
+                      </span>
+                    }
+                    aoLado={
+                      quitada ? (
+                        <Pill>quitada</Pill>
+                      ) : mostraContagem && diasAteVencimento <= 5 ? (
+                        <Pill tom="atencao">
+                          {diasAteVencimento === 0 ? "vence hoje" : `vence em ${diasAteVencimento} ${diasAteVencimento === 1 ? "dia" : "dias"}`}
+                        </Pill>
+                      ) : undefined
+                    }
+                    valor={fatura}
+                    perigoSeNegativo={false}
+                    contexto={
+                      <>
+                        Vence dia {cartaoSelecionado.dia_vencimento}
+                        {cartaoSelecionado.melhor_dia_compra
+                          ? ` · melhor dia para comprar: ${cartaoSelecionado.melhor_dia_compra}`
+                          : ""}
+                        {quitada && (
+                          <>
+                            {" · "}
+                            <button
+                              type="button"
+                              onClick={handleDesfazerPagamento}
+                              className="underline underline-offset-2 hover:text-fg transition-colors"
+                            >
+                              Desfazer pagamento
+                            </button>
+                          </>
+                        )}
+                      </>
+                    }
+                  />
+                </div>
+
+                {/* Limite */}
+                <div data-tour="cartoes-detalhes-limite">
+                  <p className="text-sm text-fg-2 mb-3">Limite</p>
+                  <ProgressBar
+                    valor={usado}
+                    maximo={limite}
+                    rotulo={`Limite de ${cartaoSelecionado.nome}: ${formatPercent(limite > 0 ? usado / limite : 0)} usado`}
+                    legenda={legendaLimite(usado, limite)}
+                  />
+                </div>
+
+                {/* Transações da fatura */}
+                <Surface as="section" data-tour="cartoes-detalhes-transacoes">
+                  <SurfaceHeader
+                    titulo="Transações da fatura"
+                    className="mb-0"
+                    acao={
+                      <span className="valor text-xs text-fg-3">
+                        {itens.length} {itens.length === 1 ? "item" : "itens"}
+                      </span>
+                    }
+                  />
+                  {cartaoSelecionado.divida_inicial && cartaoSelecionado.divida_inicial > 0 ? (
+                    <div className="flex items-center justify-between gap-3 mt-3 px-3 py-2.5 bg-surface-2 rounded-sm text-sm">
+                      <span className="text-fg-2">Saldo anterior</span>
+                      <span className="valor text-fg">{formatCurrency(cartaoSelecionado.divida_inicial)}</span>
+                    </div>
+                  ) : null}
+                  {itens.length === 0 ? (
+                    <EmptyState Icone={Receipt} frase="Nenhuma transação nesta fatura." compacto />
+                  ) : (
+                    porDia.map(({ data, itens: doDia }) => (
+                      <ListGroup key={data} titulo={rotuloDia(dataLocal(data))}>
+                        {doDia.map((t) => {
+                          const fixo = t.origem === "gasto" && isGastoFixo(t.id);
+                          const compartilhado = t.origem === "compartilhado";
+                          const parcial = compartilhado && t.pagoParcial;
+                          return (
+                            <ListRow
+                              key={`${t.origem}-${t.id}`}
+                              icone={
+                                compartilhado ? (
+                                  <Users className="w-4 h-4" strokeWidth={1.5} />
+                                ) : fixo ? (
+                                  <Repeat className="w-4 h-4" strokeWidth={1.5} />
+                                ) : (
+                                  <CreditCard className="w-4 h-4" strokeWidth={1.5} />
+                                )
+                              }
+                              titulo={t.descricao}
+                              meta={
+                                <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                                  <span>{t.categoria}</span>
+                                  {fixo && <Pill>fixo</Pill>}
+                                  {compartilhado && !t.pago && !parcial && <Pill>emprestado · {t.pessoa}</Pill>}
+                                  {parcial && <Pill tom="atencao">pagou {formatCurrency(t.valorPago || 0)}</Pill>}
+                                </span>
+                              }
+                              valor={formatDinheiro(-t.valor)}
+                              subvalor={parcial ? `falta ${formatCurrency(t.valorRestante || 0)}` : undefined}
+                              pago={t.pago}
+                              acoes={
+                                t.origem === "transacao"
+                                  ? [
+                                      {
+                                        rotulo: "Excluir",
+                                        icone: <Trash2 className="w-4 h-4" strokeWidth={1.5} />,
+                                        onClick: () => handleDeleteTransacao(t.id),
+                                        tom: "perigo",
+                                      },
+                                    ]
+                                  : undefined
+                              }
+                            />
+                          );
+                        })}
+                      </ListGroup>
+                    ))
+                  )}
+                </Surface>
+              </div>
+
+              {/* Este cartão */}
+              <Surface as="section">
+                <SurfaceHeader
+                  titulo="Este cartão"
+                  acao={
+                    <MenuAcoes
+                      titulo={cartaoSelecionado.nome}
+                      acoes={[
+                        {
+                          rotulo: "Editar",
+                          icone: <Pencil className="w-4 h-4" strokeWidth={1.5} />,
+                          onClick: () => handleEditCartao(cartaoSelecionado),
+                        },
+                        {
+                          rotulo: "Excluir",
+                          icone: <Trash2 className="w-4 h-4" strokeWidth={1.5} />,
+                          onClick: () => handleDeleteCartao(cartaoSelecionado.id, cartaoSelecionado.nome),
+                          tom: "perigo",
+                        },
+                      ]}
+                    />
+                  }
+                />
+                <dl className="text-sm">
+                  {[
+                    { rotulo: "Vencimento", valor: `dia ${cartaoSelecionado.dia_vencimento}` },
+                    {
+                      rotulo: "Melhor dia para comprar",
+                      valor: cartaoSelecionado.melhor_dia_compra ? `dia ${cartaoSelecionado.melhor_dia_compra}` : "não definido",
+                    },
+                    { rotulo: "Dívida inicial", valor: formatCurrency(cartaoSelecionado.divida_inicial || 0) },
+                    { rotulo: "Limite", valor: formatCurrency(limite) },
+                  ].map((l) => (
+                    <div key={l.rotulo} className="flex items-baseline justify-between gap-4 py-2 border-b border-line last:border-b-0">
+                      <dt className="text-fg-2">{l.rotulo}</dt>
+                      <dd className="valor text-fg">{l.valor}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Surface>
+            </div>
+          );
+        })()}
 
       <GuidedTourOverlay
         show={showTutorial}
@@ -1011,49 +1029,145 @@ export const CartoesCreditoPage = () => {
         onNext={nextTutorialStep}
       />
 
-      {/* Modal Novo/Editar Cartão */}
-      {showFormCartao && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-md p-5 border border-zinc-200 dark:border-white/[0.06] shadow-xl dark:shadow-black/60">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100">{editandoCartao ? "Editar Cartão" : "Novo cartão de crédito"}</h3>
-              <button onClick={resetFormCartao} className="p-1 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded"><X className="w-5 h-5 text-zinc-400 dark:text-zinc-500" /></button>
-            </div>
-            <form onSubmit={handleSubmitCartao} className="space-y-4">
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Nome</label><input type="text" value={formCartao.nome} onChange={e => setFormCartao({...formCartao, nome: e.target.value})} placeholder="Ex: Nubank, Inter..." className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Limite</label><input type="text" value={formCartao.limite} onChange={e => setFormCartao({...formCartao, limite: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Dia de Vencimento</label><input type="number" min="1" max="31" value={formCartao.dia_vencimento} onChange={e => setFormCartao({...formCartao, dia_vencimento: e.target.value})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" required /></div>
-                <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Melhor dia compra</label><input type="number" min="1" max="31" value={formCartao.melhor_dia_compra} onChange={e => setFormCartao({...formCartao, melhor_dia_compra: e.target.value})} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
-              </div>
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Dívida Inicial (se houver)</label><input type="text" value={formCartao.divida_inicial} onChange={e => setFormCartao({...formCartao, divida_inicial: formatCurrencyInput(e.target.value)})} placeholder="R$ 0,00" className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /></div>
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Cor</label><div className="flex gap-2 flex-wrap">{CORES_CARTAO.map(cor => (<button key={cor} type="button" onClick={() => setFormCartao({...formCartao, cor})} className={`w-8 h-8 rounded-lg ${formCartao.cor === cor ? "ring-2 ring-emerald-500" : ""}`} style={{ backgroundColor: cor }} />))}</div></div>
-              <div className="flex gap-2 pt-2">
-                <button type="button" onClick={resetFormCartao} className="flex-1 py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.10] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
-                <button type="submit" disabled={saving} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}{editandoCartao ? "Salvar" : "Criar"}</button>
-              </div>
-            </form>
+      {/* Novo / editar cartão */}
+      <FormSheet
+        aberto={showFormCartao}
+        titulo={editandoCartao ? "Editar cartão" : "Novo cartão"}
+        onFechar={resetFormCartao}
+        onEnviar={() => handleSubmitCartao({ preventDefault() {} } as React.FormEvent)}
+        rotuloEnviar={editandoCartao ? "Salvar alterações" : "Criar cartão"}
+        enviando={saving}
+        podeEnviar={!!formCartao.nome.trim() && !!formCartao.limite && !!formCartao.dia_vencimento}
+        valor={
+          <div>
+            <MoneyInput
+              tamanho="heroi"
+              value={formCartao.limite}
+              onChange={(limite) => setFormCartao({ ...formCartao, limite })}
+              aria-label="Limite"
+            />
+            <p className="mt-2 text-center text-xs text-fg-3">Limite</p>
           </div>
+        }
+      >
+        <Campo rotulo="Nome" htmlFor="cartao-nome">
+          <input
+            id="cartao-nome"
+            data-autofocus
+            type="text"
+            value={formCartao.nome}
+            onChange={(e) => setFormCartao({ ...formCartao, nome: e.target.value })}
+            placeholder="Ex: Nubank, Inter"
+            className={campoClasse}
+          />
+        </Campo>
+        <div className="grid grid-cols-2 gap-3">
+          <Campo rotulo="Dia do vencimento" htmlFor="cartao-vencimento">
+            <input
+              id="cartao-vencimento"
+              type="number"
+              inputMode="numeric"
+              min="1"
+              max="31"
+              value={formCartao.dia_vencimento}
+              onChange={(e) => setFormCartao({ ...formCartao, dia_vencimento: e.target.value })}
+              className={`${campoClasse} valor`}
+            />
+          </Campo>
+          <Campo rotulo="Melhor dia de compra" htmlFor="cartao-melhor-dia">
+            <input
+              id="cartao-melhor-dia"
+              type="number"
+              inputMode="numeric"
+              min="1"
+              max="31"
+              value={formCartao.melhor_dia_compra}
+              onChange={(e) => setFormCartao({ ...formCartao, melhor_dia_compra: e.target.value })}
+              className={`${campoClasse} valor`}
+            />
+          </Campo>
         </div>
-      )}
+        <Campo rotulo="Cor">
+          <div className="flex gap-2 flex-wrap" role="radiogroup" aria-label="Cor do cartão">
+            {CORES_CARTAO.map((cor) => {
+              const ativa = corDoCartao(formCartao.cor) === cor;
+              return (
+                <button
+                  key={cor}
+                  type="button"
+                  role="radio"
+                  aria-checked={ativa}
+                  aria-label={`Cor ${CORES_CARTAO.indexOf(cor) + 1}`}
+                  onClick={() => setFormCartao({ ...formCartao, cor })}
+                  className={`w-9 h-9 rounded-sm transition-shadow ${ativa ? "ring-2 ring-fg ring-offset-2 ring-offset-surface-1" : ""}`}
+                  style={{ backgroundColor: cor }}
+                />
+              );
+            })}
+          </div>
+        </Campo>
+        <MaisOpcoes abertoInicial={!!formCartao.divida_inicial}>
+          <Campo rotulo="Dívida inicial" htmlFor="cartao-divida" dica="O que já estava na fatura antes de você começar a usar o Hedge.">
+            <MoneyInput
+              id="cartao-divida"
+              value={formCartao.divida_inicial}
+              onChange={(divida_inicial) => setFormCartao({ ...formCartao, divida_inicial })}
+            />
+          </Campo>
+        </MaisOpcoes>
+      </FormSheet>
 
-      {/* Modal Pagar Fatura */}
-      {showPagarFatura && cartaoSelecionado && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-md p-5 border border-zinc-200 dark:border-white/[0.06] shadow-xl dark:shadow-black/60">
-            <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100 mb-2">Pagar Fatura</h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">Selecione a conta de onde sairá o dinheiro para pagar esta fatura de <strong className="font-mono valor text-emerald-600 dark:text-emerald-400">{formatCurrency(getFaturaCartao(cartaoSelecionado.id))}</strong>.</p>
-            <div className="space-y-4">
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Conta de Origem</label><select value={contaPagamento} onChange={e => setContaPagamento(e.target.value)} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"><option value="">Selecione...</option>{contas.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>
-              <div><label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Valor</label><input type="text" value={valorPagamento} onChange={e => setValorPagamento(formatCurrencyInput(e.target.value))} className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]" /><p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Insira o valor pago (deixe como está para pagamento total)</p></div>
-            </div>
-            <div className="flex flex-col gap-2 mt-4">
-              <button onClick={handlePagarFatura} disabled={saving} className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}Confirmar Pagamento</button>
-              <button onClick={() => setShowPagarFatura(false)} className="w-full py-2 bg-zinc-100 dark:bg-white/[0.04] hover:bg-zinc-200 dark:hover:bg-white/[0.10] text-zinc-700 dark:text-zinc-300 rounded-lg">Cancelar</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Pagar fatura */}
+      <FormSheet
+        aberto={showPagarFatura && !!cartaoSelecionado}
+        titulo="Pagar fatura"
+        aviso={
+          cartaoSelecionado ? (
+            <>
+              {cartaoSelecionado.nome} · fatura de {nomeDoMes}:{" "}
+              <span className="valor">{formatCurrency(getFaturaCartao(cartaoSelecionado.id))}</span>
+            </>
+          ) : undefined
+        }
+        onFechar={() => setShowPagarFatura(false)}
+        onEnviar={handlePagarFatura}
+        rotuloEnviar="Confirmar pagamento"
+        enviando={saving}
+        podeEnviar={!!contaPagamento && !!valorPagamento}
+        valor={
+          <MoneyInput
+            tamanho="heroi"
+            value={valorPagamento}
+            onChange={setValorPagamento}
+            aria-label="Valor pago"
+            data-autofocus
+          />
+        }
+      >
+        {cartaoSelecionado && (
+          <Chips>
+            <Chip
+              ativo={false}
+              onClick={() => setValorPagamento(formatCurrencyValue(getFaturaCartao(cartaoSelecionado.id)))}
+            >
+              Fatura inteira · <span className="valor">{formatCurrency(getFaturaCartao(cartaoSelecionado.id))}</span>
+            </Chip>
+          </Chips>
+        )}
+        <Campo rotulo="Sai de qual conta">
+          {contas.length > 0 ? (
+            <Chips>
+              {contas.map((c) => (
+                <Chip key={c.id} ativo={contaPagamento === c.id} onClick={() => setContaPagamento(c.id)}>
+                  {c.nome}
+                </Chip>
+              ))}
+            </Chips>
+          ) : (
+            <p className="text-sm text-fg-2">Cadastre uma conta em Contas e receitas para pagar a fatura.</p>
+          )}
+        </Campo>
+      </FormSheet>
     </div>
   );
 };
