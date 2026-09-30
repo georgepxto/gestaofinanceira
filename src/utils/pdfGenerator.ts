@@ -7,6 +7,20 @@ import { categoriaDeGasto, normalizarCategoria } from "./categories";
 import type { ParcelaAtiva, ResumoMensal, MeuGasto, MetaGasto } from "../types";
 import type { PagamentoParcial } from "../types/extended";
 
+// Paleta do PDF: a mesma régua do app em papel. Tinta quase preta e cinzas;
+// laranja só para atenção (80% da meta, pendente) e vermelho para estouro.
+// No papel branco o laranja do app não tem contraste para texto, então o texto
+// de atenção usa uma versão escura.
+type RGB = [number, number, number];
+const TINTA: RGB = [17, 17, 17];
+const TINTA_2: RGB = [94, 94, 91];
+const FIO: RGB = [220, 220, 217];
+const FUNDO: RGB = [244, 244, 242];
+const LARANJA: RGB = [255, 107, 53];
+const LARANJA_TEXTO: RGB = [184, 70, 18];
+const PERIGO: RGB = [200, 40, 46];
+const CABECALHO = { fillColor: [232, 232, 229] as RGB, textColor: TINTA, fontStyle: "bold" as const };
+
 export const generateGastosPDF = (
   parcelas: ParcelaAtiva[],
   resumo: ResumoMensal[],
@@ -20,12 +34,12 @@ export const generateGastosPDF = (
   // Título
   doc.setFontSize(20);
   doc.setFont("helvetica", "bold");
-  doc.text("Relatório de Despesas", 14, 22);
+  doc.text("Relatório de despesas", 14, 22);
   
   // Mês referência
   doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(100);
+  doc.setTextColor(...TINTA_2);
   const mesFormatado = formatMonthYear(mes);
   doc.text(`${mesFormatado.charAt(0).toUpperCase() + mesFormatado.slice(1)}`, 14, 30);
   
@@ -39,13 +53,13 @@ export const generateGastosPDF = (
   
   if (filtrosAtivos.length > 0) {
     doc.setFontSize(10);
-    doc.setTextColor(120);
+    doc.setTextColor(...TINTA_2);
     doc.text(`Filtros: ${filtrosAtivos.join(" | ")}`, 14, yPos);
     yPos += 10;
   }
 
   // Linha separadora
-  doc.setDrawColor(200);
+  doc.setDrawColor(...FIO);
   doc.line(14, yPos - 2, 196, yPos - 2);
   yPos += 4;
 
@@ -66,14 +80,14 @@ export const generateGastosPDF = (
     // Nome da pessoa
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(59, 130, 246); // blue-600
+    doc.setTextColor(...TINTA);
     doc.text(pessoa, 14, yPos);
     const nomeWidth = doc.getTextWidth(pessoa); // medir ANTES de trocar font
     
     // Quantidade de itens (na mesma linha, após o nome)
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(150);
+    doc.setTextColor(...TINTA_2);
     doc.text(`${parcelasPessoa.length} ${parcelasPessoa.length === 1 ? "lançamento" : "lançamentos"}`, 14 + nomeWidth + 4, yPos);
     yPos += 6;
     
@@ -98,11 +112,7 @@ export const generateGastosPDF = (
       head: [["Data", "Descrição", "Categoria", "Tipo", "Parcela", "Valor"]],
       body: tableData,
       theme: "striped",
-      headStyles: { 
-        fillColor: [59, 130, 246],
-        fontSize: 9,
-        fontStyle: "bold",
-      },
+      headStyles: { ...CABECALHO, fontSize: 9 },
       bodyStyles: {
         fontSize: 9,
       },
@@ -124,7 +134,7 @@ export const generateGastosPDF = (
     if (resumoPessoa) {
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(0);
+      doc.setTextColor(...TINTA);
       const totalText = `Total ${pessoa}: ${formatCurrency(resumoPessoa.total)}`;
       // Alinhar à direita
       const textWidth = doc.getTextWidth(totalText);
@@ -149,8 +159,8 @@ export const generateGastosPDF = (
 
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(34, 139, 34); // verde
-      doc.text(`Pagamentos Parciais — ${pessoa}`, 14, yPos);
+      doc.setTextColor(...TINTA);
+      doc.text(`Pagamentos parciais — ${pessoa}`, 14, yPos);
       yPos += 5;
 
       const pagData = pagamentos.map(p => [
@@ -160,14 +170,10 @@ export const generateGastosPDF = (
 
       autoTable(doc, {
         startY: yPos,
-        head: [["Data", "Valor Pago"]],
+        head: [["Data", "Valor pago"]],
         body: pagData,
         theme: "striped",
-        headStyles: {
-          fillColor: [34, 139, 34],
-          fontSize: 9,
-          fontStyle: "bold",
-        },
+        headStyles: { ...CABECALHO, fontSize: 9 },
         bodyStyles: { fontSize: 9 },
         columnStyles: {
           0: { cellWidth: 40 },
@@ -182,9 +188,9 @@ export const generateGastosPDF = (
 
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(34, 139, 34);
+      doc.setTextColor(...TINTA);
       doc.text(`Total pago: ${formatCurrency(totalPago)}`, 14, yPos);
-      doc.setTextColor(restante > 0 ? 200 : 100, restante > 0 ? 80 : 100, restante > 0 ? 50 : 100);
+      doc.setTextColor(...(restante > 0 ? LARANJA_TEXTO : TINTA_2));
       doc.text(`Falta: ${formatCurrency(Math.max(0, restante))}`, 70, yPos);
       doc.setFont("helvetica", "normal");
       yPos += 10;
@@ -192,7 +198,7 @@ export const generateGastosPDF = (
     
     // Separador entre pessoas
     if (idx < pessoas.length - 1) {
-      doc.setDrawColor(220);
+      doc.setDrawColor(...FIO);
       doc.line(14, yPos - 4, 196, yPos - 4);
       yPos += 4;
     }
@@ -205,21 +211,21 @@ export const generateGastosPDF = (
   }
   
   // Linha antes do total geral
-  doc.setDrawColor(59, 130, 246);
+  doc.setDrawColor(...TINTA);
   doc.setLineWidth(0.5);
   doc.line(14, yPos, 196, yPos);
   yPos += 8;
   
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(0);
-  doc.text(`Total Geral: ${formatCurrency(total)}`, 14, yPos);
+  doc.setTextColor(...TINTA);
+  doc.text(`Total geral: ${formatCurrency(total)}`, 14, yPos);
   yPos += 6;
   
   // Quantidade total (linha separada)
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(120);
+  doc.setTextColor(...TINTA_2);
   doc.text(`${parcelas.length} ${parcelas.length === 1 ? "lançamento" : "lançamentos"}`, 14, yPos);
   yPos += 12;
 
@@ -246,15 +252,15 @@ export const generateGastosPDF = (
       yPos = 20;
     }
 
-    doc.setDrawColor(220, 80, 50);
+    doc.setDrawColor(...TINTA);
     doc.setLineWidth(0.5);
     doc.line(14, yPos - 2, 196, yPos - 2);
     yPos += 6;
 
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(220, 80, 50);
-    doc.text("Para o Saldo Devedor (Não pago neste mês)", 14, yPos);
+    doc.setTextColor(...TINTA);
+    doc.text("Vai para a dívida (não pago neste mês)", 14, yPos);
     yPos += 6;
 
     const dividasData = devendoEsteMes.map(d => [
@@ -266,14 +272,10 @@ export const generateGastosPDF = (
 
     autoTable(doc, {
       startY: yPos,
-      head: [["Pessoa", "Total do Mês", "Valor Pago", "Vai para dívida"]],
+      head: [["Pessoa", "Total do mês", "Valor pago", "Vai para a dívida"]],
       body: dividasData,
       theme: "striped",
-      headStyles: {
-        fillColor: [220, 80, 50],
-        fontSize: 9,
-        fontStyle: "bold",
-      },
+      headStyles: { ...CABECALHO, fontSize: 9 },
       bodyStyles: { fontSize: 9 },
       columnStyles: {
         0: { cellWidth: 40 },
@@ -290,8 +292,8 @@ export const generateGastosPDF = (
     const totalParaDivida = devendoEsteMes.reduce((sum, d) => sum + d.restante, 0);
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(220, 80, 50);
-    const totalDivText = `Total para o Saldo Devedor: ${formatCurrency(totalParaDivida)}`;
+    doc.setTextColor(...TINTA);
+    const totalDivText = `Total que vai para a dívida: ${formatCurrency(totalParaDivida)}`;
     const divTextW = doc.getTextWidth(totalDivText);
     doc.text(totalDivText, 196 - divTextW, yPos);
   }
@@ -302,7 +304,7 @@ export const generateGastosPDF = (
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(160);
+    doc.setTextColor(...TINTA_2);
     const pageHeight = doc.internal.pageSize.height;
     doc.text(
       `Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
@@ -344,11 +346,11 @@ export const generateMeusGastosPDF = (
   // ─── Título ───
   doc.setFontSize(20);
   doc.setFont("helvetica", "bold");
-  doc.text("Meus Gastos — Relatório Pessoal", 14, 22);
+  doc.text("Meus gastos — relatório pessoal", 14, 22);
 
   doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(100);
+  doc.setTextColor(...TINTA_2);
   const mesFormatado = formatMonthYear(mes);
   doc.text(`${mesFormatado.charAt(0).toUpperCase() + mesFormatado.slice(1)}`, 14, 30);
 
@@ -364,38 +366,38 @@ export const generateMeusGastosPDF = (
 
   if (filtrosAtivos.length > 0) {
     doc.setFontSize(10);
-    doc.setTextColor(120);
+    doc.setTextColor(...TINTA_2);
     doc.text(`Filtros: ${filtrosAtivos.join(" | ")}`, 14, yPos);
     yPos += 8;
   }
 
   // ─── Resumo (4 cards em linha) ───
-  doc.setDrawColor(200);
+  doc.setDrawColor(...FIO);
   doc.line(14, yPos, pageWidth - 14, yPos);
   yPos += 6;
 
   const cardWidth = (pageWidth - 28 - 12) / 4; // 4 cards with 4px gaps
   const cards = [
-    { label: "Crédito", valor: totais.credito, cor: [139, 92, 246] },  // purple
-    { label: "Débito", valor: totais.debito, cor: [16, 185, 129] },   // emerald
-    { label: "Pago", valor: totais.pagos, cor: [34, 197, 94] },       // green
-    { label: "Fixos", valor: totais.fixos, cor: [245, 158, 11] },     // amber
+    { label: "Crédito", valor: totais.credito },
+    { label: "Débito", valor: totais.debito },
+    { label: "Pago", valor: totais.pagos },
+    { label: "Fixos", valor: totais.fixos },
   ];
 
   cards.forEach((card, i) => {
     const x = 14 + i * (cardWidth + 4);
     // Card background
-    doc.setFillColor(245, 247, 250);
-    doc.roundedRect(x, yPos, cardWidth, 22, 3, 3, "F");
+    doc.setFillColor(...FUNDO);
+    doc.roundedRect(x, yPos, cardWidth, 22, 1, 1, "F");
     // Label
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(card.cor[0], card.cor[1], card.cor[2]);
+    doc.setTextColor(...TINTA_2);
     doc.text(card.label, x + 4, yPos + 8);
     // Value
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(30);
+    doc.setTextColor(...TINTA);
     doc.text(formatCurrency(card.valor), x + 4, yPos + 18);
   });
 
@@ -405,20 +407,20 @@ export const generateMeusGastosPDF = (
   const totalMes = totais.credito + totais.debito;
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(0);
-  doc.text(`Total do Mês: ${formatCurrency(totalMes)}`, 14, yPos);
+  doc.setTextColor(...TINTA);
+  doc.text(`Total do mês: ${formatCurrency(totalMes)}`, 14, yPos);
   yPos += 10;
 
   // ─── Metas de Gasto ───
   if (metas.length > 0) {
-    doc.setDrawColor(200);
+    doc.setDrawColor(...FIO);
     doc.line(14, yPos - 2, pageWidth - 14, yPos - 2);
     yPos += 4;
 
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(139, 92, 246); // purple
-    doc.text("Metas de Gasto", 14, yPos);
+    doc.setTextColor(...TINTA);
+    doc.text("Metas de gasto", 14, yPos);
     yPos += 8;
 
     metas.forEach(meta => {
@@ -441,34 +443,28 @@ export const generateMeusGastosPDF = (
       // Nome da categoria + valores
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(30);
+      doc.setTextColor(...TINTA);
       doc.text(meta.categoria, 14, yPos);
 
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(100);
+      doc.setTextColor(...TINTA_2);
       const statusText = `${formatCurrency(gastoCategoria)} / ${formatCurrency(meta.limite)} (${percentual.toFixed(0)}%)`;
       doc.text(statusText, pageWidth - 14 - doc.getTextWidth(statusText), yPos);
       yPos += 4;
 
       // Barra de progresso
       const barWidth = pageWidth - 28;
-      const barHeight = 5;
+      const barHeight = 2;
 
       // Background
-      doc.setFillColor(230, 230, 230);
-      doc.roundedRect(14, yPos, barWidth, barHeight, 2, 2, "F");
+      doc.setFillColor(...FIO);
+      doc.rect(14, yPos, barWidth, barHeight, "F");
 
-      // Progress fill
-      if (ultrapassou) {
-        doc.setFillColor(239, 68, 68); // red
-      } else if (percentual > 80) {
-        doc.setFillColor(245, 158, 11); // amber
-      } else {
-        doc.setFillColor(34, 197, 94); // green
-      }
+      // Mesma régua do app: tinta, laranja a partir de 80%, vermelho acima de 100%.
+      doc.setFillColor(...(ultrapassou ? PERIGO : percentual >= 80 ? LARANJA : TINTA));
       const fillWidth = (percentual / 100) * barWidth;
       if (fillWidth > 0) {
-        doc.roundedRect(14, yPos, fillWidth, barHeight, 2, 2, "F");
+        doc.rect(14, yPos, fillWidth, barHeight, "F");
       }
 
       yPos += 10;
@@ -485,14 +481,14 @@ export const generateMeusGastosPDF = (
       yPos = 20;
     }
 
-    doc.setDrawColor(200);
+    doc.setDrawColor(...FIO);
     doc.line(14, yPos - 2, pageWidth - 14, yPos - 2);
     yPos += 4;
 
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(245, 158, 11); // amber
-    doc.text("Gastos Fixos Mensais", 14, yPos);
+    doc.setTextColor(...TINTA);
+    doc.text("Gastos fixos", 14, yPos);
     yPos += 6;
 
     const fixosData = fixosAtivos
@@ -510,7 +506,7 @@ export const generateMeusGastosPDF = (
       head: [["Vencimento", "Descrição", "Tipo", "Categoria", "Valor"]],
       body: fixosData,
       theme: "striped",
-      headStyles: { fillColor: [245, 158, 11], fontSize: 9, fontStyle: "bold" },
+      headStyles: { ...CABECALHO, fontSize: 9 },
       bodyStyles: { fontSize: 9 },
       columnStyles: { 4: { halign: "right" } },
       margin: { left: 14, right: 14 },
@@ -521,8 +517,8 @@ export const generateMeusGastosPDF = (
 
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(0);
-    const totalFixosText = `Total Fixos: ${formatCurrency(totais.fixos)}`;
+    doc.setTextColor(...TINTA);
+    const totalFixosText = `Total dos fixos: ${formatCurrency(totais.fixos)}`;
     doc.text(totalFixosText, pageWidth - 14 - doc.getTextWidth(totalFixosText), yPos);
     yPos += 12;
   }
@@ -534,14 +530,14 @@ export const generateMeusGastosPDF = (
       yPos = 20;
     }
 
-    doc.setDrawColor(200);
+    doc.setDrawColor(...FIO);
     doc.line(14, yPos - 2, pageWidth - 14, yPos - 2);
     yPos += 4;
 
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(16, 185, 129); // emerald
-    doc.text(`Gastos do Mês (${meusGastosDoMes.length})`, 14, yPos);
+    doc.setTextColor(...TINTA);
+    doc.text(`Gastos do mês (${meusGastosDoMes.length})`, 14, yPos);
     yPos += 6;
 
     // Preparar dados para tabela
@@ -559,17 +555,17 @@ export const generateMeusGastosPDF = (
         normalizarCategoria(g.categoria_gasto) || "—",
         categoriaLabel[g.categoria] || g.categoria,
         g.tipo === "credito" ? "Crédito" : "Débito",
-        g.pago || g.tipo === "debito" ? "✓ Pago" : "Pendente",
+        g.pago || g.tipo === "debito" ? "Pago" : "Pendente",
         formatCurrency(valor),
       ];
     });
 
     autoTable(doc, {
       startY: yPos,
-      head: [["Data", "Descrição", "Categ. Gasto", "Tipo Gasto", "Pagamento", "Status", "Valor"]],
+      head: [["Data", "Descrição", "Categoria", "Tipo", "Pagamento", "Status", "Valor"]],
       body: tableData,
       theme: "striped",
-      headStyles: { fillColor: [16, 185, 129], fontSize: 8, fontStyle: "bold" },
+      headStyles: { ...CABECALHO, fontSize: 8 },
       bodyStyles: { fontSize: 8 },
       columnStyles: {
         0: { cellWidth: 20 },
@@ -582,14 +578,9 @@ export const generateMeusGastosPDF = (
       },
       margin: { left: 14, right: 14 },
       didParseCell: (data: any) => {
-        // Colorir status
+        // Status: pago em cinza, pendente em atenção
         if (data.section === "body" && data.column.index === 5) {
-          if (data.cell.raw === "✓ Pago") {
-            data.cell.styles.textColor = [34, 197, 94];
-            data.cell.styles.fontStyle = "bold";
-          } else {
-            data.cell.styles.textColor = [245, 158, 11];
-          }
+          data.cell.styles.textColor = data.cell.raw === "Pago" ? TINTA_2 : LARANJA_TEXTO;
         }
       },
     });
@@ -614,14 +605,14 @@ export const generateMeusGastosPDF = (
       yPos = 20;
     }
 
-    doc.setDrawColor(200);
+    doc.setDrawColor(...FIO);
     doc.line(14, yPos - 2, pageWidth - 14, yPos - 2);
     yPos += 4;
 
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(59, 130, 246); // blue
-    doc.text("Resumo por Categoria", 14, yPos);
+    doc.setTextColor(...TINTA);
+    doc.text("Resumo por categoria", 14, yPos);
     yPos += 6;
 
     const catData = categoriasOrdenadas.map(([cat, val]) => [
@@ -632,10 +623,10 @@ export const generateMeusGastosPDF = (
 
     autoTable(doc, {
       startY: yPos,
-      head: [["Categoria", "Total", "% do Total"]],
+      head: [["Categoria", "Total", "% do total"]],
       body: catData,
       theme: "striped",
-      headStyles: { fillColor: [59, 130, 246], fontSize: 9, fontStyle: "bold" },
+      headStyles: { ...CABECALHO, fontSize: 9 },
       bodyStyles: { fontSize: 9 },
       columnStyles: {
         1: { halign: "right" },
@@ -654,20 +645,20 @@ export const generateMeusGastosPDF = (
     yPos = 20;
   }
 
-  doc.setDrawColor(16, 185, 129);
+  doc.setDrawColor(...TINTA);
   doc.setLineWidth(0.5);
   doc.line(14, yPos, pageWidth - 14, yPos);
   yPos += 8;
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(0);
-  doc.text(`Total Geral: ${formatCurrency(totalMes)}`, 14, yPos);
+  doc.setTextColor(...TINTA);
+  doc.text(`Total geral: ${formatCurrency(totalMes)}`, 14, yPos);
   yPos += 6;
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(120);
+  doc.setTextColor(...TINTA_2);
   doc.text(`${meusGastosDoMes.length} ${meusGastosDoMes.length === 1 ? "lançamento" : "lançamentos"} + ${fixosAtivos.length} fixos`, 14, yPos);
 
   // ─── Rodapé ───
@@ -676,7 +667,7 @@ export const generateMeusGastosPDF = (
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(160);
+    doc.setTextColor(...TINTA_2);
     const pageHeight = doc.internal.pageSize.height;
     doc.text(
       `Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,

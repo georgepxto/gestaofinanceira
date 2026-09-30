@@ -462,7 +462,7 @@ export const CartoesCreditoPage = () => {
 
   const handleDeleteCartao = (id: string, nome: string) => {
     setModalConfirm({
-      show: true, titulo: "Excluir Cartão", mensagem: `Excluir "${nome}"? Transações serão removidas.`,
+      show: true, titulo: "Excluir cartão", mensagem: `Excluir "${nome}"? Transações serão removidas.`,
       onConfirm: async () => {
         if (!supabase) return;
         const { error: transErr } = await supabase.from("transacoes_cartao").delete().eq("cartao_id", id);
@@ -490,7 +490,7 @@ export const CartoesCreditoPage = () => {
 
   const handleDeleteTransacao = (id: string) => {
     setModalConfirm({
-      show: true, titulo: "Excluir Transação", mensagem: "Excluir esta transação?",
+      show: true, titulo: "Excluir transação", mensagem: "Excluir esta transação?",
       onConfirm: async () => {
         if (!supabase) return;
         const { error } = await supabase.from("transacoes_cartao").delete().eq("id", id);
@@ -551,7 +551,7 @@ export const CartoesCreditoPage = () => {
     if (!supabase || !cartaoSelecionado) return;
     const mesFatura = format(mesVisualizacao, "yyyy-MM");
     setModalConfirm({
-      show: true, titulo: "Desfazer Pagamento", mensagem: "Deseja desfazer o pagamento desta fatura? O valor será devolvido à conta.",
+      show: true, titulo: "Desfazer pagamento", confirmLabel: "Desfazer", mensagem: "Deseja desfazer o pagamento desta fatura? O valor volta para a conta.",
       onConfirm: async () => {
         if (!supabase) return;
         setSaving(true);
@@ -608,6 +608,10 @@ export const CartoesCreditoPage = () => {
 
   // O atalho "Pagar fatura" do Início chega com `?pagar=1`: abre o primeiro
   // cartão com fatura em aberto já no formulário de pagamento.
+  // A conta do pagamento já vem marcada quando dá para saber: a vinculada ao
+  // cartão ou a única cadastrada. Sem isso o botão ficava cinza sem dizer o que faltava.
+  const contaSugerida = (cartao: CartaoCredito) =>
+    contas.find((c) => c.id === cartao.conta_id)?.id || (contas.length === 1 ? contas[0].id : "");
   const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => {
     if (loading || searchParams.get("pagar") !== "1") return;
@@ -615,6 +619,7 @@ export const CartoesCreditoPage = () => {
     if (comFatura) {
       setCartaoSelecionado(comFatura);
       setValorPagamento(formatCurrencyValue(getFaturaCartao(comFatura.id)));
+      setContaPagamento(contaSugerida(comFatura));
       setShowPagarFatura(true);
     }
     setSearchParams({}, { replace: true });
@@ -654,6 +659,7 @@ export const CartoesCreditoPage = () => {
   const abrirPagarFatura = () => {
     if (!cartaoSelecionado) return;
     setValorPagamento(formatCurrencyValue(getFaturaCartao(cartaoSelecionado.id)));
+    setContaPagamento(contaSugerida(cartaoSelecionado));
     setShowPagarFatura(true);
   };
 

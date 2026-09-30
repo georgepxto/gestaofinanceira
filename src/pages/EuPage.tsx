@@ -27,7 +27,7 @@ const MEUS_GASTOS_TUTORIAL_STEPS: MeuGastoTutorialStep[] = [
   {
     target: "[data-tour='eu-header']",
     alvo: "Cabeçalho da aba",
-    titulo: "Visão da aba Meus Gastos",
+    titulo: "Lançamentos",
     descricao:
       "Aqui você controla despesas pessoais, gastos fixos, filtros e pagamentos em um único fluxo.",
     placement: "below",

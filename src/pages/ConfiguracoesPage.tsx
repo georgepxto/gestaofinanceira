@@ -95,7 +95,7 @@ export const ConfiguracoesPage = () => {
 
       setModalFeedback({
         show: true,
-        titulo: "Sucesso!",
+        titulo: "Pronto",
         mensagem: "Seu nome foi atualizado.",
         tipo: "sucesso",
       });
@@ -225,7 +225,7 @@ export const ConfiguracoesPage = () => {
 
       setModalFeedback({
         show: true,
-        titulo: "Conta Resetada",
+        titulo: "Dados zerados",
         mensagem: "Todos os seus dados foram apagados e a conta foi zerada.",
         tipo: "sucesso",
       });
@@ -280,7 +280,7 @@ export const ConfiguracoesPage = () => {
 
       setModalFeedback({
         show: true,
-        titulo: "Conta Excluída",
+        titulo: "Conta excluída",
         mensagem: "Sua conta e todos os dados foram excluídos permanentemente.",
         tipo: "info",
       });

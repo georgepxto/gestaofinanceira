@@ -26,6 +26,7 @@ interface UseSaldosDevedoresProps {
     titulo: string;
     mensagem: string;
     onConfirm: () => void;
+    confirmLabel?: string;
   }) => void;
   setModalFeedback: (modal: {
     show: boolean;
@@ -314,7 +315,8 @@ export function useSaldosDevedores({
   ) => {
     setModalConfirm({
       show: true,
-      titulo: "Desfazer Pagamento",
+      titulo: "Desfazer pagamento",
+      confirmLabel: "Desfazer",
       mensagem: `Tem certeza que deseja desfazer este pagamento de ${formatCurrency(
         valorPagamentoParam
       )}? O valor será adicionado de volta à dívida.`,
@@ -366,7 +368,7 @@ export function useSaldosDevedores({
   const handleDeleteDivida = (id: string) => {
     setModalConfirm({
       show: true,
-      titulo: "Excluir Dívida",
+      titulo: "Excluir dívida",
       mensagem:
         "Tem certeza que deseja excluir esta dívida? Esta ação não pode ser desfeita.",
       onConfirm: async () => {
@@ -497,7 +499,7 @@ export function useSaldosDevedores({
       if (valorDevedor > 0) {
         setModalFeedback({
           show: true,
-          titulo: "Mês Fechado!",
+          titulo: "Mês fechado",
           mensagem: `${pessoa} pagou ${formatCurrency(
             valorPago
           )}.\n${formatCurrency(
@@ -508,7 +510,7 @@ export function useSaldosDevedores({
       } else {
         setModalFeedback({
           show: true,
-          titulo: "Mês Fechado!",
+          titulo: "Mês fechado",
           mensagem: `${pessoa} quitou o restante de ${formatCurrency(
             valorPago
           )}.`,
@@ -591,7 +593,7 @@ export function useSaldosDevedores({
 
       setModalFeedback({
         show: true,
-        titulo: "Fechamento Desfeito!",
+        titulo: "Fechamento desfeito",
         mensagem: `O fechamento do mês de ${pessoa} foi desfeito. Os pagamentos parciais foram removidos.${
           fechamento.saldoDevedorId 
             ? ` O saldo devedor de ${formatCurrency(fechamento.valorDevedor)} foi removido.` 

@@ -315,7 +315,7 @@ export function useGastos({
   const handleDelete = async (id: string) => {
     setModalConfirm({
       show: true,
-      titulo: "Excluir Lançamento",
+      titulo: "Excluir lançamento",
       mensagem:
         "Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.",
       onConfirm: async () => {

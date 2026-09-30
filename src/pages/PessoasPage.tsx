@@ -147,7 +147,7 @@ export const PessoasPage = () => {
   const handleDelete = (nome: string) => {
     setModalConfirm({
       show: true,
-      titulo: "Excluir Pessoa",
+      titulo: "Excluir pessoa",
       mensagem: `Tem certeza que deseja excluir "${nome}"? Isso não afetará gastos ou dívidas já cadastradas.`,
       onConfirm: () => {
         handleRemovePessoa(nome);

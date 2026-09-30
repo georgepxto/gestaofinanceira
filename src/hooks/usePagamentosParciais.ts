@@ -18,6 +18,7 @@ interface UsePagamentosParciaisProps {
     titulo: string;
     mensagem: string;
     onConfirm: () => void;
+    confirmLabel?: string;
   }) => void;
   setModalFeedback: (modal: {
     show: boolean;
@@ -180,7 +181,8 @@ export function usePagamentosParciais({
 
     setModalConfirm({
       show: true,
-      titulo: "Desfazer Pagamento",
+      titulo: "Desfazer pagamento",
+      confirmLabel: "Desfazer",
       mensagem: `Deseja remover o pagamento de ${formatCurrency(
         ultimoPagamento.valor
       )} feito em ${ultimoPagamento.data}?`,

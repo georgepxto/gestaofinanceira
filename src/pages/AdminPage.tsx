@@ -143,7 +143,7 @@ export const AdminPage = () => {
 
     setModalConfirm({
       show: true,
-      titulo: `${user.is_active ? "Desativar" : "Ativar"} Usuário`,
+      titulo: `${user.is_active ? "Desativar" : "Ativar"} usuário`,
       mensagem: `Tem certeza que deseja ${action} a conta de "${nome}"? ${
         user.is_active
           ? "O usuário não conseguirá acessar o sistema."
@@ -156,7 +156,7 @@ export const AdminPage = () => {
         if (success) {
           setModalFeedback({
             show: true,
-            titulo: "Sucesso!",
+            titulo: "Pronto",
             mensagem: `Conta de "${nome}" foi ${user.is_active ? "desativada" : "ativada"}.`,
             tipo: "sucesso",
           });
@@ -171,16 +171,16 @@ export const AdminPage = () => {
     const nome = user.nome || user.email;
     setModalConfirm({
       show: true,
-      titulo: "Resetar Senha",
+      titulo: "Redefinir senha",
       mensagem: `Deseja enviar um email de redefinição de senha para "${nome}" (${user.email})? O usuário receberá um link para criar uma nova senha.`,
-      confirmLabel: "Enviar Email",
+      confirmLabel: "Enviar e-mail",
       confirmColor: "emerald",
       onConfirm: async () => {
         const success = await resetPassword(user.id, user.email);
         if (success) {
           setModalFeedback({
             show: true,
-            titulo: "Email Enviado",
+            titulo: "E-mail enviado",
             mensagem: `Link de redefinição de senha enviado para ${user.email}.`,
             tipo: "sucesso",
           });
@@ -240,7 +240,7 @@ export const AdminPage = () => {
       const user = users.find((u) => u.id === userId);
       setModalFeedback({
         show: true,
-        titulo: "Sucesso!",
+        titulo: "Pronto",
         mensagem: `Funcionalidades de "${user?.nome || user?.email}" atualizadas.`,
         tipo: "sucesso",
       });
@@ -259,7 +259,7 @@ export const AdminPage = () => {
     const nome = inactiveUser.nome || inactiveUser.email;
     setModalConfirm({
       show: true,
-      titulo: "Desativar Conta Inativa",
+      titulo: "Desativar conta inativa",
       mensagem: `"${nome}" está inativo há ${inactiveUser.days_inactive} dias. Deseja desativar a conta?`,
       confirmLabel: "Desativar",
       confirmColor: "red",
@@ -268,7 +268,7 @@ export const AdminPage = () => {
         if (success) {
           setModalFeedback({
             show: true,
-            titulo: "Conta Desativada",
+            titulo: "Conta desativada",
             mensagem: `"${nome}" foi desativado.`,
             tipo: "sucesso",
           });

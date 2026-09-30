@@ -239,7 +239,7 @@ export const ContasBancariasPage = () => {
 
   const handleDeleteConta = (id: string, nome: string) => {
     setModalConfirm({
-      show: true, titulo: "Excluir Conta", mensagem: `Excluir "${nome}"?`,
+      show: true, titulo: "Excluir conta", mensagem: `Excluir "${nome}"?`,
       onConfirm: async () => {
         if (!supabase) return;
         const { error } = await supabase.from("contas_bancarias").delete().eq("id", id);
@@ -348,7 +348,7 @@ export const ContasBancariasPage = () => {
 
   const handleDeleteReceita = (id: string, desc: string) => {
     setModalConfirm({
-      show: true, titulo: "Excluir Receita", mensagem: `Excluir "${desc}"?`,
+      show: true, titulo: "Excluir receita", mensagem: `Excluir "${desc}"?`,
       onConfirm: async () => {
         if (!supabase) return;
         const { error } = await supabase.from("receitas").delete().eq("id", id);

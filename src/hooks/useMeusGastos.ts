@@ -49,7 +49,8 @@ async function criarLancamentoEmprestimoDoMes(
   valorTotalPorPessoa: number,
   numParcelas: number,
   dataInicio: string,
-  categoriaGasto?: string
+  categoriaGasto?: string,
+  tipo: "credito" | "debito" = "credito"
 ) {
   if (!isSupabaseConfigured || !supabase) return;
 
@@ -59,7 +60,7 @@ async function criarLancamentoEmprestimoDoMes(
     valor_total: valorTotalPorPessoa,
     num_parcelas: numParcelas,
     data_inicio: dataInicio,
-    tipo: "credito",
+    tipo,
     // O empréstimo em si já é a entidade (Dívidas / Saldos Devedores); sem
     // categoria escolhida, o gasto espelhado cai no padrão da lista da pessoa.
     categoria: categoriaGasto || categoriaPadraoAtual("gasto"),
@@ -69,6 +70,34 @@ async function criarLancamentoEmprestimoDoMes(
   });
 }
 // Note: saldo devedor behavior removed - no associated deletion needed
+
+/**
+ * Apaga as cobranças que um gasto dividido espelhou em A receber (tabela
+ * `gastos`). Não há chave ligando os dois: o espelho é achado pelo nome que
+ * `criarLancamentoEmprestimoDoMes` dá ("<descrição> - <pessoa>", com
+ * " (N parcelas)" quando parcelado), pela pessoa e pela data da 1ª parcela.
+ * Sem isto, excluir o gasto deixava a cobrança órfã e cada edição a duplicava.
+ */
+async function removerEspelhosDoDividido(gasto: MeuGasto, dataPrimeiraParcela: string) {
+  if (!isSupabaseConfigured || !supabase || gasto.categoria !== "dividido") return;
+  const pessoas = gasto.dividido_com_pessoas?.length
+    ? gasto.dividido_com_pessoas
+    : gasto.dividido_com
+      ? [gasto.dividido_com]
+      : [];
+  if (pessoas.length === 0) return;
+
+  const base = gasto.descricao.replace(/\s*\(\d+\/\d+\)$/, "");
+  const n = gasto.num_parcelas || 1;
+  const nome = n > 1 ? `${base} (${n} parcelas)` : base;
+  const { data } = await supabase
+    .from("gastos")
+    .select("id")
+    .in("pessoa", pessoas)
+    .in("descricao", pessoas.map((p) => `${nome} - ${p}`))
+    .eq("data_inicio", dataPrimeiraParcela);
+  for (const row of data || []) await gastosFunctions.delete(row.id);
+}
 
 interface UseMeusGastosProps {
   user: { id: string } | null;
@@ -377,7 +406,8 @@ export function useMeusGastos({
               valorTotalPorPessoa,
               numParcelas,
               formMeuGasto.data,
-              formMeuGasto.categoria_gasto || undefined
+              formMeuGasto.categoria_gasto || undefined,
+              formMeuGasto.tipo
             );
           }
         }
@@ -656,7 +686,11 @@ export function useMeusGastos({
           }
         }
 
-        // No longer managing saldos_devedores here (dead code removed)
+        // As cobranças do gasto como ele ERA saem antes: se continuar dividido,
+        // são recriadas abaixo com os valores novos; se deixou de ser, somem.
+        const primeiraOriginal =
+          parcelasRelacionadas.find((g) => (g.parcela_atual || 1) === 1) || editandoMeuGasto;
+        await removerEspelhosDoDividido(editandoMeuGasto, primeiraOriginal.data);
 
         if (
           formMeuGasto.categoria === "dividido" &&
@@ -690,7 +724,8 @@ export function useMeusGastos({
                   valorTotalPorPessoa,
                   novoNumParcelas,
                   formMeuGasto.data,
-                  formMeuGasto.categoria_gasto || undefined
+                  formMeuGasto.categoria_gasto || undefined,
+                  formMeuGasto.tipo
                 );
             }
 
@@ -753,21 +788,23 @@ export function useMeusGastos({
     });
 
     const mensagem =
-      parcelasRelacionadas.length > 1
+      (parcelasRelacionadas.length > 1
         ? `Tem certeza que deseja excluir este gasto e todas as suas ${parcelasRelacionadas.length} parcelas?`
-        : "Tem certeza que deseja excluir este gasto?";
+        : "Tem certeza que deseja excluir este gasto?") +
+      (gastoParaExcluir.categoria === "dividido" ? " A cobrança em A receber sai junto." : "");
 
     setModalConfirm({
       show: true,
-      titulo: "Excluir Gasto",
+      titulo: "Excluir gasto",
       mensagem,
       onConfirm: async () => {
         setSaving(true);
         try {
-          for (const parcela of parcelasRelacionadas) {
-            // Se for gasto dividido, deletar o saldo devedor associado (apenas na primeira parcela)
-            // No saldo_devedor cleanup required for 'dividido' parcels anymore
+          const primeira =
+            parcelasRelacionadas.find((g) => (g.parcela_atual || 1) === 1) || gastoParaExcluir;
+          await removerEspelhosDoDividido(gastoParaExcluir, primeira.data);
 
+          for (const parcela of parcelasRelacionadas) {
             if (isSupabaseConfigured && supabase) {
               await meusGastosFunctions.delete(parcela.id);
             }
