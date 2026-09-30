@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
+import { CalendarDays, X } from "lucide-react";
 
 export interface Filtro<T extends string = string> {
   valor: T;
@@ -42,5 +43,69 @@ export function FilterChips<T extends string>({ filtros, ativo, onChange, rotulo
       ))}
       {extra}
     </div>
+  );
+}
+
+/**
+ * O chip "Dia": abre o seletor de data nativo e vira "Dia 12" quando há um dia
+ * escolhido, com um "×" ao lado para limpar.
+ */
+export function ChipDia({
+  valor,
+  onChange,
+  min,
+  max,
+  "data-tour": dataTour,
+}: {
+  /** "yyyy-MM-dd" ou "". */
+  valor: string;
+  onChange: (valor: string) => void;
+  min: string;
+  max: string;
+  "data-tour"?: string;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const dia = valor ? parseInt(valor.substring(8, 10), 10) : null;
+
+  const abrir = () => {
+    const input = ref.current;
+    if (!input) return;
+    try {
+      input.showPicker();
+    } catch {
+      input.focus();
+    }
+  };
+
+  return (
+    <span className="relative inline-flex shrink-0 gap-px" data-tour={dataTour}>
+      <button type="button" onClick={abrir} aria-pressed={!!valor} className={chipClasse(!!valor)}>
+        <CalendarDays className="w-3.5 h-3.5" strokeWidth={1.5} aria-hidden="true" />
+        {dia ? `Dia ${dia}` : "Dia"}
+      </button>
+      {valor && (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          aria-label="Limpar filtro de dia"
+          className={`${chipClasse(true)} px-2`}
+        >
+          <X className="w-3.5 h-3.5" strokeWidth={1.5} />
+        </button>
+      )}
+      {/* O seletor nativo, aberto pelo chip. Fora da vista, mas no lugar do
+          chip, para o popup nascer ali. */}
+      <input
+        ref={ref}
+        type="date"
+        tabIndex={-1}
+        aria-label="Dia do mês"
+        value={valor}
+        onChange={(e) => onChange(e.target.value)}
+        min={min}
+        max={max}
+        className="absolute left-0 bottom-0 w-px h-px opacity-0 pointer-events-none"
+      />
+    </span>
   );
 }

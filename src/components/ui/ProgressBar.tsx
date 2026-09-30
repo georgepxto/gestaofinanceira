@@ -16,6 +16,11 @@ interface ProgressBarProps {
   legenda?: ItemLegenda[];
   /** Barra de participação (sem estado): sempre em --fg-3, sem laranja nem vermelho. */
   neutra?: boolean;
+  /**
+   * Barra de progresso bom (quanto já foi pago): sempre em --fg. Pagar 80% de
+   * uma cobrança não é alerta, então a régua de estado não vale aqui.
+   */
+  progresso?: boolean;
   className?: string;
 }
 
@@ -25,14 +30,14 @@ interface ProgressBarProps {
  * ir até o valor usado e um marcador fica no ponto dos 100%, para mostrar
  * quanto passou do limite.
  */
-export function ProgressBar({ valor, maximo, rotulo, legenda, neutra = false, className = "" }: ProgressBarProps) {
+export function ProgressBar({ valor, maximo, rotulo, legenda, neutra = false, progresso = false, className = "" }: ProgressBarProps) {
   const fracao = maximo > 0 ? valor / maximo : 0;
-  const estourou = !neutra && fracao > 1;
+  const estourou = !neutra && !progresso && fracao > 1;
   const escala = estourou ? valor : maximo;
   const largura = escala > 0 ? Math.max(0, Math.min(1, valor / escala)) : 0;
   const marcador = estourou ? maximo / valor : null;
 
-  const cor = neutra ? "bg-fg-3" : estourou ? "bg-danger" : fracao >= 0.8 ? "bg-accent" : "bg-fg";
+  const cor = neutra ? "bg-fg-3" : progresso ? "bg-fg" : estourou ? "bg-danger" : fracao >= 0.8 ? "bg-accent" : "bg-fg";
 
   return (
     <div className={className}>

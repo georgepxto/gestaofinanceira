@@ -4,11 +4,6 @@ src/App.tsx
 src/components/GerenciarCategorias.tsx
 src/components/GuidedTourOverlay.tsx
 src/components/modals/FeedbackModal.tsx
-src/components/Tabs/TabDividas.tsx
-src/components/Tabs/TabGastos.tsx
 src/pages/AdminPage.tsx
 src/pages/ConfiguracoesPage.tsx
-src/pages/DividasPage.tsx
-src/pages/GastosPage.tsx
-src/pages/PessoasPage.tsx
 src/pages/ResetPasswordPage.tsx

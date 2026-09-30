@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2, Loader2, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { Plus, Trash2, Banknote, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -7,14 +7,21 @@ import { useAppContext } from "../context";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageHeader } from "../components/ui/PageHeader";
 import { SeletorMes } from "../components/ui/SeletorMes";
-import { PageEmptyState } from "../components/ui/AsyncState";
-import { Valor } from "../components/ui/Valor";
-import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
+import { useGuidedTour, usePageTutorialHelpButton, useIsMobile } from "../hooks";
 import { formatCurrency } from "../utils/calculations";
+import { formatPercent } from "../utils/dinheiro";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
-import { Rotulo } from "../components/ui/Rotulo";
-import { Card } from "../components/ui/Card";
-import { Resumo, ResumoItem } from "../components/ui/Resumo";
+import { Button } from "../components/ui/Button";
+import { Avatar } from "../components/ui/Avatar";
+import { KpiStrip, Kpi } from "../components/ui/KpiStrip";
+import { AnimatedNumber } from "../components/ui/AnimatedNumber";
+import { Surface, SurfaceHeader } from "../components/ui/Surface";
+import { ListGroup, ListRow } from "../components/ui/ListRow";
+import { ProgressBar } from "../components/ui/ProgressBar";
+import { Pill } from "../components/ui/Pill";
+import { EmptyState } from "../components/ui/EmptyState";
+import { FormSheet, Campo, campoClasse } from "../components/ui/FormSheet";
+import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
 
 interface DevedoresTutorialStep {
   target: string;
@@ -62,14 +69,14 @@ const DEVEDORES_TUTORIAL_STEPS: DevedoresTutorialStep[] = [
     alvo: "Comparativo por pessoa",
     titulo: "Comparativo por pessoa",
     descricao:
-      "Barras na mesma escala mostram empréstimos do mês (esmeralda) e dívida em aberto (âmbar) de cada pessoa.",
+      "Cada pessoa mostra o que está em aberto e quanto do mês já pagou. Toque na linha para ver os itens.",
   },
   {
     target: "[data-tour='devedores-item-acoes']",
     alvo: "Ações por pessoa",
     titulo: "Ações rápidas",
     descricao:
-      "Expandindo uma linha você registra pagamentos, vê os lançamentos e pode excluir o devedor.",
+      "No menu da linha você registra pagamentos e exclui o devedor.",
   },
   {
     target: "[data-tour='devedores-help-button']",
@@ -100,6 +107,9 @@ export const PessoasPage = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [adding, setAdding] = useState(false);
   const [pessoaExpandida, setPessoaExpandida] = useState<string | null>(null);
+  const isMobile = useIsMobile();
+  // "Novo devedor" é o botão laranja desta tela no desktop.
+  useAcaoPrincipalDaPagina(!isMobile);
   const {
     viewportSize,
     showTutorial,
@@ -171,16 +181,6 @@ export const PessoasPage = () => {
   const pessoasComDivida = new Set(saldosDevedores.filter((d) => d.valor_atual > 0).map((d) => d.pessoa)).size;
   const totalRecebidoMes = pessoas.reduce((sum, p) => sum + getTotalPagoParcial(p), 0);
 
-  // Escala única do comparativo: S = maior soma entre TODAS as pessoas
-  // (nunca normalizar por linha — as barras precisam ser comparáveis).
-  const escalaS = Math.max(
-    ...pessoas.map((p) => {
-      const s = getEstatisticasPessoa(p);
-      return s.emprestimosMes + s.dividaAberta;
-    }),
-    1
-  );
-
   const pessoasOrdenadas = [...pessoas].sort(
     (a, b) => getEstatisticasPessoa(b).dividaAberta - getEstatisticasPessoa(a).dividaAberta
   );
@@ -192,267 +192,209 @@ export const PessoasPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-8">
       {/* HEADER_PAGINA */}
       <PageHeader
         data-tour="devedores-header"
-        eyebrow="A receber · Por pessoa"
-        title="Devedores"
-        description="Quem deve o quê — comparável de uma olhada."
+        title="Por pessoa"
+        description="Quem deve o quê, de uma olhada."
+        nota="Empréstimos do mês são fluxo do período; dívida em aberto é saldo acumulado. Os dois não se somam."
         action={
-          <div className="flex items-center gap-3 flex-wrap">
+          <>
             <SeletorMes data-tour="devedores-mes" />
-            <button
+            <Button
+              variante={isMobile ? "secundario" : "principal"}
               onClick={() => setShowAddForm(true)}
               data-tour="devedores-btn-novo"
-              className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:ring-offset-app-dark"
+              icone={<Plus className="w-4 h-4" strokeWidth={1.75} />}
             >
-              <Plus className="w-[18px] h-[18px]" />
               Novo devedor
-            </button>
-          </div>
+            </Button>
+          </>
         }
       />
 
       {/* FAIXA_RESUMO — estoque e fluxo lado a lado, nunca somados */}
-      <Resumo data-tour="devedores-resumo-total">
-        <ResumoItem
+      <KpiStrip data-tour="devedores-resumo-total">
+        <Kpi
           rotulo="Dívidas em aberto"
-          apoio={`saldo acumulado · ${pessoasComDivida} ${pessoasComDivida === 1 ? "pessoa" : "pessoas"}`}
-        >
-          <Valor porte="destaque" className="block mt-1 text-zinc-900 dark:text-zinc-50">
-            {formatCurrency(totalDividasGeral)}
-          </Valor>
-        </ResumoItem>
-        <ResumoItem
-          // O mês vem em minúscula do date-fns; `capitalize` no próprio texto
-          // ganha do `uppercase` do Rotulo, que é como esta linha sempre leu.
-          rotulo={<span className="capitalize">Empréstimos de {mesNome}</span>}
-          apoio={`fluxo do mês · ${pessoasComEmprestimos} ${pessoasComEmprestimos === 1 ? "pessoa" : "pessoas"}`}
-        >
-          <Valor porte="destaque" className="block mt-1 text-zinc-900 dark:text-zinc-50">
-            {formatCurrency(totalEmprestimosMes)}
-          </Valor>
-        </ResumoItem>
-        <ResumoItem rotulo="Recebido no mês" apoio="pagamentos registrados no período">
-          <Valor porte="destaque" className="block mt-1 text-emerald-700 dark:text-emerald-400">
-            {formatCurrency(totalRecebidoMes)}
-          </Valor>
-        </ResumoItem>
-      </Resumo>
+          valor={<AnimatedNumber valor={totalDividasGeral} className="text-[20px]" />}
+          meta={`${pessoasComDivida} ${pessoasComDivida === 1 ? "pessoa" : "pessoas"}`}
+        />
+        <Kpi
+          rotulo={`Empréstimos de ${mesNome}`}
+          valor={<AnimatedNumber valor={totalEmprestimosMes} className="text-[20px]" />}
+          meta={`${pessoasComEmprestimos} ${pessoasComEmprestimos === 1 ? "pessoa" : "pessoas"}`}
+        />
+        <Kpi
+          rotulo="Recebido no mês"
+          valor={<AnimatedNumber valor={totalRecebidoMes} className="text-[20px]" />}
+          meta="pagamentos registrados"
+        />
+      </KpiStrip>
 
-      {/* Form Novo devedor */}
-      {showAddForm && (
-        <Card>
-          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Adicionar devedor</h2>
-          <div className="space-y-3">
-            <input
-              type="text"
-              value={novaPessoa}
-              onChange={(e) => setNovaPessoa(e.target.value)}
-              placeholder="Nome do devedor"
-              className="w-full h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
-              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-              autoFocus
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={handleAdd}
-                disabled={adding || !novaPessoa.trim()}
-                className="flex-1 inline-flex items-center justify-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-200 disabled:text-zinc-400 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-500 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-colors"
-              >
-                {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Adicionar
-              </button>
-              <button
-                onClick={() => { setShowAddForm(false); setNovaPessoa(""); }}
-                className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {/* Card Comparativo por pessoa */}
-      <Card data-tour="devedores-lista">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Comparativo por pessoa</h2>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-              <span className="w-3 h-[10px] rounded-full bg-emerald-500" />
-              Empréstimos do mês
-            </span>
-            <span className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-              <span className="w-3 h-[10px] rounded-full bg-amber-500" />
-              Dívida em aberto
-            </span>
-          </div>
-        </div>
-        <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-2">ordenado pela dívida em aberto · barras na mesma escala</p>
+      {/* Uma linha por pessoa, ordenada pela dívida em aberto */}
+      <Surface as="section" data-tour="devedores-lista">
+        <SurfaceHeader titulo="Pessoas" descricao="Da maior dívida em aberto para a menor." className="mb-1" />
 
         {pessoas.length === 0 ? (
-          <PageEmptyState
-            compact
-            title="Nenhum devedor cadastrado"
-            description="Clique em Novo devedor para começar a acompanhar valores em aberto."
+          <EmptyState
+            Icone={Users}
+            frase="Nenhum devedor cadastrado."
+            acao={<Button onClick={() => setShowAddForm(true)}>Novo devedor</Button>}
           />
         ) : (
-          <div className="overflow-x-auto">
-            <div className="min-w-[700px]">
-              {pessoasOrdenadas.map((pessoa) => {
-                const stats = getEstatisticasPessoa(pessoa);
-                const isExpanded = pessoaExpandida === pessoa;
-                const parcelasPessoa = parcelasAtivas.filter((p) => p.gasto.pessoa === pessoa);
-                const larguraMes = (stats.emprestimosMes / escalaS) * 100;
-                const larguraDivida = (stats.dividaAberta / escalaS) * 100;
+          <ListGroup>
+            {pessoasOrdenadas.map((pessoa) => {
+              const stats = getEstatisticasPessoa(pessoa);
+              const isExpanded = pessoaExpandida === pessoa;
+              const parcelasPessoa = parcelasAtivas.filter((p) => p.gasto.pessoa === pessoa);
+              // Só a dívida em aberto (saldo): somar o fluxo do mês daria um
+              // número sem significado. O mês aparece na barra, embaixo.
+              const emAberto = stats.dividaAberta;
 
-                return (
-                  <div key={pessoa} className="border-b border-zinc-100 dark:border-white/[0.05] last:border-b-0">
-                    <div className="grid [grid-template-columns:190px_minmax(120px,1fr)_132px_116px_34px] gap-4 items-center py-3.5 hover:bg-app-row dark:hover:bg-white/[0.02] transition-colors">
-                      {/* Pessoa */}
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 flex-shrink-0 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center">
-                          <span className="font-bold text-emerald-700 dark:text-emerald-400">
-                            {pessoa.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">{pessoa}</p>
-                          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-                            {stats.qtdItensMes} {stats.qtdItensMes === 1 ? "item" : "itens"} · {stats.qtdCobrancas} cobrança{stats.qtdCobrancas === 1 ? "" : "s"}
+              return (
+                <ListRow
+                  key={pessoa}
+                  dataTour="devedores-item-acoes"
+                  iconeCru={<Avatar nome={pessoa} />}
+                  titulo={pessoa}
+                  meta={
+                    <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                      <span>
+                        {stats.qtdItensMes} {stats.qtdItensMes === 1 ? "item" : "itens"} no mês · {stats.qtdCobrancas}{" "}
+                        {stats.qtdCobrancas === 1 ? "cobrança" : "cobranças"}
+                      </span>
+                      {stats.fechado ? <Pill>fechado</Pill> : stats.quitada ? <Pill>quitada</Pill> : null}
+                    </span>
+                  }
+                  valor={formatCurrency(emAberto)}
+                  subvalor="em aberto"
+                  pago={emAberto === 0 && (stats.quitada || stats.fechado)}
+                  onAbrir={() => toggleExpand(pessoa)}
+                  expandido={isExpanded}
+                  acoes={[
+                    {
+                      rotulo: "Registrar pagamento",
+                      icone: <Banknote className="w-4 h-4" strokeWidth={1.5} />,
+                      onClick: () => setShowPagamentoParcial(pessoa),
+                    },
+                    ...(pessoas.length > 1
+                      ? [
+                          {
+                            rotulo: "Excluir",
+                            icone: <Trash2 className="w-4 h-4" strokeWidth={1.5} />,
+                            onClick: () => handleDelete(pessoa),
+                            tom: "perigo" as const,
+                          },
+                        ]
+                      : []),
+                  ]}
+                  rodape={
+                    <div className="pl-12 space-y-3">
+                      {stats.emprestimosMes > 0 && (
+                        <div>
+                          <ProgressBar
+                            progresso
+                            valor={stats.pagoMes}
+                            maximo={stats.emprestimosMes}
+                            rotulo={`${pessoa} pagou ${formatPercent(stats.pagoMes / stats.emprestimosMes)} do mês`}
+                          />
+                          <p className="mt-1.5 text-xs text-fg-2">
+                            pagou <span className="valor">{formatCurrency(stats.pagoMes)}</span> de{" "}
+                            <span className="valor">{formatCurrency(stats.emprestimosMes)}</span> do mês
                           </p>
                         </div>
-                      </div>
-                      {/* Barra empilhada — escala global S */}
-                      <div className="flex h-[22px] rounded-lg overflow-hidden bg-zinc-100 dark:bg-white/[0.04] min-w-0">
-                        {larguraMes > 0 && <div className="h-full bg-emerald-500" style={{ width: `${larguraMes}%` }} />}
-                        {larguraDivida > 0 && <div className="h-full bg-amber-500" style={{ width: `${larguraDivida}%` }} />}
-                      </div>
-                      {/* No mês */}
-                      <div className="text-right min-w-0">
-                        <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(stats.emprestimosMes)}</p>
-                        <p className="font-mono text-[10px] text-zinc-500 dark:text-zinc-400">no mês</p>
-                      </div>
-                      {/* Em aberto */}
-                      <div className="text-right min-w-0">
-                        {stats.dividaAberta > 0 ? (
-                          <>
-                            <p className="font-mono valor text-sm font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">{formatCurrency(stats.dividaAberta)}</p>
-                            <p className="font-mono text-[10px] text-zinc-500 dark:text-zinc-400">em aberto</p>
-                          </>
-                        ) : stats.fechado ? (
-                          <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400">Fechado</span>
-                        ) : stats.quitada ? (
-                          <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">
-                            <Check className="w-[11px] h-[11px]" /> Quitada
-                          </span>
-                        ) : (
-                          <p className="font-mono valor text-sm text-zinc-500 dark:text-zinc-400 whitespace-nowrap">{formatCurrency(0)}</p>
-                        )}
-                      </div>
-                      {/* Expandir */}
-                      <button
-                        type="button"
-                        onClick={() => toggleExpand(pessoa)}
-                        aria-expanded={isExpanded}
-                        aria-label={`${isExpanded ? "Recolher" : "Expandir"} detalhes de ${pessoa}`}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                      >
-                        {isExpanded ? <ChevronUp className="w-[15px] h-[15px]" /> : <ChevronDown className="w-[15px] h-[15px]" />}
-                      </button>
-                    </div>
+                      )}
 
-                    {/* Linha expandida */}
-                    {isExpanded && (
-                      <div className="pb-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-4">
-                          <div className="min-w-0">
-                            <Rotulo className="mb-2">Cobranças em aberto</Rotulo>
+                      {isExpanded && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pt-1">
+                          <ListGroup titulo="Cobranças em aberto">
                             {stats.dividasPendentes.length === 0 ? (
-                              <p className="text-sm text-zinc-500 dark:text-zinc-400">Nenhuma cobrança em aberto.</p>
+                              <li className="py-3 text-sm text-fg-2 list-none">Nenhuma cobrança em aberto.</li>
                             ) : (
-                              <div className="space-y-2">
-                                {stats.dividasPendentes.map((d) => {
-                                  const pago = Math.max(d.valor_original - d.valor_atual, 0);
-                                  const pctPago = d.valor_original > 0 ? (pago / d.valor_original) * 100 : 0;
-                                  return (
-                                    <div key={d.id} className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.05] rounded-xl p-3.5">
-                                      <div className="flex items-center justify-between gap-3">
-                                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{d.descricao}</p>
-                                        <p className="font-mono valor text-sm font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">{formatCurrency(d.valor_atual)}</p>
-                                      </div>
-                                      <div className="h-1.5 rounded-full bg-zinc-100 dark:bg-white/[0.04] overflow-hidden mt-2">
-                                        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(pctPago, 100)}%` }} />
-                                      </div>
-                                      <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
-                                        pago {formatCurrency(pago)} de {formatCurrency(d.valor_original)} · {pctPago.toFixed(0)}%
-                                      </p>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                              stats.dividasPendentes.map((d) => {
+                                const pago = Math.max(d.valor_original - d.valor_atual, 0);
+                                return (
+                                  <ListRow
+                                    key={d.id}
+                                    titulo={d.descricao}
+                                    meta={`pago ${formatCurrency(pago)} de ${formatCurrency(d.valor_original)}`}
+                                    valor={formatCurrency(d.valor_atual)}
+                                    rodape={
+                                      <ProgressBar
+                                        progresso
+                                        valor={pago}
+                                        maximo={d.valor_original}
+                                        rotulo={`${d.descricao}: ${formatPercent(d.valor_original > 0 ? pago / d.valor_original : 0)} pago`}
+                                      />
+                                    }
+                                  />
+                                );
+                              })
                             )}
-                          </div>
-                          <div className="min-w-0">
-                            <Rotulo className="mb-2">Empréstimos de {mesNome}</Rotulo>
+                          </ListGroup>
+                          <ListGroup titulo={`Empréstimos de ${mesNome}`}>
                             {parcelasPessoa.length === 0 ? (
-                              <p className="text-sm text-zinc-500 dark:text-zinc-400">Nenhum empréstimo neste mês.</p>
+                              <li className="py-3 text-sm text-fg-2 list-none">Nenhum empréstimo neste mês.</li>
                             ) : (
-                              <div className="space-y-2">
-                                {parcelasPessoa.map(({ gasto, parcela_atual, valor_parcela }) => (
-                                  <div key={gasto.id} className="bg-app-row dark:bg-white/[0.03] border border-zinc-100 dark:border-white/[0.05] rounded-xl p-3.5 flex items-center justify-between gap-3">
-                                    <div className="min-w-0">
-                                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{gasto.descricao}</p>
-                                      <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
-                                        parcela {parcela_atual}/{gasto.num_parcelas} · total {formatCurrency(gasto.valor_total)}
-                                      </p>
-                                    </div>
-                                    <p className="font-mono valor text-sm font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">{formatCurrency(valor_parcela)}</p>
-                                  </div>
-                                ))}
-                              </div>
+                              parcelasPessoa.map(({ gasto, parcela_atual, valor_parcela }) => (
+                                <ListRow
+                                  key={gasto.id}
+                                  titulo={gasto.descricao}
+                                  meta={`parcela ${parcela_atual}/${gasto.num_parcelas} · total ${formatCurrency(gasto.valor_total)}`}
+                                  valor={formatCurrency(valor_parcela)}
+                                />
+                              ))
                             )}
+                          </ListGroup>
+                          <div className="md:col-span-2 flex items-center gap-2 flex-wrap pt-3">
+                            <Button tamanho="sm" onClick={() => setShowPagamentoParcial(pessoa)}>
+                              Registrar pagamento
+                            </Button>
+                            <Link
+                              to="/a-receber/mes"
+                              className="h-9 px-3 inline-flex items-center text-sm text-fg-2 hover:text-fg transition-colors"
+                            >
+                              Ver lançamentos
+                            </Link>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-wrap" data-tour="devedores-item-acoes">
-                          <button
-                            onClick={() => setShowPagamentoParcial(pessoa)}
-                            className="inline-flex items-center gap-2 h-9 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors"
-                          >
-                            Registrar pagamento
-                          </button>
-                          <Link
-                            to="/a-receber/mes"
-                            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors"
-                          >
-                            Ver lançamentos
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(pessoa)}
-                            disabled={pessoas.length <= 1}
-                            aria-label={`Excluir devedor ${pessoa}`}
-                            title="Excluir devedor"
-                            className="ml-auto w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-zinc-500"
-                          >
-                            <Trash2 className="w-[15px] h-[15px]" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                      )}
+                    </div>
+                  }
+                />
+              );
+            })}
+          </ListGroup>
         )}
-      </Card>
+      </Surface>
 
-      {/* Nota: estoque × fluxo */}
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        empréstimos do mês é fluxo do período; dívida em aberto é saldo acumulado — somar os dois produz um número sem significado.
-      </p>
+      {/* Novo devedor */}
+      <FormSheet
+        aberto={showAddForm}
+        titulo="Novo devedor"
+        onFechar={() => {
+          setShowAddForm(false);
+          setNovaPessoa("");
+        }}
+        onEnviar={handleAdd}
+        rotuloEnviar="Adicionar devedor"
+        enviando={adding}
+        podeEnviar={!!novaPessoa.trim()}
+      >
+        <Campo rotulo="Nome" htmlFor="devedor-nome">
+          <input
+            id="devedor-nome"
+            data-autofocus
+            type="text"
+            value={novaPessoa}
+            onChange={(e) => setNovaPessoa(e.target.value)}
+            placeholder="Ex: Ana"
+            className={campoClasse}
+          />
+        </Campo>
+      </FormSheet>
 
       <GuidedTourOverlay
         show={showTutorial}

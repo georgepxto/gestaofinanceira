@@ -1,11 +1,11 @@
 import { Plus, FileText } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { PageHeader } from "../components/ui/PageHeader";
 import { SeletorMes } from "../components/ui/SeletorMes";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
-import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
+import { useGuidedTour, usePageTutorialHelpButton, useIsMobile } from "../hooks";
+import { Button } from "../components/ui/Button";
+import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
 import { TabGastos } from "../components/Tabs";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 
@@ -121,6 +121,9 @@ export const GastosPage = () => {
     handleDesfazerFechamento,
     features,
   } = useAppContext();
+  const isMobile = useIsMobile();
+  // "Novo empréstimo" é o botão laranja desta tela no desktop.
+  useAcaoPrincipalDaPagina(!isMobile);
 
   const {
     viewportSize,
@@ -173,36 +176,34 @@ export const GastosPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-8">
       {/* HEADER_PAGINA */}
       <PageHeader
         data-tour="gastos-header"
-        eyebrow={<>A receber · <span className="capitalize">{format(mesVisualizacao, "MMMM", { locale: ptBR })}</span></>}
-        title="Empréstimos do mês"
-        description="Valores a receber, organizados por devedor."
+        title="Do mês"
+        description="O que você emprestou neste mês, organizado por pessoa."
         action={
-          <div className="flex items-center gap-3 flex-wrap" data-tour="gastos-actions">
+          <div className="flex items-center gap-2 flex-wrap" data-tour="gastos-actions">
             <SeletorMes data-tour="gastos-navegacao-mes" />
             {features.exportar_pdf && (
-              <button
+              <Button
                 onClick={handleExportPDF}
                 disabled={parcelasAtivas.length === 0}
                 data-tour="gastos-btn-pdf"
-                className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 title="Exportar PDF"
+                icone={<FileText className="w-4 h-4" strokeWidth={1.5} />}
               >
-                <FileText className="w-4 h-4" />
                 PDF
-              </button>
+              </Button>
             )}
-            <button
+            <Button
+              variante={isMobile ? "secundario" : "principal"}
               onClick={() => setShowForm(true)}
               data-tour="gastos-btn-novo"
-              className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:ring-offset-app-dark"
+              icone={<Plus className="w-4 h-4" strokeWidth={1.75} />}
             >
-              <Plus className="w-[18px] h-[18px]" />
               Novo empréstimo
-            </button>
+            </Button>
           </div>
         }
       />

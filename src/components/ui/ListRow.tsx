@@ -35,6 +35,8 @@ interface ListRowProps {
   novo?: boolean;
   dataTour?: string;
   className?: string;
+  /** A linha abre detalhes embaixo (rodapé): anuncia o estado ao leitor de tela. */
+  expandido?: boolean;
   /** "div" fora de uma lista <ul> (o adaptador do LinhaLista, por exemplo). */
   as?: "li" | "div";
 }
@@ -60,6 +62,7 @@ export function ListRow({
   dataTour,
   className = "",
   as: Tag = "li",
+  expandido,
 }: ListRowProps) {
   const [folhaAberta, setFolhaAberta] = useState(false);
   const tituloTexto = typeof titulo === "string" ? titulo : "item";
@@ -107,7 +110,7 @@ export function ListRow({
       <div className="flex items-center gap-3 min-h-[60px] md:min-h-[56px]">
         {prefixo}
         {onAbrir ? (
-          <button type="button" onClick={onAbrir} className={`${alvo} rounded-sm`}>
+          <button type="button" onClick={onAbrir} aria-expanded={expandido} className={`${alvo} rounded-sm`}>
             {miolo}
           </button>
         ) : (

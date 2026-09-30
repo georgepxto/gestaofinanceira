@@ -4,7 +4,6 @@ import {
   CheckCircle,
   Repeat,
   Users,
-  CalendarDays,
   Pencil,
   Trash2,
   MinusCircle,
@@ -13,7 +12,6 @@ import {
   CreditCard,
   Wallet,
   Receipt,
-  X,
 } from "lucide-react";
 import { format, addMonths, isSameMonth, isBefore, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,7 +23,7 @@ import { KpiStrip, Kpi } from "../ui/KpiStrip";
 import { Valor } from "../ui/Valor";
 import { Surface, SurfaceHeader } from "../ui/Surface";
 import { ListGroup, ListRow, type Acao } from "../ui/ListRow";
-import { FilterChips, chipClasse } from "../ui/FilterChips";
+import { FilterChips, ChipDia } from "../ui/FilterChips";
 import { EmptyState } from "../ui/EmptyState";
 import { Pill, type TomPill } from "../ui/Pill";
 import { MenuAcoes } from "../ui/MenuAcoes";
@@ -136,7 +134,6 @@ export function TabMeuGasto({
   cartoes,
 }: TabMeuGastoProps) {
   const [modalSuspensao, setModalSuspensao] = useState<{ show: boolean; id: string; nome: string } | null>(null);
-  const inputDiaRef = useRef<HTMLInputElement>(null);
   const mesChave = format(mesVisualizacao, "yyyy-MM");
 
   const handleClickSuspender = (gasto: MeuGasto, isSuspenso: boolean) => {
@@ -202,16 +199,6 @@ export function TabMeuGasto({
     return format(dataFatura, "MMMM", { locale: ptBR });
   };
 
-  const abrirSeletorDia = () => {
-    const input = inputDiaRef.current;
-    if (!input) return;
-    try {
-      input.showPicker();
-    } catch {
-      input.focus();
-    }
-  };
-
   const diaSelecionado = filtroDiaMeuGasto ? parseInt(filtroDiaMeuGasto.substring(8, 10), 10) : null;
 
   const acoesDoFixo = (gasto: MeuGasto, isSuspenso: boolean): Acao[] => [
@@ -255,40 +242,13 @@ export function TabMeuGasto({
           ativo={filtroCategoriaMeuGasto}
           onChange={setFiltroCategoriaMeuGasto}
           extra={
-            <span className="relative inline-flex shrink-0 gap-px" data-tour="eu-filtro-dia">
-              <button
-                type="button"
-                onClick={abrirSeletorDia}
-                aria-pressed={!!filtroDiaMeuGasto}
-                className={chipClasse(!!filtroDiaMeuGasto)}
-              >
-                <CalendarDays className="w-3.5 h-3.5" strokeWidth={1.5} aria-hidden="true" />
-                {diaSelecionado ? `Dia ${diaSelecionado}` : "Dia"}
-              </button>
-              {filtroDiaMeuGasto && (
-                <button
-                  type="button"
-                  onClick={() => setFiltroDiaMeuGasto("")}
-                  aria-label="Limpar filtro de dia"
-                  className={`${chipClasse(true)} px-2`}
-                >
-                  <X className="w-3.5 h-3.5" strokeWidth={1.5} />
-                </button>
-              )}
-              {/* O seletor nativo, aberto pelo chip. Fica fora da vista mas no
-                  lugar do chip, para o popup nascer ali. */}
-              <input
-                ref={inputDiaRef}
-                type="date"
-                tabIndex={-1}
-                aria-label="Dia do mês"
-                value={filtroDiaMeuGasto}
-                onChange={(e) => setFiltroDiaMeuGasto(e.target.value)}
-                min={`${mesChave}-01`}
-                max={`${mesChave}-31`}
-                className="absolute left-0 bottom-0 w-px h-px opacity-0 pointer-events-none"
-              />
-            </span>
+            <ChipDia
+              valor={filtroDiaMeuGasto}
+              onChange={setFiltroDiaMeuGasto}
+              min={`${mesChave}-01`}
+              max={`${mesChave}-31`}
+              data-tour="eu-filtro-dia"
+            />
           }
         />
       </div>

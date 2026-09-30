@@ -2,7 +2,9 @@ import { Plus } from "lucide-react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
-import { useGuidedTour, usePageTutorialHelpButton } from "../hooks";
+import { useGuidedTour, usePageTutorialHelpButton, useIsMobile } from "../hooks";
+import { Button } from "../components/ui/Button";
+import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
 import { TabDividas } from "../components/Tabs";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 
@@ -96,6 +98,9 @@ export const DividasPage = () => {
     handleDesfazerPagamento,
     setShowFormDivida,
   } = useAppContext();
+  const isMobile = useIsMobile();
+  // "Nova cobrança" é o botão laranja desta tela no desktop.
+  useAcaoPrincipalDaPagina(!isMobile);
   const {
     viewportSize,
     showTutorial,
@@ -123,22 +128,21 @@ export const DividasPage = () => {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 md:space-y-8">
       {/* HEADER_PAGINA */}
       <PageHeader
         data-tour="dividas-header"
-        eyebrow="Cobranças"
-        title="Dívidas em aberto"
-        description="Tudo que ainda precisam te pagar, com o progresso de cada cobrança."
+        title="Em aberto"
+        description="O que ainda precisam te pagar, com o progresso de cada cobrança."
         action={
-          <button
+          <Button
+            variante={isMobile ? "secundario" : "principal"}
             onClick={() => setShowFormDivida(true)}
             data-tour="dividas-btn-novo"
-            className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:ring-offset-app-dark"
+            icone={<Plus className="w-4 h-4" strokeWidth={1.75} />}
           >
-            <Plus className="w-[18px] h-[18px]" />
             Nova cobrança
-          </button>
+          </Button>
         }
       />
 
