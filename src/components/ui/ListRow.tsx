@@ -37,7 +37,7 @@ interface ListRowProps {
   className?: string;
   /** A linha abre detalhes embaixo (rodapé): anuncia o estado ao leitor de tela. */
   expandido?: boolean;
-  /** "div" fora de uma lista <ul> (o adaptador do LinhaLista, por exemplo). */
+  /** "div" quando a linha não está dentro de uma lista <ul>. */
   as?: "li" | "div";
 }
 

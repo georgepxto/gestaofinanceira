@@ -63,9 +63,6 @@ export default {
           7: token('--cat-7'),
           8: token('--cat-8'),
         },
-        // Legado da identidade anterior, usado pelas telas ainda não migradas.
-        'app-dark': '#0A0A0B',
-        'app-row':  '#FCFCFC',
         // Landing: aponta para as variáveis com escopo em .lp (landing.css).
         // Fora da landing essas variáveis não existem, então nada no app muda.
         lp: {

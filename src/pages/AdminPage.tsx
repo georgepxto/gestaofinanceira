@@ -37,11 +37,11 @@ import { Resumo, ResumoItem } from "../components/ui/Resumo";
 
 // ========== ACTION LABELS ==========
 const ACTION_LABELS: Record<string, { label: string; color: string; dot: string }> = {
-  login: { label: "Login", color: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/30", dot: "bg-emerald-500" },
-  logout: { label: "Logout", color: "text-zinc-600 bg-zinc-50 dark:text-zinc-400 dark:bg-white/[0.04]", dot: "bg-zinc-300" },
-  login_failed: { label: "Login Falhou", color: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30", dot: "bg-amber-500" },
-  login_blocked: { label: "Bloqueado", color: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-950/30", dot: "bg-red-500" },
-  password_reset: { label: "Reset Senha", color: "text-zinc-600 bg-zinc-100 dark:text-zinc-400 dark:bg-white/[0.04]", dot: "bg-zinc-400" },
+  login: { label: "Login", color: "text-fg bg-surface-2", dot: "bg-accent" },
+  logout: { label: "Logout", color: "text-fg-2 bg-surface-2", dot: "bg-surface-3" },
+  login_failed: { label: "Login Falhou", color: "text-accent-ink bg-accent/[0.12]", dot: "bg-accent" },
+  login_blocked: { label: "Bloqueado", color: "text-danger-ink bg-danger/[0.12]", dot: "bg-danger" },
+  password_reset: { label: "Reset Senha", color: "text-fg-2 bg-surface-2", dot: "bg-surface-3" },
 
 };
 
@@ -332,7 +332,7 @@ export const AdminPage = () => {
               if (activeTab === "inactive") fetchInactiveUsers(inactiveDays);
             }}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-surface-1 border border-line hover:border-line text-fg-2 hover:text-fg rounded text-sm font-medium transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             Atualizar
@@ -343,40 +343,40 @@ export const AdminPage = () => {
       {/* FAIXA_RESUMO */}
       <Resumo>
         <ResumoItem rotulo="Contas" apoio="sem contar administradores">
-          <Valor porte="destaque" className="block mt-1 text-zinc-900 dark:text-zinc-50">
+          <Valor porte="destaque" className="block mt-1 text-fg">
             {totalUsers}
           </Valor>
         </ResumoItem>
         <ResumoItem rotulo="Habilitadas">
-          <Valor porte="medio" className="block mt-1.5 text-zinc-900 dark:text-zinc-50">{activeUsers}</Valor>
+          <Valor porte="medio" className="block mt-1.5 text-fg">{activeUsers}</Valor>
         </ResumoItem>
         <ResumoItem rotulo="Suspensas">
-          <Valor porte="medio" className="block mt-1.5 text-zinc-900 dark:text-zinc-50">{inactiveUsersCount}</Valor>
+          <Valor porte="medio" className="block mt-1.5 text-fg">{inactiveUsersCount}</Valor>
         </ResumoItem>
         <ResumoItem rotulo="Ativas hoje" tomRotulo="acento">
-          <Valor porte="medio" className="block mt-1.5 text-emerald-700 dark:text-emerald-400">
+          <Valor porte="medio" className="block mt-1.5 text-fg">
             {usageStats ? usageStats.active_today : "—"}
           </Valor>
         </ResumoItem>
       </Resumo>
 
       {/* SEGMENTADO de abas */}
-      <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] p-1 rounded-xl overflow-x-auto w-fit max-w-full">
+      <div className="flex gap-1 bg-surface-2 p-1 rounded overflow-x-auto w-fit max-w-full">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors whitespace-nowrap ${
+            className={`flex items-center gap-2 px-4 py-2 rounded text-sm transition-colors whitespace-nowrap ${
               activeTab === tab.id
-                ? "bg-emerald-600 text-white font-semibold"
-                : "text-zinc-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
+                ? "bg-accent text-accent-fg font-medium"
+                : "text-fg-2 hover:bg-surface-3 hover:text-fg font-medium"
             }`}
           >
             {tab.icon}
             {tab.label}
             {tab.id === "inactive" && inactiveUsers.length > 0 && (
-              <span className={`font-mono valor text-xs px-1.5 py-0.5 rounded-full ${
-                activeTab === "inactive" ? "bg-white/25 text-white" : "bg-zinc-200 dark:bg-white/[0.07] text-zinc-600 dark:text-zinc-300"
+              <span className={`font-mono valor text-xs px-1.5 py-0.5 rounded-sm ${
+                activeTab === "inactive" ? "bg-surface-1/25 text-accent-fg" : "bg-surface-3 text-fg-2"
               }`}>
                 {inactiveUsers.length}
               </span>
@@ -405,32 +405,32 @@ export const AdminPage = () => {
           {/* Toolbar */}
           <div className="flex flex-col lg:flex-row gap-3 lg:items-center mb-4">
             <div className="relative flex-1 min-w-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-3" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Buscar por nome ou email..."
-                className="w-full h-11 pl-10 pr-3 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
+                className="w-full h-11 pl-10 pr-3 bg-surface-2 border border-line rounded text-sm text-fg placeholder:text-fg-3 outline-none focus:border-fg-3"
               />
             </div>
             <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] p-1 rounded-xl">
+              <div className="flex gap-1 bg-surface-2 p-1 rounded">
                 {(["all", "active", "inactive"] as const).map((status) => (
                   <button
                     key={status}
                     onClick={() => setFilterStatus(status)}
-                    className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                    className={`px-4 py-2 rounded text-sm transition-colors ${
                       filterStatus === status
-                        ? "bg-emerald-600 text-white font-semibold"
-                        : "text-zinc-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-white/[0.08] hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
+                        ? "bg-accent text-accent-fg font-medium"
+                        : "text-fg-2 hover:bg-surface-3 hover:text-fg font-medium"
                     }`}
                   >
                     {status === "all" ? "Todas" : status === "active" ? "Habilitadas" : "Suspensas"}
                   </button>
                 ))}
               </div>
-              <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+              <span className="font-mono valor text-[13px] text-fg-2 whitespace-nowrap">
                 {filteredUsers.length} {filteredUsers.length === 1 ? "resultado" : "resultados"}
               </span>
             </div>
@@ -451,7 +451,7 @@ export const AdminPage = () => {
               <div className="overflow-x-auto">
                 <div className="min-w-[820px]">
                   {/* Cabeçalho */}
-                  <div className="grid [grid-template-columns:minmax(200px,1fr)_120px_120px_128px_150px] gap-3 items-center pb-2 border-b border-zinc-200 dark:border-white/[0.06]">
+                  <div className="grid [grid-template-columns:minmax(200px,1fr)_120px_120px_128px_150px] gap-3 items-center pb-2 border-b border-line">
                     <Rotulo as="span">Usuário</Rotulo>
                     <Rotulo as="span">Criada</Rotulo>
                     <Rotulo as="span">Último acesso</Rotulo>
@@ -461,55 +461,55 @@ export const AdminPage = () => {
                   {filteredUsers.map((user) => (
                     <div
                       key={user.id}
-                      className={`grid [grid-template-columns:minmax(200px,1fr)_120px_120px_128px_150px] gap-3 items-center py-3 border-b border-zinc-100 dark:border-white/[0.05] last:border-b-0 hover:bg-app-row dark:hover:bg-white/[0.02] transition-colors ${
-                        expandedUser === user.id ? "bg-emerald-50/40 dark:bg-emerald-950/10" : ""
+                      className={`grid [grid-template-columns:minmax(200px,1fr)_120px_120px_128px_150px] gap-3 items-center py-3 border-b border-line last:border-b-0 hover:bg-surface-2 transition-colors ${
+                        expandedUser === user.id ? "bg-surface-2/40" : ""
                       }`}
                     >
                       {/* Usuário */}
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        <div className={`w-9 h-9 rounded-sm flex items-center justify-center flex-shrink-0 ${
                           user.role === "admin" || !user.is_active
-                            ? "bg-zinc-100 dark:bg-white/[0.06]"
-                            : "bg-emerald-50 dark:bg-emerald-950/40"
+                            ? "bg-surface-2"
+                            : "bg-surface-2"
                         }`}>
-                          <span className={`font-bold ${
+                          <span className={`font-medium ${
                             user.role === "admin" || !user.is_active
-                              ? "text-zinc-500 dark:text-zinc-400"
-                              : "text-emerald-700 dark:text-emerald-400"
+                              ? "text-fg-2"
+                              : "text-fg"
                           }`}>
                             {(user.nome || user.email || "U").charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                            <p className="text-sm font-medium text-fg truncate">
                               {user.nome || "Sem nome"}
                             </p>
                             {user.role === "admin" && (
-                              <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400">Admin</span>
+                              <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded bg-surface-2 text-fg-2">Admin</span>
                             )}
                           </div>
-                          <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 truncate">{user.email}</p>
+                          <p className="font-mono text-[11px] text-fg-2 truncate">{user.email}</p>
                         </div>
                       </div>
                       {/* Criada */}
-                      <span className="font-mono valor text-[13px] text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
+                      <span className="font-mono valor text-[13px] text-fg-2 whitespace-nowrap">
                         {formatDateShort(user.created_at)}
                       </span>
                       {/* Último acesso */}
-                      <span className="font-mono valor text-[13px] text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
+                      <span className="font-mono valor text-[13px] text-fg-2 whitespace-nowrap">
                         {formatDateShort(user.last_sign_in_at)}
                       </span>
                       {/* Status — badge textual, nunca no mesmo controle que a ação */}
                       <span>
                         {user.is_active ? (
-                          <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-medium px-2 py-0.5 rounded bg-surface-2 text-fg">
+                            <span className="w-1.5 h-1.5 rounded-full bg-accent" /> {/* ds-ok: ponto de estado de 8px */}
                             Habilitada
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-medium px-2 py-0.5 rounded-lg bg-zinc-100 text-zinc-600 dark:bg-white/[0.07] dark:text-zinc-400">
-                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+                          <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-medium px-2 py-0.5 rounded bg-surface-2 text-fg-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-surface-3" /> {/* ds-ok: ponto de estado de 8px */}
                             Suspensa
                           </span>
                         )}
@@ -524,10 +524,10 @@ export const AdminPage = () => {
                           <button
                             onClick={() => handleToggleExpand(user.id)}
                             aria-expanded={expandedUser === user.id}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1.5 border rounded-lg text-xs font-medium transition-colors ${
+                            className={`inline-flex items-center gap-1 px-2.5 py-1.5 border rounded text-xs font-medium transition-colors ${
                               expandedUser === user.id
-                                ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-400"
-                                : "bg-white dark:bg-white/[0.04] border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+                                ? "bg-surface-2 border-fg-3 text-fg"
+                                : "bg-surface-1 border-line hover:border-line text-fg-2 hover:text-fg"
                             }`}
                             title="Gerenciar permissões"
                           >
@@ -537,7 +537,7 @@ export const AdminPage = () => {
                           <button
                             onClick={() => handleResetPassword(user)}
                             disabled={saving}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
+                            className="w-8 h-8 rounded flex items-center justify-center text-fg-2 hover:bg-surface-2 hover:text-fg transition-colors"
                             title="Enviar reset de senha"
                             aria-label={`Enviar reset de senha para ${user.nome || user.email}`}
                           >
@@ -547,7 +547,7 @@ export const AdminPage = () => {
                             <button
                               onClick={() => handleToggleActive(user)}
                               disabled={saving}
-                              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"
+                              className="w-8 h-8 rounded flex items-center justify-center text-fg-2 hover:bg-danger/[0.12] hover:text-danger-ink transition-colors"
                               title="Suspender conta"
                               aria-label={`Suspender conta de ${user.nome || user.email}`}
                             >
@@ -557,7 +557,7 @@ export const AdminPage = () => {
                             <button
                               onClick={() => handleToggleActive(user)}
                               disabled={saving}
-                              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400 transition-colors"
+                              className="w-8 h-8 rounded flex items-center justify-center text-fg-2 hover:bg-surface-2 hover:text-fg transition-colors"
                               title="Reativar conta"
                               aria-label={`Reativar conta de ${user.nome || user.email}`}
                             >
@@ -576,27 +576,27 @@ export const AdminPage = () => {
                 const user = users.find((u) => u.id === expandedUser);
                 if (!user || user.role === "admin") return null;
                 return (
-                  <div className="mt-4 border-t border-zinc-100 dark:border-white/[0.05] pt-4">
+                  <div className="mt-4 border-t border-line pt-4">
                     <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-                      <h3 className="font-bold text-zinc-900 dark:text-zinc-100">
+                      <h3 className="font-medium text-fg">
                         Permissões de {user.nome || user.email}
                       </h3>
                       <div className="flex items-center gap-2 flex-wrap">
                         <button
                           onClick={() => handleSetAllFeatures(user.id, true)}
-                          className="px-3 py-1.5 text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-950/50 transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium bg-surface-2 text-fg rounded hover:bg-surface-2 transition-colors"
                         >
                           Completo
                         </button>
                         <button
                           onClick={() => handlePresetPessoal(user.id)}
-                          className="px-3 py-1.5 text-xs font-medium bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-300 rounded-lg hover:bg-zinc-200 dark:hover:bg-white/[0.08] hover:text-zinc-900 transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium bg-surface-2 text-fg-2 rounded hover:bg-surface-3 hover:text-fg transition-colors"
                         >
                           Apenas pessoal
                         </button>
                         <button
                           onClick={() => handleSetAllFeatures(user.id, false)}
-                          className="px-3 py-1.5 text-xs font-medium bg-zinc-100 dark:bg-white/[0.04] text-zinc-600 dark:text-zinc-300 rounded-lg hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium bg-surface-2 text-fg-2 rounded hover:bg-danger/[0.12] hover:text-danger-ink transition-colors"
                         >
                           Desabilitar tudo
                         </button>
@@ -605,7 +605,7 @@ export const AdminPage = () => {
 
                     {loadingFeatures === user.id ? (
                       <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-6 h-6 animate-spin text-emerald-600 dark:text-emerald-400" />
+                        <Loader2 className="w-6 h-6 animate-spin text-fg" />
                       </div>
                     ) : (
                       <>
@@ -619,22 +619,22 @@ export const AdminPage = () => {
                                 onClick={() => handleToggleFeature(user.id, feature)}
                                 role="switch"
                                 aria-checked={isEnabled}
-                                className={`flex items-center gap-3 p-3 rounded-lg border transition-all text-left ${
+                                className={`flex items-center gap-3 p-3 rounded border transition-all text-left ${
                                   isEnabled
-                                    ? "bg-white dark:bg-white/[0.06] border-emerald-100 dark:border-emerald-900/60 hover:border-emerald-300"
-                                    : "bg-zinc-50 dark:bg-white/[0.02] border-zinc-200 dark:border-white/[0.09] hover:border-zinc-300 dark:hover:border-white/[0.14]"
+                                    ? "bg-surface-1 border-fg-3 hover:border-fg-3"
+                                    : "bg-surface-2 border-line hover:border-line"
                                 }`}
                               >
-                                <div className={`w-8 h-5 rounded-full flex items-center transition-colors flex-shrink-0 ${
-                                  isEnabled ? "bg-emerald-500 justify-end" : "bg-zinc-300 dark:bg-white/25 justify-start"
+                                <div className={`w-8 h-5 rounded-sm flex items-center transition-colors flex-shrink-0 ${
+                                  isEnabled ? "bg-accent justify-end" : "bg-surface-3 justify-start"
                                 }`}>
-                                  <div className="w-4 h-4 bg-white rounded-full shadow mx-0.5" />
+                                  <div className="w-4 h-4 bg-surface-1 rounded-sm mx-0.5" />
                                 </div>
                                 <div className="min-w-0">
-                                  <span className={`text-sm font-medium block ${isEnabled ? "text-zinc-800 dark:text-zinc-100" : "text-zinc-500 dark:text-zinc-400"}`}>
+                                  <span className={`text-sm font-medium block ${isEnabled ? "text-fg" : "text-fg-2"}`}>
                                     {FEATURE_LABELS[feature]}
                                   </span>
-                                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400 block truncate">
+                                  <span className="text-[11px] text-fg-2 block truncate">
                                     {FEATURE_DESCRIPTIONS[feature]}
                                   </span>
                                 </div>
@@ -644,17 +644,17 @@ export const AdminPage = () => {
                         </div>
 
                         {/* Rodapé */}
-                        <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-zinc-100 dark:border-white/[0.05]">
+                        <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-line">
                           <button
                             onClick={() => setExpandedUser(null)}
-                            className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors"
+                            className="inline-flex items-center gap-2 px-3.5 py-2 bg-surface-1 border border-line hover:border-line text-fg-2 hover:text-fg rounded text-sm font-medium transition-colors"
                           >
                             Cancelar
                           </button>
                           <button
                             onClick={() => handleSaveFeatures(user.id)}
                             disabled={saving}
-                            className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-200 disabled:text-zinc-400 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-500 text-white rounded-xl text-sm font-semibold transition-colors"
+                            className="inline-flex items-center gap-2 h-10 px-4 bg-accent hover:bg-accent/90 disabled:bg-surface-3 disabled:text-fg-3 text-accent-fg rounded text-sm font-medium transition-colors"
                           >
                             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                             Salvar permissões
@@ -675,23 +675,23 @@ export const AdminPage = () => {
         <div className="space-y-4">
           {loadingStats ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-emerald-600 dark:text-emerald-400" />
+              <Loader2 className="w-8 h-8 animate-spin text-fg" />
             </div>
           ) : usageStats ? (
             <>
               {/* Métricas Principais */}
               <Resumo>
                 <ResumoItem rotulo="Total usuários">
-                  <Valor porte="medio" className="block mt-1.5 text-zinc-900 dark:text-zinc-100">{usageStats.total_users}</Valor>
+                  <Valor porte="medio" className="block mt-1.5 text-fg">{usageStats.total_users}</Valor>
                 </ResumoItem>
                 <ResumoItem rotulo="Ativos hoje" tomRotulo="acento">
-                  <Valor porte="medio" className="block mt-1.5 text-emerald-700 dark:text-emerald-400">{usageStats.active_today}</Valor>
+                  <Valor porte="medio" className="block mt-1.5 text-fg">{usageStats.active_today}</Valor>
                 </ResumoItem>
                 <ResumoItem rotulo="Ativos 7 dias">
-                  <Valor porte="medio" className="block mt-1.5 text-zinc-900 dark:text-zinc-100">{usageStats.active_7d}</Valor>
+                  <Valor porte="medio" className="block mt-1.5 text-fg">{usageStats.active_7d}</Valor>
                 </ResumoItem>
                 <ResumoItem rotulo="Ativos 30 dias">
-                  <Valor porte="medio" className="block mt-1.5 text-zinc-900 dark:text-zinc-100">{usageStats.active_30d}</Valor>
+                  <Valor porte="medio" className="block mt-1.5 text-fg">{usageStats.active_30d}</Valor>
                 </ResumoItem>
               </Resumo>
 
@@ -699,44 +699,44 @@ export const AdminPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Logins */}
                 <Card>
-                  <h3 className="font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
-                    <Activity className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
+                  <h3 className="font-medium tracking-tight text-fg flex items-center gap-2 mb-4">
+                    <Activity className="w-5 h-5 text-fg-3" />
                     Logins
                   </h3>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Hoje</span>
-                      <span className="font-mono valor font-bold text-zinc-900 dark:text-zinc-100">{usageStats.logins_today}</span>
+                      <span className="text-sm text-fg-2">Hoje</span>
+                      <span className="font-mono valor font-medium text-fg">{usageStats.logins_today}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Últimos 7 dias</span>
-                      <span className="font-mono valor font-bold text-zinc-900 dark:text-zinc-100">{usageStats.logins_7d}</span>
+                      <span className="text-sm text-fg-2">Últimos 7 dias</span>
+                      <span className="font-mono valor font-medium text-fg">{usageStats.logins_7d}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Últimos 30 dias</span>
-                      <span className="font-mono valor font-bold text-zinc-900 dark:text-zinc-100">{usageStats.logins_30d}</span>
+                      <span className="text-sm text-fg-2">Últimos 30 dias</span>
+                      <span className="font-mono valor font-medium text-fg">{usageStats.logins_30d}</span>
                     </div>
                   </div>
                 </Card>
 
                 {/* Novos Usuários */}
                 <Card>
-                  <h3 className="font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
-                    <TrendingUp className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+                  <h3 className="font-medium tracking-tight text-fg flex items-center gap-2 mb-4">
+                    <TrendingUp className="w-5 h-5 text-fg" />
                     Novos Cadastros
                   </h3>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Últimos 7 dias</span>
-                      <span className="font-mono valor font-bold text-emerald-600 dark:text-emerald-400">{usageStats.new_users_7d}</span>
+                      <span className="text-sm text-fg-2">Últimos 7 dias</span>
+                      <span className="font-mono valor font-medium text-fg">{usageStats.new_users_7d}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Últimos 30 dias</span>
-                      <span className="font-mono valor font-bold text-emerald-600 dark:text-emerald-400">{usageStats.new_users_30d}</span>
+                      <span className="text-sm text-fg-2">Últimos 30 dias</span>
+                      <span className="font-mono valor font-medium text-fg">{usageStats.new_users_30d}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-zinc-500 dark:text-zinc-400">Taxa de retenção (30d)</span>
-                      <span className="font-mono valor font-bold text-zinc-900 dark:text-zinc-100">
+                      <span className="text-sm text-fg-2">Taxa de retenção (30d)</span>
+                      <span className="font-mono valor font-medium text-fg">
                         {usageStats.total_users > 0
                           ? Math.round((usageStats.active_30d / usageStats.total_users) * 100)
                           : 0}%
@@ -749,14 +749,14 @@ export const AdminPage = () => {
               {/* Gráfico de Logins por Dia */}
               <Card>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
+                  <h3 className="font-medium tracking-tight text-fg flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-fg-3" />
                     Logins por Dia (últimos 30 dias)
                   </h3>
                   <button
                     onClick={fetchUsageStats}
                     disabled={loadingStats}
-                    className="p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors text-zinc-500"
+                    className="p-2 hover:bg-surface-2 rounded transition-colors text-fg-2"
                   >
                     <RefreshCw className={`w-4 h-4 ${loadingStats ? "animate-spin" : ""}`} />
                   </button>
@@ -769,12 +769,12 @@ export const AdminPage = () => {
                       const height = Math.max((d.total / maxVal) * 100, 4);
                       return (
                         <div key={i} className="flex flex-col items-center gap-1 min-w-[24px]" title={`${d.dia}: ${d.total} logins`}>
-                          <span className="font-mono valor text-[10px] text-zinc-500 dark:text-zinc-400">{d.total}</span>
+                          <span className="font-mono valor text-[10px] text-fg-2">{d.total}</span>
                           <div
-                            className="w-5 bg-emerald-500 dark:bg-emerald-400 rounded-t-sm transition-all hover:bg-emerald-600"
+                            className="w-5 bg-accent rounded-t-sm transition-all hover:bg-accent/90"
                             style={{ height: `${height}%` }}
                           />
-                          <span className="font-mono text-[9px] text-zinc-400 dark:text-zinc-500 -rotate-45 origin-left whitespace-nowrap">{d.dia}</span>
+                          <span className="font-mono text-[9px] text-fg-3 -rotate-45 origin-left whitespace-nowrap">{d.dia}</span>
                         </div>
                       );
                     })}
@@ -790,8 +790,8 @@ export const AdminPage = () => {
 
               {/* Gráfico de Cadastros por Dia */}
               <Card>
-                <h3 className="font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
-                  <Calendar className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
+                <h3 className="font-medium tracking-tight text-fg flex items-center gap-2 mb-4">
+                  <Calendar className="w-5 h-5 text-fg" />
                   Novos Cadastros por Dia (últimos 30 dias)
                 </h3>
 
@@ -802,12 +802,12 @@ export const AdminPage = () => {
                       const height = Math.max((d.total / maxVal) * 100, 4);
                       return (
                         <div key={i} className="flex flex-col items-center gap-1 min-w-[24px]" title={`${d.dia}: ${d.total} cadastros`}>
-                          <span className="font-mono valor text-[10px] text-zinc-500 dark:text-zinc-400">{d.total}</span>
+                          <span className="font-mono valor text-[10px] text-fg-2">{d.total}</span>
                           <div
-                            className="w-5 bg-emerald-500 dark:bg-emerald-400 rounded-t-sm transition-all hover:bg-emerald-600"
+                            className="w-5 bg-accent rounded-t-sm transition-all hover:bg-accent/90"
                             style={{ height: `${height}%` }}
                           />
-                          <span className="font-mono text-[9px] text-zinc-400 dark:text-zinc-500 -rotate-45 origin-left whitespace-nowrap">{d.dia}</span>
+                          <span className="font-mono text-[9px] text-fg-3 -rotate-45 origin-left whitespace-nowrap">{d.dia}</span>
                         </div>
                       );
                     })}
@@ -835,10 +835,10 @@ export const AdminPage = () => {
         <div className="space-y-4">
           {/* Filtro de dias */}
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="text-sm font-medium text-fg">
               Sem acesso há mais de:
             </span>
-            <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1">
+            <div className="flex gap-1 bg-surface-2 border border-line rounded p-1">
               {[7, 15, 30, 60, 90].map((days) => (
                 <button
                   key={days}
@@ -846,10 +846,10 @@ export const AdminPage = () => {
                     setInactiveDays(days);
                     fetchInactiveUsers(days);
                   }}
-                  className={`px-3 py-1.5 rounded-lg font-mono valor text-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded font-mono valor text-sm font-medium transition-colors ${
                     inactiveDays === days
-                      ? "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300"
-                      : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
+                      ? "bg-accent/[0.12] text-accent-ink"
+                      : "text-fg-2 hover:bg-surface-2"
                   }`}
                 >
                   {days}d
@@ -859,7 +859,7 @@ export const AdminPage = () => {
             <button
               onClick={() => fetchInactiveUsers(inactiveDays)}
               disabled={loadingInactive}
-              className="p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors text-zinc-500"
+              className="p-2 hover:bg-surface-2 rounded transition-colors text-fg-2"
             >
               <RefreshCw className={`w-4 h-4 ${loadingInactive ? "animate-spin" : ""}`} />
             </button>
@@ -867,7 +867,7 @@ export const AdminPage = () => {
 
           {loadingInactive ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-amber-500 dark:text-amber-400" />
+              <Loader2 className="w-8 h-8 animate-spin text-accent-ink" />
             </div>
           ) : inactiveUsers.length === 0 ? (
             <PageSuccessState
@@ -876,34 +876,34 @@ export const AdminPage = () => {
             />
           ) : (
             <div className="space-y-2">
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                <AlertTriangle className="w-4 h-4 inline mr-1 text-amber-500 dark:text-amber-400" />
+              <p className="text-sm text-fg-2">
+                <AlertTriangle className="w-4 h-4 inline mr-1 text-accent-ink" />
                 {inactiveUsers.length} usuário{inactiveUsers.length > 1 ? "s" : ""} inativo{inactiveUsers.length > 1 ? "s" : ""} há mais de {inactiveDays} dias
               </p>
               {inactiveUsers.map((iu) => (
                 <div
                   key={iu.id}
                   /* ds-ok: card de cor própria — a borda âmbar comunica estado, é a exceção prevista no Card */
-                  className="bg-white dark:bg-zinc-900 rounded-2xl border border-amber-200 dark:border-amber-900/50 shadow-sm dark:shadow-none p-4 flex items-center gap-4"
+                  className="bg-surface-1 rounded border border-amber-200 p-4 flex items-center gap-4"
                 >
-                  <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center flex-shrink-0">
-                    <UserMinus className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  <div className="w-10 h-10 rounded-sm bg-accent/[0.12] flex items-center justify-center flex-shrink-0">
+                    <UserMinus className="w-5 h-5 text-accent-ink" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-zinc-800 dark:text-zinc-100 truncate">
+                    <p className="font-medium text-fg truncate">
                       {iu.nome || "Sem nome"}
                     </p>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate">{iu.email}</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="text-sm text-fg-2 truncate">{iu.email}</p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-fg-2">
                       <span className="flex items-center gap-1 font-mono valor">
                         <Clock className="w-3 h-3" />
                         Último acesso: {formatDateShort(iu.last_sign_in_at)}
                       </span>
-                      <span className="px-2 py-0.5 font-mono valor bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 rounded-full font-medium">
+                      <span className="px-2 py-0.5 font-mono valor bg-accent/[0.12] text-accent-ink rounded-sm font-medium">
                         {iu.days_inactive} dias inativo
                       </span>
                       {!iu.is_active && (
-                        <span className="px-2 py-0.5 bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 rounded-full font-medium">
+                        <span className="px-2 py-0.5 bg-danger/[0.12] text-danger-ink rounded-sm font-medium">
                           Desativado
                         </span>
                       )}
@@ -914,7 +914,7 @@ export const AdminPage = () => {
                       <button
                         onClick={() => handleDeactivateInactive(iu)}
                         disabled={saving}
-                        className="px-3 py-2 text-xs font-medium bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-950/50 transition-colors flex items-center gap-1"
+                        className="px-3 py-2 text-xs font-medium bg-danger/[0.12] text-danger-ink rounded hover:bg-danger/[0.2] transition-colors flex items-center gap-1"
                       >
                         <Ban className="w-3.5 h-3.5" />
                         Desativar
@@ -933,7 +933,7 @@ export const AdminPage = () => {
         <div className="space-y-4">
           {/* Filtros de log */}
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 overflow-x-auto">
+            <div className="flex gap-1 bg-surface-2 border border-line rounded p-1 overflow-x-auto">
               {[
                 { value: "all", label: "Todos" },
                 { value: "login", label: "Logins" },
@@ -947,10 +947,10 @@ export const AdminPage = () => {
                     setLogFilter(f.value);
                     fetchActivityLogs(f.value === "all" ? undefined : f.value);
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap ${
                     logFilter === f.value
-                      ? "bg-emerald-600 text-white"
-                      : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
+                      ? "bg-accent text-accent-fg"
+                      : "text-fg-2 hover:bg-surface-2"
                   }`}
                 >
                   {f.label}
@@ -960,7 +960,7 @@ export const AdminPage = () => {
             <button
               onClick={() => fetchActivityLogs(logFilter === "all" ? undefined : logFilter)}
               disabled={loadingLogs}
-              className="p-2 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors text-zinc-500"
+              className="p-2 hover:bg-surface-2 rounded transition-colors text-fg-2"
             >
               <RefreshCw className={`w-4 h-4 ${loadingLogs ? "animate-spin" : ""}`} />
             </button>
@@ -968,7 +968,7 @@ export const AdminPage = () => {
 
           {loadingLogs ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-emerald-600 dark:text-emerald-400" />
+              <Loader2 className="w-8 h-8 animate-spin text-fg" />
             </div>
           ) : activityLogs.length === 0 ? (
             <PageEmptyState
@@ -977,7 +977,7 @@ export const AdminPage = () => {
             />
           ) : (
             <Card padding="nenhum" className="overflow-hidden">
-              <div className="divide-y divide-zinc-100 dark:divide-white/[0.05]">
+              <div className="divide-y divide-line">
                 {activityLogs.map((log) => (
                   <LogRow key={log.id} log={log} formatDate={formatDate} />
                 ))}
@@ -994,23 +994,23 @@ export const AdminPage = () => {
 function LogRow({ log, formatDate }: { log: ActivityLog; formatDate: (d: string | null) => string }) {
   const actionInfo = ACTION_LABELS[log.action] || {
     label: log.action,
-    color: "text-zinc-600 bg-zinc-50 dark:text-zinc-400 dark:bg-white/[0.04]",
-    dot: "bg-zinc-300",
+    color: "text-fg-2 bg-surface-2",
+    dot: "bg-surface-3",
   };
 
   return (
-    <div className="px-4 py-3 flex items-center gap-3 hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors">
-      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${actionInfo.dot}`} />
+    <div className="px-4 py-3 flex items-center gap-3 hover:bg-surface-2 transition-colors">
+      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${actionInfo.dot}`} /> {/* ds-ok: ponto de estado de 8px */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded-full ${actionInfo.color}`}>
+          <span className={`px-2 py-0.5 text-[10px] font-medium rounded-sm ${actionInfo.color}`}>
             {actionInfo.label}
           </span>
-          <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate">
+          <span className="text-sm text-fg truncate">
             {log.email || "—"}
           </span>
         </div>
-        <div className="flex items-center gap-3 mt-0.5 font-mono text-xs valor text-zinc-500 dark:text-zinc-400">
+        <div className="flex items-center gap-3 mt-0.5 font-mono text-xs valor text-fg-2">
           <span>{formatDate(log.created_at)}</span>
           {log.ip_address && (
             <span className="flex items-center gap-1">

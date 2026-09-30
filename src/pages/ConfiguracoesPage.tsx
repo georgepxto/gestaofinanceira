@@ -1,16 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {
-  Trash2,
-  Loader2,
-  AlertTriangle,
-  Check,
-  Sun,
-  Moon,
-  ChevronDown,
-  ChevronUp,
-  KeyRound,
-  Download,
-} from "lucide-react";
+import { Trash2, Sun, Moon, ChevronDown, KeyRound, Download } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAppContext } from "../context";
@@ -19,9 +8,13 @@ import { useTheme } from "../hooks/useTheme";
 import { PageHeader } from "../components/ui/PageHeader";
 import { PAGE_CONTAINER_CLASS } from "../utils/layout";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
-import { Rotulo } from "../components/ui/Rotulo";
-import { Card } from "../components/ui/Card";
+import { Surface } from "../components/ui/Surface";
+import { Avatar } from "../components/ui/Avatar";
+import { Button } from "../components/ui/Button";
+import { SegmentedControl } from "../components/ui/SegmentedControl";
+import { KpiStrip, Kpi } from "../components/ui/KpiStrip";
 import { Valor } from "../components/ui/Valor";
+import { campoClasse } from "../components/ui/FormSheet";
 import { GerenciarCategorias } from "../components/GerenciarCategorias";
 
 interface Contagens {
@@ -308,10 +301,7 @@ export const ConfiguracoesPage = () => {
     }
   };
 
-  const inicial = (user?.user_metadata?.nome || user?.email || "U").charAt(0).toUpperCase();
-  const desde = user?.created_at
-    ? format(new Date(user.created_at), "MMMM 'de' yyyy", { locale: ptBR })
-    : null;
+  const desde = user?.created_at ? format(new Date(user.created_at), "MMMM 'de' yyyy", { locale: ptBR }) : null;
 
   const itensZerar = [
     { label: "lançamentos", quantidade: contagens.lancamentos },
@@ -320,271 +310,222 @@ export const ConfiguracoesPage = () => {
     { label: "metas", quantidade: contagens.metas },
   ];
 
+  const Linha = ({ titulo, detalhe, children }: { titulo: string; detalhe?: string; children: React.ReactNode }) => (
+    <div className="flex items-center justify-between gap-4 flex-wrap py-4">
+      <div className="min-w-0">
+        <p className="text-[15px] md:text-sm text-fg">{titulo}</p>
+        {detalhe && <p className="text-xs text-fg-2 mt-0.5">{detalhe}</p>}
+      </div>
+      {children}
+    </div>
+  );
+
   return (
-    <div className={PAGE_CONTAINER_CLASS}>
+    <div className={`${PAGE_CONTAINER_CLASS} max-w-3xl`}>
       {/* HEADER_PAGINA */}
-      <PageHeader
-        eyebrow="Conta"
-        title="Suas configurações"
-        description="Perfil, aparência e gerenciamento da conta."
-      />
+      <PageHeader title="Configurações" description="Perfil, aparência e a sua conta." />
 
-      {/* Grid principal */}
-      <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
-        {/* Card Perfil */}
-        <Card as="section" className="min-w-0">
-          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Perfil</h2>
-
-          <div className="flex items-center gap-3.5 mb-5">
-            <div className="w-[52px] h-[52px] rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
-              <span className="font-bold text-xl text-emerald-700 dark:text-emerald-400">{inicial}</span>
-            </div>
+      {/* Perfil */}
+      <section className="space-y-3">
+        <h2 className="text-base font-medium text-fg">Perfil</h2>
+        <Surface padding="nenhum" className="px-4 md:px-5 divide-y divide-line">
+          <div className="flex items-center gap-3 py-4">
+            <Avatar nome={user?.user_metadata?.nome || user?.email} tamanho={40} />
             <div className="min-w-0">
-              <p className="text-[15px] font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                {user?.user_metadata?.nome || "Usuário"}
-              </p>
-              <p className="font-mono text-[12px] text-zinc-500 dark:text-zinc-400 truncate">{user?.email}</p>
+              <p className="text-[15px] md:text-sm text-fg break-words">{user?.user_metadata?.nome || "Usuário"}</p>
+              <p className="text-xs text-fg-2 break-all">{user?.email}</p>
             </div>
           </div>
-
-          <div>
-            <label className="block text-sm text-zinc-600 dark:text-zinc-400 mb-1">Nome de exibição</label>
+          <div className="py-4">
+            <label htmlFor="config-nome" className="block text-xs text-fg-2 mb-2">
+              Nome de exibição
+            </label>
             <div className="flex gap-2 flex-wrap">
               <input
+                id="config-nome"
                 type="text"
                 value={novoNome}
                 onChange={(e) => setNovoNome(e.target.value)}
                 placeholder="Seu nome"
-                className="flex-1 min-w-[180px] h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
+                className={`flex-1 min-w-[180px] ${campoClasse}`}
               />
-              <button
+              <Button
                 onClick={handleAlterarNome}
-                disabled={savingNome || novoNome === user?.user_metadata?.nome}
-                className="inline-flex items-center gap-2 h-10 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-200 disabled:text-zinc-400 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-500 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-colors"
+                disabled={novoNome === user?.user_metadata?.nome}
+                carregando={savingNome}
+                className="h-11"
               >
-                {savingNome ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                 Salvar
-              </button>
+              </Button>
             </div>
           </div>
-
-          <div className="border-t border-zinc-100 dark:border-white/[0.05] mt-5 pt-4 flex items-center justify-between gap-3 flex-wrap">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">Senha</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">enviamos um link por e-mail</p>
-            </div>
-            <button
-              onClick={handleAlterarSenha}
-              disabled={sendingReset}
-              className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {sendingReset ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+          <Linha titulo="Senha" detalhe="Enviamos um link por e-mail para trocar.">
+            <Button onClick={handleAlterarSenha} carregando={sendingReset} icone={<KeyRound className="w-4 h-4" strokeWidth={1.5} />}>
               Alterar senha
-            </button>
-          </div>
-        </Card>
+            </Button>
+          </Linha>
+        </Surface>
+      </section>
 
-        {/* Coluna: Aparência + Seus dados */}
-        <div className="space-y-5 min-w-0">
-          {/* Card Aparência */}
-          <Card as="section">
-            <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Aparência</h2>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">Tema</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  {theme === "dark" ? "Modo escuro ativado" : "Modo claro ativado"}
-                </p>
-              </div>
-              {/* SEGMENTADO claro/escuro — os dois botões usam a MESMA string de
-                  estado. Enquanto divergiram, "Claro" ficava branco chapado no
-                  escuro (era o controle mais quebrado do modo escuro) e o ativo
-                  do "Escuro" tinha a cor do cartão que o contém, sem se ler.
-                  No dark o degrau é branco a 10% sobre o trilho de 4%. */}
-              <div className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] p-1 rounded-xl" role="radiogroup" aria-label="Tema">
-                <button
-                  onClick={() => setTheme("light")}
-                  role="radio"
-                  aria-checked={theme === "light"}
-                  className={`px-3.5 py-2 rounded-lg text-sm transition-colors flex items-center gap-1.5 ${
-                    theme === "light"
-                      ? "bg-white dark:bg-white/[0.10] text-zinc-900 dark:text-zinc-50 shadow-sm dark:shadow-none font-semibold"
-                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
-                  }`}
-                >
-                  <Sun className="w-4 h-4" />
-                  Claro
-                </button>
-                <button
-                  onClick={() => setTheme("dark")}
-                  role="radio"
-                  aria-checked={theme === "dark"}
-                  className={`px-3.5 py-2 rounded-lg text-sm transition-colors flex items-center gap-1.5 ${
-                    theme === "dark"
-                      ? "bg-white dark:bg-white/[0.10] text-zinc-900 dark:text-zinc-50 shadow-sm dark:shadow-none font-semibold"
-                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
-                  }`}
-                >
-                  <Moon className="w-4 h-4" />
-                  Escuro
-                </button>
-              </div>
-            </div>
-          </Card>
+      {/* Aparência */}
+      <section className="space-y-3">
+        <h2 className="text-base font-medium text-fg">Aparência</h2>
+        <Surface padding="nenhum" className="px-4 md:px-5">
+          <Linha titulo="Tema" detalhe={theme === "dark" ? "Escuro" : "Claro"}>
+            <SegmentedControl
+              rotulo="Tema"
+              segmentos={[
+                {
+                  chave: "dark",
+                  rotulo: (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Moon className="w-4 h-4" strokeWidth={1.5} /> Escuro
+                    </span>
+                  ),
+                  ativo: theme === "dark",
+                  onClick: () => setTheme("dark"),
+                },
+                {
+                  chave: "light",
+                  rotulo: (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Sun className="w-4 h-4" strokeWidth={1.5} /> Claro
+                    </span>
+                  ),
+                  ativo: theme === "light",
+                  onClick: () => setTheme("light"),
+                },
+              ]}
+            />
+          </Linha>
+        </Surface>
+      </section>
 
-          {/* Card Seus dados */}
-          <Card as="section">
-            <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Seus dados</h2>
-            {desde && (
-              <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">no Hedge desde {desde}</p>
-            )}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 mb-5">
-              <div className="min-w-0">
-                <Rotulo>Lançamentos</Rotulo>
-                <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-100">{contagens.lancamentos}</Valor>
-              </div>
-              <div className="min-w-0">
-                <Rotulo>Cartões</Rotulo>
-                <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-100">{contagens.cartoes}</Valor>
-              </div>
-              <div className="min-w-0">
-                <Rotulo>Devedores</Rotulo>
-                <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-100">{contagens.devedores}</Valor>
-              </div>
-              <div className="min-w-0">
-                <Rotulo>Metas</Rotulo>
-                <Valor porte="medio" className="block mt-0.5 text-zinc-900 dark:text-zinc-100">{contagens.metas}</Valor>
-              </div>
-            </div>
-            <button
-              onClick={handleExportarDados}
-              disabled={exporting}
-              className="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              Exportar meus dados
-            </button>
-          </Card>
+      {/* Seus dados */}
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+          <h2 className="text-base font-medium text-fg">Seus dados</h2>
+          {desde && <p className="text-xs text-fg-3">No Hedge desde {desde}</p>}
         </div>
-      </div>
+        <KpiStrip>
+          <Kpi rotulo="Lançamentos" valor={<Valor porte="medio">{contagens.lancamentos}</Valor>} />
+          <Kpi rotulo="Cartões" valor={<Valor porte="medio">{contagens.cartoes}</Valor>} />
+          <Kpi rotulo="Devedores" valor={<Valor porte="medio">{contagens.devedores}</Valor>} />
+          <Kpi rotulo="Metas" valor={<Valor porte="medio">{contagens.metas}</Valor>} />
+        </KpiStrip>
+        <Button onClick={handleExportarDados} carregando={exporting} icone={<Download className="w-4 h-4" strokeWidth={1.5} />}>
+          Exportar meus dados
+        </Button>
+      </section>
 
-      {/* Categorias — acordeão fechado por padrão, como o de baixo */}
-      <div className="mt-5">
-        <GerenciarCategorias />
-      </div>
+      {/* Categorias — fechado por padrão */}
+      <GerenciarCategorias />
 
-      {/* Ações irreversíveis — acordeão fechado por padrão */}
-      <Card as="section" padding="nenhum" className="mt-5">
+      {/* Ações irreversíveis — fechado por padrão */}
+      <Surface as="section" padding="nenhum">
         <button
           type="button"
           onClick={() => setShowAcoesIrreversiveis(!showAcoesIrreversiveis)}
           aria-expanded={showAcoesIrreversiveis}
-          className="w-full flex items-center gap-3 p-5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-2xl"
+          className="w-full flex items-center gap-3 px-4 md:px-5 min-h-[64px] text-left rounded"
         >
-          <AlertTriangle className="w-5 h-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Ações irreversíveis</h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">zerar seus dados ou excluir a conta</p>
+          <div className="flex-1 min-w-0 py-3">
+            <h2 className="text-base font-medium text-danger-ink">Ações irreversíveis</h2>
+            <p className="text-xs text-fg-2 mt-0.5">Zerar seus dados ou excluir a conta.</p>
           </div>
-          {showAcoesIrreversiveis ? (
-            <ChevronUp className="w-5 h-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
-          )}
+          <ChevronDown
+            className={`w-4 h-4 text-fg-3 shrink-0 transition-transform duration-150 ${showAcoesIrreversiveis ? "rotate-180" : ""}`}
+            strokeWidth={1.5}
+            aria-hidden="true"
+          />
         </button>
 
         {showAcoesIrreversiveis && (
-          <div className="px-5 pb-5 grid gap-4 md:grid-cols-2">
+          <div className="px-4 md:px-5 pb-5 divide-y divide-line">
             {/* Zerar dados */}
-            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-2xl p-5 min-w-0">
-              <Rotulo tom="alerta" className="mb-1">Zerar dados</Rotulo>
-              <h3 className="font-bold text-zinc-900 dark:text-zinc-100 mb-2">Começar do zero</h3>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
-                Apaga permanentemente tudo isto, mantendo só o seu login:
-              </p>
-              <ul className="space-y-1.5 mb-4">
-                {itensZerar.map((item) => (
-                  <li key={item.label} className="flex items-center gap-2 font-mono text-[12px] text-zinc-600 dark:text-zinc-400">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
-                    {item.quantidade} {item.label}
-                  </li>
+            <div className="py-5 first:pt-0">
+              <h3 className="text-[15px] md:text-sm text-fg">Zerar meus dados</h3>
+              <p className="text-sm text-fg-2 mt-1">
+                Apaga para sempre{" "}
+                {itensZerar.map((item, i) => (
+                  <span key={item.label}>
+                    <span className="valor text-fg">{item.quantidade}</span> {item.label}
+                    {i < itensZerar.length - 2 ? ", " : i === itensZerar.length - 2 ? " e " : ""}
+                  </span>
                 ))}
-              </ul>
-
+                . Seu login continua.
+              </p>
               {!showResetConfirm ? (
-                <button
-                  onClick={() => setShowResetConfirm(true)}
-                  className="inline-flex items-center gap-2 px-3.5 py-2 bg-transparent border border-amber-400 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-100/60 dark:hover:bg-amber-950/40 rounded-xl text-sm font-semibold transition-colors"
+                <Button variante="fantasma" className="mt-3 -ml-4 !text-danger-ink" onClick={() => setShowResetConfirm(true)}
+                  icone={<Trash2 className="w-4 h-4" strokeWidth={1.5} />}
                 >
-                  <Trash2 className="w-4 h-4" />
                   Zerar meus dados
-                </button>
+                </Button>
               ) : (
-                <div className="space-y-3">
-                  <p className="text-sm text-zinc-700 dark:text-zinc-300">
-                    Digite <strong className="font-mono text-amber-700 dark:text-amber-400">RESETAR</strong> para confirmar:
-                  </p>
+                <div className="mt-3 space-y-3">
+                  <label htmlFor="config-resetar" className="block text-sm text-fg-2">
+                    Digite <span className="valor text-danger-ink">RESETAR</span> para confirmar.
+                  </label>
                   <input
+                    id="config-resetar"
                     type="text"
                     value={resetConfirmText}
                     onChange={(e) => setResetConfirmText(e.target.value.toUpperCase())}
                     placeholder="RESETAR"
-                    className="w-full h-11 px-3.5 font-mono text-sm bg-white dark:bg-white/[0.04] border border-amber-300 dark:border-amber-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                    className={`${campoClasse} valor max-w-xs`}
                   />
                   <div className="flex gap-2 flex-wrap">
-                    <button
+                    <Button
+                      variante="perigo"
                       onClick={handleResetConta}
-                      disabled={resetingAccount || resetConfirmText !== "RESETAR"}
-                      className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-xl text-sm font-semibold transition-colors ${
-                        resetConfirmText === "RESETAR" && !resetingAccount
-                          ? "bg-amber-600 hover:bg-amber-700 text-white"
-                          : "bg-zinc-200 text-zinc-400 dark:bg-zinc-700 dark:text-zinc-500 cursor-not-allowed"
-                      }`}
+                      disabled={resetConfirmText !== "RESETAR"}
+                      carregando={resetingAccount}
                     >
-                      {resetingAccount ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                      Confirmar
-                    </button>
-                    <button
-                      onClick={() => { setShowResetConfirm(false); setResetConfirmText(""); }}
-                      className="inline-flex items-center px-3.5 py-2 bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.08] hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 rounded-xl text-sm font-medium transition-colors"
+                      Zerar dados
+                    </Button>
+                    <Button
+                      variante="fantasma"
+                      onClick={() => {
+                        setShowResetConfirm(false);
+                        setResetConfirmText("");
+                      }}
                     >
                       Cancelar
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Excluir conta */}
-            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-2xl p-5 min-w-0">
-              <Rotulo tom="perigo" className="mb-1">Excluir conta</Rotulo>
-              <h3 className="font-bold text-zinc-900 dark:text-zinc-100 mb-2">Apagar tudo, inclusive o login</h3>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
-                Ação permanente e irreversível. Digite <strong className="font-mono text-red-600 dark:text-red-400">EXCLUIR</strong> para liberar o botão:
-              </p>
+            <div className="py-5 last:pb-0">
+              <h3 className="text-[15px] md:text-sm text-fg">Excluir minha conta</h3>
+              <p className="text-sm text-fg-2 mt-1">Apaga tudo, inclusive o login. Não tem volta.</p>
+              <label htmlFor="config-excluir" className="block text-sm text-fg-2 mt-3 mb-2">
+                Digite <span className="valor text-danger-ink">EXCLUIR</span> para liberar o botão.
+              </label>
               <input
+                id="config-excluir"
                 type="text"
                 value={deleteConfirmText}
                 onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
                 placeholder="EXCLUIR"
-                className="w-full h-11 px-3.5 font-mono text-sm bg-white dark:bg-white/[0.04] border border-red-200 dark:border-red-800 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 mb-3"
+                className={`${campoClasse} valor max-w-xs`}
               />
-              <button
+              <Button
+                variante="perigo"
+                className="mt-3"
                 onClick={handleExcluirConta}
-                disabled={deletingAccount || deleteConfirmText !== "EXCLUIR"}
-                className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-xl text-sm font-semibold transition-colors ${
-                  deleteConfirmText === "EXCLUIR" && !deletingAccount
-                    ? "bg-red-600 hover:bg-red-700 text-white"
-                    : "bg-zinc-200 text-zinc-400 dark:bg-zinc-700 dark:text-zinc-500 cursor-not-allowed"
-                }`}
+                disabled={deleteConfirmText !== "EXCLUIR"}
+                carregando={deletingAccount}
+                icone={<Trash2 className="w-4 h-4" strokeWidth={1.5} />}
               >
-                {deletingAccount ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                 Excluir minha conta
-              </button>
+              </Button>
             </div>
           </div>
         )}
-      </Card>
+      </Surface>
     </div>
   );
 };

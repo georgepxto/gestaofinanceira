@@ -1,32 +1,22 @@
 import { useState } from "react";
-import {
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-  Pencil,
-  Plus,
-  Tags,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Check, ChevronDown, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useAppContext } from "../context";
 import { useCategorias, contarUsosCategoria, type TipoCategoria } from "../hooks/useCategorias";
-import { CATEGORIA_NOME_MAX } from "../utils/categories";
+import { CATEGORIA_NOME_MAX, corDaCategoria } from "../utils/categories";
 import { toast } from "./ui/Toaster";
-import { Card } from "./ui/Card";
-import { Rotulo } from "./ui/Rotulo";
+import { Surface } from "./ui/Surface";
+import { SegmentedControl } from "./ui/SegmentedControl";
+import { PontoCategoria } from "./ui/PontoCategoria";
+import { Button } from "./ui/Button";
+import { campoClasse } from "./ui/FormSheet";
 
 const ABAS: { tipo: TipoCategoria; label: string; singular: string }[] = [
   { tipo: "gasto", label: "Gastos", singular: "gasto" },
   { tipo: "receita", label: "Receitas", singular: "receita" },
 ];
 
-const INPUT_CLASS =
-  "h-11 px-3.5 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]";
-
 const BOTAO_ICONE_CLASS =
-  "p-2 rounded-lg text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500";
+  "w-9 h-9 shrink-0 rounded flex items-center justify-center text-fg-3 hover:text-fg hover:bg-surface-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
 
 /**
  * Gerência das categorias de lançamento.
@@ -133,69 +123,51 @@ export const GerenciarCategorias = () => {
   };
 
   return (
-    <Card as="section" padding="nenhum">
+    <Surface as="section" padding="nenhum">
       <button
         type="button"
         onClick={alternarAberto}
         aria-expanded={aberto}
-        className="w-full flex items-center gap-3 p-5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-2xl"
+        className="w-full flex items-center gap-3 px-4 md:px-5 min-h-[64px] text-left rounded"
       >
-        <Tags className="w-5 h-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">
-            Categorias
-          </h2>
+        <div className="flex-1 min-w-0 py-3">
+          <h2 className="text-base font-medium text-fg">Categorias</h2>
           {/* O resumo fechado responde "quantas eu tenho?" sem abrir nada. */}
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs text-fg-2 mt-0.5">
             {gasto.categorias.length} de gasto · {receita.categorias.length} de receita
             {gasto.personalizado || receita.personalizado ? "" : " · lista padrão"}
           </p>
         </div>
-        {aberto ? (
-          <ChevronUp className="w-5 h-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
-        ) : (
-          <ChevronDown className="w-5 h-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
-        )}
+        <ChevronDown
+          className={`w-4 h-4 text-fg-3 shrink-0 transition-transform duration-150 ${aberto ? "rotate-180" : ""}`}
+          strokeWidth={1.5}
+          aria-hidden="true"
+        />
       </button>
 
       {aberto && (
-        <div className="px-5 pb-5">
-          <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 min-w-0">
+        <div className="px-4 md:px-5 pb-5">
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+            <p className="text-sm text-fg-2 min-w-0">
               {personalizado
-                ? "Sua lista — é ela que aparece ao lançar e nos gráficos."
+                ? "Sua lista: é ela que aparece ao lançar e nos gráficos."
                 : "Você está na lista padrão. Personalize à vontade."}
             </p>
-
-            {/* SEGMENTADO gastos/receitas */}
-            <div
-              className="flex gap-1 bg-zinc-100 dark:bg-white/[0.04] p-1 rounded-xl"
-              role="radiogroup"
-              aria-label="Tipo de categoria"
-            >
-              {ABAS.map((aba) => (
-                <button
-                  key={aba.tipo}
-                  onClick={() => trocarAba(aba.tipo)}
-                  role="radio"
-                  aria-checked={tipo === aba.tipo}
-                  className={`px-3.5 py-2 rounded-lg text-sm transition-colors ${
-                    tipo === aba.tipo
-                      ? "bg-white dark:bg-white/[0.10] text-zinc-900 dark:text-zinc-50 shadow-sm dark:shadow-none font-semibold"
-                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 font-medium"
-                  }`}
-                >
-                  {aba.label}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              rotulo="Tipo de categoria"
+              tamanho="sm"
+              segmentos={ABAS.map((aba) => ({
+                chave: aba.tipo,
+                rotulo: aba.label,
+                ativo: tipo === aba.tipo,
+                onClick: () => trocarAba(aba.tipo),
+              }))}
+            />
           </div>
 
-          <Rotulo className="mb-2">{categorias.length} categorias</Rotulo>
-
-          <ul className="divide-y divide-zinc-100 dark:divide-white/[0.05] border-y border-zinc-100 dark:border-white/[0.05]">
+          <ul className="divide-y divide-line border-y border-line">
             {categorias.map((nome) => (
-              <li key={nome} className="py-2">
+              <li key={nome} className="py-1.5">
                 {emEdicao === nome ? (
                   <div className="flex items-center gap-2">
                     <input
@@ -209,43 +181,34 @@ export const GerenciarCategorias = () => {
                         if (e.key === "Escape") setEmEdicao(null);
                       }}
                       aria-label={`Novo nome para ${nome}`}
-                      className={`flex-1 min-w-0 ${INPUT_CLASS}`}
+                      className={`flex-1 min-w-0 ${campoClasse}`}
                     />
                     <button
                       onClick={() => handleRenomear(nome)}
                       disabled={salvando}
                       aria-label="Salvar nome"
-                      className={`${BOTAO_ICONE_CLASS} text-emerald-600 dark:text-emerald-400 disabled:opacity-50`}
-                    >
-                      {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                    </button>
-                    <button
-                      onClick={() => setEmEdicao(null)}
-                      aria-label="Cancelar edição"
                       className={BOTAO_ICONE_CLASS}
                     >
-                      <X className="w-4 h-4" />
+                      {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" strokeWidth={1.5} />}
+                    </button>
+                    <button onClick={() => setEmEdicao(null)} aria-label="Cancelar edição" className={BOTAO_ICONE_CLASS}>
+                      <X className="w-4 h-4" strokeWidth={1.5} />
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="flex-1 min-w-0 text-sm text-zinc-800 dark:text-zinc-100 truncate">
-                      {nome}
-                    </span>
-                    <button
-                      onClick={() => abrirEdicao(nome)}
-                      aria-label={`Renomear ${nome}`}
-                      className={BOTAO_ICONE_CLASS}
-                    >
-                      <Pencil className="w-4 h-4" />
+                  <div className="flex items-center gap-3 min-h-[44px]">
+                    <PontoCategoria cor={corDaCategoria(nome, categorias)} />
+                    <span className="flex-1 min-w-0 text-[15px] md:text-sm text-fg break-words">{nome}</span>
+                    <button onClick={() => abrirEdicao(nome)} aria-label={`Renomear ${nome}`} className={BOTAO_ICONE_CLASS}>
+                      <Pencil className="w-4 h-4" strokeWidth={1.5} />
                     </button>
                     <button
                       onClick={() => handleExcluir(nome)}
                       disabled={categorias.length <= 1}
                       aria-label={`Excluir ${nome}`}
-                      className={`${BOTAO_ICONE_CLASS} hover:text-red-600 dark:hover:text-red-400 disabled:opacity-40 disabled:cursor-not-allowed`}
+                      className={`${BOTAO_ICONE_CLASS} hover:text-danger-ink`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" strokeWidth={1.5} />
                     </button>
                   </div>
                 )}
@@ -262,26 +225,27 @@ export const GerenciarCategorias = () => {
               onKeyDown={(e) => {
                 if (e.key === "Enter" && nova.trim()) handleAdicionar();
               }}
-              placeholder={tipo === "gasto" ? "Ex: Pet, Academia, Viagem…" : "Ex: Dividendos, Bônus…"}
+              placeholder={tipo === "gasto" ? "Ex: pet, academia, viagem" : "Ex: dividendos, bônus"}
               aria-label="Nome da nova categoria"
-              className={`flex-1 min-w-[180px] ${INPUT_CLASS}`}
+              className={`flex-1 min-w-[180px] ${campoClasse}`}
             />
-            <button
+            <Button
               onClick={handleAdicionar}
-              disabled={salvando || !nova.trim()}
-              className="inline-flex items-center gap-2 h-11 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-200 disabled:text-zinc-400 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-500 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-colors"
+              disabled={!nova.trim()}
+              carregando={salvando}
+              icone={<Plus className="w-4 h-4" strokeWidth={1.75} />}
+              className="h-11"
             >
-              {salvando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               Adicionar
-            </button>
+            </Button>
           </div>
 
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-3">
-            Renomear atualiza os lançamentos que já usavam a categoria. Excluir
-            move esses lançamentos para outra categoria — nenhum valor se perde.
+          <p className="text-xs text-fg-3 mt-3">
+            Renomear atualiza os lançamentos que já usavam a categoria. Excluir move esses lançamentos para outra
+            categoria: nenhum valor se perde. A cor vem da posição na lista.
           </p>
         </div>
       )}
-    </Card>
+    </Surface>
   );
 };

@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { HedgeMark } from "../components/landing/HedgeMark";
 import { useNavigate } from "react-router-dom";
-import { Lock, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useAppContext } from "../context";
-import { PageErrorState, PageSuccessState } from "../components/ui/AsyncState";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
-import { Card } from "../components/ui/Card";
+import { Button } from "../components/ui/Button";
+import { Campo, campoClasse } from "../components/ui/FormSheet";
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -65,105 +65,68 @@ export function ResetPasswordPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-app-dark flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Back */}
+    <div className="min-h-screen bg-page flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-sm">
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 mb-6 transition-colors"
+          className="h-11 -ml-2 px-2 inline-flex items-center gap-1.5 rounded text-sm text-fg-2 hover:text-fg transition-colors mb-8"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Voltar para o App
+          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
+          Voltar para o app
         </button>
 
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-8 h-8 mb-4">
-            <HedgeMark className="h-8 w-auto text-accent" title="Hedge" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-            Atualizar Senha
-          </h1>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-2">
-            Digite sua nova senha de acesso abaixo
-          </p>
-        </div>
+        <HedgeMark className="h-8 w-auto text-accent" title="Hedge" />
+        <h1 className="text-2xl md:text-[28px] font-title leading-tight tracking-[-0.01em] text-fg mt-6">Nova senha</h1>
+        <p className="text-[15px] md:text-sm text-fg-2 mt-1">Escolha a senha que você vai usar para entrar.</p>
 
-        <Card padding="resumo">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Senha */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
-                Nova Senha
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-11 pl-10 pr-12 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-400"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Confirmar Senha */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-2">
-                Confirmar Nova Senha
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full h-11 pl-10 pr-4 bg-zinc-50 dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.09] rounded-xl text-zinc-800 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white dark:focus:bg-white/[0.06]"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
-
-            {/* Error & Success Messages */}
-            {error && (
-              <PageErrorState
-                compact
-                title="Não foi possível atualizar a senha"
-                description={toActionableErrorMessage(error, "Não conseguimos finalizar a atualização da sua senha.")}
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
+          <Campo rotulo="Nova senha" htmlFor="reset-senha" dica="Pelo menos 6 caracteres.">
+            <div className="relative">
+              <input
+                id="reset-senha"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`${campoClasse} pr-12`}
               />
-            )}
-            {success && (
-              <PageSuccessState
-                compact
-                title="Senha atualizada com sucesso"
-                description="Você será redirecionado automaticamente em alguns segundos."
-              />
-            )}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
+                className="absolute right-0 top-0 w-11 h-11 flex items-center justify-center text-fg-3 hover:text-fg transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" strokeWidth={1.5} /> : <Eye className="w-4 h-4" strokeWidth={1.5} />}
+              </button>
+            </div>
+          </Campo>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading || !!success}
-              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Atualizando...
-                </>
-              ) : (
-                "Atualizar Senha"
-              )}
-            </button>
-          </form>
-        </Card>
+          <Campo rotulo="Confirmar a senha" htmlFor="reset-confirma">
+            <input
+              id="reset-confirma"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={campoClasse}
+            />
+          </Campo>
+
+          {error && (
+            <p role="alert" className="text-sm text-danger-ink">
+              {toActionableErrorMessage(error, "Não conseguimos atualizar a sua senha.")}
+            </p>
+          )}
+          {success && (
+            <p role="status" className="text-sm text-fg-2">
+              Senha atualizada. Você volta para o app em alguns segundos.
+            </p>
+          )}
+
+          <Button type="submit" variante="principal" cheio carregando={loading} disabled={!!success}>
+            Salvar nova senha
+          </Button>
+        </form>
       </div>
     </div>
   );

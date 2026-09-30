@@ -219,14 +219,12 @@ function AppContent() {
 
   if (!isSupabaseConfigured) {
     return (
-      <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
-          <h1 className="text-xl font-bold tracking-tight text-white mb-2">
-            Configuração Necessária
-          </h1>
-          <p className="text-zinc-400">
-            Configure as variáveis de ambiente do Supabase no arquivo .env.local
+      <div className="min-h-screen bg-page flex items-center justify-center p-6">
+        <div className="max-w-sm">
+          <AlertCircle className="w-5 h-5 text-danger-ink mb-3" strokeWidth={1.5} />
+          <h1 className="text-xl font-medium text-fg mb-2">Falta configurar o Supabase</h1>
+          <p className="text-sm text-fg-2">
+            Preencha as variáveis de ambiente do Supabase no arquivo .env.local.
           </p>
         </div>
       </div>
@@ -251,22 +249,18 @@ function AppContent() {
   // Conta desativada pelo admin
   if (!isActive) {
     return (
-      <div className="min-h-screen bg-zinc-100 dark:bg-app-dark flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <div className="w-16 h-16 bg-red-100 dark:bg-red-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ShieldAlert className="w-8 h-8 text-red-500 dark:text-red-400" />
-          </div>
-          <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">
-            Conta Desativada
-          </h1>
-          <p className="text-zinc-500 dark:text-zinc-400 mb-6">
-            Sua conta foi desativada pelo administrador. Entre em contato com o suporte para mais informações.
+      <div className="min-h-screen bg-page flex items-center justify-center p-6">
+        <div className="max-w-sm">
+          <ShieldAlert className="w-5 h-5 text-danger-ink mb-3" strokeWidth={1.5} />
+          <h1 className="text-xl font-medium text-fg mb-2">Conta desativada</h1>
+          <p className="text-sm text-fg-2 mb-6">
+            Sua conta foi desativada pelo administrador. Fale com o suporte para saber mais.
           </p>
           <button
             onClick={handleLogout}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium"
+            className="h-11 md:h-10 px-4 inline-flex items-center gap-2 rounded bg-surface-2 text-fg hover:bg-surface-3 transition-colors text-sm font-medium"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-4 h-4" strokeWidth={1.5} />
             Sair
           </button>
         </div>

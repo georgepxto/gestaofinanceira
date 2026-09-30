@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { CheckCircle2, X, Info } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Check, Info } from "lucide-react";
 import type { ModalFeedback } from "../../types/extended";
 import { useFocusTrap } from "../../hooks";
-import { Card } from "../ui/Card";
+import { Button } from "../ui/Button";
 
 interface FeedbackModalProps {
   modal: ModalFeedback;
   onClose: () => void;
 }
 
-export const FeedbackModal: React.FC<FeedbackModalProps> = ({
-  modal,
-  onClose,
-}) => {
+/** Aviso que pede leitura (erro com instrução, conta excluída). Mesmo painel do ConfirmDialog. */
+export const FeedbackModal: React.FC<FeedbackModalProps> = ({ modal, onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isRendered, setIsRendered] = useState(false);
   const dialogRef = useFocusTrap(onClose, modal.show);
@@ -23,77 +22,49 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
       requestAnimationFrame(() => setIsVisible(true));
     } else {
       setIsVisible(false);
-      const timer = setTimeout(() => setIsRendered(false), 200);
+      const timer = setTimeout(() => setIsRendered(false), 150);
       return () => clearTimeout(timer);
     }
   }, [modal.show]);
 
   if (!isRendered) return null;
 
-  return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center p-4 sm:p-0">
+  const Icone = modal.tipo === "sucesso" ? Check : Info;
+
+  return createPortal(
+    <div className="fixed inset-0 z-modal flex items-end md:items-center justify-center p-4">
       <div
-        className={`fixed inset-0 bg-black/45 backdrop-blur-sm transition-opacity duration-200 ${
-          isVisible ? "opacity-100" : "opacity-0"
-        }`}
+        className={`fixed inset-0 bg-scrim transition-opacity duration-150 ${isVisible ? "opacity-100" : "opacity-0"}`}
         aria-hidden="true"
         /* ds-ok: fundo de dispensa. O foco fica preso no diálogo e o Esc fecha — o fundo não entra na ordem de foco de propósito */
         onClick={onClose}
       />
 
-      <Card
-        padding="nenhum"
+      <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="feedback-modal-title"
-        className={`relative w-full max-w-sm overflow-hidden shadow-xl dark:shadow-black/60 transition-all duration-200 ${
-          isVisible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-4 sm:translate-y-8"
+        className={`relative w-full max-w-sm bg-surface-2 border border-line rounded p-5 mb-[env(safe-area-inset-bottom)] transition-[opacity,transform] duration-150 ${
+          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
         }`}
       >
-        <button
-          onClick={onClose}
-          aria-label="Fechar"
-          className="absolute right-4 top-4 p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded-lg transition-colors z-10"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        <div className="p-6">
-          <div className="flex flex-col items-center text-center">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
-              modal.tipo === "sucesso"
-                ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
-                : "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
-            }`}>
-              {modal.tipo === "sucesso" ? (
-                <CheckCircle2 className="w-6 h-6" />
-              ) : (
-                <Info className="w-6 h-6" />
-              )}
-            </div>
-
-            <h3 id="feedback-modal-title" className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
+        <div className="flex items-start gap-3">
+          <Icone className="w-5 h-5 mt-0.5 shrink-0 text-fg-2" strokeWidth={1.5} aria-hidden="true" />
+          <div className="min-w-0">
+            <h3 id="feedback-modal-title" className="text-base font-medium text-fg">
               {modal.titulo}
             </h3>
-
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-line mb-6">
-              {modal.mensagem}
-            </p>
-
-            <button
-              onClick={onClose}
-              className={`w-full py-2.5 px-4 rounded-xl font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:ring-offset-zinc-900 ${
-                modal.tipo === "sucesso"
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white focus-visible:ring-emerald-500"
-                  : "bg-emerald-600 hover:bg-emerald-700 text-white focus-visible:ring-emerald-500"
-              }`}
-            >
-              Entendido
-            </button>
+            <p className="text-sm text-fg-2 whitespace-pre-line mt-1.5 leading-relaxed">{modal.mensagem}</p>
           </div>
         </div>
-      </Card>
-    </div>
+        <div className="mt-5 flex justify-end">
+          <Button onClick={onClose} data-autofocus>
+            Entendido
+          </Button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 };

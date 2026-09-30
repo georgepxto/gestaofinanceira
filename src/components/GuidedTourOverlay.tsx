@@ -1,4 +1,6 @@
 import { X } from "lucide-react";
+import { Button } from "./ui/Button";
+import { Pill } from "./ui/Pill";
 
 interface GuidedTourOverlayStep {
   alvo: string;
@@ -25,6 +27,11 @@ interface GuidedTourOverlayProps {
   onNext: () => void;
 }
 
+/**
+ * O balão do tutorial ("?"). --surface-2 com borda --line, cabeçalho neutro e
+ * o indicador de passos em --accent. O alvo fica recortado no fundo escurecido,
+ * com um contorno de 2px no tom do texto — sem brilho.
+ */
 export const GuidedTourOverlay = ({
   show,
   tutorialTitle,
@@ -44,21 +51,15 @@ export const GuidedTourOverlay = ({
     return null;
   }
 
+  const recorte = "fixed bg-scrim";
+
   return (
-    <div className="fixed inset-0 z-[60] pointer-events-none" style={{ position: "fixed" }}>
+    <div className="fixed inset-0 z-modal-top pointer-events-none">
       {highlightRect && (
         <>
+          <div className={recorte} style={{ top: 0, left: 0, width: "100%", height: Math.max(0, highlightRect.top - 8) }} />
           <div
-            className="fixed bg-black/75"
-            style={{
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: Math.max(0, highlightRect.top - 8),
-            }}
-          />
-          <div
-            className="fixed bg-black/75"
+            className={recorte}
             style={{
               top: Math.max(0, highlightRect.top - 8),
               left: 0,
@@ -67,7 +68,7 @@ export const GuidedTourOverlay = ({
             }}
           />
           <div
-            className="fixed bg-black/75"
+            className={recorte}
             style={{
               top: Math.max(0, highlightRect.top - 8),
               left: highlightRect.right + 8,
@@ -76,7 +77,7 @@ export const GuidedTourOverlay = ({
             }}
           />
           <div
-            className="fixed bg-black/75"
+            className={recorte}
             style={{
               top: highlightRect.bottom + 8,
               left: 0,
@@ -85,86 +86,71 @@ export const GuidedTourOverlay = ({
             }}
           />
           <div
-            className="fixed rounded-2xl border-2 border-emerald-300 bg-transparent"
+            className="fixed rounded border-2 border-fg"
             style={{
               top: highlightRect.top - 8,
               left: highlightRect.left - 8,
               width: highlightRect.width + 16,
               height: highlightRect.height + 16,
-              boxShadow: "0 0 0 2px rgba(52,211,153,0.55), 0 0 24px rgba(16,185,129,0.20)",
+            }}
+          />
+          {/* Seta do balão, na cor do balão */}
+          <div
+            className="absolute w-0 h-0"
+            style={{
+              left: highlightRect.left + highlightRect.width / 2 - 8,
+              top: showTooltipBelow ? highlightRect.bottom + 8 : highlightRect.top - 16,
+              borderLeft: "8px solid transparent",
+              borderRight: "8px solid transparent",
+              borderTop: showTooltipBelow ? "0" : "8px solid var(--surface-2)",
+              borderBottom: showTooltipBelow ? "8px solid var(--surface-2)" : "0",
             }}
           />
         </>
       )}
 
-      {highlightRect && (
-        <div
-          className="absolute w-0 h-0"
-          style={{
-            left: highlightRect.left + highlightRect.width / 2 - 10,
-            top: showTooltipBelow ? highlightRect.bottom + 6 : highlightRect.top - 16,
-            borderLeft: "10px solid transparent",
-            borderRight: "10px solid transparent",
-            borderTop: showTooltipBelow ? "12px solid #059669" : "0px solid transparent",
-            borderBottom: showTooltipBelow ? "0px solid transparent" : "12px solid #059669",
-          }}
-        />
-      )}
-
       <div
-        /* ds-ok: balão do tour é posicionado no alvo e flutua acima do recorte — geometria e sombra próprias */
-        className="absolute pointer-events-auto bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 w-[calc(100vw-24px)] max-w-[360px] rounded-2xl border border-zinc-200 dark:border-white/[0.06] overflow-hidden shadow-2xl dark:shadow-black/60 max-h-[calc(100vh-24px)] overflow-y-auto"
+        role="dialog"
+        aria-labelledby="tour-titulo"
+        className="absolute pointer-events-auto bg-surface-2 text-fg w-[calc(100vw-24px)] max-w-[360px] rounded border border-line max-h-[calc(100vh-24px)] overflow-y-auto"
         style={{ left: tooltipLeft, top: tooltipTop }}
       >
-        <div className="px-4 py-3 border-b border-emerald-700/40 flex items-start justify-between gap-3 bg-emerald-600 dark:bg-emerald-700">
-          <div>
-            <p className="font-mono text-[11px] font-medium text-emerald-50">
-              {tutorialTitle} • Passo {stepIndex + 1} de {totalSteps}
+        <div className="px-4 pt-4 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs text-fg-3">
+              {tutorialTitle} · passo <span className="valor">{stepIndex + 1}</span> de <span className="valor">{totalSteps}</span>
             </p>
-            <h3 className="text-base font-bold text-white mt-1">{currentStep.titulo}</h3>
+            <h3 id="tour-titulo" className="text-base font-medium text-fg mt-1">
+              {currentStep.titulo}
+            </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-emerald-700 dark:hover:bg-emerald-800 transition-colors"
+            className="w-8 h-8 -mr-2 -mt-1 shrink-0 rounded flex items-center justify-center text-fg-3 hover:text-fg transition-colors"
             aria-label="Fechar tutorial"
           >
-            <X className="w-4 h-4 text-white" />
+            <X className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
 
-        <div className="px-4 py-4">
-          <div className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-mono text-[10px] font-medium uppercase tracking-[0.16em] mb-3 border border-emerald-200 dark:border-emerald-900">
-            {currentStep.alvo}
-          </div>
-          <p className="text-zinc-600 dark:text-zinc-300 text-sm leading-relaxed">{currentStep.descricao}</p>
+        <div className="px-4 py-3">
+          <Pill>{currentStep.alvo}</Pill>
+          <p className="text-sm text-fg-2 leading-relaxed mt-3">{currentStep.descricao}</p>
 
-          <div className="flex gap-1.5 mt-4">
+          <div className="flex gap-1 mt-4" aria-hidden="true">
             {Array.from({ length: totalSteps }).map((_, i) => (
-              <div
-                key={i}
-                className={`h-1.5 flex-1 rounded-full transition-colors ${
-                  i <= stepIndex ? "bg-emerald-500" : "bg-zinc-200 dark:bg-white/[0.07]"
-                }`}
-              />
+              <div key={i} className={`h-1 flex-1 transition-colors ${i <= stepIndex ? "bg-accent" : "bg-surface-3"}`} />
             ))}
           </div>
         </div>
 
-        <div className="px-4 py-3 border-t border-zinc-200 dark:border-white/[0.06] flex items-center justify-between gap-2 bg-zinc-50 dark:bg-zinc-950">
-          <button
-            onClick={onPrevious}
-            disabled={stepIndex === 0}
-            className="px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-white/[0.09] text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/[0.06] disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-          >
+        <div className="px-4 pb-4 pt-1 flex items-center justify-between gap-2">
+          <Button variante="fantasma" tamanho="sm" onClick={onPrevious} disabled={stepIndex === 0}>
             Voltar
-          </button>
-
-          <button
-            onClick={onNext}
-            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium"
-          >
+          </Button>
+          <Button variante="secundario" tamanho="sm" onClick={onNext} className="bg-surface-3 hover:bg-surface-1">
             {stepIndex === totalSteps - 1 ? "Concluir" : "Próximo"}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

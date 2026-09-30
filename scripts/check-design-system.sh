@@ -255,7 +255,10 @@ reportar "onClick em div/span" \
 
 # ─────────────────────────────────────────────────────────────────────────────
 printf '\n'
-pendentes=$(grep -cvE '^\s*(#|$)' "$LEGADO_ARQ" 2>/dev/null || echo 0)
+# `grep -c` imprime 0 e sai com 1 quando não acha nada; o `|| true` não pode
+# acrescentar um segundo número.
+pendentes=$(grep -cvE '^\s*(#|$)' "$LEGADO_ARQ" 2>/dev/null || true)
+pendentes=${pendentes:-0}
 if [ "$pendentes" -gt 0 ]; then
   printf '%s%d arquivo(s) ainda no visual anterior (scripts/ds-legado.txt).%s\n' "$DIM" "$pendentes" "$OFF"
 fi
