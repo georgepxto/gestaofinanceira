@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { format, subMonths, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Link, useLocation } from "react-router-dom";
 import { Plus, Users, Wallet, CreditCard, Receipt, Gauge, PieChart as IconePizza, BarChart3 } from "lucide-react";
@@ -364,7 +364,7 @@ export const DashboardPage = () => {
       
       const gastosDoMesAnterior = (meusGastos as MeuGasto[] || [])
         .filter(g => {
-          const dataGasto = new Date(g.data);
+          const dataGasto = parseISO(g.data);
           return dataGasto >= inicioMesAnterior && dataGasto <= fimMesAnterior;
         });
       
@@ -448,7 +448,7 @@ export const DashboardPage = () => {
       
       const parcelasProximasFim = (gastosCompartilhados as Gasto[] || [])
         .map(g => {
-          const dataInicio = new Date(g.data_inicio);
+          const dataInicio = parseISO(g.data_inicio);
           const mesesDesdeInicio = Math.floor(
             (new Date().getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24 * 30)
           );

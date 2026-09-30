@@ -465,7 +465,8 @@ export function useSaldosDevedores({
         };
 
         if (isSupabaseConfigured && supabase) {
-          await saldosFunctions.create(novaDivida);
+          const criada = await saldosFunctions.create(novaDivida);
+          if (criada?.id) novaDivida.id = criada.id;
         }
 
         setSaldosDevedores((prev) => [...prev, novaDivida]);
@@ -504,7 +505,7 @@ export function useSaldosDevedores({
             valorPago
           )}.\n${formatCurrency(
             valorDevedor
-          )} foi transferido para o Saldo Devedor.`,
+          )} foi para as cobranças em aberto.`,
           tipo: "info",
         });
       } else {
@@ -528,23 +529,32 @@ export function useSaldosDevedores({
     }
   };
 
-  // Verificar se um mês está fechado para uma pessoa
-  const isMesFechado = (pessoa: string): boolean => {
-    const key = `${pessoa}|${getMesAtual()}`;
-    return !!mesesFechados[key];
-  };
+  // O fechamento com resto vira a cobrança "Gastos pendentes - <mês>". Ela é
+  // o registro durável do fechamento: o estado em memória some ao recarregar,
+  // e sem isto a tela voltava a oferecer "Fechar mês" e duplicava a cobrança.
+  const cobrancaDoFechamento = (pessoa: string) =>
+    saldosDevedores.find(
+      (s) => s.pessoa === pessoa && s.descricao === `Gastos pendentes - ${formatMonthYear(mesVisualizacao)}`
+    );
 
   // Obter dados do fechamento de um mês
   const getMesFechado = (pessoa: string) => {
     const key = `${pessoa}|${getMesAtual()}`;
-    return mesesFechados[key] || null;
+    if (mesesFechados[key]) return mesesFechados[key];
+    const cobranca = cobrancaDoFechamento(pessoa);
+    return cobranca
+      ? { saldoDevedorId: cobranca.id, valorPago: 0, valorDevedor: cobranca.valor_original }
+      : null;
   };
+
+  // Verificar se um mês está fechado para uma pessoa
+  const isMesFechado = (pessoa: string): boolean => getMesFechado(pessoa) !== null;
 
   // Desfazer o fechamento do mês de uma pessoa
   const handleDesfazerFechamento = async (pessoa: string) => {
     const key = `${pessoa}|${getMesAtual()}`;
-    const fechamento = mesesFechados[key];
-    
+    const fechamento = getMesFechado(pessoa);
+
     if (!fechamento) return;
 
     setSaving(true);
@@ -596,7 +606,7 @@ export function useSaldosDevedores({
         titulo: "Fechamento desfeito",
         mensagem: `O fechamento do mês de ${pessoa} foi desfeito. Os pagamentos parciais foram removidos.${
           fechamento.saldoDevedorId 
-            ? ` O saldo devedor de ${formatCurrency(fechamento.valorDevedor)} foi removido.` 
+            ? ` A cobrança de ${formatCurrency(fechamento.valorDevedor)} saiu de Em aberto.` 
             : ""
         }`,
         tipo: "info",

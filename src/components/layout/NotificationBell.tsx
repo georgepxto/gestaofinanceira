@@ -105,7 +105,7 @@ export const NotificationBell = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded text-fg-2 hover:text-fg hover:bg-surface-2 transition-colors"
-        aria-label={totalCount > 0 ? `Notificações, ${totalCount} novas` : "Notificações"}
+        aria-label={totalCount > 0 ? `Notificações, ${totalCount} ${totalCount === 1 ? "nova" : "novas"}` : "Notificações"}
         aria-expanded={isOpen}
       >
         <Bell className="w-5 h-5" strokeWidth={1.5} />

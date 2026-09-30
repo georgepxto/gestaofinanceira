@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { format, subMonths, startOfMonth, endOfMonth, getDaysInMonth, getDate } from "date-fns";
+import { format, subMonths, startOfMonth, endOfMonth, getDaysInMonth, getDate, parseISO } from "date-fns";
 import { supabase } from "../lib/supabase";
 import { useAppContext } from "../context";
 import { formatCurrency, isGastoAtivoNoMes } from "../utils/calculations";
@@ -52,7 +52,7 @@ export const useAlertas = () => {
         (g) => g.data.substring(0, 7) === mesAtualFiltro
       );
       const gastosDoMesAnterior = todosGastos.filter((g) => {
-        const d = new Date(g.data);
+        const d = parseISO(g.data);
         return d >= inicioMesAnterior && d <= fimMesAnterior;
       });
 
@@ -142,7 +142,7 @@ export const useAlertas = () => {
 
       // c) Parcelas acabando este mês
       const parcelasAcabando = todosCompartilhados.filter((g) => {
-        const dataInicio = new Date(g.data_inicio);
+        const dataInicio = parseISO(g.data_inicio);
         const mesesDesdeInicio = Math.floor(
           (agora.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24 * 30)
         );

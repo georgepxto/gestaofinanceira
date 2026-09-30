@@ -1,5 +1,5 @@
 import { Trash2, Undo2, Banknote, Inbox } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import type { SaldoDevedor } from "../../types";
 import { formatCurrency } from "../../utils/calculations";
 import { formatDinheiro, formatPercent } from "../../utils/dinheiro";
@@ -200,7 +200,7 @@ export function TabDividas({
                   meta={
                     <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
                       <span>
-                        {divida.pessoa} · criada {format(new Date(divida.data_criacao), "dd/MM")}
+                        {divida.pessoa} · criada {format(parseISO(divida.data_criacao), "dd/MM")}
                         {dataQuitacao ? ` · quitada ${format(new Date(dataQuitacao), "dd/MM")}` : ""}
                       </span>
                       {quitada && <Pill>quitada</Pill>}
@@ -239,7 +239,7 @@ export function TabDividas({
                             {divida.historico.map((pag) => (
                               <li key={pag.id} className="flex items-center justify-between gap-3 py-1.5 text-xs text-fg-2">
                                 <span className="min-w-0 break-words">
-                                  <span className="valor text-fg">{formatDinheiro(-pag.valor)}</span> · {format(new Date(pag.data), "dd/MM")}
+                                  <span className="valor text-fg">{formatDinheiro(-pag.valor)}</span> · {format(parseISO(pag.data), "dd/MM")}
                                   {pag.observacao ? ` · ${pag.observacao}` : ""}
                                 </span>
                                 <button

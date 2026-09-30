@@ -7,7 +7,8 @@ interface AvatarProps {
 
 /** Inicial do nome num quadrado de --surface-2. Pessoa e usuário, iguais. */
 export function Avatar({ nome, tamanho = 36, className = "" }: AvatarProps) {
-  const inicial = (nome?.trim() || "?").charAt(0).toLocaleUpperCase("pt-BR");
+  // Primeira letra ou número do nome: "[Casa] Ana" vira C, não "[".
+  const inicial = ((nome || "").match(/[\p{L}\p{N}]/u)?.[0] || "?").toLocaleUpperCase("pt-BR");
   return (
     <span
       aria-hidden="true"

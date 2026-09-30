@@ -1112,7 +1112,7 @@ export const CartoesCreditoPage = () => {
                   aria-checked={ativa}
                   aria-label={`Cor ${CORES_CARTAO.indexOf(cor) + 1}`}
                   onClick={() => setFormCartao({ ...formCartao, cor })}
-                  className={`w-9 h-9 rounded-sm transition-shadow ${ativa ? "ring-2 ring-fg ring-offset-2 ring-offset-surface-1" : ""}`}
+                  className={`w-11 h-11 md:w-9 md:h-9 rounded-sm transition-shadow ${ativa ? "ring-2 ring-fg ring-offset-2 ring-offset-surface-1" : ""}`}
                   style={{ backgroundColor: cor }}
                 />
               );
