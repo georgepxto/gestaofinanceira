@@ -3,11 +3,6 @@
 src/App.tsx
 src/components/GerenciarCategorias.tsx
 src/components/GuidedTourOverlay.tsx
-src/components/layout/BottomBar.tsx
-src/components/layout/Layout.tsx
-src/components/layout/NotificationBell.tsx
-src/components/layout/Sidebar.tsx
-src/components/layout/SubPills.tsx
 src/components/modals/ConfirmModal.tsx
 src/components/modals/FecharMesModal.tsx
 src/components/modals/FeedbackModal.tsx

@@ -48,6 +48,9 @@
   --cat-7: #9C9690; /* greige */
   --cat-8: #8C8FC7; /* índigo */
 
+  /* Fundo atrás de painel e gaveta: escurece sem desfocar. */
+  --scrim: rgba(0, 0, 0, 0.6);
+
   --ease-out-cubic: cubic-bezier(0.33, 1, 0.68, 1);
 
   color-scheme: dark;
@@ -63,6 +66,8 @@ html:not(.dark) {
   --fg-2: #5E5E5B;
   /* #8A8A86 no sistema; 2,9:1 sobre o fundo. Este passa no AA. */
   --fg-3: #6A6A66;
+
+  --scrim: rgba(11, 11, 12, 0.4);
 
   --accent-ink: #A93F16;
   --danger-ink: #BF3035;

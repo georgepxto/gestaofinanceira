@@ -58,12 +58,16 @@ if (EMAIL && SENHA) {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   await page.goto(`${BASE}/login`);
-  const mostrar = page.getByRole("button", { name: /e-?mail/i }).first();
-  if (await mostrar.isVisible().catch(() => false)) await mostrar.click();
+  // O formulário de e-mail fica atrás de um botão, que só aparece depois
+  // da entrada do login.
+  await page.getByRole("button", { name: /continuar com e-?mail/i }).click();
   await page.locator("#login-email").fill(EMAIL);
   await page.locator("#login-senha").fill(SENHA);
   await page.locator('button[type="submit"]').click();
-  await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 20000 });
+  await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 20000 }).catch(async (e) => {
+    const erro = await page.locator("#login-erro").innerText().catch(() => "");
+    throw new Error(`login não passou${erro ? `: ${erro}` : ""}`, { cause: e });
+  });
   estado = await ctx.storageState();
   await ctx.close();
 }

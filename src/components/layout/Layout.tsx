@@ -1,10 +1,13 @@
-import { useState, Suspense } from "react";
+import { useState, useCallback, Suspense } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
+import { TopBar } from "./TopBar";
 import { NotificationBell } from "./NotificationBell";
+import { BotaoAjuda } from "./BotaoAjuda";
 import { BottomBar } from "./BottomBar";
 import { SubPills } from "./SubPills";
 import { AparecerSeDemorar } from "./BootSplash";
+import { AcaoPrincipalProvider } from "./AcaoPrincipalContext";
 import { PageLoadingState } from "../ui/AsyncState";
 import {
   TutorialHelpContext,
@@ -19,66 +22,59 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail }) => {
   const [helpButton, setHelpButton] = useState<TutorialHelpButtonConfig | null>(null);
+  const [contaAberta, setContaAberta] = useState(false);
+  const [recolhida, setRecolhida] = useState(false);
   const navigate = useNavigate();
+  const fecharConta = useCallback(() => setContaAberta(false), []);
 
-  // Contrato pequeno de propósito: o botão de lançar leva à tela de Lançamentos
-  // com o modal que ela já tem aberto. Quando a folha nativa do mobile chegar,
-  // ela substitui o modal e o botão continua chamando a mesma rota.
+  // Contrato pequeno de propósito: lançar leva à tela de Lançamentos com o
+  // formulário aberto. O "Lançar" da barra lateral e o "+" do celular chamam isto.
   const abrirLancamento = () => navigate("/gastos/lancamentos?novo=1");
 
   return (
     <TutorialHelpContext.Provider value={{ helpButton, setHelpButton }}>
-      <div className="min-h-screen bg-zinc-50 dark:bg-app-dark">
-        <Sidebar onLogout={onLogout} userName={userName} userEmail={userEmail} />
+      <AcaoPrincipalProvider>
+        <div className="min-h-screen bg-page text-fg">
+          <TopBar onAbrirConta={() => setContaAberta(true)} userName={userName} userEmail={userEmail} />
+          <Sidebar
+            onLogout={onLogout}
+            onLancar={abrirLancamento}
+            aberta={contaAberta}
+            onFechar={fecharConta}
+            recolhida={recolhida}
+            onRecolher={setRecolhida}
+            userName={userName}
+            userEmail={userEmail}
+          />
 
-        {/* Main Content */}
-        <main className="
-          md:ml-64 /* Desktop: offset for sidebar */
-          pt-16 md:pt-0 /* Mobile: offset for header */
-          pb-24 md:pb-0 /* Mobile: espaço da barra inferior, senão o último item da lista fica embaixo dela */
-          min-h-screen
-          transition-all duration-300
-        ">
-          {/* Desktop Header for Notifications */}
-          <header className="hidden md:flex justify-end items-center p-4 pb-0 bg-zinc-50 dark:bg-app-dark z-30 relative">
-            <div className="flex items-center gap-2">
-              {helpButton && (
-                <button
-                  onClick={helpButton.onClick}
-                  data-tour={helpButton.dataTour}
-                  title={helpButton.title}
-                  aria-label={helpButton.ariaLabel}
-                  className="flex w-8 h-8 rounded-full border border-zinc-300 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.04] text-zinc-500 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-400 dark:hover:border-emerald-500 items-center justify-center shadow-sm dark:shadow-none transition-colors"
-                >
-                  ?
-                </button>
-              )}
+          <main
+            className={`min-h-screen pt-14 md:pt-0 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0 transition-[margin] duration-[250ms] ease-out ${
+              recolhida ? "md:ml-[72px]" : "md:ml-60"
+            }`}
+          >
+            {/* Ajuda e notificações no desktop: uma faixa discreta acima do
+                cabeçalho da tela. No celular moram na barra do topo. */}
+            <div className="hidden md:flex justify-end items-center gap-1 h-12 px-6">
+              <BotaoAjuda />
               <NotificationBell />
             </div>
-          </header>
 
-          <div className="max-w-6xl mx-auto">
-            <SubPills />
+            <div className="max-w-[1200px] mx-auto">
+              <SubPills />
 
-            {/* Fronteira de suspense DENTRO do layout: ao carregar o chunk de
-                uma tela, só o conteúdo suspende — a sidebar permanece montada
-                e o indicador consegue viajar em vez de teleportar.
+              {/* Fronteira de suspense DENTRO do layout: ao carregar o chunk de
+                  uma tela, só o conteúdo suspende — a barra lateral fica montada
+                  e o indicador viaja em vez de teleportar. Passados 300ms, o
+                  esqueleto entra no lugar certo. */}
+              <Suspense fallback={<AparecerSeDemorar><PageLoadingState /></AparecerSeDemorar>}>
+                <Outlet />
+              </Suspense>
+            </div>
+          </main>
 
-                O fallback era `null`, o que deixava toda tela que não a de
-                entrada sem retorno nenhum numa espera longa: o usuário olhava
-                uma área de conteúdo vazia sem explicação. `null` continua certo
-                como PRIMEIRO momento — por isso o limiar. Passados 300ms, o
-                skeleton entra no lugar certo, sob o header real e ao lado da
-                sidebar montada; aqui ele é honesto, porque promete conteúdo que
-                vem naquele formato, naquele lugar. */}
-            <Suspense fallback={<AparecerSeDemorar><PageLoadingState /></AparecerSeDemorar>}>
-              <Outlet />
-            </Suspense>
-          </div>
-        </main>
-
-        <BottomBar onLancar={abrirLancamento} />
-      </div>
+          <BottomBar onLancar={abrirLancamento} />
+        </div>
+      </AcaoPrincipalProvider>
     </TutorialHelpContext.Provider>
   );
 };

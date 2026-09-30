@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Plus } from "lucide-react";
+import { Home, Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { gruposVisiveis } from "./navGroups";
 import { useAppContext } from "../../context";
@@ -34,7 +34,7 @@ export const BottomBar = ({ onLancar }: BottomBarProps) => {
 
   const abas: Aba[] = [
     ...(mostrarDashboard
-      ? [{ to: "/", label: "Dashboard", Icon: LayoutDashboard, ativo: pathname === "/" }]
+      ? [{ to: "/", label: "Início", Icon: Home, ativo: pathname === "/" }]
       : []),
     // O destino é o primeiro filho visível, não o prefixo do grupo: assim a aba
     // não depende do redirect do shell de rota para chegar em algum lugar.
@@ -47,29 +47,18 @@ export const BottomBar = ({ onLancar }: BottomBarProps) => {
   ];
 
   // `Link`, não `NavLink`: quem decide o ativo aqui é o prefixo do grupo, e o
-  // `NavLink` sobrescreveria o `aria-current` com o casamento exato do `to` —
-  // em /a-receber/aberto a aba ficava verde na tela e sem marca nenhuma para
-  // leitor de tela, porque o `to` dela é /a-receber/pessoas.
+  // `NavLink` sobrescreveria o `aria-current` com o casamento exato do `to`.
   const Celula = ({ to, label, Icon, ativo }: Aba) => (
     <Link
       key={to}
       to={to}
       aria-current={ativo ? "page" : undefined}
-      className={`relative flex flex-col items-center justify-center gap-1 min-h-[56px] transition-colors ${
-        ativo
-          ? "text-emerald-600 dark:text-emerald-400"
-          : "text-zinc-500 dark:text-zinc-400"
+      className={`flex flex-col items-center justify-center gap-1 min-h-[56px] transition-colors ${
+        ativo ? "text-fg" : "text-fg-3 hover:text-fg-2"
       }`}
     >
-      {/* O mesmo traço da sidebar, deitado. */}
-      {ativo && (
-        <span
-          className="absolute top-0 w-6 h-[3px] rounded-full bg-emerald-500"
-          aria-hidden="true"
-        />
-      )}
-      <Icon className="w-[22px] h-[22px]" strokeWidth={1.75} />
-      <span className="text-[11px] font-medium leading-none">{label}</span>
+      <Icon className="w-[22px] h-[22px]" strokeWidth={1.5} />
+      <span className="text-[11px] leading-none">{label}</span>
     </Link>
   );
 
@@ -79,26 +68,23 @@ export const BottomBar = ({ onLancar }: BottomBarProps) => {
   return (
     <nav
       aria-label="Navegação principal"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-white/[0.06] pb-[env(safe-area-inset-bottom)]"
+      className="md:hidden fixed bottom-0 inset-x-0 z-sticky bg-surface-1 pb-[env(safe-area-inset-bottom)]"
     >
       <div className="grid grid-flow-col auto-cols-fr h-16">
         {esquerda.map((aba) => (
           <Celula key={aba.to} {...aba} />
         ))}
 
+        {/* O botão da tela no celular: quadrado, raio de 4px, laranja. */}
         {podeLancar && (
           <div className="flex items-center justify-center">
             <button
               onClick={onLancar}
               aria-label="Novo lançamento"
               data-tour="barra-btn-novo"
-              /* O anel na cor da barra é o que recorta o botão dela. A sombra é
-                 neutra de propósito: o botão sobe acima da barra, então ganha
-                 elevação, mas sombra colorida em botão vira halo (a guarda tem
-                 regra para isso). No escuro só o anel separa. */
-              className="-mt-3 w-[52px] h-[52px] rounded-2xl bg-emerald-600 text-white flex items-center justify-center ring-4 ring-white dark:ring-zinc-900 shadow-lg shadow-black/10 dark:shadow-none active:scale-95 transition-transform"
+              className="w-12 h-12 rounded bg-accent text-accent-fg flex items-center justify-center active:scale-95 transition-transform"
             >
-              <Plus className="w-6 h-6" strokeWidth={2.25} />
+              <Plus className="w-6 h-6" strokeWidth={1.75} />
             </button>
           </div>
         )}

@@ -1,36 +1,66 @@
-import { useState, useRef, useLayoutEffect } from "react";
+import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { X, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { NotificationBell } from "./NotificationBell";
+import { X, LogOut, PanelLeftClose, PanelLeftOpen, Plus } from "lucide-react";
 import { HedgeMark } from "../landing/HedgeMark";
-import { useTutorialHelpContext } from "./TutorialHelpContext";
+import { Logo } from "../ui/Logo";
+import { Avatar } from "../ui/Avatar";
+import { Button } from "../ui/Button";
 import { gruposVisiveis } from "./navGroups";
+import { useAcaoPrincipal } from "./AcaoPrincipalContext";
 import { useAppContext } from "../../context";
 
 interface SidebarProps {
   onLogout: () => void;
+  onLancar: () => void;
+  /** Gaveta da conta no celular (aberta pelo avatar da barra do topo). */
+  aberta: boolean;
+  onFechar: () => void;
+  /** Desktop: barra reduzida a 72px. Mora no Layout, que desloca o conteúdo. */
+  recolhida: boolean;
+  onRecolher: (recolhida: boolean) => void;
   userName?: string;
   userEmail?: string;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+/**
+ * Barra lateral do desktop (240px) e, no celular, a gaveta da conta.
+ *
+ * No celular os destinos moram na barra inferior; aqui sobra o que é conta —
+ * Configurações, Admin e sair. Repetir a lista de telas na gaveta é o que faz
+ * app de celular parecer painel de administração.
+ */
+export const Sidebar: React.FC<SidebarProps> = ({
+  onLogout,
+  onLancar,
+  aberta,
+  onFechar,
+  recolhida,
+  onRecolher,
+  userName,
+  userEmail,
+}) => {
   const location = useLocation();
-  const { helpButton } = useTutorialHelpContext();
   const { isAdmin, features } = useAppContext();
+  const { paginaTemAcao } = useAcaoPrincipal();
 
   const visibleGroups = gruposVisiveis(isAdmin, features);
-
   const showConfiguracoes = features.configuracoes || isAdmin;
+  const podeLancar = isAdmin || features.meus_gastos;
+
+  // Esc fecha a gaveta do celular.
+  useEffect(() => {
+    if (!aberta) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onFechar();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [aberta, onFechar]);
 
   // ── Indicador deslizante ─────────────────────────────────────────────
-  // Um único traço absoluto por área (nav e rodapé) VIAJA até o item ativo
-  // com transição contínua de `top`. Depende da fronteira de Suspense estar
-  // dentro do Layout: se a sidebar desmontasse a cada chunk, teleportaria.
+  // Um único traço de 2px por área (nav e rodapé) VIAJA até o item ativo com
+  // transição contínua de `top`. Depende da fronteira de Suspense estar dentro
+  // do Layout: se a barra desmontasse a cada chunk, teleportaria.
   const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
-  const [indicador, setIndicador] = useState<{ area: "nav" | "rodape"; top: number } | null>(null);
+  const [indicador, setIndicador] = useState<{ area: "nav" | "rodape"; top: number; altura: number } | null>(null);
 
   const isPathActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
@@ -53,171 +83,123 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
     }
     setIndicador({
       area: rodapePaths.includes(activePath) ? "rodape" : "nav",
-      top: el.offsetTop + el.offsetHeight / 2 - 8,
+      top: el.offsetTop + 8,
+      altura: el.offsetHeight - 16,
     });
     // Deps enxutas de propósito: `navPaths` e `rodapePaths` são recriados a cada
-    // render, então entrar na lista faria o efeito rodar sem parar. O que de fato
-    // move o indicador está abaixo — rota, colapso e quais grupos aparecem.
+    // render. O que de fato move o indicador está abaixo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, isCollapsed, isAdmin, showConfiguracoes, visibleGroups.length]);
+  }, [location.pathname, recolhida, isAdmin, showConfiguracoes, visibleGroups.length]);
 
   const Indicador = ({ area }: { area: "nav" | "rodape" }) =>
     indicador?.area === area ? (
       <span
-        className="absolute left-0 w-[3px] h-4 rounded-full bg-emerald-500 transition-[top] duration-[400ms] [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] will-change-[top]"
-        style={{ top: indicador.top }}
+        className="absolute left-0 w-[2px] bg-fg transition-[top,height] duration-300 ease-out"
+        style={{ top: indicador.top, height: indicador.altura }}
         aria-hidden="true"
       />
     ) : null;
 
   const NavItem = ({ path, label }: { path: string; label: string }) => {
-    const isActive = isPathActive(path);
+    const ativo = isPathActive(path);
     return (
       <NavLink
         to={path}
         ref={(el) => {
           itemRefs.current[path] = el;
         }}
-        onClick={() => setIsOpen(false)}
-        title={isCollapsed ? label : undefined}
-        className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors duration-300 ${
-          isActive
-            ? "text-zinc-900 font-semibold dark:text-zinc-50"
-            : "text-zinc-500 font-medium hover:text-zinc-900 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-white/[0.04]"
-        } ${isCollapsed ? "md:justify-center" : ""}`}
+        onClick={onFechar}
+        title={recolhida ? label : undefined}
+        aria-current={ativo ? "page" : undefined}
+        className={`flex items-center min-h-[44px] md:min-h-[36px] px-4 text-[15px] md:text-sm transition-colors ${
+          ativo ? "text-fg" : "text-fg-2 hover:text-fg"
+        } ${recolhida ? "md:justify-center md:px-0" : ""}`}
       >
-        {/* Recolhida, o item vira a inicial (não há mais ícone por tela). */}
-        <span className={`font-mono text-xs font-semibold hidden ${isCollapsed ? "md:inline" : ""}`} aria-hidden="true">
-          {label.charAt(0).toUpperCase()}
+        {/* Recolhida, o item vira a inicial. */}
+        <span className={`hidden ${recolhida ? "md:inline" : ""}`} aria-hidden="true">
+          {label.charAt(0)}
         </span>
-        <span className={isCollapsed ? "md:hidden" : ""}>{label}</span>
+        <span className={recolhida ? "md:sr-only" : ""}>{label}</span>
       </NavLink>
     );
   };
 
-  const GroupLabel = ({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) => (
-    <p
-      className={`flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-400 px-3 pt-4 pb-1 ${
-        isCollapsed ? "md:justify-center md:px-0" : ""
-      }`}
-    >
-      <Icon className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.75} />
-      <span className={isCollapsed ? "md:hidden" : ""}>{children}</span>
-    </p>
+  const GroupLabel = ({ children }: { children: React.ReactNode }) => (
+    <p className={`px-4 pt-5 pb-1 text-xs text-fg-3 ${recolhida ? "md:sr-only" : ""}`}>{children}</p>
   );
 
   return (
     <>
-      {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-white/[0.06] z-40 flex items-center justify-between px-4 shadow-sm dark:shadow-none">
-        {/* O hambúrguer saiu: os destinos moraram nele até virarem barra
-            inferior. O que resta atrás da gaveta é conta — por isso o gatilho
-            agora é o avatar, do lado do polegar. */}
-        <div className="flex items-center">
-          <HedgeMark className="h-4 w-auto text-accent" title="Hedge" />
-          <h1 className="ml-2 text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-            Hedge
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          {helpButton && (
-            <button
-              onClick={helpButton.onClick}
-              data-tour={helpButton.dataTour}
-              title={helpButton.title}
-              aria-label={helpButton.ariaLabel}
-              className="flex w-8 h-8 rounded-full border border-zinc-300 dark:border-white/[0.09] bg-white/80 dark:bg-white/[0.04] text-zinc-500 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-400 dark:hover:border-emerald-500 items-center justify-center shadow-sm dark:shadow-none transition-colors"
-            >
-              ?
-            </button>
-          )}
-          <NotificationBell />
-          <button
-            onClick={() => setIsOpen(true)}
-            aria-label="Abrir conta e configurações"
-            className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0"
-          >
-            <span className="font-bold text-emerald-700 dark:text-emerald-400">
-              {(userName || userEmail || "U").charAt(0).toUpperCase()}
-            </span>
-          </button>
-        </div>
-      </header>
-
-      {/* Mobile Overlay */}
-      {isOpen && (
+      {/* Fundo da gaveta (celular) */}
+      {aberta && (
         <div
-          className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+          className="md:hidden fixed inset-0 z-overlay bg-scrim animate-[fundo-entra_150ms_ease-out]"
           aria-hidden="true"
-          /* ds-ok: fundo de dispensa. Quem usa teclado fecha no Esc e no botão do menu — o fundo não entra na ordem de foco de propósito */
-          onClick={() => setIsOpen(false)}
+          /* ds-ok: fundo de dispensa. Teclado fecha no Esc e no botão da gaveta — o fundo não entra na ordem de foco de propósito */
+          onClick={onFechar}
         />
       )}
 
-      {/* Sidebar */}
       <aside
+        aria-label="Navegação"
         className={`
-          fixed top-0 left-0 h-full bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-white/[0.06] z-50 flex flex-col
-          transition-all duration-300 ease-in-out
-
-          /* Mobile: drawer */
-          ${isOpen ? "translate-x-0" : "-translate-x-full"}
-          w-72
-
-          /* Desktop: always visible */
-          md:translate-x-0
-          ${isCollapsed ? "md:w-20" : "md:w-64"}
+          fixed top-0 left-0 h-full z-modal flex flex-col bg-page
+          transition-[transform,width] duration-[250ms] ease-out
+          w-72 ${aberta ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0 md:z-sticky ${recolhida ? "md:w-[72px]" : "md:w-60"}
+          max-md:bg-surface-1
         `}
       >
-        {/* Topo: logo + recolher */}
-        <div className="h-[68px] flex items-center justify-between px-5 border-b border-zinc-100 dark:border-white/[0.05] shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <HedgeMark className="h-6 w-auto shrink-0 text-accent" />
-            <h2
-              /* ds-ok: wordmark da sidebar — corpo casado com o favicon de 28px, não é título de tela */
-              className={`font-bold text-[19px] tracking-tight text-zinc-900 dark:text-zinc-50 ${
-                isCollapsed ? "md:hidden" : ""
-              }`}
+        {/* Topo: logo e recolher */}
+        <div className={`h-16 shrink-0 flex items-center justify-between px-4 ${recolhida ? "md:justify-center md:px-0" : ""}`}>
+          {/* No celular a gaveta é a conta, e o título diz isso. */}
+          <span className="md:hidden text-base font-medium text-fg">Conta</span>
+          <span className="hidden md:inline-flex">
+            {recolhida ? <HedgeMark className="h-[22px] w-auto text-accent" title="Hedge" /> : <Logo />}
+          </span>
+
+          <button
+            onClick={onFechar}
+            aria-label="Fechar"
+            className="md:hidden w-11 h-11 -mr-2 rounded flex items-center justify-center text-fg-2 hover:text-fg transition-colors"
+          >
+            <X className="w-5 h-5" strokeWidth={1.5} />
+          </button>
+          {!recolhida && (
+            <button
+              onClick={() => onRecolher(true)}
+              aria-label="Recolher barra lateral"
+              className="hidden md:flex w-8 h-8 -mr-1 rounded items-center justify-center text-fg-3 hover:text-fg hover:bg-surface-2 transition-colors"
             >
-              {/* No mobile a gaveta não é mais o menu do app, é a conta — e o
-                  título tem que dizer o que ela guarda. */}
-              <span className="md:hidden">Conta</span>
-              <span className="hidden md:inline">Hedge</span>
-            </h2>
-          </div>
-
-          {/* Fechar (mobile) */}
-          <button
-            onClick={() => setIsOpen(false)}
-            aria-label="Fechar menu de navegação"
-            className="md:hidden w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          {/* Recolher (desktop) */}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            aria-label={isCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
-            className={`hidden md:flex w-8 h-8 rounded-lg items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors ${
-              isCollapsed ? "ml-0" : ""
-            }`}
-          >
-            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
+              <PanelLeftClose className="w-4 h-4" strokeWidth={1.5} />
+            </button>
+          )}
         </div>
 
-        {/* Navegação — desktop só. No mobile os destinos vivem na barra
-            inferior; repetir a lista aqui é o que faz app de celular parecer
-            painel de administração. */}
-        <nav className="relative hidden md:flex md:flex-1 min-h-0 overflow-y-auto p-3 flex-col gap-0.5">
+        {/* Ação principal. Laranja, a não ser que a tela aberta tenha a própria. */}
+        {podeLancar && (
+          <div className={`hidden md:block px-4 pb-2 ${recolhida ? "md:px-3" : ""}`}>
+            <Button
+              variante={paginaTemAcao ? "secundario" : "principal"}
+              cheio
+              onClick={onLancar}
+              data-tour="sidebar-btn-lancar"
+              aria-label={recolhida ? "Lançar gasto" : undefined}
+              icone={<Plus className="w-4 h-4" strokeWidth={1.75} />}
+              className={recolhida ? "px-0" : ""}
+            >
+              {!recolhida && "Lançar"}
+            </Button>
+          </div>
+        )}
+
+        {/* Destinos — só no desktop; no celular vivem na barra inferior. */}
+        <nav className="relative hidden md:flex md:flex-1 min-h-0 overflow-y-auto py-2 flex-col">
           <Indicador area="nav" />
-          {(isAdmin || features.dashboard) && (
-            <NavItem path="/" label="Dashboard" />
-          )}
+          {(isAdmin || features.dashboard) && <NavItem path="/" label="Início" />}
           {visibleGroups.map((group) => (
-            <div key={group.label} className="flex flex-col gap-0.5">
-              <GroupLabel icon={group.icon}>{group.label}</GroupLabel>
+            <div key={group.label} className="flex flex-col">
+              <GroupLabel>{group.label}</GroupLabel>
               {group.items.map((item) => (
                 <NavItem key={item.path} path={item.path} label={item.label} />
               ))}
@@ -225,44 +207,40 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
           ))}
         </nav>
 
-        {/* Rodapé */}
-        <div className="relative shrink-0 mt-auto md:mt-0 p-3 border-t border-zinc-100 dark:border-white/[0.05] bg-app-row dark:bg-white/[0.03] flex flex-col gap-0.5">
+        {/* Rodapé: configurações e usuário */}
+        <div className="relative shrink-0 mt-auto md:mt-0 py-3 flex flex-col">
           <Indicador area="rodape" />
           {isAdmin && <NavItem path="/admin" label="Admin" />}
-          {showConfiguracoes && (
-            <NavItem path="/configuracoes" label="Configurações" />
-          )}
+          {showConfiguracoes && <NavItem path="/configuracoes" label="Configurações" />}
 
-          {/* Cartão do usuário (logout embutido) */}
-          <div
-            className={`flex items-center gap-3 p-2.5 mt-1.5 bg-white dark:bg-white/[0.04] border border-zinc-100 dark:border-white/[0.05] rounded-xl ${
-              isCollapsed ? "md:justify-center md:p-2" : ""
-            }`}
-          >
-            <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
-              <span className="font-bold text-emerald-700 dark:text-emerald-400">
-                {(userName || userEmail || "U").charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div className={`flex-1 min-w-0 ${isCollapsed ? "md:hidden" : ""}`}>
-              <p className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                {userName || "Usuário"}
-              </p>
-              <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-                {userEmail || ""}
-              </p>
+          <div className={`flex items-center gap-3 mt-2 px-4 min-h-[48px] ${recolhida ? "md:justify-center md:px-0" : ""}`}>
+            <Avatar nome={userName || userEmail} tamanho={32} />
+            <div className={`flex-1 min-w-0 ${recolhida ? "md:hidden" : ""}`}>
+              <p className="text-sm text-fg break-words">{userName || "Usuário"}</p>
+              {/* E-mail pode cortar: é identificação, não dado financeiro. */}
+              <p className="text-xs text-fg-3 truncate">{userEmail || ""}</p>
             </div>
             <button
               onClick={onLogout}
               aria-label="Sair da conta"
               title="Sair"
-              className={`w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors flex-shrink-0 ${
-                isCollapsed ? "md:hidden" : ""
+              className={`w-11 h-11 md:w-8 md:h-8 -mr-2 md:mr-0 rounded flex items-center justify-center text-fg-3 hover:text-fg hover:bg-surface-2 transition-colors shrink-0 ${
+                recolhida ? "md:hidden" : ""
               }`}
             >
-              <LogOut className="w-[17px] h-[17px]" />
+              <LogOut className="w-4 h-4" strokeWidth={1.5} />
             </button>
           </div>
+
+          {recolhida && (
+            <button
+              onClick={() => onRecolher(false)}
+              aria-label="Expandir barra lateral"
+              className="hidden md:flex mx-auto mt-2 w-8 h-8 rounded items-center justify-center text-fg-3 hover:text-fg hover:bg-surface-2 transition-colors"
+            >
+              <PanelLeftOpen className="w-4 h-4" strokeWidth={1.5} />
+            </button>
+          )}
         </div>
       </aside>
     </>

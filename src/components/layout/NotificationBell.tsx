@@ -7,37 +7,32 @@ import {
   AlertCircle,
   Info,
   TrendingUp,
-  DollarSign,
-  PartyPopper,
-  ShieldAlert,
-  Flame,
+  Receipt,
+  CalendarCheck,
+  Gauge,
 } from "lucide-react";
 import { useAlertas, type Alerta } from "../../hooks/useAlertas";
 
+// A cor é o estado, não o assunto: perigo em --danger-ink, atenção em
+// --accent-ink, informação em --fg-2. O ícone diz o assunto, sempre em traço
+// fino e sem enfeite (o confete das parcelas saiu).
+//
 // A cadeia de `if` decide por substring do título — a ordem é significativa,
 // reordenar troca qual ícone aparece.
+const corDoAlerta = (alerta: Alerta) =>
+  alerta.tipo === "danger" ? "text-danger-ink" : alerta.tipo === "warning" ? "text-accent-ink" : "text-fg-2";
+
 const AlertIcon = ({ alerta }: { alerta: Alerta }) => {
-  const baseClass = "w-4 h-4 flex-shrink-0";
-  const alerta_ = "text-amber-600 dark:text-amber-400";
-  const perigo = "text-red-600 dark:text-red-400";
-  const positivo = "text-emerald-600 dark:text-emerald-400";
+  const classe = `w-4 h-4 shrink-0 ${corDoAlerta(alerta)}`;
+  const props = { className: classe, strokeWidth: 1.5 };
 
-  if (alerta.titulo.includes("subiu"))
-    return <TrendingUp className={`${baseClass} ${alerta_}`} />;
-  if (alerta.titulo.includes("receita") || alerta.titulo.includes("gastou"))
-    return <DollarSign className={`${baseClass} ${alerta_}`} />;
-  if (alerta.titulo.includes("parcela"))
-    return <PartyPopper className={`${baseClass} ${positivo}`} />;
-  if (alerta.titulo.includes("Meta"))
-    return <ShieldAlert className={`${baseClass} ${perigo}`} />;
-  if (alerta.titulo.includes("superam"))
-    return <Flame className={`${baseClass} ${perigo}`} />;
-
-  if (alerta.tipo === "danger")
-    return <AlertTriangle className={`${baseClass} ${perigo}`} />;
-  if (alerta.tipo === "warning")
-    return <AlertCircle className={`${baseClass} ${alerta_}`} />;
-  return <Info className={`${baseClass} ${positivo}`} />;
+  if (alerta.titulo.includes("subiu")) return <TrendingUp {...props} />;
+  if (alerta.titulo.includes("receita") || alerta.titulo.includes("gastou")) return <Receipt {...props} />;
+  if (alerta.titulo.includes("parcela")) return <CalendarCheck {...props} />;
+  if (alerta.titulo.includes("Meta") || alerta.titulo.includes("superam")) return <Gauge {...props} />;
+  if (alerta.tipo === "danger") return <AlertTriangle {...props} />;
+  if (alerta.tipo === "warning") return <AlertCircle {...props} />;
+  return <Info {...props} />;
 };
 
 export const NotificationBell = () => {
@@ -109,18 +104,16 @@ export const NotificationBell = () => {
     <div className="relative" ref={panelRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
-        aria-label="Notificações"
+        className="relative w-11 h-11 md:w-9 md:h-9 flex items-center justify-center rounded text-fg-2 hover:text-fg hover:bg-surface-2 transition-colors"
+        aria-label={totalCount > 0 ? `Notificações, ${totalCount} novas` : "Notificações"}
+        aria-expanded={isOpen}
       >
-        <Bell
-          className={`w-5 h-5 ${totalCount > 0 ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500"}`}
-        />
+        <Bell className="w-5 h-5" strokeWidth={1.5} />
         {totalCount > 0 && (
           <span
-            className={`absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center font-mono valor text-[10px] font-bold rounded-full px-1 ${
-              dangerCount > 0
-                ? "bg-red-500 text-white"
-                : "bg-amber-500 text-white"
+            aria-hidden="true"
+            className={`absolute top-2 right-1.5 md:top-1 md:right-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-sm valor text-[10px] leading-none text-accent-fg ${
+              dangerCount > 0 ? "bg-danger" : "bg-accent"
             }`}
           >
             {totalCount}
@@ -129,84 +122,61 @@ export const NotificationBell = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.06] rounded-xl shadow-xl dark:shadow-black/60 z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-white/[0.05] bg-zinc-50 dark:bg-white/[0.04]">
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
-              <Bell className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-              Notificações
-              {totalCount > 0 && (
-                <span className="font-mono valor text-xs text-zinc-400 dark:text-zinc-500">({totalCount})</span>
-              )}
-            </h3>
-            <div className="flex items-center gap-2">
+        <div
+          role="dialog"
+          aria-label="Notificações"
+          className="absolute right-0 top-full mt-2 w-[calc(100vw-1rem)] max-w-[380px] bg-surface-2 border border-line rounded z-overlay overflow-hidden animate-[fundo-entra_150ms_ease-out]"
+        >
+          <div className="flex items-center justify-between pl-4 pr-2 h-12 border-b border-line">
+            <h3 className="text-base font-medium text-fg">Notificações</h3>
+            <div className="flex items-center gap-1">
               {totalCount > 0 && (
                 <button
                   onClick={handleDismissAll}
-                  className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                  className="h-8 px-2 rounded text-xs text-fg-2 hover:text-fg transition-colors"
                 >
                   Limpar tudo
                 </button>
               )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 hover:bg-zinc-200 dark:hover:bg-white/[0.08] rounded transition-colors"
+                aria-label="Fechar notificações"
+                className="w-8 h-8 flex items-center justify-center rounded text-fg-3 hover:text-fg transition-colors"
               >
-                <X className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
+                <X className="w-4 h-4" strokeWidth={1.5} />
               </button>
             </div>
           </div>
 
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-[min(24rem,70vh)] overflow-y-auto">
             {loading ? (
-              <div className="p-6 text-center text-zinc-400 dark:text-zinc-500 text-sm">
-                Carregando...
-              </div>
+              <p className="p-6 text-center text-sm text-fg-2">Carregando…</p>
             ) : alertasVisiveis.length === 0 ? (
-              <div className="p-6 text-center">
-                <Bell className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-                <p className="text-zinc-400 dark:text-zinc-500 text-sm">
-                  Nenhuma notificação no momento
-                </p>
+              <div className="p-8 flex flex-col items-center gap-2 text-center">
+                <Bell className="w-5 h-5 text-fg-3" strokeWidth={1.5} />
+                <p className="text-sm text-fg-2">Nada novo por aqui.</p>
               </div>
             ) : (
-              alertasVisiveis.map((alerta, i) => (
-                <div
-                  key={i}
-                  className={`px-4 py-3 border-b border-zinc-100 dark:border-white/[0.05] flex items-start gap-3 hover:bg-zinc-50 dark:hover:bg-white/[0.06] transition-colors ${
-                    alerta.tipo === "danger"
-                      ? "bg-red-50/50 dark:bg-red-950/20"
-                      : alerta.tipo === "warning"
-                        ? "bg-amber-50/50 dark:bg-amber-950/20"
-                        : "bg-transparent"
-                  }`}
-                >
-                  <div className="mt-0.5">
-                    <AlertIcon alerta={alerta} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={`text-sm font-medium ${
-                        alerta.tipo === "danger"
-                          ? "text-red-700 dark:text-red-400"
-                          : alerta.tipo === "warning"
-                            ? "text-amber-700 dark:text-amber-400"
-                            : "text-emerald-700 dark:text-emerald-400"
-                      }`}
+              <ul className="divide-y divide-line">
+                {alertasVisiveis.map((alerta, i) => (
+                  <li key={i} className="pl-4 pr-2 py-3 flex items-start gap-3">
+                    <span className="mt-0.5">
+                      <AlertIcon alerta={alerta} />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm ${alerta.tipo === "info" ? "text-fg" : corDoAlerta(alerta)}`}>{alerta.titulo}</p>
+                      <p className="text-xs text-fg-2 mt-0.5">{alerta.mensagem}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDismiss(alerta)}
+                      aria-label={`Dispensar: ${alerta.titulo}`}
+                      className="w-8 h-8 flex items-center justify-center rounded text-fg-3 hover:text-fg transition-colors shrink-0"
                     >
-                      {alerta.titulo}
-                    </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                      {alerta.mensagem}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleDismiss(alerta)}
-                    className="p-1 hover:bg-zinc-200 dark:hover:bg-white/[0.08] rounded transition-colors flex-shrink-0"
-                  >
-                    <X className="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
-                  </button>
-                </div>
-              ))
+                      <X className="w-3.5 h-3.5" strokeWidth={1.5} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </div>

@@ -38,6 +38,7 @@ export default {
           3: token('--surface-3'),
         },
         line: token('--line'),
+        scrim: 'var(--scrim)',
         fg: {
           DEFAULT: token('--fg'),
           2: token('--fg-2'),
