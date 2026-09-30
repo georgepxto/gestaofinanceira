@@ -398,7 +398,7 @@ export const MetasPage = () => {
                         {(estourou || quase) && (
                           <Link
                             to="/gastos/lancamentos"
-                            className="text-fg-2 underline underline-offset-2 hover:text-fg transition-colors"
+                            className="inline-flex items-center min-h-[44px] -my-3 md:min-h-0 md:my-0 text-fg-2 underline underline-offset-2 hover:text-fg transition-colors"
                           >
                             Ver lançamentos
                           </Link>

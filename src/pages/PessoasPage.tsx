@@ -354,7 +354,7 @@ export const PessoasPage = () => {
                             </Button>
                             <Link
                               to="/a-receber/mes"
-                              className="h-9 px-3 inline-flex items-center text-sm text-fg-2 hover:text-fg transition-colors"
+                              className="h-11 md:h-9 px-3 inline-flex items-center text-sm text-fg-2 hover:text-fg transition-colors"
                             >
                               Ver lançamentos
                             </Link>

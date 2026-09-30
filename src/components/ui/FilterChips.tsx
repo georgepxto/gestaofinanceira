@@ -18,7 +18,7 @@ interface FilterChipsProps<T extends string> {
 
 /** Classe de um chip, para quem desenha um chip fora da lista (o "Dia"). */
 export const chipClasse = (ativo: boolean) =>
-  `shrink-0 h-9 md:h-8 px-3 rounded-sm text-sm whitespace-nowrap inline-flex items-center gap-1.5 transition-colors ${
+  `shrink-0 h-11 md:h-8 px-3 rounded-sm text-sm whitespace-nowrap inline-flex items-center gap-1.5 transition-colors ${
     ativo ? "bg-surface-1 text-fg ring-1 ring-inset ring-line" : "bg-surface-2 text-fg-2 hover:text-fg"
   }`;
 

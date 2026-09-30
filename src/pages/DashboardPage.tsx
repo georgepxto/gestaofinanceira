@@ -698,7 +698,7 @@ export const DashboardPage = () => {
             className="mb-1"
             acao={
               data.top5MeusGastos.length > 0 ? (
-                <Link to="/gastos/lancamentos" className="hover:text-fg transition-colors">
+                <Link to="/gastos/lancamentos" className="inline-flex items-center min-h-[44px] -my-3 md:min-h-0 md:my-0 hover:text-fg transition-colors">
                   Ver todos
                 </Link>
               ) : undefined
@@ -727,7 +727,7 @@ export const DashboardPage = () => {
             titulo="Metas do mês"
             acao={
               data.metasGasto.length > 0 ? (
-                <Link to="/gastos/metas" className="hover:text-fg transition-colors">
+                <Link to="/gastos/metas" className="inline-flex items-center min-h-[44px] -my-3 md:min-h-0 md:my-0 hover:text-fg transition-colors">
                   Ver metas
                 </Link>
               ) : undefined

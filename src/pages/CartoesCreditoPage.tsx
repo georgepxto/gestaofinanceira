@@ -876,7 +876,7 @@ export const CartoesCreditoPage = () => {
                             <button
                               type="button"
                               onClick={handleDesfazerPagamento}
-                              className="underline underline-offset-2 hover:text-fg transition-colors"
+                              className="inline-flex items-center min-h-[44px] -my-3 md:min-h-0 md:my-0 underline underline-offset-2 hover:text-fg transition-colors"
                             >
                               Desfazer pagamento
                             </button>

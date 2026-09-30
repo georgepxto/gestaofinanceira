@@ -34,7 +34,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   },
   ref,
 ) {
-  const altura = tamanho === "sm" ? "h-9 px-3 text-sm" : "h-11 md:h-10 px-4 text-[15px] md:text-sm";
+  const altura = tamanho === "sm" ? "h-11 md:h-9 px-3 text-sm" : "h-11 md:h-10 px-4 text-[15px] md:text-sm";
   return (
     <button
       ref={ref}

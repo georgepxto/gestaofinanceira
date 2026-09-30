@@ -35,7 +35,7 @@ export function SegmentedControl({
   className = "",
 }: SegmentedControlProps) {
   const navegacao = segmentos.some((s) => s.to);
-  const altura = tamanho === "sm" ? "h-8 text-[13px]" : "h-11 md:h-9 text-[15px] md:text-sm";
+  const altura = tamanho === "sm" ? "h-11 md:h-8 text-[13px]" : "h-11 md:h-9 text-[15px] md:text-sm";
 
   const classe = (s: Segmento) =>
     `${cheio ? "flex-1" : ""} ${altura} px-3 rounded-sm whitespace-nowrap inline-flex items-center justify-center transition-colors disabled:opacity-40 ${
