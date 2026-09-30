@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { HedgeMark } from "../components/landing/HedgeMark";
 import { useNavigate } from "react-router-dom";
 import { Lock, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -77,10 +78,9 @@ export function ResetPasswordPage() {
 
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-8 h-8 mb-4">
-            <img src="/favicon-light.png" alt="Hedge" className="w-8 h-8 dark:hidden" />
-            <img src="/favicon-dark.png" alt="Hedge" className="w-8 h-8 hidden dark:block" />
+            <HedgeMark className="h-8 w-auto text-accent" title="Hedge" />
           </div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             Atualizar Senha
           </h1>
           <p className="text-zinc-500 dark:text-zinc-400 mt-2">

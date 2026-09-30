@@ -1,4 +1,5 @@
 import { useState, useEffect, type ReactNode } from "react";
+import { HedgeMark } from "../landing/HedgeMark";
 
 /**
  * O splash de boot. Um só para os dois portões do App (auth e feature flags):
@@ -12,27 +13,16 @@ import { useState, useEffect, type ReactNode } from "react";
 export function BootSplash() {
   return (
     <div
-      className="min-h-screen bg-zinc-50 dark:bg-app-dark flex flex-col items-center justify-center gap-5"
+      className="min-h-screen bg-page flex flex-col items-center justify-center gap-6"
       role="status"
       aria-label="Abrindo o Hedge"
     >
-      <img
-        src="/favicon-light.png"
-        alt=""
-        aria-hidden="true"
-        className="w-11 h-11 dark:hidden"
-      />
-      <img
-        src="/favicon-dark.png"
-        alt=""
-        aria-hidden="true"
-        className="w-11 h-11 hidden dark:block"
-      />
+      <HedgeMark className="h-10 w-auto text-accent" />
 
-      {/* Progresso indeterminado: 2px, o acento da marca, e nada mais. A
-          animação é a única do produto e vive no index.css como `boot-slide`. */}
-      <div className="w-32 h-[2px] rounded-full bg-zinc-200 dark:bg-white/[0.07] overflow-hidden">
-        <div className="h-full w-1/3 rounded-full bg-emerald-600 dark:bg-emerald-500 motion-safe:animate-[boot-slide_1.1s_ease-in-out_infinite] motion-reduce:w-full" />
+      {/* Progresso indeterminado: 2px e nada mais. A animação vive no
+          index.css como `boot-slide`. */}
+      <div className="w-32 h-[2px] bg-surface-3 overflow-hidden">
+        <div className="h-full w-1/3 bg-fg motion-safe:animate-[boot-slide_1.1s_ease-in-out_infinite] motion-reduce:w-full" />
       </div>
 
       <span className="sr-only">Abrindo o Hedge…</span>

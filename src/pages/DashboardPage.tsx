@@ -713,7 +713,7 @@ export const DashboardPage = () => {
         {/* Gráfico de barras - Gastos por mês */}
         <Card className="min-w-0 overflow-hidden" data-tour="grafico-mensal">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Por mês</h2>
+            <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Por mês</h2>
             <Rotulo as="span">Últimos 6 meses</Rotulo>
           </div>
           {data.tendenciaMensal.length > 0 ? (
@@ -780,7 +780,7 @@ export const DashboardPage = () => {
 
         {/* Últimos lançamentos (pessoais) */}
         <Card className="min-w-0" data-tour="ultimos-gastos">
-          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">Últimos lançamentos</h2>
+          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">Últimos lançamentos</h2>
           {data.top5MeusGastos.length > 0 ? (
             <>
               <div>
@@ -817,7 +817,7 @@ export const DashboardPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Onde o dinheiro foi */}
         <Card className="min-w-0">
-          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Onde o dinheiro foi</h2>
+          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Onde o dinheiro foi</h2>
           {data.gastosPorCategoria.length > 0 ? (
             <div className="space-y-4">
               {(() => {
@@ -853,7 +853,7 @@ export const DashboardPage = () => {
 
         {/* Metas do mês */}
         <Card className="min-w-0" data-tour="metas-section">
-          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Metas do mês</h2>
+          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Metas do mês</h2>
           {data.metasGasto.length > 0 ? (
             <div className="space-y-4">
               {data.metasGasto.map((meta) => {
@@ -900,7 +900,7 @@ export const DashboardPage = () => {
       {data.tendenciaMensal.length > 0 && (
         <Card className="min-w-0 overflow-hidden">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Gastos totais · 6 meses</h2>
+            <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Gastos totais · 6 meses</h2>
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400" data-tour="trend-6meses-meus">
                 <span className="w-3 h-[3px] rounded-full bg-emerald-600" />

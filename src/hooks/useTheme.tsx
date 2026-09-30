@@ -12,21 +12,14 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    // Migração única para o redesign light-first: quem estava no dark (padrão
-    // antigo) passa a ver o tema claro uma vez; depois o toggle manda.
-    //
-    // Esta mesma lógica está duplicada no script bloqueante do <head> em
-    // index.html, que é quem aplica a classe antes do primeiro paint. Os dois
-    // leem a mesma chave e chegam à mesma conclusão — se um mudar, muda o outro.
-    const MIGRATION_KEY = "theme-migrated-light-v1";
-    const stored = localStorage.getItem("theme") as Theme | null;
-    if (stored === "dark" && !localStorage.getItem(MIGRATION_KEY)) {
-      localStorage.setItem(MIGRATION_KEY, "1");
-      localStorage.setItem("theme", "light");
-      return "light";
+    // O escuro é o padrão de quem nunca escolheu. A mesma regra está no script
+    // bloqueante do <head> em index.html, que é quem aplica a classe antes do
+    // primeiro paint — se uma mudar, muda a outra.
+    try {
+      return localStorage.getItem("theme") === "light" ? "light" : "dark";
+    } catch {
+      return "dark";
     }
-    // Padrão para usuário novo é sempre light (sem detectar preferência do sistema).
-    return stored || "light";
   });
 
   // Reconciliação, não aplicação inicial: quem aplica a classe no boot é o
@@ -36,10 +29,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
+    try {
+      localStorage.setItem("theme", theme);
+    } catch {
+      /* armazenamento bloqueado: o tema vale só para esta visita */
+    }
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", theme === "dark" ? "#0A0A0B" : "#FAFAFA");
+      // ds-ok: a meta theme-color não lê var(); são os valores de --bg.
+      ?.setAttribute("content", theme === "dark" ? "#0B0B0C" : "#ECECE9");
   }, [theme]);
 
   const toggleTheme = () => setThemeState((t) => (t === "dark" ? "light" : "dark"));

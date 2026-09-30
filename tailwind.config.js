@@ -1,13 +1,70 @@
 /** @type {import('tailwindcss').Config} */
+
+/* Cor a partir de uma variável CSS de src/index.css.
+   As variáveis guardam hex (é o que o sistema documenta e o que o DevTools
+   mostra), então a opacidade do Tailwind (`bg-accent/12`) sai por color-mix em
+   vez do `rgb(var() / a)` que exigiria guardar canais soltos. */
+const token = (nome) => ({ opacityValue }) =>
+  opacityValue === undefined || opacityValue === "1"
+    ? `var(${nome})`
+    : `color-mix(in srgb, var(${nome}) calc(${opacityValue} * 100%), transparent)`;
+
 export default {
   darkMode: 'class',
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
+    // Substitui a escala inteira, não estende: raio acima de 4px não existe.
+    // Os degraus antigos (md/lg/xl/2xl/3xl) apontam para 4px durante a
+    // migração, para que tela ainda não refeita já perca a curva; o guarda
+    // (scripts/check-design-system.sh) barra o uso deles em arquivo migrado.
+    borderRadius: {
+      none: '0',
+      sm: '2px',
+      DEFAULT: '4px',
+      md: '4px',
+      lg: '4px',
+      xl: '4px',
+      '2xl': '4px',
+      '3xl': '4px',
+      // Só para o ponto de 8px de categoria e cartão. Pílula não usa.
+      full: '9999px',
+    },
     extend: {
       colors: {
-        // Os dois neutros da marca que não existem na escala zinc.
-        'app-dark': '#0A0A0B', // fundo de tela no dark
-        'app-row':  '#FCFCFC', // painel/linha quase-branco no light
+        page: token('--bg'),
+        surface: {
+          1: token('--surface-1'),
+          2: token('--surface-2'),
+          3: token('--surface-3'),
+        },
+        line: token('--line'),
+        fg: {
+          DEFAULT: token('--fg'),
+          2: token('--fg-2'),
+          3: token('--fg-3'),
+        },
+        accent: {
+          DEFAULT: token('--accent'),
+          fg: token('--accent-fg'),
+          ink: token('--accent-ink'),
+        },
+        danger: {
+          DEFAULT: token('--danger'),
+          ink: token('--danger-ink'),
+        },
+        cat: {
+          1: token('--cat-1'),
+          2: token('--cat-2'),
+          3: token('--cat-3'),
+          4: token('--cat-4'),
+          5: token('--cat-5'),
+          6: token('--cat-6'),
+          7: token('--cat-7'),
+          8: token('--cat-8'),
+        },
+        // Legado da identidade anterior, usado pelas telas ainda não migradas.
+        'app-dark': '#0A0A0B',
+        'app-row':  '#FCFCFC',
         // Landing: aponta para as variáveis com escopo em .lp (landing.css).
         // Fora da landing essas variáveis não existem, então nada no app muda.
         lp: {
@@ -30,13 +87,21 @@ export default {
         'modal-top': '60',
         toast: '70',
       },
+      // Nada acima de 500. Os pesos nomeados mais altos caem em 500 para que o
+      // legado não pinte negrito enquanto não é migrado.
+      fontWeight: {
+        title: '450',
+        semibold: '500',
+        bold: '500',
+        extrabold: '500',
+        black: '500',
+      },
       fontFamily: {
-        display: ['Syne', 'sans-serif'],
-        // Números grandes. Não é a `display` porque a Syne aperta numeral tabular,
-        // e não é a `mono` porque em 44px a largura fixa da mono fica mecânica.
-        num: ['Geist', 'sans-serif'],
         sans: ['Switzer', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
         mono: ['Geist Mono', 'ui-monospace', 'monospace'],
+      },
+      transitionDuration: {
+        DEFAULT: '150ms',
       },
     },
   },

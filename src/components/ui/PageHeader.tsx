@@ -50,7 +50,7 @@ export const PageHeader = ({ eyebrow, title, description, action, className = ""
           {eyebrow}
         </p>
       )}
-      <h1 className="font-display font-bold text-[34px] leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50">
+      <h1 className="font-bold text-[34px] leading-[1.05] tracking-tight text-zinc-900 dark:text-zinc-50">
         {title}
       </h1>
       {description && (

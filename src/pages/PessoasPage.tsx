@@ -244,7 +244,7 @@ export const PessoasPage = () => {
       {/* Form Novo devedor */}
       {showAddForm && (
         <Card>
-          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Adicionar devedor</h2>
+          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Adicionar devedor</h2>
           <div className="space-y-3">
             <input
               type="text"
@@ -278,7 +278,7 @@ export const PessoasPage = () => {
       {/* Card Comparativo por pessoa */}
       <Card data-tour="devedores-lista">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Comparativo por pessoa</h2>
+          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Comparativo por pessoa</h2>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
               <span className="w-3 h-[10px] rounded-full bg-emerald-500" />
@@ -314,7 +314,7 @@ export const PessoasPage = () => {
                       {/* Pessoa */}
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-9 h-9 flex-shrink-0 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center">
-                          <span className="font-display font-bold text-emerald-700 dark:text-emerald-400">
+                          <span className="font-bold text-emerald-700 dark:text-emerald-400">
                             {pessoa.charAt(0).toUpperCase()}
                           </span>
                         </div>

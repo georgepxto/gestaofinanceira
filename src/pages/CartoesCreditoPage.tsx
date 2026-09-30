@@ -640,7 +640,7 @@ export const CartoesCreditoPage = () => {
   const renderLimiteConsolidado = () => (
     <Card className="min-w-0" data-tour="cartoes-consolidado">
       <div className="flex items-center justify-between gap-3 mb-2">
-        <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Limite consolidado</h2>
+        <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Limite consolidado</h2>
         <Valor porte="medio" className="text-zinc-900 dark:text-zinc-50">{percentUsado.toFixed(0)}%</Valor>
       </div>
       {barraLimite(percentUsado)}
@@ -853,7 +853,7 @@ export const CartoesCreditoPage = () => {
               {/* Transações da fatura */}
               <Card padding="nenhum" sangra className="min-w-0" data-tour="cartoes-detalhes-transacoes">
                 <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 md:px-5 md:pt-5">
-                  <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Transações da fatura</h2>
+                  <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Transações da fatura</h2>
                   <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">{itens.length} {itens.length === 1 ? "item" : "itens"}</span>
                 </div>
                 {cartaoSelecionado.divida_inicial && cartaoSelecionado.divida_inicial > 0 ? (
@@ -954,7 +954,7 @@ export const CartoesCreditoPage = () => {
               {/* Este cartão */}
               <Card className="h-fit" data-tour="cartoes-detalhes-limite">
                 <div className="flex items-center justify-between gap-3 mb-4">
-                  <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Este cartão</h2>
+                  <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Este cartão</h2>
                   <div className="flex gap-0.5">
                     <button onClick={() => handleEditCartao(cartaoSelecionado)} aria-label={`Editar cartão ${cartaoSelecionado.nome}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors"><Edit2 className="w-[15px] h-[15px]" /></button>
                     <button onClick={() => handleDeleteCartao(cartaoSelecionado.id, cartaoSelecionado.nome)} aria-label={`Excluir cartão ${cartaoSelecionado.nome}`} className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"><Trash2 className="w-[15px] h-[15px]" /></button>

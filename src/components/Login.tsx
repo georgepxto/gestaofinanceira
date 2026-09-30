@@ -6,7 +6,6 @@ import "./landing/landing.css";
 import { LiveBalanceCard } from "./landing/LiveBalanceCard";
 import { HedgeLogo } from "./landing/HedgeMark";
 import { MarkGhost } from "./landing/MarkGhost";
-import { useBrandFavicon } from "./landing/useBrandFavicon";
 
 interface LoginProps {
   onLogin: (email: string, password: string) => Promise<{ error?: string }>;
@@ -85,7 +84,6 @@ export function Login({ onLogin, onSignUp }: LoginProps) {
     searchParams.get("mode") === "signup"
   );
 
-  useBrandFavicon();
 
   // Celular: o monograma só aparece se o espaço acima do formulário tiver
   // altura para ele (numa tela baixa vira uma fresta). Medido, não por

@@ -51,7 +51,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
         className="w-full max-w-[460px] shadow-xl dark:shadow-black/60"
       >
         <div className="p-4 border-b border-zinc-200 dark:border-white/[0.06] flex items-center justify-between">
-          <h2 id="fechar-mes-modal-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <h2 id="fechar-mes-modal-title" className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             Fechar Mês - {pessoa}
           </h2>

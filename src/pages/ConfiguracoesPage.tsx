@@ -333,11 +333,11 @@ export const ConfiguracoesPage = () => {
       <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))]">
         {/* Card Perfil */}
         <Card as="section" className="min-w-0">
-          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Perfil</h2>
+          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Perfil</h2>
 
           <div className="flex items-center gap-3.5 mb-5">
             <div className="w-[52px] h-[52px] rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
-              <span className="font-display font-bold text-xl text-emerald-700 dark:text-emerald-400">{inicial}</span>
+              <span className="font-bold text-xl text-emerald-700 dark:text-emerald-400">{inicial}</span>
             </div>
             <div className="min-w-0">
               <p className="text-[15px] font-semibold text-zinc-900 dark:text-zinc-100 truncate">
@@ -388,7 +388,7 @@ export const ConfiguracoesPage = () => {
         <div className="space-y-5 min-w-0">
           {/* Card Aparência */}
           <Card as="section">
-            <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Aparência</h2>
+            <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Aparência</h2>
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">Tema</p>
@@ -434,7 +434,7 @@ export const ConfiguracoesPage = () => {
 
           {/* Card Seus dados */}
           <Card as="section">
-            <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Seus dados</h2>
+            <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Seus dados</h2>
             {desde && (
               <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">no Hedge desde {desde}</p>
             )}
@@ -483,7 +483,7 @@ export const ConfiguracoesPage = () => {
         >
           <AlertTriangle className="w-5 h-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Ações irreversíveis</h2>
+            <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Ações irreversíveis</h2>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">zerar seus dados ou excluir a conta</p>
           </div>
           {showAcoesIrreversiveis ? (
@@ -498,7 +498,7 @@ export const ConfiguracoesPage = () => {
             {/* Zerar dados */}
             <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-2xl p-5 min-w-0">
               <Rotulo tom="alerta" className="mb-1">Zerar dados</Rotulo>
-              <h3 className="font-display font-bold text-zinc-900 dark:text-zinc-100 mb-2">Começar do zero</h3>
+              <h3 className="font-bold text-zinc-900 dark:text-zinc-100 mb-2">Começar do zero</h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
                 Apaga permanentemente tudo isto, mantendo só o seu login:
               </p>
@@ -558,7 +558,7 @@ export const ConfiguracoesPage = () => {
             {/* Excluir conta */}
             <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-2xl p-5 min-w-0">
               <Rotulo tom="perigo" className="mb-1">Excluir conta</Rotulo>
-              <h3 className="font-display font-bold text-zinc-900 dark:text-zinc-100 mb-2">Apagar tudo, inclusive o login</h3>
+              <h3 className="font-bold text-zinc-900 dark:text-zinc-100 mb-2">Apagar tudo, inclusive o login</h3>
               <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
                 Ação permanente e irreversível. Digite <strong className="font-mono text-red-600 dark:text-red-400">EXCLUIR</strong> para liberar o botão:
               </p>

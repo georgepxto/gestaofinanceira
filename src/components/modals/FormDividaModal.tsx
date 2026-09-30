@@ -55,7 +55,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
             <Rotulo>
               Cobranças
             </Rotulo>
-            <h2 id="form-divida-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+            <h2 id="form-divida-title" className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <Clock className="w-5 h-5 text-amber-500 dark:text-amber-400" />
               Nova Cobrança em Aberto
             </h2>

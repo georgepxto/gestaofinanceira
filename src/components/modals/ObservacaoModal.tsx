@@ -39,7 +39,7 @@ export const ObservacaoModal: React.FC<ObservacaoModalProps> = ({
         className="w-full max-w-[460px] shadow-xl dark:shadow-black/60"
       >
         <div className="p-4 border-b border-zinc-200 dark:border-white/[0.06] flex items-center justify-between">
-          <h2 id="obs-modal-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+          <h2 id="obs-modal-title" className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             Observação - {pessoa}
           </h2>

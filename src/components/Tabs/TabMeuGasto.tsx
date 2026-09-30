@@ -229,7 +229,7 @@ export function TabMeuGasto({
           {gastosFixos.length > 0 && (
             <Card padding="nenhum" sangra data-tour="eu-gastos-fixos">
               <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 md:px-5 md:pt-5">
-                <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Gastos fixos</h2>
+                <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Gastos fixos</h2>
                 <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">
                   {gastosFixosAtivos} {gastosFixosAtivos === 1 ? "ativo" : "ativos"}
                 </span>
@@ -329,7 +329,7 @@ export function TabMeuGasto({
         {/* Card Lançamentos do mês */}
         <Card padding="nenhum" sangra className="min-w-0" data-tour="eu-lista-gastos">
           <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3 md:px-5 md:pt-5">
-            <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Lançamentos do mês</h2>
+            <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Lançamentos do mês</h2>
             <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">
               {gastosFiltrados.length} {gastosFiltrados.length === 1 ? "item" : "itens"}
             </span>

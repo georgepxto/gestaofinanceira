@@ -191,7 +191,7 @@ export function TabDividas({
           meta significaria jogar fora o histórico — e não existe tela de
           detalhe de cobrança para onde ele iria. */}
       <Card padding="nenhum" sangra data-tour="dividas-lista">
-        <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 px-4 pt-4 pb-3 md:px-5 md:pt-5">
+        <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 px-4 pt-4 pb-3 md:px-5 md:pt-5">
           {pendentes ? "Cobranças em aberto" : "Cobranças quitadas"}
           {filtroPessoaDivida && (
             <span className="text-sm font-normal font-sans text-zinc-500 dark:text-zinc-400"> — {filtroPessoaDivida}</span>

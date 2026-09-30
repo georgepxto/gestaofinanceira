@@ -133,7 +133,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
             <Rotulo>
               Lançamentos
             </Rotulo>
-            <h2 id="form-gasto-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100">
+            <h2 id="form-gasto-title" className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
               {isEditing ? "Editar Lançamento" : "Novo Lançamento"}
             </h2>
           </div>

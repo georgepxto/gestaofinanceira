@@ -142,7 +142,7 @@ export const GerenciarCategorias = () => {
       >
         <Tags className="w-5 h-5 text-zinc-400 dark:text-zinc-500 flex-shrink-0" />
         <div className="flex-1 min-w-0">
-          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">
+          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">
             Categorias
           </h2>
           {/* O resumo fechado responde "quantas eu tenho?" sem abrir nada. */}

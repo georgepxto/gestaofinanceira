@@ -4,7 +4,6 @@ import { Nav } from "../components/landing/Nav";
 import { Hero } from "../components/landing/Hero";
 import { ScrollProgress } from "../components/landing/ScrollProgress";
 import { SafeBoundary } from "../components/landing/SafeBoundary";
-import { useBrandFavicon } from "../components/landing/useBrandFavicon";
 
 const BelowFold = lazy(() => import("../components/landing/BelowFold"));
 
@@ -14,7 +13,6 @@ const BelowFold = lazy(() => import("../components/landing/BelowFold"));
    Nav e hero vão no chunk de entrada; o resto carrega em seguida. */
 export const LandingPage = () => {
   const rootRef = useRef<HTMLDivElement>(null);
-  useBrandFavicon();
 
   return (
     <div ref={rootRef} className="lp min-h-screen" data-theme="dark">

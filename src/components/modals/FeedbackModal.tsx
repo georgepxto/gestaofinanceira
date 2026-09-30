@@ -73,7 +73,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({
               )}
             </div>
 
-            <h3 id="feedback-modal-title" className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
+            <h3 id="feedback-modal-title" className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
               {modal.titulo}
             </h3>
 

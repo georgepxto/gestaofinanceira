@@ -166,7 +166,7 @@ export function TabGastos({
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 flex-shrink-0 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center">
-                    <span className="font-display font-bold text-emerald-700 dark:text-emerald-400">
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">
                       {resumo.pessoa.charAt(0).toUpperCase()}
                     </span>
                   </div>
@@ -300,7 +300,7 @@ export function TabGastos({
       {/* Card Lançamentos do mês */}
       {!loading && (
         <Card padding="nenhum" sangra data-tour="gastos-lista">
-          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 px-4 pt-4 pb-3 md:px-5 md:pt-5">
+          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 px-4 pt-4 pb-3 md:px-5 md:pt-5">
             Lançamentos do mês
           </h2>
 

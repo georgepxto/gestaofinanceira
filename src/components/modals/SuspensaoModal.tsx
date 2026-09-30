@@ -64,7 +64,7 @@ export function SuspensaoModal({ show, onClose, onConfirm, mesRef, nomeGasto }: 
         className="w-full max-w-sm overflow-hidden shadow-xl dark:shadow-black/60"
       >
         <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-white/[0.06]">
-          <h2 id="suspensao-modal-title" className="font-display text-lg font-bold text-zinc-900 dark:text-zinc-100">
+          <h2 id="suspensao-modal-title" className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
             Suspender Gasto Fixo
           </h2>
           <button

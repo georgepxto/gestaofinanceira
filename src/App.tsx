@@ -224,7 +224,7 @@ function AppContent() {
       <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-500 dark:text-red-400 mx-auto mb-4" />
-          <h1 className="font-display text-xl font-bold tracking-tight text-white mb-2">
+          <h1 className="text-xl font-bold tracking-tight text-white mb-2">
             Configuração Necessária
           </h1>
           <p className="text-zinc-400">
@@ -258,7 +258,7 @@ function AppContent() {
           <div className="w-16 h-16 bg-red-100 dark:bg-red-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <ShieldAlert className="w-8 h-8 text-red-500 dark:text-red-400" />
           </div>
-          <h1 className="font-display text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">
+          <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">
             Conta Desativada
           </h1>
           <p className="text-zinc-500 dark:text-zinc-400 mb-6">

@@ -2,64 +2,123 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════
+   TOKENS
+   A única fonte de cor do app. Componente não escreve hex: lê daqui, pelas
+   cores do Tailwind (tailwind.config.js) ou por var() direto.
+   O escuro é o padrão e mora na raiz; o claro entra quando o <html> não tem
+   .dark. A landing tem os próprios tokens, com escopo em .lp.
+   ═══════════════════════════════════════════════ */
+
+:root {
+  --bg: #0B0B0C;
+  --surface-1: #131315;
+  --surface-2: #1B1B1E;
+  --surface-3: #26262A;
+  --line: #26262A;
+  --fg: #F2F2F0;
+  --fg-2: #9A9A97;
+  /* Legenda, eixo e cabeçalho de grupo. O #6B6B68 do sistema dá 3,7:1 sobre
+     o fundo e fica abaixo do AA; este é o tom mais escuro que passa (4,5:1)
+     também sobre --surface-2. */
+  --fg-3: #83837F;
+
+  /* Iguais nos dois temas. Texto sobre o laranja é sempre o quase-preto:
+     branco sobre #FF6B35 não passa de 2,6:1. */
+  --accent: #FF6B35;
+  --accent-fg: #0B0B0C;
+  --danger: #E5484D;
+
+  /* Laranja e vermelho como TEXTO (pílula, valor estourado, link de
+     atenção). No escuro são o próprio tom; no claro, o tom cheio não chega a
+     4,5:1 sobre branco e o texto usa uma versão mais funda. Fundo, barra e
+     botão continuam em --accent e --danger. */
+  --accent-ink: #FF6B35;
+  --danger-ink: #EE5D61;
+
+  /* Categorias: tons dessaturados, espaçados no círculo e longe do laranja
+     (e do verde, que não existe na interface). Só em ponto de 8px e em
+     segmento de gráfico de categoria. */
+  --cat-1: #7C93B2; /* ardósia */
+  --cat-2: #74A3AD; /* petróleo */
+  --cat-3: #A18BC0; /* lavanda */
+  --cat-4: #B888AE; /* malva */
+  --cat-5: #C48A8E; /* rosa-argila */
+  --cat-6: #C2A477; /* areia */
+  --cat-7: #9C9690; /* greige */
+  --cat-8: #8C8FC7; /* índigo */
+
+  --ease-out-cubic: cubic-bezier(0.33, 1, 0.68, 1);
+
+  color-scheme: dark;
+}
+
+html:not(.dark) {
+  --bg: #ECECE9;
+  --surface-1: #FFFFFF;
+  --surface-2: #F4F4F2;
+  --surface-3: #E2E2DE;
+  --line: #E2E2DE;
+  --fg: #0B0B0C;
+  --fg-2: #5E5E5B;
+  /* #8A8A86 no sistema; 2,9:1 sobre o fundo. Este passa no AA. */
+  --fg-3: #6A6A66;
+
+  --accent-ink: #A93F16;
+  --danger-ink: #BF3035;
+
+  /* Os mesmos tons, um degrau mais escuros: no branco o tom do escuro some. */
+  --cat-1: #5E769A;
+  --cat-2: #4F8591;
+  --cat-3: #7F68A3;
+  --cat-4: #97628C;
+  --cat-5: #A6646A;
+  --cat-6: #9C7E4F;
+  --cat-7: #7A746E;
+  --cat-8: #6A6DAE;
+
+  color-scheme: light;
+}
+
 * {
   box-sizing: border-box;
 }
 
 html {
   scroll-behavior: smooth;
+  background-color: var(--bg);
 }
 
 body {
   margin: 0;
   font-family: 'Switzer', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #FAFAFA; /* zinc-50 */
-  color: #18181B; /* zinc-900 */
+  background-color: var(--bg);
+  color: var(--fg);
 }
 
-.dark body,
-html.dark body {
-  background-color: #0A0A0B; /* preto neutro da marca */
-  color: #FAFAFA; /* zinc-50 */
+/* Foco de teclado: um contorno só, no tom do texto, afastado 2px. */
+:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
 }
 
-/* Controles nativos seguem o tema do app.
-   Sem isto o navegador pinta o popup de <select>, o autofill, o caret e a
-   scrollbar nativa no esquema claro — e o texto das <option>, que herda
-   dark:text-zinc-100 do select, fica branco sobre branco. É a causa dos
-   dropdowns ilegíveis no escuro. */
-html {
-  color-scheme: light;
+/* Popup nativo do <select>. O macOS ignora estas cores (o popup é desenhado
+   pelo SO); Windows e Linux as respeitam. */
+select option {
+  background-color: var(--surface-2);
+  color: var(--fg);
 }
 
-html.dark {
-  color-scheme: dark;
-}
-
-/* Fallback e marca no popup nativo. O macOS ignora estas cores (o popup é
-   desenhado pelo SO); Windows e Linux as respeitam. */
-html.dark select option {
-  background-color: #18181B; /* zinc-900 */
-  color: #F4F4F5;            /* zinc-100 */
-}
-
-/* O seletor do escuro precisa repetir `html.dark`: sem isso
-   `html.dark select option` (0,1,3) vence `select option:checked` (0,1,2) por
-   especificidade e a linha atual sai zinc-900 em vez de esmeralda. */
-select option:checked,
-html.dark select option:checked {
-  background-color: #059669; /* emerald-600 — o azul do SO não é da marca */
-  color: #FFFFFF;
+select option:checked {
+  background-color: var(--surface-3);
+  color: var(--fg);
 }
 
 select option:disabled {
-  color: #A1A1AA; /* zinc-400 */
-}
-
-html.dark select option:disabled {
-  color: #71717A; /* zinc-500 */
+  color: var(--fg-3);
 }
 
 /* Previne zoom no iOS ao focar em inputs */
@@ -69,20 +128,11 @@ textarea {
   font-size: 16px !important;
 }
 
-/* Exceção única à regra acima: a entrada de valor da folha de lançamento é o
-   herói da tela, no degrau de 44px. A regra dos 16px existe para impedir o zoom
-   que o iOS dá em campo com fonte MENOR que 16px — acima disso o motivo não se
-   aplica, e sem esta linha o `!important` acima achataria o valor. */
+/* Exceção única à regra acima: o valor grande do <MoneyInput> é o herói do
+   formulário. A regra dos 16px existe para impedir o zoom que o iOS dá em
+   campo com fonte MENOR que 16px — acima disso o motivo não se aplica. */
 input.valor-entrada {
-  font-size: 44px !important;
-}
-
-@media screen and (max-width: 768px) {
-  input,
-  select,
-  textarea {
-    font-size: 16px !important;
-  }
+  font-size: 40px !important;
 }
 
 input[type="number"]::-webkit-inner-spin-button,
@@ -105,72 +155,108 @@ input[type="time"] {
   appearance: none;
   min-height: 2.5rem;
   background-color: transparent;
-  color: #18181B !important; /* zinc-900 */
+  color: var(--fg) !important;
   opacity: 1 !important;
-}
-
-html.dark input[type="date"],
-html.dark input[type="datetime-local"],
-html.dark input[type="month"],
-html.dark input[type="time"] {
-  color: #F4F4F5 !important; /* zinc-100 */
 }
 
 input[type="date"]::-webkit-date-and-time-value {
   text-align: left;
-  color: #18181B !important; /* zinc-900 */
+  color: var(--fg) !important;
   opacity: 1 !important;
 }
 
-html.dark input[type="date"]::-webkit-date-and-time-value {
-  color: #F4F4F5 !important; /* zinc-100 */
-}
-
-/* Custom scrollbar — light */
+/* Barra de rolagem */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #FAFAFA;
+  background: var(--bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #D4D4D8;
-  border-radius: 3px;
+  background: var(--surface-3);
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #A1A1AA;
+  background: var(--fg-3);
 }
 
-/* Custom scrollbar — dark */
-html.dark ::-webkit-scrollbar-track {
-  background: #0A0A0B;
+/* Fileira horizontal (KpiStrip, ActionRow, seletor de cartões): rola sem
+   mostrar a barra, que no celular só ocupa espaço. */
+.sem-barra {
+  scrollbar-width: none;
 }
-html.dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 3px;
-}
-html.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.14);
+.sem-barra::-webkit-scrollbar {
+  display: none;
 }
 
 /* ═══════════════════════════════════════════════
    VALORES NUMÉRICOS
    ═══════════════════════════════════════════════ */
 
-/* Valor monetário: nunca quebra, nunca trunca. Só quem pede é que recebe —
-   a utility `tabular-nums` do Tailwind volta a ser só a do Tailwind. */
+/* Valor monetário: Geist Mono, dígitos de largura fixa, nunca quebra, nunca
+   trunca. Só quem pede é que recebe — a utility `tabular-nums` do Tailwind
+   volta a ser só a do Tailwind. */
 .valor {
-  font-variant-numeric: tabular-nums; /* ds-ok: esta é a definição sancionada — o escopo é .valor, não global */
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums; /* ds-ok: definição sancionada — o escopo é .valor, não global */
   white-space: nowrap;
 }
 
+/* Centavos do número de destaque, no estilo Mercury: menores e elevados,
+   com a vírgula junto. Só no herói — em lista o número fica inteiro. */
+.centavos {
+  font-size: 0.55em;
+  vertical-align: 0.72em;
+  line-height: 0;
+  margin-left: 0.04em;
+}
+
 /* ═══════════════════════════════════════════════
-   ANIMAÇÃO
+   MOVIMENTO
    ═══════════════════════════════════════════════ */
 
-/* Progresso indeterminado do BootSplash. Única animação do produto — por isso
-   mora aqui e não numa @keyframes por componente. */
+/* Progresso indeterminado do BootSplash. */
 @keyframes boot-slide {
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(300%); }
+}
+
+/* Brilho do <Skeleton>: uma faixa que passa devagar. */
+@keyframes skeleton-brilho {
+  0%   { background-position: 150% 0; }
+  100% { background-position: -50% 0; }
+}
+
+/* Item novo numa lista: entra no topo com fade e 8px de deslize. */
+@keyframes entra-item {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes sheet-sobe {
+  from { transform: translateY(100%); }
+  to   { transform: none; }
+}
+
+@keyframes sheet-direita {
+  from { transform: translateX(100%); }
+  to   { transform: none; }
+}
+
+@keyframes fundo-entra {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Tudo desligado para quem pediu menos movimento. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

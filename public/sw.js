@@ -11,14 +11,14 @@ self.addEventListener('push', (event) => {
     data = {
       title: 'Gestão Financeira',
       body: event.data.text(),
-      icon: '/favicon.svg',
+      icon: '/favicon-app.png',
     };
   }
 
   const options = {
     body: data.body || 'Você tem uma notificação',
-    icon: data.icon || '/favicon.svg',
-    badge: '/favicon.svg',
+    icon: data.icon || '/favicon-app.png',
+    badge: '/favicon-app.png',
     vibrate: [200, 100, 200],
     data: {
       url: data.url || '/',

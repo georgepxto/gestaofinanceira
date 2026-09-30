@@ -2,15 +2,22 @@
 #
 # Guarda do sistema visual — Hedge
 #
-# Dezoito regras, todas nascidas de um achado real da revisão visual. O que virou
-# componente (PageHeader, Card, Rotulo, Valor) já está protegido por existir num
-# lugar só; o que continua sendo convenção é o que este script segura.
+# O sistema mora em src/index.css (tokens) e tailwind.config.js (cores que
+# leem os tokens, raio de 2/4px, pesos até 500). Este script segura o que
+# continua sendo convenção: nada de cor fixa, de verde, de raio grande, de
+# rótulo em caixa-alta, de ornamento.
 #
-# Uma linha pode ser dispensada com um comentário `ds-ok` acompanhado do motivo:
+# Uma linha pode ser dispensada com um comentário `ds-ok` acompanhado do motivo,
+# na própria linha ou na de cima:
 #
-#     <div className="rounded-3xl"> {/* ds-ok: cápsula do avatar, geometria própria */}
+#     <span className="rounded-full" /> {/* ds-ok: ponto de categoria de 8px */}
 #
 # Dispensar uma linha é saudável. Enfraquecer uma regra para calar um caso, não.
+#
+# MIGRAÇÃO. O redesign acontece por fases, e os arquivos ainda no visual
+# anterior estão listados em scripts/ds-legado.txt. As regras de VISUAL não
+# olham para eles; as de dinheiro e acessibilidade valem para todos. Cada fase
+# tira da lista o que migrou. Lista vazia = redesign concluído.
 #
 # Uso:  ./scripts/check-design-system.sh
 # Saída: 0 = limpo · 1 = violação encontrada
@@ -22,11 +29,17 @@ cd "$(dirname "$0")/.." || exit 1
 SRC="src"
 CSS="src/index.css"
 
-# Peças de marca: a landing (página e src/components/landing/) e o login. Vivem noutra gramática
-# visual (degradê, raio grande, corpo fora da escala) porque a pessoa ali está
-# sendo convencida, não lendo o saldo. As regras de dinheiro e de acessibilidade
-# valem para elas do mesmo jeito.
+# Peças de marca: a landing e o login. Têm tokens próprios (.lp) e outra
+# gramática. As regras de dinheiro e de acessibilidade valem para elas também.
 MARCA='(LandingPage|Login)\.tsx|src/components/landing/|src/content/'
+
+# Arquivos ainda no visual anterior, um por linha, como um regex só.
+LEGADO_ARQ="scripts/ds-legado.txt"
+LEGADO='^$'
+if [ -s "$LEGADO_ARQ" ]; then
+  LEGADO=$(grep -vE '^\s*(#|$)' "$LEGADO_ARQ" | sed 's/[.]/\\./g; s/^/^/; s/$/:/' | paste -sd'|' -)
+  [ -z "$LEGADO" ] && LEGADO='^$'
+fi
 
 RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[0;33m'
 DIM=$'\033[2m'; BOLD=$'\033[1m'; OFF=$'\033[0m'
@@ -36,11 +49,7 @@ violacoes=0
 
 grupo() { printf '\n%s%s%s\n' "$BOLD" "$1" "$OFF"; }
 
-# Filtra registros `arquivo:linha:…` dispensados por `ds-ok`.
-#
-# Aceita a marca na própria linha ou na linha de cima — dentro de um template
-# literal (`className={\`…\`}`) não cabe comentário, então a linha anterior é a
-# única saída. Mesma ideia do `eslint-disable-next-line`.
+# Filtra registros `arquivo:linha:…` dispensados por `ds-ok` (na linha ou na de cima).
 sem_dsok() {
   local rec f resto l ctx
   while IFS= read -r rec; do
@@ -52,7 +61,6 @@ sem_dsok() {
   done
 }
 
-# Imprime um bloco de achados e soma ao contador.
 reportar() {
   local nome="$1" porque="$2" achados="$3"
   [ -z "$achados" ] && return 0
@@ -66,208 +74,127 @@ reportar() {
   printf '\n'
 }
 
-# regra <nome> <porquê> <padrão-erx> [escopo] [exceção-erx]
+# regra <nome> <porquê> <padrão> [escopo] [exceção-erx]
 #
-#   escopo   "produto" (padrão — isenta as peças de marca)
-#            "tudo"    (vale em todo o src, marca inclusive)
-#            <caminho> (um arquivo só)
+#   escopo   "visual"  (padrão) — produto migrado: sem marca e sem legado
+#            "produto" — produto inteiro, legado incluído, sem marca
+#            "tudo"    — todo o src
+#            <caminho> — um arquivo só
 #
-#   exceção  ERX aplicado sobre a linha `arquivo:nº:conteúdo`. É por onde sai o
-#            arquivo que *define* o padrão — Valor.tsx pode usar tracking-tighter
-#            porque ele é o único lugar que tem o direito de apertar a display.
-#            Não é por onde sai um caso incômodo: isso é `ds-ok`, na linha.
-
-# Dialeto do grep usado por `regra`. Fica em E (ERX) e só o `regra_p` troca.
+#   exceção  ERX sobre `arquivo:nº:conteúdo` para o arquivo que DEFINE o padrão.
 REGRA_GREP=E
 
 regra() {
-  local nome="$1" porque="$2" padrao="$3" escopo="${4:-produto}" excecao="${5:-}"
+  local nome="$1" porque="$2" padrao="$3" escopo="${4:-visual}" excecao="${5:-}"
   local alvo="$SRC" achados
 
-  if [ "$escopo" != "produto" ] && [ "$escopo" != "tudo" ]; then alvo="$escopo"; fi
+  case "$escopo" in visual|produto|tudo) ;; *) alvo="$escopo" ;; esac
   [ -e "$alvo" ] || return 0
 
-  # -H porque com um arquivo só o grep omite o nome, e o `sem_dsok` precisa dele.
-  achados=$(grep -rHn"$REGRA_GREP" --include='*.tsx' --include='*.ts' --include='*.css' "$padrao" "$alvo" 2>/dev/null \
-    | sem_dsok || true)
+  # O ds-ok é o filtro caro (um sed por achado), então roda por último.
+  achados=$(grep -rHn"$REGRA_GREP" --include='*.tsx' --include='*.ts' --include='*.css' "$padrao" "$alvo" 2>/dev/null || true)
 
-  if [ "$escopo" = "produto" ]; then
+  if [ "$escopo" = "visual" ] || [ "$escopo" = "produto" ]; then
     achados=$(printf '%s' "$achados" | grep -vE "$MARCA" || true)
+  fi
+  if [ "$escopo" = "visual" ]; then
+    achados=$(printf '%s' "$achados" | grep -vE "$LEGADO" || true)
   fi
   if [ -n "$excecao" ]; then
     achados=$(printf '%s' "$achados" | grep -vE "$excecao" || true)
   fi
+  achados=$(printf '%s\n' "$achados" | sem_dsok || true)
 
   reportar "$nome" "$porque" "$achados"
 }
 
-# Igual a `regra`, mas com `grep -P`.
-#
-# Existe por causa das duas regras de "par dark:": elas precisam dizer *classe X
-# sem a classe Y na mesma string*, e isso é lookahead — que o `grep -E` não tem.
-# O caminho alternativo (um segundo `grep -v`) foi descartado porque ele filtra
-# a LINHA inteira: um `dark:text-` num atributo vizinho absolveria a classe
-# errada calada. Se você acrescentar uma regra com `(?!…)`, use `regra_p`.
 regra_p() {
   REGRA_GREP=P
   regra "$@"
   REGRA_GREP=E
 }
 
-# Falha alto se o grep desta máquina não tiver PCRE: sem isto as duas regras de
-# par dark: passariam vazias e ninguém notaria (o 2>/dev/null come o erro).
 if ! printf 'a' | grep -qP 'a(?!b)' 2>/dev/null; then
-  printf '%sgrep sem suporte a -P (PCRE) — as regras de par dark: não podem rodar.%s\n' "$RED" "$OFF"
+  printf '%sgrep sem suporte a -P (PCRE) — as regras com lookahead não podem rodar.%s\n' "$RED" "$OFF"
   exit 1
 fi
 
 printf '%sGuarda do sistema visual — Hedge%s\n' "$BOLD" "$OFF"
 
 # ─────────────────────────────────────────────────────────────────────────────
-grupo "Ornamento"
+grupo "Tipografia"
 
-regra "sombra esmeralda em botão" \
-  "Botão primário se destaca pelo peso e pelo fundo. Sombra colorida vira halo." \
-  'shadow-emerald-'
+regra "Syne ou família antiga" \
+  "Switzer em todo texto e Geist Mono nos números. A Syne e a Geist saíram do projeto." \
+  "Syne|font-display|font-num|'Geist'|\"Geist\"" "tudo"
 
-regra "sombra colorida" \
-  "A única sombra do produto é a neutra — shadow-sm, shadow-zinc-*. Cor em sombra é ornamento." \
-  'shadow-(red|amber|yellow|blue|indigo|violet|purple|pink|rose|orange|lime|green|teal|cyan|sky|fuchsia)-'
+regra "peso acima de 500" \
+  "Pesos entre 400 e 500. Hierarquia vem de corpo e cor, não de negrito." \
+  '\bfont-(semibold|bold|extrabold|black)\b|font-\[[6-9]00\]'
 
-regra "scale-x-" \
-  "Deformar o eixo X estica a tipografia junto. O indicador da sidebar anima por transform inline." \
-  'scale-x-'
+regra "caixa-alta" \
+  "Rótulo é sentence case em Switzer. Caixa-alta monoespaçada é o tique que o redesign tirou." \
+  '\buppercase\b'
 
-regra "backdrop-filter no CSS" \
-  "Desfoque de fundo custa caro no scroll e degrada fora do WebKit. Use fundo opaco." \
-  'backdrop-filter' "$CSS"
+regra "tracking de rótulo" \
+  "Espaçamento largo só existia para a caixa-alta. Número de destaque usa −0.02em." \
+  'tracking-(wide|wider|widest)\b|tracking-\[0?\.[0-9]+em\]'
 
-regra "degradê decorativo" \
-  "Superfície do produto é chapada. Degradê é linguagem da landing." \
-  'bg-gradient-to-'
+regra "seta em texto" \
+  "Link e botão dizem o que fazem; a seta → é enfeite." \
+  '→' "visual" \
+  '^[^:]+:[0-9]+:\s*(//|\*|/\*|\{/\*)'
 
-# ─────────────────────────────────────────────────────────────────────────────
-grupo "Escalas"
-
-# Três espaçamentos arbitrários e só três: .16em no rótulo de card e de coluna,
-# .20em no eyebrow de página, e −0.015em no numeral grande (Valor herói/destaque
-# e os poucos números escritos à mão). Qualquer outro valor é desvio.
-regra "tracking fora de .16em/.20em/−0.015em" \
-  "Rótulo mono usa .16em (card, coluna) e .20em (eyebrow). Numeral grande usa −0.015em." \
-  'tracking-\[' "tudo" \
-  'tracking-\[(0?\.(16|2|20)|-0\.015)em\]'
-
-# Vale inclusive para o Valor: −0.05em encosta dígito em dígito no numeral
-# tabular, e foi metade do motivo de o valor em Syne parecer apertado. Trocar a
-# família sem trocar o tracking traria o defeito de volta.
-regra "tracking-tighter" \
-  "Aperto de −0.05em cola os dígitos. Numeral usa tracking-[-0.015em]; título usa tracking-tight." \
-  'tracking-tighter' "tudo"
-
-regra "raio fora de 8/12/16" \
-  "Três raios: rounded-lg (8), rounded-xl (12), rounded-2xl (16) — mais rounded-full em pílula e avatar." \
-  'rounded-(3xl|md|sm)\b'
-
-# 22 entrou na escala porque o salto de text-sm (14) para 30 era grande demais e
-# onze lugares inventaram 19px ou 22px na falta de um degrau. Quem precisa dele
-# usa <Valor porte="medio"> — 19 e 26 seguem barrados de propósito.
-regra "corpo fora de 22/30/34/44" \
-  "Acima de 15px existem quatro corpos: 22 (Valor medio), 30 (destaque), 34 (PageHeader), 44 (herói)." \
-  'text-\[(1[6-9]|2[013-9]|3[1-35-9]|4[0-35-9]|[5-9][0-9]|[0-9]{3,})px\]'
-
-# O degrau nomeado do Tailwind é o caminho por onde a escala vazou: dezessete valores
-# nasceram `text-2xl` (24px) ou `text-lg` (18px) porque `text-[24px]` seria pego e o
-# degrau nomeado não. Dinheiro passa pelo <Valor>, o único lugar que escolhe corpo.
-#
-# A âncora é `valor`, não o corpo: título de cartão em text-lg continua livre. O que
-# esta regra barra é text-lg em dinheiro, não text-lg.
-regra "valor com corpo nomeado do Tailwind" \
-  "Dinheiro usa <Valor porte=…>. text-lg/xl/2xl não são degraus da escala (18/20/24)." \
-  'valor[^"'"'"']*\btext-(lg|xl|[2-9]xl)\b|\btext-(lg|xl|[2-9]xl)[^"'"'"']*\bvalor\b' \
-  produto \
-  'src/components/ui/Valor\.tsx'
+regra_p "emoji" \
+  "Nada de emoji ou ícone decorativo na interface." \
+  '[\x{1F300}-\x{1FAFF}\x{2600}-\x{26FF}]'
 
 # ─────────────────────────────────────────────────────────────────────────────
 grupo "Cor"
 
-regra "família fora da paleta" \
-  "Quatro famílias: emerald (acento), zinc (neutro), amber (alerta), red (perigo)." \
-  '\b(text|bg|border|ring|from|via|to|fill|stroke|decoration|outline|divide|accent|caret|shadow)-(blue|indigo|violet|purple|pink|rose|orange|yellow|lime|green|teal|cyan|sky|fuchsia)-[0-9]'
+regra "cor fixa do Tailwind" \
+  "Toda cor vem dos tokens: page, surface-1/2/3, line, fg/fg-2/fg-3, accent, danger, cat-1…8." \
+  '\b(text|bg|border|ring|fill|stroke|divide|outline|from|via|to|shadow|decoration|placeholder|caret|accent)-(white|black|zinc|slate|gray|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)\b'
 
-regra "neutro fora do zinc" \
-  "O neutro do app é zinc. gray, slate, neutral e stone desafinam com ele lado a lado." \
-  '\b(text|bg|border|ring|from|via|to|fill|stroke|decoration|outline|divide|shadow)-(gray|slate|neutral|stone)-[0-9]'
+regra "verde" \
+  "Não existe verde na interface. Positivo é --fg com sinal; ok é --fg-2." \
+  '\b(emerald|green|lime|teal)-[0-9]'
 
-# Hex cru não é proibido — Recharts e borda de CSS não aceitam classe. O que é
-# proibido é hex que não seja um valor da paleta: foi assim que gray-900
-# (#111827) entrou nos inputs sem ninguém ver.
-PALETA='fff|ffffff|000|000000|transparent'
-PALETA="$PALETA|fafafa|f4f4f5|e4e4e7|d4d4d8|a1a1aa|71717a|52525b|3f3f46|27272a|18181b|09090b"  # zinc
-PALETA="$PALETA|ecfdf5|d1fae5|a7f3d0|6ee7b7|34d399|10b981|059669|047857|065f46|064e3b|022c22"  # emerald
-PALETA="$PALETA|fffbeb|fef3c7|fde68a|fcd34d|fbbf24|f59e0b|d97706|b45309|92400e|78350f"         # amber
-PALETA="$PALETA|fef2f2|fee2e2|fecaca|fca5a5|f87171|ef4444|dc2626|b91c1c|991b1b|7f1d1d"         # red
-PALETA="$PALETA|0a0a0b|fcfcfc"                                                                 # tokens da marca
+regra "variante dark:" \
+  "O tema troca pelos tokens. Classe dark: em arquivo migrado é cor escrita duas vezes." \
+  '\bdark:'
 
 hex_fora=$(grep -rnoE --include='*.tsx' --include='*.ts' --include='*.css' \
              '#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?\b' "$SRC" 2>/dev/null \
-           | grep -viE ":#($PALETA)\$" | grep -vE "$MARCA" | sem_dsok || true)
-reportar "hex fora da paleta" \
-  "Hex é aceito onde classe não entra (Recharts, borda CSS) — desde que o valor seja da paleta." \
+           | grep -vE "^$CSS:" | grep -vE "$MARCA" | grep -vE "$LEGADO" | sem_dsok || true)
+reportar "hex fora do index.css" \
+  "Hex mora nos tokens. Recharts lê var(--…); cor de cartão escolhida pela pessoa leva ds-ok." \
   "$hex_fora"
 
 # ─────────────────────────────────────────────────────────────────────────────
-grupo "Modo escuro"
+grupo "Forma e ornamento"
 
-# A etapa 39 encontrou este erro 45 vezes: a cor foi escrita olhando só para o
-# claro. amber-600 sobre zinc-900 dá 3,1:1 — o ícone some.
-#
-# O lookahead aceita o par em qualquer variante (`dark:text-`, mas também
-# `dark:hover:text-`), porque num estado de hover o par certo é o hover escuro.
-regra_p "cor de texto sem par dark" \
-  "Texto e ícone coloridos precisam do par dark: — tom 400 no escuro." \
-  'text-(emerald|amber|red)-(600|700)(?![^"'"'"'`]*dark:([a-z-]+:)*text-)'
+regra "raio acima de 4px" \
+  "Dois raios: rounded-sm (2px) em pílula, campo e bloco de ícone; rounded (4px) em card e botão." \
+  'rounded(-[trbl]{1,2})?-(md|lg|xl|2xl|3xl|\[)'
 
-# Duas gramáticas de borda conviviam: zinc-800 opaco e branco translúcido. O
-# Card usava uma e a Sidebar a outra, então as bordas do app não casavam.
-regra "borda opaca no escuro" \
-  "Borda no dark é branco translúcido: 5% divisória, 6% superfície, 9% controle." \
-  'dark:border-zinc-[0-9]'
+regra "rounded-full" \
+  "Forma de pílula não existe. O único círculo é o ponto de 8px, e ele leva ds-ok." \
+  'rounded-full'
 
-# O vidro foi aposentado, mas a regra que importa é outra: zinc-900 é a cor do
-# cartão. Um controle da mesma cor do cartão que o contém é um controle
-# invisível — foi o que aconteceu com o select de mês do modal de suspensão.
-regra "superfície de cartão em controle" \
-  "dark:bg-zinc-900 é cartão. Controle no escuro é branco translúcido (4%–10%)." \
-  '(input|select|textarea|button)[^>]*dark:bg-zinc-900'
+regra "sombra" \
+  "Card não tem sombra nem borda: a separação é a diferença entre --bg e --surface-1." \
+  '\bshadow(-(sm|md|lg|xl|2xl|inner|\[))?\b' "visual" \
+  'shadow-none'
 
-# zinc-600 some sobre #0A0A0B. Estava no empty state de Lançamentos.
-regra "zinc-600 como texto no escuro" \
-  "dark:text-zinc-600 não se lê sobre #0A0A0B. Terciário é zinc-500." \
-  'dark:text-zinc-600'
+regra "desfoque e vidro" \
+  "Nada de glassmorphism: fundo opaco." \
+  'backdrop-blur|backdrop-filter|\bblur-'
 
-# ring-offset sem par usa o padrão do Tailwind, que é branco: no escuro cada
-# foco de teclado desenhava um anel branco de 2px entre o elemento e o anel
-# esmeralda. Parecia defeito de render.
-regra_p "ring-offset sem par dark" \
-  "Offset do anel é a cor de trás: ring-offset-zinc-900 em card, app-dark em página." \
-  'ring-offset-2(?![^"'"'"'`]*dark:ring-offset)'
-
-# ─────────────────────────────────────────────────────────────────────────────
-grupo "Componentes"
-
-regra "text-[34px] fora do PageHeader" \
-  "O corpo do h1 de página mora no PageHeader. Quem precisa dele importa o componente." \
-  'text-\[34px\]' "tudo" \
-  'ui/PageHeader\.tsx'
-
-regra "string de card escrita à mão" \
-  "A superfície branca é o Card. Copiar a string é como o shadow-sm sumiu de metade das telas." \
-  'bg-white[^"'"'"'\`]*dark:bg-zinc-900[^"'"'"'\`]*rounded-2xl' "produto" \
-  'ui/Card\.tsx'
-
-regra "tabular-nums redefinido no CSS" \
-  "Quem pede tabular-nums é a classe .valor. Regra ampla rouba a utility do Tailwind." \
-  'font-variant-numeric' "$CSS"
+regra "degradê" \
+  "Superfície é chapada. O único degradê é o da área do gráfico, e ele mora no tema do gráfico." \
+  'bg-gradient-to-|linear-gradient|radial-gradient' "visual" \
+  '^src/index\.css:'
 
 # ─────────────────────────────────────────────────────────────────────────────
 grupo "Dinheiro"
@@ -289,21 +216,18 @@ regra "tipo vazando como categoria" \
   "categoria_gasto || categoria faz 'dividido' virar fatia do gráfico. Use categoriaDeGasto()." \
   'categoria_gasto\s*\|\|\s*categoria' "tudo"
 
-# A chave de pagamentos_parciais foi montada por dois caminhos e divergiu: a escrita
-# gravava yyyy-MM, a leitura do Dashboard consultava "MMMM yyyy". Consulta volta vazia,
-# sem erro, e a taxa de quitação mostrou zero por meses.
 regra "chave de mês montada fora do utils" \
   "Chave de pagamentos_parciais vem de chaveMesPagamentoParcial(). Formato inline diverge calado." \
   '\.eq\("mes",\s*(format|`|'"'"'|")' \
   produto
 
+regra "tabular-nums redefinido no CSS" \
+  "Quem pede tabular-nums é a classe .valor. Regra ampla rouba a utility do Tailwind." \
+  'font-variant-numeric' "$CSS"
+
 # ─────────────────────────────────────────────────────────────────────────────
 grupo "Acessibilidade"
 
-# `onClick` e a tag que o recebe quase nunca estão na mesma linha, então grep de
-# linha não serve. Este awk acompanha a tag aberta pelo fluxo do arquivo: corta
-# cada linha nos `<`, guarda o nome da tag mais recente e acusa o `onClick=` que
-# cair dentro de uma `div` ou `span`.
 clique=$(find "$SRC" -name '*.tsx' -print0 2>/dev/null | xargs -0 awk '
   FNR == 1 { tag = ""; abriu = 0 }
   {
@@ -316,9 +240,6 @@ clique=$(find "$SRC" -name '*.tsx' -print0 2>/dev/null | xargs -0 awk '
           tag = substr(seg, RSTART, RLENGTH); abriu = FNR
         }
       }
-      # Reporta a linha do próprio `onClick`, não a da abertura da tag: é lá que
-      # o `ds-ok` cabe, já que dentro da tag o comentário fica solto no meio dos
-      # atributos.
       if (seg ~ /onClick=/ && (tag == "div" || tag == "span")) {
         if (visto[FILENAME ":" abriu] == 0) {
           visto[FILENAME ":" abriu] = 1
@@ -334,6 +255,10 @@ reportar "onClick em div/span" \
 
 # ─────────────────────────────────────────────────────────────────────────────
 printf '\n'
+pendentes=$(grep -cvE '^\s*(#|$)' "$LEGADO_ARQ" 2>/dev/null || echo 0)
+if [ "$pendentes" -gt 0 ]; then
+  printf '%s%d arquivo(s) ainda no visual anterior (scripts/ds-legado.txt).%s\n' "$DIM" "$pendentes" "$OFF"
+fi
 if [ "$violacoes" -eq 0 ]; then
   printf '%s✓ nenhuma violação%s\n' "$GREEN" "$OFF"
   exit 0

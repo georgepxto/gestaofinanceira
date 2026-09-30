@@ -121,7 +121,7 @@ export const GuidedTourOverlay = ({
             <p className="font-mono text-[11px] font-medium text-emerald-50">
               {tutorialTitle} • Passo {stepIndex + 1} de {totalSteps}
             </p>
-            <h3 className="font-display text-base font-bold text-white mt-1">{currentStep.titulo}</h3>
+            <h3 className="text-base font-bold text-white mt-1">{currentStep.titulo}</h3>
           </div>
           <button
             onClick={onClose}

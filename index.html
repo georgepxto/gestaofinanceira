@@ -2,13 +2,14 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon-light.png" media="(prefers-color-scheme: light)" />
-    <link rel="icon" type="image/png" href="/favicon-dark.png" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/svg+xml" href="/hedge-mark.svg" />
+    <link rel="icon" type="image/png" href="/favicon-dark.png" />
+    <link rel="apple-touch-icon" href="/favicon-app.png" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#FAFAFA" />
+    <meta name="theme-color" content="#0B0B0C" />
     <meta
       name="description"
       content="Hedge - Suas contas na régua. Gestão financeira pessoal simplificada."
@@ -25,20 +26,18 @@
     <meta name="twitter:description" content="Entenda para onde seu dinheiro vai, identifique padrões e construa hábitos que fazem diferença. Gratuito, seguro e sem anúncios." />
     <!-- Fontes sem bloquear a primeira pintura: o CSS entra como preload e vira
          stylesheet quando chega; até lá o texto aparece na fonte do sistema
-         (display=swap). Syne — display · Geist — números grandes ·
-         Geist Mono — números/dados · Switzer — texto. -->
+         (display=swap). Duas famílias e só duas: Switzer (variável, para o
+         450 dos títulos) em todo texto e Geist Mono nos números. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://api.fontshare.com">
     <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
-    <!-- Os arquivos das fontes do primeiro quadro (Switzer 400/500 e Geist
-         Mono latin) vêm em paralelo com o CSS, não depois dele. Se o
-         Fontshare/Google trocarem o arquivo, o preload só fica sem uso. -->
-    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://cdn.fontshare.com/wf/BLNB4FAQFNK56DWWNF7PMGTCOTZHOEII/ST3WKSSDMBK2MIQQO3MAVYWLF4FTOLFV/6IN5WOLRCYP4G4MOCOHOMXNON6Q7MDAR.woff2">
-    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://cdn.fontshare.com/wf/OYB4CXKJQXKTNSLJMTDQOIVUL2V5EL7S/WYO2P7DQVV5RNXGMCUO2HL4RJP4VFUAS/6XPIMU23OJVRY676OG5YVJMWEHWICATX.woff2">
+    <!-- Os arquivos do primeiro quadro vêm em paralelo com o CSS, não depois
+         dele. Se o Fontshare/Google trocarem o arquivo, o preload só fica sem uso. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://cdn.fontshare.com/wf/HJHZ26OECMTXRH7JXPFC7EVIHDSLT2RA/LJRNLR7WCPF3PY3SZ7B2LHNUTQMFNCHL/4MCJYGQDIOOXHWSIIB2OYNDBEALJSOGN.woff2">
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/geistmono/v6/or3nQ6H-1_WfwkMZI_qYFrcdmg.woff2">
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Geist:wght@600;700&family=Geist+Mono:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet';window.__hedgeFontCss&&window.__hedgeFontCss()">
-    <link rel="preload" as="style" href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap" onload="this.onload=null;this.rel='stylesheet';window.__hedgeFontCss&&window.__hedgeFontCss()">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap" onload="this.onload=null;this.rel='stylesheet';window.__hedgeFontCss&&window.__hedgeFontCss()">
+    <link rel="preload" as="style" href="https://api.fontshare.com/v2/css?f[]=switzer@1&display=swap" onload="this.onload=null;this.rel='stylesheet';window.__hedgeFontCss&&window.__hedgeFontCss()">
     <!-- Fontes prontas: a entrada do hero (e do login) espera a Switzer para
          o título não aparecer na fonte do sistema e trocar na frente de
          quem lê. Limite de 900 ms: sem a fonte até lá, entra assim mesmo. -->
@@ -60,49 +59,33 @@
       })();
     </script>
     <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Geist:wght@600;700&family=Geist+Mono:wght@400;500;600;700&display=swap">
-      <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap">
+      <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@1&display=swap">
     </noscript>
     <title>Hedge</title>
-    <!-- Tema antes do primeiro paint. Sem isto, quem está no escuro vê um
-         flash branco a cada carregamento: o useEffect que aplica .dark só
-         roda depois de o browser já ter pintado o fundo claro do index.css.
-         A lógica de migração é a mesma de src/hooks/useTheme.tsx — se ela
+    <!-- Tema antes do primeiro paint. Sem isto, quem está no claro vê um
+         flash escuro a cada carregamento: o useEffect que tira o .dark só
+         roda depois de o browser já ter pintado. O escuro é o padrão de quem
+         nunca escolheu. A mesma regra está em src/hooks/useTheme.tsx — se ela
          mudar lá, muda aqui. -->
     <script>
       (function () {
-        // Landing e login são sempre escuros: pinta o fundo antes do primeiro
-        // quadro, senão aparece o fundo claro do app até o React montar.
+        var html = document.documentElement, t = null, sessao = true;
         try {
-          var p = location.pathname;
-          if (p === "/" || p === "/login") {
-            document.documentElement.style.backgroundColor = "#0B0B0C";
-            var mt = document.querySelector('meta[name="theme-color"]');
-            if (mt) mt.setAttribute("content", "#0B0B0C");
-            // Aba com o monograma (o app ainda usa o escudo): os links do
-            // escudo saem e ficam guardados para o useBrandFavicon devolver.
-            var icons = [].slice.call(document.querySelectorAll('link[rel="icon"]'));
-            icons.forEach(function (l) { l.parentNode.removeChild(l); });
-            window.__hedgeAppIcons = icons;
-            var bi = document.createElement("link");
-            bi.id = "brand-icon"; bi.rel = "icon"; bi.type = "image/svg+xml"; bi.href = "/hedge-mark.svg";
-            document.head.appendChild(bi);
-          }
+          t = localStorage.getItem("theme");
+          sessao = Object.keys(localStorage).some(function (k) {
+            return k.indexOf("sb-") === 0 && k.slice(-11) === "-auth-token";
+          });
         } catch (e) {}
-        try {
-          var MIGRATION_KEY = "theme-migrated-light-v1";
-          var t = localStorage.getItem("theme");
-          if (t === "dark" && !localStorage.getItem(MIGRATION_KEY)) {
-            localStorage.setItem(MIGRATION_KEY, "1");
-            localStorage.setItem("theme", "light");
-            t = "light";
-          }
-          if (t === "dark") {
-            document.documentElement.classList.add("dark");
-            var m = document.querySelector('meta[name="theme-color"]');
-            if (m) m.setAttribute("content", "#0A0A0B");
-          }
-        } catch (e) {}
+        // Landing e login são sempre escuros, qualquer que seja o tema do app:
+        // sem sessão, "/" e "/login" pintam o fundo deles antes do React.
+        var p = location.pathname;
+        var marca = !sessao && (p === "/" || p === "/login");
+        var escuro = t !== "light";
+        if (escuro) html.classList.add("dark");
+        if (marca) html.style.backgroundColor = "#0B0B0C";
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute("content", escuro || marca ? "#0B0B0C" : "#ECECE9");
       })();
     </script>
   </head>

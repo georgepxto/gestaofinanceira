@@ -82,7 +82,7 @@ export function ConfirmModal({
             <IconComponent className="w-6 h-6" />
           </div>
           <div className="flex-1 mt-1">
-            <h2 id="confirm-modal-title" className="font-display text-xl font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
+            <h2 id="confirm-modal-title" className="text-xl font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
               {modal.titulo}
             </h2>
             <p className="mt-2 text-[15px] leading-relaxed text-zinc-600 dark:text-zinc-400">

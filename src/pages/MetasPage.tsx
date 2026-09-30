@@ -334,7 +334,7 @@ export const MetasPage = () => {
       <div className="grid gap-5 [grid-template-columns:repeat(auto-fit,minmax(330px,1fr))]">
         {/* Card Suas metas */}
         <Card as="section" padding="nenhum" sangra className="min-w-0" data-tour="metas-lista">
-          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 px-4 pt-4 md:px-5 md:pt-5">Suas metas</h2>
+          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 px-4 pt-4 md:px-5 md:pt-5">Suas metas</h2>
           <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-3 px-4 md:px-5">ordenadas por risco de estouro</p>
           {linhas.length > 0 ? (
             <div className={LISTA_CLASSES}>
@@ -417,7 +417,7 @@ export const MetasPage = () => {
         <div className="space-y-5 min-w-0">
           {/* Card Nova meta */}
           <Card as="section" data-tour="metas-form">
-            <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">
+            <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">
               {metaEmEdicao ? "Editar meta" : "Nova meta"}
             </h2>
             <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-4">

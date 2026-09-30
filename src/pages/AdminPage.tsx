@@ -472,7 +472,7 @@ export const AdminPage = () => {
                             ? "bg-zinc-100 dark:bg-white/[0.06]"
                             : "bg-emerald-50 dark:bg-emerald-950/40"
                         }`}>
-                          <span className={`font-display font-bold ${
+                          <span className={`font-bold ${
                             user.role === "admin" || !user.is_active
                               ? "text-zinc-500 dark:text-zinc-400"
                               : "text-emerald-700 dark:text-emerald-400"
@@ -578,7 +578,7 @@ export const AdminPage = () => {
                 return (
                   <div className="mt-4 border-t border-zinc-100 dark:border-white/[0.05] pt-4">
                     <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-                      <h3 className="font-display font-bold text-zinc-900 dark:text-zinc-100">
+                      <h3 className="font-bold text-zinc-900 dark:text-zinc-100">
                         Permissões de {user.nome || user.email}
                       </h3>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -699,7 +699,7 @@ export const AdminPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Logins */}
                 <Card>
-                  <h3 className="font-display font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
+                  <h3 className="font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
                     <Activity className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
                     Logins
                   </h3>
@@ -721,7 +721,7 @@ export const AdminPage = () => {
 
                 {/* Novos Usuários */}
                 <Card>
-                  <h3 className="font-display font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
+                  <h3 className="font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
                     <TrendingUp className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
                     Novos Cadastros
                   </h3>
@@ -749,7 +749,7 @@ export const AdminPage = () => {
               {/* Gráfico de Logins por Dia */}
               <Card>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-display font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <h3 className="font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                     <BarChart3 className="w-5 h-5 text-zinc-400 dark:text-zinc-500" />
                     Logins por Dia (últimos 30 dias)
                   </h3>
@@ -790,7 +790,7 @@ export const AdminPage = () => {
 
               {/* Gráfico de Cadastros por Dia */}
               <Card>
-                <h3 className="font-display font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
+                <h3 className="font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-4">
                   <Calendar className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
                   Novos Cadastros por Dia (últimos 30 dias)
                 </h3>

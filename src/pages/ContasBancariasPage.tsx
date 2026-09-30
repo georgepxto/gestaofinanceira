@@ -513,7 +513,7 @@ export const ContasBancariasPage = () => {
       {/* Card Minhas contas */}
       <Card as="section" padding="nenhum" sangra className="min-w-0" data-tour="contas-section-contas">
         <div className="flex items-center justify-between gap-3 px-4 pt-4 md:px-5 md:pt-5">
-          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Minhas contas</h2>
+          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Minhas contas</h2>
           <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400">{contas.length} {contas.length === 1 ? "conta" : "contas"}</span>
         </div>
         <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-3 px-4 md:px-5">barra = participação no saldo total</p>
@@ -572,7 +572,7 @@ export const ContasBancariasPage = () => {
       {/* Card Entradas do mês — recebidas e previstas na mesma lista */}
       <Card as="section" padding="nenhum" sangra className="min-w-0" data-tour="contas-section-receitas">
         <div className="flex items-center justify-between gap-3 px-4 pt-4 md:px-5 md:pt-5">
-          <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 capitalize">
+          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 capitalize">
             Entradas de {format(mesVisualizacao, "MMMM", { locale: ptBR })}
           </h2>
           <button
@@ -638,7 +638,7 @@ export const ContasBancariasPage = () => {
 
       {/* Card Previsão do mês */}
       <Card as="section" className="min-w-0">
-        <h2 className="font-display font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Previsão do mês</h2>
+        <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Previsão do mês</h2>
         <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 mb-4">se tudo entrar e sair como previsto</p>
         {(() => {
           const maxPrevisao = Math.max(totalRecebidoMes, totalPrevistoMes, totalGastosFixosMes, 1);
@@ -692,7 +692,7 @@ export const ContasBancariasPage = () => {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-md p-5 border border-zinc-200 dark:border-white/[0.06] shadow-xl dark:shadow-black/60">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">{editandoConta ? "Editar Conta" : "Nova Conta Bancária"}</h3>
+              <h3 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">{editandoConta ? "Editar Conta" : "Nova Conta Bancária"}</h3>
               <button onClick={resetFormConta} className="p-1 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded"><X className="w-5 h-5 text-zinc-400 dark:text-zinc-500" /></button>
             </div>
             <form onSubmit={handleSubmitConta} className="space-y-4">
@@ -716,7 +716,7 @@ export const ContasBancariasPage = () => {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-md p-5 border border-zinc-200 dark:border-white/[0.06] shadow-xl dark:shadow-black/60 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">{editandoReceita ? "Editar Receita" : "Nova Receita"}</h3>
+              <h3 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">{editandoReceita ? "Editar Receita" : "Nova Receita"}</h3>
               <button onClick={resetFormReceita} className="p-1 hover:bg-zinc-100 dark:hover:bg-white/[0.06] rounded"><X className="w-5 h-5 text-zinc-400 dark:text-zinc-500" /></button>
             </div>
             <form onSubmit={handleSubmitReceita} className="space-y-4">

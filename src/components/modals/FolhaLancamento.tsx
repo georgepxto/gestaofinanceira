@@ -149,7 +149,7 @@ export const FolhaLancamento: React.FC<FolhaLancamentoProps> = ({
         <div className="shrink-0">
           <div className="w-10 h-1 rounded-full bg-zinc-300 dark:bg-white/[0.14] mx-auto mt-2.5" aria-hidden="true" />
           <div className="flex items-center justify-between px-5 pt-3 pb-1">
-            <h2 className="font-display font-bold text-lg text-zinc-900 dark:text-zinc-100">
+            <h2 className="font-bold text-lg text-zinc-900 dark:text-zinc-100">
               {isEditing ? "Editar gasto" : "Novo gasto"}
             </h2>
             <button

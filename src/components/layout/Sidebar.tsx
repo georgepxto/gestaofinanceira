@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { X, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
+import { HedgeMark } from "../landing/HedgeMark";
 import { useTutorialHelpContext } from "./TutorialHelpContext";
 import { gruposVisiveis } from "./navGroups";
 import { useAppContext } from "../../context";
@@ -113,9 +114,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
             inferior. O que resta atrás da gaveta é conta — por isso o gatilho
             agora é o avatar, do lado do polegar. */}
         <div className="flex items-center">
-          <img src="/favicon-light.png" alt="Hedge" className="w-4 h-4 dark:hidden" />
-          <img src="/favicon-dark.png" alt="Hedge" className="w-4 h-4 hidden dark:block" />
-          <h1 className="ml-2 font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+          <HedgeMark className="h-4 w-auto text-accent" title="Hedge" />
+          <h1 className="ml-2 text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             Hedge
           </h1>
         </div>
@@ -137,7 +137,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
             aria-label="Abrir conta e configurações"
             className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0"
           >
-            <span className="font-display font-bold text-emerald-700 dark:text-emerald-400">
+            <span className="font-bold text-emerald-700 dark:text-emerald-400">
               {(userName || userEmail || "U").charAt(0).toUpperCase()}
             </span>
           </button>
@@ -172,11 +172,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
         {/* Topo: logo + recolher */}
         <div className="h-[68px] flex items-center justify-between px-5 border-b border-zinc-100 dark:border-white/[0.05] shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <img src="/favicon-light.png" alt="Hedge" className="w-7 h-7 dark:hidden flex-shrink-0 object-contain" />
-            <img src="/favicon-dark.png" alt="Hedge" className="w-7 h-7 hidden dark:block flex-shrink-0 object-contain" />
+            <HedgeMark className="h-6 w-auto shrink-0 text-accent" />
             <h2
               /* ds-ok: wordmark da sidebar — corpo casado com o favicon de 28px, não é título de tela */
-              className={`font-display font-bold text-[19px] tracking-tight text-zinc-900 dark:text-zinc-50 ${
+              className={`font-bold text-[19px] tracking-tight text-zinc-900 dark:text-zinc-50 ${
                 isCollapsed ? "md:hidden" : ""
               }`}
             >
@@ -241,7 +240,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onLogout, userName, userEmail 
             }`}
           >
             <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
-              <span className="font-display font-bold text-emerald-700 dark:text-emerald-400">
+              <span className="font-bold text-emerald-700 dark:text-emerald-400">
                 {(userName || userEmail || "U").charAt(0).toUpperCase()}
               </span>
             </div>
