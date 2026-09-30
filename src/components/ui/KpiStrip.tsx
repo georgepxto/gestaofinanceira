@@ -18,7 +18,7 @@ export function KpiStrip({ children, className = "", "data-tour": dataTour }: Kp
   return (
     <div
       data-tour={dataTour}
-      className={`sem-barra -mx-4 px-4 scroll-px-4 flex gap-2 overflow-x-auto snap-x snap-mandatory
+      className={`relative sem-barra -mx-4 px-4 scroll-px-4 flex gap-2 overflow-x-auto snap-x snap-mandatory
         md:mx-0 md:px-5 md:py-5 md:gap-0 md:overflow-visible md:bg-surface-1 md:rounded
         md:grid md:[grid-template-columns:repeat(auto-fit,minmax(0,1fr))] ${className}`}
     >

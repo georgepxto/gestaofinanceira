@@ -82,7 +82,9 @@ export function AnimatedNumber({
   }
 
   return (
-    <span className={`valor ${className}`}>
+    // `relative`: o texto sr-only é absoluto e, sem isto, escapava da fileira
+    // rolável do KpiStrip e alargava a página no celular.
+    <span className={`valor relative ${className}`}>
       <span aria-hidden="true">{visivel}</span>
       <span className="sr-only">{final}</span>
     </span>

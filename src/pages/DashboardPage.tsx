@@ -1,19 +1,30 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Link, useLocation } from "react-router-dom";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { Plus, Users, Wallet, CreditCard, Receipt, Gauge, PieChart as IconePizza, BarChart3 } from "lucide-react";
 import { useAppContext } from "../context";
-import { useTheme } from "../hooks/useTheme";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
-import { PageEmptyState, PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
-import { Valor } from "../components/ui/Valor";
-import { PageHeader } from "../components/ui/PageHeader";
+import { PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
 import { SeletorMes } from "../components/ui/SeletorMes";
+import { BalanceHero } from "../components/ui/BalanceHero";
+import { ActionRow, type AcaoRapida } from "../components/ui/ActionRow";
+import { KpiStrip, Kpi } from "../components/ui/KpiStrip";
+import { AnimatedNumber } from "../components/ui/AnimatedNumber";
+import { Surface, SurfaceHeader } from "../components/ui/Surface";
+import { ListGroup, ListRow } from "../components/ui/ListRow";
+import { ProgressBar } from "../components/ui/ProgressBar";
+import { Pill } from "../components/ui/Pill";
+import { PontoCategoria } from "../components/ui/PontoCategoria";
+import { EmptyState } from "../components/ui/EmptyState";
+import { SegmentedControl } from "../components/ui/SegmentedControl";
+import { useChartTheme, eixoDinheiro } from "../components/ui/chart";
 import { useGuidedTour, usePageTutorialHelpButton, useIsMobile } from "../hooks";
+import { useCategorias } from "../hooks/useCategorias";
 import { supabase } from "../lib/supabase";
 import { chaveMesPagamentoParcial, formatCurrency, isGastoAtivoNoMes } from "../utils/calculations";
-import { categoriaDeGasto } from "../utils/categories";
+import { categoriaDeGasto, corDaCategoria } from "../utils/categories";
+import { formatDinheiro, formatPercent, MENOS } from "../utils/dinheiro";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
 import { PAGE_CONTAINER_RELATIVE_CLASS } from "../utils/layout";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
@@ -27,13 +38,8 @@ import {
   BarChart,
   Bar,
   Cell,
-  Area,
-  AreaChart,
-  LabelList,
 } from "recharts";
 import type { ContaBancaria, SaldoDevedor, MeuGasto, Receita, Gasto } from "../types";
-import { Rotulo } from "../components/ui/Rotulo";
-import { Card } from "../components/ui/Card";
 
 interface DashboardData {
   saldoTotal: number;
@@ -63,7 +69,6 @@ interface DashboardData {
 }
 
 /** Tons esmeralda decrescentes das barras "Onde o dinheiro foi". */
-const TONS_CATEGORIA = ["bg-emerald-600", "bg-emerald-500", "bg-emerald-400", "bg-emerald-300", "bg-emerald-300"];
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -186,43 +191,18 @@ const DASHBOARD_TUTORIAL_STEPS: DashboardTutorialStep[] = [
 
 export const DashboardPage = () => {
   const { user, mesVisualizacao } = useAppContext();
-  const { theme } = useTheme();
-  const location = useLocation();
-
-  // Recharts não lê classes do Tailwind — os neutros da marca entram como hex,
-  // trocados pelo tema para a grade não gritar mais que os dados no dark.
-  const isDark = theme === "dark";
+  const {
+    features,
+    isAdmin,
+    setShowFormMeuGasto,
+    setFormMeuGasto,
+    formMeuGasto,
+  } = useAppContext();
   const isMobile = useIsMobile();
-  const chartGrid = isDark ? "rgba(255,255,255,0.07)" : "#F4F4F5";
-  const chartAxis = isDark ? "#71717A" : "#A1A1AA";
-
-  // A série secundária é neutra: precisa recuar do fundo, e "recuar" troca de
-  // direção entre os temas — zinc-300 sobre branco, zinc-600 sobre preto. Com o
-  // valor claro fixo ela ficava mais chamativa que a série principal em
-  // esmeralda, invertendo a hierarquia do gráfico.
-  const chartNeutro = isDark ? "#52525B" : "#D4D4D8";
-
-  // Esmeralda também sobe um degrau no escuro: emerald-700 sobre preto vira
-  // verde barroso e o destaque do mês corrente se perde.
-  const chartBarra = isDark ? "#10B981" : "#059669";       // emerald-500 / 600
-  const chartBarraAtual = isDark ? "#34D399" : "#047857";  // emerald-400 / 700
-
-  // 18% de esmeralda quase não aparece sobre preto.
-  const chartAreaTopo = isDark ? 0.28 : 0.18;
-
-  // ds-ok: o hex abaixo aparece citado, não usado — é o padrão do recharts.
-  // O cursor do recharts é `#ccc` por padrão — no escuro, uma laje branca atrás
-  // da barra apontada, mais forte que o dado que ela realça. Realce afunda:
-  // escurece sobre o cartão em vez de clarear.
-  const chartCursor = isDark ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.04)";
-
-  const tooltipStyle = useMemo(() => isDark
-    ? { backgroundColor: "#18181B", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", boxShadow: "0 4px 24px -4px rgba(0,0,0,0.5)", fontSize: "12px", color: "#FAFAFA" }
-    : { backgroundColor: "#FFFFFF", border: "1px solid #E4E4E7", borderRadius: "10px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)", fontSize: "12px" },
-    [isDark]
-  );
-  const tooltipLabelStyle = useMemo(() => isDark ? { color: "#FAFAFA", fontWeight: 600 } : { color: "#18181B", fontWeight: 600 }, [isDark]);
-  const tooltipItemStyle = useMemo(() => isDark ? { color: "#F4F4F5" } : { color: "#27272A" }, [isDark]);
+  const grafico = useChartTheme();
+  const { categorias } = useCategorias("gasto");
+  const [serie, setSerie] = useState<"meusGastos" | "compartilhados">("meusGastos");
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -581,366 +561,290 @@ export const DashboardPage = () => {
   }, [fetchDashboardData, mesVisualizacao, refreshKey]);
 
   if (loading) {
-    return <PageLoadingState title="Carregando dashboard" description="Estamos calculando os principais indicadores do mês." />;
+    return (
+      <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
+        <PageLoadingState title="Carregando o início" />
+      </div>
+    );
   }
 
   if (loadError) {
     return (
-      <PageErrorState
-        title="Não foi possível carregar a dashboard"
-        description={loadError}
-        onAction={() => fetchDashboardData()}
-        actionLabel="Recarregar indicadores"
-      />
+      <div className={PAGE_CONTAINER_RELATIVE_CLASS}>
+        <PageErrorState
+          title="Não foi possível carregar o início"
+          description={loadError}
+          onAction={() => fetchDashboardData()}
+          actionLabel="Tentar de novo"
+        />
+      </div>
     );
   }
 
+  const nomeDoMes = format(mesVisualizacao, "MMMM", { locale: ptBR });
+  const primeiroNome = user?.user_metadata?.nome?.split(" ")[0] || "";
+  const sobraMensal = data.receitasFixasMensais - data.gastosFixosMensais;
+  const variacaoGastos =
+    data.totalGastosMesAnterior > 0
+      ? (data.totalGastosMesAtual - data.totalGastosMesAnterior) / data.totalGastosMesAnterior
+      : null;
+
+  // Atalhos logo abaixo do saldo. Cada um só aparece se a pessoa tem a área.
+  const pode = (f: keyof typeof features) => isAdmin || features[f];
+  const acoes: AcaoRapida[] = [
+    ...(pode("meus_gastos")
+      ? [
+          { rotulo: "Lançar gasto", Icone: Plus, onClick: () => setShowFormMeuGasto(true) },
+          {
+            rotulo: "Dividir",
+            Icone: Users,
+            onClick: () => {
+              setFormMeuGasto({ ...formMeuGasto, categoria: "dividido" });
+              setShowFormMeuGasto(true);
+            },
+          },
+        ]
+      : []),
+    ...(pode("contas_bancarias") ? [{ rotulo: "Nova receita", Icone: Wallet, to: "/carteira/contas?receita=1" }] : []),
+    ...(pode("cartoes_credito") ? [{ rotulo: "Pagar fatura", Icone: CreditCard, to: "/carteira/cartoes?pagar=1" }] : []),
+  ];
+
+  const totalCategorias = data.gastosPorCategoria.reduce((acc, c) => acc + c.valor, 0);
+  const topCategorias = data.gastosPorCategoria.slice(0, 6);
+  const maxCategoria = Math.max(...topCategorias.map((c) => c.valor), 1);
+  const { ticks, domain } = eixoDinheiro(data.tendenciaMensal.map((m) => Number(m[serie]) || 0));
+
   return (
     <div className={`${PAGE_CONTAINER_RELATIVE_CLASS} pb-20`}>
-      {/* HEADER_PAGINA */}
-      <PageHeader
-        data-tour="dashboard-header"
-        eyebrow={<>Painel · <span className="capitalize">{format(mesVisualizacao, "MMMM", { locale: ptBR })}</span></>}
-        title={<>Olá, {user?.user_metadata?.nome?.split(' ')[0] || 'Usuário'}</>}
-        description="Sua vida financeira inteira num só lugar."
-        action={<SeletorMes data-tour="month-selector" />}
-      />
+      {/* 1. Saudação e mês — não é mais um título gigante. */}
+      <div className="flex items-center justify-between gap-4 flex-wrap" data-tour="dashboard-header">
+        <p className="text-[15px] text-fg-2">{primeiroNome ? `Olá, ${primeiroNome}` : "Olá"}</p>
+        <SeletorMes data-tour="month-selector" />
+      </div>
 
-      {/* Card Herói: Saldo livre + Fluxo do mês */}
-      {(() => {
-        const sobraMensal = data.receitasFixasMensais - data.gastosFixosMensais;
-        const maxFluxo = Math.max(data.receitasFixasMensais, data.gastosFixosMensais, 1);
-        const variacaoGastos = data.totalGastosMesAnterior > 0
-          ? ((data.totalGastosMesAtual - data.totalGastosMesAnterior) / data.totalGastosMesAnterior) * 100
-          : null;
-        return (
-          <Card padding="resumo" className="grid grid-cols-1 lg:[grid-template-columns:1.15fr_1px_0.85fr] gap-8" data-tour="card-saldo-total">
-            {/* Esquerda: Saldo livre */}
-            <div className="min-w-0" data-tour="saldo-livre">
-              <Rotulo>Saldo livre · Disponível agora</Rotulo>
-              {/* No mobile o badge de variação desce para a própria linha:
-                  enquanto fica ao lado, é ele que empurra o número contra a
-                  borda do cartão. */}
-              <div className="flex flex-col items-start gap-2 mt-2 md:flex-row md:items-center md:gap-3 md:flex-wrap">
-                <Valor porte="heroi" className={data.saldoLivre >= 0 ? 'text-zinc-900 dark:text-zinc-50' : 'text-red-600 dark:text-red-400'}>
-                  {formatCurrency(data.saldoLivre)}
-                </Valor>
-                {variacaoGastos !== null && (
-                  <span className="inline-flex items-center gap-1 font-mono text-[13px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 rounded-full whitespace-nowrap">
-                    {variacaoGastos <= 0 ? <TrendingDown className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
-                    {variacaoGastos >= 0 ? '+' : ''}{variacaoGastos.toFixed(0)}%
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-3">
-                É o que sobra do seu saldo depois dos gastos fixos do mês.
-              </p>
-              {/* No mobile, três linhas rótulo–valor separadas por fio — a mesma
-                  forma que o "Fluxo do mês" logo abaixo já usa, então não é
-                  padrão novo. Com o valor à direita na própria linha, o piso de
-                  172px deixa de ser necessário; ele continua valendo no desktop,
-                  onde resolveu o vazamento: em Geist Mono 22px o valor mede ~158
-                  e `.valor` não quebra linha, então a 140 ele passava por cima
-                  do vizinho na largura em que cabiam exatamente três colunas. */}
-              <div className="border-t border-zinc-100 dark:border-white/[0.05] mt-5 pt-5 divide-y divide-zinc-100 dark:divide-white/[0.05] md:divide-y-0 md:grid md:gap-x-6 md:gap-y-4 md:[grid-template-columns:repeat(auto-fit,minmax(172px,1fr))]">
-                <div className="min-w-0 flex items-baseline justify-between gap-3 py-2.5 md:block md:py-0" data-tour="card-saldo-total-mini">
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Saldo total</p>
-                  <Valor porte="medio" className="block md:mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.saldoTotal)}</Valor>
-                </div>
-                <div className="min-w-0 flex items-baseline justify-between gap-3 py-2.5 md:block md:py-0" data-tour="card-a-receber">
-                  <div className="min-w-0">
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">A receber</p>
-                    {/* Sem ninguém com gasto compartilhado no mês, "0 de 0" é ruído: a linha some. */}
-                    {data.totalPessoas > 0 && (
-                      <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 md:hidden">
-                        {data.pessoasQuitadas} de {data.totalPessoas} {data.totalPessoas === 1 ? "acertou" : "acertaram"}
-                      </p>
-                    )}
-                  </div>
-                  <Valor porte="medio" className="block md:mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.totalEmprestimosMesAtual)}</Valor>
-                  {data.totalPessoas > 0 && (
-                    <p className="hidden md:block font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                      {data.pessoasQuitadas} de {data.totalPessoas} {data.totalPessoas === 1 ? "acertou" : "acertaram"}
-                    </p>
-                  )}
-                </div>
-                <div className="min-w-0 flex items-baseline justify-between gap-3 py-2.5 md:block md:py-0">
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Meus gastos</p>
-                  <Valor porte="medio" className="block md:mt-0.5 text-zinc-900 dark:text-zinc-50">{formatCurrency(data.totalGastosMesAtual)}</Valor>
-                </div>
-              </div>
+      {/* 2. Saldo livre, e 3. atalhos. */}
+      <div data-tour="card-saldo-total">
+        <BalanceHero
+          rotulo="Saldo livre"
+          valor={data.saldoLivre}
+          contexto={
+            <>
+              O que sobra depois dos fixos do mês · <span className="capitalize">{nomeDoMes}</span>
+            </>
+          }
+          data-tour="saldo-livre"
+        >
+          {acoes.length > 0 && (
+            <div className="mt-6 md:mt-8" data-tour="acoes-rapidas">
+              <ActionRow acoes={acoes} />
             </div>
+          )}
+        </BalanceHero>
+      </div>
 
-            {/* Divisória */}
-            <div className="hidden lg:block bg-zinc-100 dark:bg-zinc-800" aria-hidden="true" />
+      {/* 4. Indicadores */}
+      <KpiStrip>
+        <Kpi
+          rotulo="Saldo total"
+          data-tour="card-saldo-total-mini"
+          valor={<AnimatedNumber valor={data.saldoTotal} className={`text-[20px] ${data.saldoTotal < 0 ? "text-danger-ink" : ""}`} />}
+        />
+        <Kpi
+          rotulo="A receber"
+          data-tour="card-a-receber"
+          valor={<AnimatedNumber valor={data.totalEmprestimosMesAtual} className="text-[20px]" />}
+          meta={
+            data.totalPessoas > 0
+              ? `${data.pessoasQuitadas} de ${data.totalPessoas} ${data.totalPessoas === 1 ? "acertou" : "acertaram"}`
+              : undefined
+          }
+        />
+        <Kpi
+          rotulo="Meus gastos"
+          valor={<AnimatedNumber valor={data.totalGastosMesAtual} className="text-[20px]" />}
+          meta={
+            variacaoGastos !== null
+              ? `${variacaoGastos >= 0 ? "+" : MENOS}${formatPercent(Math.abs(variacaoGastos))} que no mês passado`
+              : undefined
+          }
+        />
+        <Kpi
+          rotulo="Sobra mensal"
+          data-tour="fluxo-mensal"
+          valor={
+            <AnimatedNumber
+              valor={sobraMensal}
+              positivo
+              className={`text-[20px] ${sobraMensal < 0 ? "text-danger-ink" : ""}`}
+            />
+          }
+          meta={
+            <span data-tour="card-receitas-fixas">
+              <span className="valor">{formatCurrency(data.receitasFixasMensais)}</span> entram,{" "}
+              <span className="valor" data-tour="card-gastos-fixos">
+                {formatCurrency(data.gastosFixosMensais)}
+              </span>{" "}
+              fixos
+            </span>
+          }
+        />
+      </KpiStrip>
 
-            {/* Direita: Fluxo do mês */}
-            <div className="min-w-0" data-tour="fluxo-mensal">
-              <Rotulo className="mb-4">Fluxo do mês</Rotulo>
-              <div className="space-y-3">
-                <div data-tour="card-receitas-fixas">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-zinc-500 dark:text-zinc-400">Receitas fixas</span>
-                    <span className="font-mono valor text-zinc-900 dark:text-zinc-100">{formatCurrency(data.receitasFixasMensais)}</span>
-                  </div>
-                  <div className="h-2 bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(data.receitasFixasMensais / maxFluxo) * 100}%` }} />
-                  </div>
-                </div>
-                <div data-tour="card-gastos-fixos">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-zinc-500 dark:text-zinc-400">Gastos fixos</span>
-                    <span className="font-mono valor text-zinc-900 dark:text-zinc-100">{formatCurrency(data.gastosFixosMensais)}</span>
-                  </div>
-                  <div className="h-2 bg-zinc-100 dark:bg-white/[0.04] rounded-full overflow-hidden">
-                    <div className="h-full bg-zinc-300 dark:bg-white/25 rounded-full" style={{ width: `${(data.gastosFixosMensais / maxFluxo) * 100}%` }} />
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-between items-center mt-5 pt-4 border-t border-zinc-100 dark:border-white/[0.05]">
-                <span className="text-zinc-500 dark:text-zinc-400 text-sm">Sobra mensal</span>
-                <Valor porte="medio" className={sobraMensal >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
-                  {sobraMensal >= 0 ? '+' : ''}{formatCurrency(sobraMensal)}
-                </Valor>
-              </div>
-            </div>
-          </Card>
-        );
-      })()}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 items-start">
+        {/* 5. Últimos lançamentos */}
+        <Surface as="section" data-tour="ultimos-gastos">
+          <SurfaceHeader
+            titulo="Últimos lançamentos"
+            className="mb-1"
+            acao={
+              data.top5MeusGastos.length > 0 ? (
+                <Link to="/gastos/lancamentos" className="hover:text-fg transition-colors">
+                  Ver todos
+                </Link>
+              ) : undefined
+            }
+          />
+          {data.top5MeusGastos.length > 0 ? (
+            <ListGroup>
+              {data.top5MeusGastos.slice(0, 5).map((gasto, i) => (
+                <ListRow
+                  key={i}
+                  icone={<PontoCategoria cor={corDaCategoria(gasto.categoria, categorias)} />}
+                  titulo={gasto.descricao}
+                  meta={<span className="capitalize">{gasto.categoria}</span>}
+                  valor={formatDinheiro(-gasto.valor)}
+                />
+              ))}
+            </ListGroup>
+          ) : (
+            <EmptyState Icone={Receipt} frase="Nenhum gasto neste mês ainda." compacto />
+          )}
+        </Surface>
 
-      {/* Linha 2: Por mês + Últimos lançamentos */}
-      <div className="grid grid-cols-1 lg:[grid-template-columns:minmax(0,1.6fr)_minmax(0,1fr)] gap-4">
-        {/* Gráfico de barras - Gastos por mês */}
-        <Card className="min-w-0 overflow-hidden" data-tour="grafico-mensal">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Por mês</h2>
-            <Rotulo as="span">Últimos 6 meses</Rotulo>
-          </div>
-          {data.tendenciaMensal.length > 0 ? (
-            <div className="h-40 md:h-44">
-              {/* initialDimension: o ResponsiveContainer da v3 nasce com -1×-1 e só mede
-                  um quadro depois, o que dispara um aviso de tamanho no console (recharts
-                  #6716). A altura vem do pai; a largura é chute de desktop, vale um quadro. */}
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 600, height: 176 }}>
-                {/* Sem eixo Y no mobile, `margin` zero manda as barras até as
-                    bordas do cartão; `top: 16` continua para caber o rótulo. */}
-                <BarChart data={data.tendenciaMensal} margin={{ top: 16, left: 0, right: 0 }}>
-                  {/* O eixo Y custa ~40px fixos — 13% da largura útil de um
-                      gráfico de 310px — para dizer "R$2k, R$4k". O número que
-                      interessa já está escrito acima da barra pelo LabelList.
-                      Junto com a grade, o fundo tinha mais tinta que os dados. */}
-                  {!isMobile && <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />}
-                  <XAxis dataKey="mes" stroke={chartAxis} fontSize={11} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
-                  {!isMobile && <YAxis stroke={chartAxis} fontSize={10} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />}
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    labelStyle={tooltipLabelStyle}
-                    itemStyle={tooltipItemStyle}
-                    cursor={{ fill: chartCursor }}
-                    formatter={(value: unknown) => [formatCurrency(Number(value) || 0), 'Meus Gastos']}
-                  />
-                  <Bar dataKey="meusGastos" radius={[6, 6, 0, 0]}>
-                    {data.tendenciaMensal.map((_, index) => (
-                      <Cell key={`cell-mes-${index}`} fill={index === data.tendenciaMensal.length - 1 ? chartBarraAtual : chartBarra} />
-                    ))}
-                    {/* Valor do mês atual acima da barra */}
-                    <LabelList
-                      dataKey="meusGastos"
-                      content={(props) => {
-                        const { x, y, width, value, index } = props as { x?: number; y?: number; width?: number; value?: number; index?: number };
-                        if (index !== data.tendenciaMensal.length - 1) return null;
-                        if (x === undefined || y === undefined || width === undefined) return null;
-                        return (
-                          <text
-                            x={x + width / 2}
-                            y={y - 6}
-                            textAnchor="middle"
-                            fill={chartBarraAtual}
-                            fontSize={11}
-                            fontFamily="Geist Mono, monospace"
-                            fontWeight={600}
-                          >
-                            {formatCurrency(Number(value) || 0)}
-                          </text>
-                        );
-                      }}
+        {/* 6. Metas do mês */}
+        <Surface as="section" data-tour="metas-section">
+          <SurfaceHeader
+            titulo="Metas do mês"
+            acao={
+              data.metasGasto.length > 0 ? (
+                <Link to="/gastos/metas" className="hover:text-fg transition-colors">
+                  Ver metas
+                </Link>
+              ) : undefined
+            }
+          />
+          {data.metasGasto.length > 0 ? (
+            <ul className="space-y-5">
+              {data.metasGasto.map((meta) => {
+                const fracao = meta.limite > 0 ? meta.gastoAtual / meta.limite : 0;
+                return (
+                  <li key={meta.id}>
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <span className="flex items-center gap-2 min-w-0 text-sm text-fg">
+                        <PontoCategoria cor={corDaCategoria(meta.categoria, categorias)} />
+                        <span className="capitalize break-words">{meta.categoria}</span>
+                      </span>
+                      {fracao > 1 ? (
+                        <Pill tom="perigo">estourou</Pill>
+                      ) : fracao >= 0.8 ? (
+                        <Pill tom="atencao">quase no limite</Pill>
+                      ) : null}
+                    </div>
+                    <ProgressBar
+                      valor={meta.gastoAtual}
+                      maximo={meta.limite}
+                      rotulo={`${meta.categoria}: ${formatPercent(fracao)} do limite`}
                     />
+                    <p className="mt-1.5 valor text-xs text-fg-2">
+                      {formatCurrency(meta.gastoAtual)} de {formatCurrency(meta.limite)}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <EmptyState Icone={Gauge} frase="Nenhuma meta definida." detalhe="Crie metas por categoria em Gastos, Metas." compacto />
+          )}
+        </Surface>
+
+        {/* 7. Onde o dinheiro foi */}
+        <Surface as="section">
+          <SurfaceHeader titulo="Onde o dinheiro foi" acao={<span className="capitalize text-fg-3">{nomeDoMes}</span>} />
+          {topCategorias.length > 0 ? (
+            <ul className="space-y-4">
+              {topCategorias.map((cat) => {
+                const cor = corDaCategoria(cat.categoria, categorias);
+                return (
+                  <li key={cat.categoria}>
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <span className="flex items-center gap-2 min-w-0 text-sm text-fg">
+                        <PontoCategoria cor={cor} />
+                        <span className="capitalize break-words">{cat.categoria}</span>
+                      </span>
+                      <span className="valor text-xs text-fg-2">
+                        {formatCurrency(cat.valor)} · {totalCategorias > 0 ? formatPercent(cat.valor / totalCategorias) : "0%"}
+                      </span>
+                    </div>
+                    <div className="h-1 bg-surface-3" aria-hidden="true">
+                      <div className="h-full" style={{ width: `${(cat.valor / maxCategoria) * 100}%`, backgroundColor: cor }} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <EmptyState Icone={IconePizza} frase="Sem gastos por categoria neste mês." compacto />
+          )}
+        </Surface>
+
+        {/* 8. Últimos 6 meses */}
+        <Surface as="section" className="min-w-0" data-tour="grafico-mensal">
+          <SurfaceHeader
+            titulo="Gastos dos últimos 6 meses"
+            acao={
+              <span data-tour="trend-6meses-meus">
+                <SegmentedControl
+                  rotulo="Série do gráfico"
+                  tamanho="sm"
+                  segmentos={[
+                    { chave: "meus", rotulo: "Meus", ativo: serie === "meusGastos", onClick: () => setSerie("meusGastos") },
+                    {
+                      chave: "comp",
+                      rotulo: <span data-tour="trend-6meses-compartilhados">Compartilhados</span>,
+                      ativo: serie === "compartilhados",
+                      onClick: () => setSerie("compartilhados"),
+                    },
+                  ]}
+                />
+              </span>
+            }
+          />
+          {data.tendenciaMensal.length > 0 ? (
+            <div className="h-48 md:h-56">
+              {/* initialDimension: o ResponsiveContainer da v3 nasce com -1×-1 e
+                  só mede um quadro depois (recharts #6716). */}
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 500, height: 224 }}>
+                <BarChart data={data.tendenciaMensal} margin={{ top: 4, left: 0, right: 0, bottom: 0 }}>
+                  <CartesianGrid {...grafico.grid} />
+                  <XAxis dataKey="mes" {...grafico.eixoX} />
+                  <YAxis {...grafico.eixoY} ticks={ticks} domain={domain} hide={isMobile} />
+                  <Tooltip
+                    {...grafico.tooltip}
+                    formatter={(v) => [formatCurrency(Number(v) || 0), serie === "meusGastos" ? "Meus gastos" : "Compartilhados"]}
+                  />
+                  <Bar dataKey={serie} radius={[2, 2, 0, 0]} maxBarSize={44}>
+                    {data.tendenciaMensal.map((_, i) => (
+                      <Cell key={i} fill={i === data.tendenciaMensal.length - 1 ? grafico.cores.fg : grafico.cores.fg3} />
+                    ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <PageEmptyState
-              compact
-              title="Sem dados para o gráfico"
-              description="Adicione novos gastos neste mês para visualizar a tendência."
-            />
+            <EmptyState Icone={BarChart3} frase="Sem gastos nos últimos meses." compacto />
           )}
-        </Card>
-
-        {/* Últimos lançamentos (pessoais) */}
-        <Card className="min-w-0" data-tour="ultimos-gastos">
-          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">Últimos lançamentos</h2>
-          {data.top5MeusGastos.length > 0 ? (
-            <>
-              <div>
-                {data.top5MeusGastos.slice(0, 5).map((gasto, i) => (
-                  <div key={i} className="flex items-center gap-3 py-3 border-b border-zinc-100 dark:border-white/[0.05] last:border-b-0">
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      gasto.categoria.toLowerCase().includes('fixo') ? 'bg-zinc-300' : 'bg-emerald-500'
-                    }`} />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{gasto.descricao}</p>
-                      <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 capitalize">{gasto.categoria}</p>
-                    </div>
-                    <span className="font-mono valor text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex-shrink-0">
-                      −{formatCurrency(gasto.valor)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <Link to="/gastos/lancamentos" className="inline-block text-[13px] font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 mt-3">
-                Ver todos os gastos →
-              </Link>
-            </>
-          ) : (
-            <PageEmptyState
-              compact
-              title="Nenhum gasto no período"
-              description="Quando você registrar gastos, eles aparecerão aqui automaticamente."
-            />
-          )}
-        </Card>
+        </Surface>
       </div>
-
-      {/* Linha 3: Onde o dinheiro foi + Metas do mês */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Onde o dinheiro foi */}
-        <Card className="min-w-0">
-          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Onde o dinheiro foi</h2>
-          {data.gastosPorCategoria.length > 0 ? (
-            <div className="space-y-4">
-              {(() => {
-                const top5 = data.gastosPorCategoria.slice(0, 5);
-                const totalCategorias = data.gastosPorCategoria.reduce((acc, c) => acc + c.valor, 0);
-                const maxCategoria = Math.max(...top5.map((c) => c.valor), 1);
-                return top5.map((cat, i) => (
-                  <div key={cat.categoria}>
-                    <div className="flex items-center justify-between gap-3 mb-1.5">
-                      <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 capitalize truncate">{cat.categoria}</span>
-                      <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-                        {formatCurrency(cat.valor)} · {totalCategorias > 0 ? Math.round((cat.valor / totalCategorias) * 100) : 0}%
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-zinc-100 dark:bg-white/[0.04] overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${TONS_CATEGORIA[i] || TONS_CATEGORIA[TONS_CATEGORIA.length - 1]}`}
-                        style={{ width: `${(cat.valor / maxCategoria) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ));
-              })()}
-            </div>
-          ) : (
-            <PageEmptyState
-              compact
-              title="Sem gastos categorizados"
-              description="Registre gastos no mês para ver a distribuição por categoria."
-            />
-          )}
-        </Card>
-
-        {/* Metas do mês */}
-        <Card className="min-w-0" data-tour="metas-section">
-          <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Metas do mês</h2>
-          {data.metasGasto.length > 0 ? (
-            <div className="space-y-4">
-              {data.metasGasto.map((meta) => {
-                const porcentagem = meta.limite > 0 ? (meta.gastoAtual / meta.limite) * 100 : 0;
-                const estourou = porcentagem > 100;
-                const quaseEstourando = porcentagem >= 80 && porcentagem <= 100;
-                return (
-                  <div key={meta.id}>
-                    <div className="flex items-center justify-between gap-3 mb-1.5">
-                      <span className="text-sm font-medium text-zinc-800 dark:text-zinc-100 capitalize truncate">{meta.categoria}</span>
-                      <span className="font-mono valor text-[13px] text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-                        {formatCurrency(meta.gastoAtual)} / {formatCurrency(meta.limite)}
-                      </span>
-                    </div>
-                    <div className={`h-2 rounded-full overflow-hidden ${estourou ? 'bg-red-50 dark:bg-red-950/30' : 'bg-zinc-100 dark:bg-white/[0.04]'}`}>
-                      <div
-                        className={`h-full rounded-full ${estourou ? 'bg-red-500' : quaseEstourando ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                        style={{ width: `${Math.min(porcentagem, 100)}%` }}
-                      />
-                    </div>
-                    {estourou ? (
-                      <p className="font-mono text-[11px] text-red-600 dark:text-red-400 mt-1">
-                        {porcentagem.toFixed(0)}% usado · estourou o limite
-                      </p>
-                    ) : quaseEstourando ? (
-                      <p className="font-mono text-[11px] text-amber-700 dark:text-amber-400 mt-1">
-                        {porcentagem.toFixed(0)}% usado · quase no limite
-                      </p>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <PageEmptyState
-              compact
-              title="Nenhuma meta definida"
-              description="Crie metas por categoria em Gastos › Metas para acompanhá-las aqui."
-            />
-          )}
-        </Card>
-      </div>
-      {/* Linha 4: Gastos totais · 6 meses */}
-      {data.tendenciaMensal.length > 0 && (
-        <Card className="min-w-0 overflow-hidden">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <h2 className="font-bold text-lg tracking-tight text-zinc-900 dark:text-zinc-100">Gastos totais · 6 meses</h2>
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400" data-tour="trend-6meses-meus">
-                <span className="w-3 h-[3px] rounded-full bg-emerald-600" />
-                Meus gastos
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400" data-tour="trend-6meses-compartilhados">
-                <span className="w-3 h-[3px] rounded-full bg-zinc-300 dark:bg-zinc-600" />
-                Compartilhados
-              </span>
-            </div>
-          </div>
-          <div className="h-52 md:h-64">
-            {/* Mesmo motivo do gráfico de barras acima — ver recharts #6716. */}
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 900, height: 256 }}>
-              <AreaChart data={data.tendenciaMensal} margin={{ left: 0, right: 0 }}>
-                <defs>
-                  <linearGradient id="colorMeus" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={chartAreaTopo}/>
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                {/* Sem eixo Y e sem grade no mobile — a legenda acima é quem
-                    nomeia as séries, e o tooltip dá o valor no toque. */}
-                {!isMobile && <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} vertical={false} />}
-                <XAxis dataKey="mes" stroke={chartAxis} fontSize={11} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} />
-                {!isMobile && <YAxis stroke={chartAxis} fontSize={10} fontFamily="Geist Mono, monospace" tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />}
-                <Tooltip
-                  contentStyle={tooltipStyle}
-                  labelStyle={tooltipLabelStyle}
-                  itemStyle={tooltipItemStyle}
-                  cursor={{ stroke: chartCursor, strokeWidth: 1 }}
-                  formatter={(value: unknown, name: unknown) => [formatCurrency(Number(value) || 0), name === 'meusGastos' ? 'Meus gastos' : 'Compartilhados']}
-                />
-                <Area type="monotone" dataKey="meusGastos" stroke={chartBarra} fillOpacity={1} fill="url(#colorMeus)" strokeWidth={2.5} dot={{ r: 3, fill: chartBarra }} />
-                <Area type="monotone" dataKey="compartilhados" stroke={chartNeutro} strokeDasharray="5 4" fill="none" strokeWidth={2} dot={{ r: 3, fill: chartNeutro }} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      )}
 
       <GuidedTourOverlay
         show={showTutorial}
