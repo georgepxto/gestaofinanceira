@@ -27,33 +27,36 @@ export const SeletorMes = ({ "data-tour": dataTour, className = "" }: SeletorMes
   const noMesCorrente = isSameMonth(mesVisualizacao, new Date());
 
   const seta =
-    "w-8 h-8 rounded-lg flex items-center justify-center text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100 transition-colors";
+    "w-11 h-11 md:w-9 md:h-9 rounded-sm flex items-center justify-center text-fg-2 hover:text-fg hover:bg-surface-3 transition-colors";
 
   return (
     <div
       data-tour={dataTour}
-      className={`inline-flex items-center bg-white dark:bg-white/[0.04] border border-zinc-200 dark:border-white/[0.06] rounded-xl p-1 shadow-sm dark:shadow-none ${className}`}
+      className={`inline-flex items-center bg-surface-2 rounded-sm ${className}`}
     >
       <button onClick={() => navegarMes("anterior")} aria-label="Mês anterior" className={seta}>
-        <ChevronLeft className="w-[18px] h-[18px]" />
+        <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
       </button>
 
-      <span className="min-w-[128px] text-center text-sm font-semibold capitalize text-zinc-800 dark:text-zinc-100">
+      <span className="min-w-[124px] text-center text-sm text-fg capitalize" aria-live="polite">
         {formatMesAno(mesVisualizacao)}
       </span>
 
       {!noMesCorrente && (
         <button
           onClick={irParaHoje}
-          className="text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 px-1.5"
+          className="h-7 px-2 rounded-sm text-xs text-fg-2 hover:text-fg bg-surface-1 transition-colors"
         >
-          hoje
+          Hoje
         </button>
       )}
 
       <button onClick={() => navegarMes("proximo")} aria-label="Próximo mês" className={seta}>
-        <ChevronRight className="w-[18px] h-[18px]" />
+        <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
       </button>
     </div>
   );
 };
+
+/** Nome do sistema de design para o mesmo componente. */
+export const MonthSwitcher = SeletorMes;

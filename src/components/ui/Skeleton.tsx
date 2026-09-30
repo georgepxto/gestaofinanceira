@@ -1,7 +1,4 @@
+/** Bloco de carregamento reto em --surface-3, com brilho sutil. */
 export function Skeleton({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`animate-pulse rounded-lg bg-zinc-200 dark:bg-white/[0.06] ${className}`}
-    />
-  );
+  return <div aria-hidden="true" className={`skeleton rounded-sm ${className}`} />;
 }

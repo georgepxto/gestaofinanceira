@@ -1,51 +1,58 @@
-import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, X } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Check, AlertCircle, X } from "lucide-react";
+
+type TipoToast = "success" | "error";
 
 export const toast = {
-  success: (msg: string) => document.dispatchEvent(new CustomEvent('app-toast', { detail: { type: 'success', message: msg } })),
-  error: (msg: string) => document.dispatchEvent(new CustomEvent('app-toast', { detail: { type: 'error', message: msg } })),
+  success: (msg: string) =>
+    document.dispatchEvent(new CustomEvent("app-toast", { detail: { type: "success", message: msg } })),
+  error: (msg: string) =>
+    document.dispatchEvent(new CustomEvent("app-toast", { detail: { type: "error", message: msg } })),
 };
 
+/**
+ * Aviso curto de resultado. --surface-2 com borda --line, ícone e texto. No
+ * celular fica acima da barra inferior; no desktop, no canto inferior direito.
+ */
 export function Toaster() {
-  const [toasts, setToasts] = useState<{id: number, type: string, message: string}[]>([]);
+  const [toasts, setToasts] = useState<{ id: number; type: TipoToast; message: string }[]>([]);
 
   useEffect(() => {
-    const handleToast = (e: any) => {
-      const id = Date.now();
-      setToasts(prev => [...prev, { id, type: e.detail.type, message: e.detail.message }]);
-      setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.id !== id));
-      }, 4000);
+    const handleToast = (e: Event) => {
+      const { type, message } = (e as CustomEvent<{ type: TipoToast; message: string }>).detail;
+      const id = Date.now() + Math.random();
+      setToasts((prev) => [...prev, { id, type, message }]);
+      setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
     };
 
-    document.addEventListener('app-toast', handleToast);
-    return () => document.removeEventListener('app-toast', handleToast);
+    document.addEventListener("app-toast", handleToast);
+    return () => document.removeEventListener("app-toast", handleToast);
   }, []);
 
   return (
-    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-toast flex flex-col gap-3 pointer-events-none" role="region" aria-label="Notificações" aria-live="polite">
+    <div
+      role="region"
+      aria-label="Avisos"
+      aria-live="polite"
+      className="fixed z-toast inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] md:inset-x-auto md:right-6 md:bottom-6 flex flex-col gap-2 items-stretch md:items-end pointer-events-none"
+    >
       {toasts.map((t) => (
         <div
           key={t.id}
-          /* ds-ok: toast flutua sobre a tela — sombra elevada e borda própria, não é a superfície assentada do Card */
-          className="animate-in slide-in-from-right-full fade-in duration-500 ease-out fill-mode-forwards bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-50 shadow-xl shadow-black/10 dark:shadow-black/60 rounded-2xl p-4 flex items-center gap-3 min-w-[280px] max-w-sm pointer-events-auto border border-zinc-100 dark:border-white/[0.06] relative z-50 overflow-hidden"
+          className="pointer-events-auto flex items-center gap-3 bg-surface-2 border border-line rounded pl-4 pr-2 py-2.5 md:min-w-[280px] md:max-w-sm animate-[entra-item_200ms_ease-out]"
         >
-          {t.type === 'success' ? (
-            <div className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-1.5 rounded-full shrink-0">
-              <CheckCircle className="w-5 h-5" />
-            </div>
+          {t.type === "success" ? (
+            <Check className="w-4 h-4 shrink-0 text-fg-2" strokeWidth={2} aria-hidden="true" />
           ) : (
-            <div className="bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 p-1.5 rounded-full shrink-0">
-              <XCircle className="w-5 h-5" />
-            </div>
+            <AlertCircle className="w-4 h-4 shrink-0 text-danger-ink" strokeWidth={1.5} aria-hidden="true" />
           )}
-          <p className="text-[15px] font-medium flex-1">{t.message}</p>
+          <p className="flex-1 text-sm text-fg">{t.message}</p>
           <button
-            onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
-            aria-label="Fechar notificação"
-            className="text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors bg-transparent border-0 outline-none cursor-pointer p-1"
+            onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))}
+            aria-label="Fechar aviso"
+            className="w-8 h-8 shrink-0 flex items-center justify-center rounded text-fg-3 hover:text-fg transition-colors"
           >
-             <X className="w-4 h-4" />
+            <X className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
       ))}

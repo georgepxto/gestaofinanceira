@@ -66,7 +66,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
                   uma tela, só o conteúdo suspende — a barra lateral fica montada
                   e o indicador viaja em vez de teleportar. Passados 300ms, o
                   esqueleto entra no lugar certo. */}
-              <Suspense fallback={<AparecerSeDemorar><PageLoadingState /></AparecerSeDemorar>}>
+              <Suspense fallback={<AparecerSeDemorar><div className="px-4 md:px-8"><PageLoadingState /></div></AparecerSeDemorar>}>
                 <Outlet />
               </Suspense>
             </div>

@@ -115,3 +115,16 @@ export function categoriaDeGasto(row: {
   const bruta = "categoria_gasto" in row ? row.categoria_gasto : row.categoria;
   return normalizarCategoria(bruta) || CATEGORIA_PADRAO;
 }
+
+/**
+ * Cor da categoria: a posição dela na lista da pessoa, na paleta de 8 tons
+ * (--cat-1…8 no index.css). As padrão têm cor fixa pela ordem; a criada pela
+ * pessoa entra no fim da lista e recebe a próxima cor. Categoria que saiu da
+ * lista (lançamento antigo) fica no tom neutro, o de "Outros".
+ *
+ * É apresentação pura — nada disso é gravado no banco.
+ */
+export function corDaCategoria(nome: string | null | undefined, lista: string[]): string {
+  const i = nome ? lista.findIndex((c) => chaveCategoria(c) === chaveCategoria(nome)) : -1;
+  return `var(--cat-${i >= 0 ? (i % 8) + 1 : 8})`;
+}
