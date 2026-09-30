@@ -128,3 +128,39 @@ export function corDaCategoria(nome: string | null | undefined, lista: string[])
   const i = nome ? lista.findIndex((c) => chaveCategoria(c) === chaveCategoria(nome)) : -1;
   return `var(--cat-${i >= 0 ? (i % 8) + 1 : 8})`;
 }
+
+// Categorias usadas por último no formulário de gasto, neste aparelho. Só
+// ordena a lista e sugere a última: a pessoa sempre vê e pode trocar.
+const RECENTES_KEY = "hedge_categorias_recentes_v1";
+
+export function lerCategoriasRecentes(): string[] {
+  try {
+    const bruto = JSON.parse(localStorage.getItem(RECENTES_KEY) || "[]");
+    return Array.isArray(bruto) ? bruto.filter((c): c is string => typeof c === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export function registrarCategoriaUsada(categoria: string) {
+  const nome = categoria.trim();
+  if (!nome) return;
+  const resto = lerCategoriasRecentes().filter((c) => chaveCategoria(c) !== chaveCategoria(nome));
+  try {
+    localStorage.setItem(RECENTES_KEY, JSON.stringify([nome, ...resto].slice(0, 8)));
+  } catch {
+    /* sem armazenamento: a lista fica na ordem padrão */
+  }
+}
+
+/** A lista com as recentes na frente, na ordem de uso; o resto na ordem de sempre. */
+export function ordenarPorUso(categorias: string[], recentes: string[]): string[] {
+  const posicao = (c: string) => {
+    const i = recentes.findIndex((r) => chaveCategoria(r) === chaveCategoria(c));
+    return i === -1 ? Infinity : i;
+  };
+  return categorias
+    .map((c, i) => ({ c, i, p: posicao(c) }))
+    .sort((a, b) => a.p - b.p || a.i - b.i)
+    .map((x) => x.c);
+}

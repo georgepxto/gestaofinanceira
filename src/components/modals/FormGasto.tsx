@@ -1,8 +1,14 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { MeuGastoForm, CartaoCredito, ContaBancaria } from "../../types";
 import { useMinhaParteAutomatica } from "../../hooks";
 import { formatCurrency, parseCurrency } from "../../utils/calculations";
-import { comCategoriaAtual } from "../../utils/categories";
+import {
+  chaveCategoria,
+  comCategoriaAtual,
+  lerCategoriasRecentes,
+  ordenarPorUso,
+  registrarCategoriaUsada,
+} from "../../utils/categories";
 import { useCategorias } from "../../hooks/useCategorias";
 import { PARCELAS_OPTIONS, PARCELAS_MAX } from "../../utils/constants";
 import {
@@ -62,7 +68,37 @@ export const FormGasto: React.FC<FormGastoProps> = ({
   const { categorias } = useCategorias("gasto");
   // Categoria excluída depois do lançamento continua listada: sem isto o chip
   // sumiria e o próximo salvamento trocaria a categoria do gasto.
-  const categoriasDoForm = comCategoriaAtual(categorias, formData.categoria_gasto);
+  // As usadas por último vêm primeiro; além das cinco da frente, o resto fica
+  // atrás de "Mais" (a escolhida aparece sempre).
+  const recentes = useMemo(() => (show ? lerCategoriasRecentes() : []), [show]);
+  const categoriasDoForm = ordenarPorUso(comCategoriaAtual(categorias, formData.categoria_gasto), recentes);
+  const [todasCategorias, setTodasCategorias] = useState(false);
+  const VISIVEIS = 5;
+  const escondidas = categoriasDoForm.length - VISIVEIS;
+  const categoriasVisiveis =
+    todasCategorias || escondidas <= 1
+      ? categoriasDoForm
+      : categoriasDoForm.filter(
+          (c, i) => i < VISIVEIS || chaveCategoria(c) === chaveCategoria(formData.categoria_gasto || "")
+        );
+
+  // Gasto novo sem categoria: sugere a última usada, se ela ainda existe.
+  useEffect(() => {
+    if (!show) {
+      setTodasCategorias(false);
+      return;
+    }
+    if (isEditing || formData.categoria_gasto) return;
+    const ultima = recentes.find((r) => categorias.some((c) => chaveCategoria(c) === chaveCategoria(r)));
+    if (ultima) onFormChange({ ...formData, categoria_gasto: ultima });
+    // Só na abertura: depois disso a escolha é da pessoa.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show]);
+
+  const enviar = () => {
+    if (!isEditing && formData.categoria_gasto) registrarCategoriaUsada(formData.categoria_gasto);
+    onSubmit();
+  };
   // A divisão automática da minha parte é regra do formulário.
   useMinhaParteAutomatica(formData, onFormChange);
 
@@ -82,7 +118,7 @@ export const FormGasto: React.FC<FormGastoProps> = ({
       aberto={show}
       titulo={isEditing ? "Editar gasto" : "Novo gasto"}
       onFechar={onClose}
-      onEnviar={onSubmit}
+      onEnviar={enviar}
       rotuloEnviar={isEditing ? "Salvar alterações" : fixo ? "Adicionar gasto fixo" : "Adicionar gasto"}
       enviando={saving}
       podeEnviar={!!formData.valor}
@@ -149,11 +185,16 @@ export const FormGasto: React.FC<FormGastoProps> = ({
 
       <Campo rotulo="Categoria" dica="Crie ou renomeie categorias em Configurações.">
         <Chips>
-          {categoriasDoForm.map((cat) => (
+          {categoriasVisiveis.map((cat) => (
             <Chip key={cat} ativo={formData.categoria_gasto === cat} onClick={() => set({ categoria_gasto: cat })}>
               {cat}
             </Chip>
           ))}
+          {categoriasVisiveis.length < categoriasDoForm.length && (
+            <Chip ativo={false} onClick={() => setTodasCategorias(true)}>
+              Mais categorias
+            </Chip>
+          )}
         </Chips>
       </Campo>
 
