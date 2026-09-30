@@ -51,7 +51,7 @@ const CARTOES_TUTORIAL_STEPS: CartoesTutorialStep[] = [
   {
     target: "[data-tour='cartoes-header']",
     alvo: "Cabeçalho da aba",
-    titulo: "Visão de Cartões de Crédito",
+    titulo: "Seus cartões",
     descricao:
       "Aqui você acompanha limites, faturas e transações dos cartões em uma visão consolidada ou individual.",
     placement: "below",
@@ -222,6 +222,7 @@ export const CartoesCreditoPage = () => {
   } = useGuidedTour<CartoesTutorialStep>({
     steps: CARTOES_TUTORIAL_STEPS,
     storageKey: CARTOES_TUTORIAL_KEY,
+    ready: !loading,
   });
 
   usePageTutorialHelpButton({

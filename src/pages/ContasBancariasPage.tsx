@@ -45,7 +45,7 @@ const CONTAS_TUTORIAL_STEPS: ContasTutorialStep[] = [
   {
     target: "[data-tour='contas-header']",
     alvo: "Cabeçalho da aba",
-    titulo: "Visão de Contas Bancárias",
+    titulo: "Contas e receitas",
     descricao:
       "Nesta tela você centraliza contas, receitas programadas e entradas do mês para controlar saldo com mais precisão.",
     placement: "below",
@@ -166,6 +166,7 @@ export const ContasBancariasPage = () => {
   } = useGuidedTour<ContasTutorialStep>({
     steps: CONTAS_TUTORIAL_STEPS,
     storageKey: CONTAS_TUTORIAL_KEY,
+    ready: !loading,
   });
 
   usePageTutorialHelpButton({

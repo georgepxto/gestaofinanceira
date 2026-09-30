@@ -23,7 +23,7 @@ const GASTOS_TUTORIAL_STEPS: GastosTutorialStep[] = [
   {
     target: "[data-tour='gastos-header']",
     alvo: "Cabeçalho da aba",
-    titulo: "Visão de Empréstimos do Mês",
+    titulo: "Do mês",
     descricao:
       "Nesta tela você acompanha os valores emprestados no mês, com foco no que ainda precisa receber.",
     placement: "below",
@@ -142,6 +142,7 @@ export const GastosPage = () => {
   } = useGuidedTour<GastosTutorialStep>({
     steps: GASTOS_TUTORIAL_STEPS,
     storageKey: GASTOS_TUTORIAL_KEY,
+    ready: !loading,
   });
 
   usePageTutorialHelpButton({

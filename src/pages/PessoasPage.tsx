@@ -37,7 +37,7 @@ const DEVEDORES_TUTORIAL_STEPS: DevedoresTutorialStep[] = [
   {
     target: "[data-tour='devedores-header']",
     alvo: "Cabeçalho da aba",
-    titulo: "Visão de Devedores",
+    titulo: "Por pessoa",
     descricao:
       "Aqui você gerencia pessoas com valores em aberto e compara o que cada uma deve de uma olhada.",
     placement: "below",

@@ -11,6 +11,8 @@ export interface GuidedTourStep {
 interface UseGuidedTourOptions<T extends GuidedTourStep> {
   steps: T[];
   storageKey: string;
+  /** Falso enquanto a página mostra o carregamento: os alvos ainda não existem. */
+  ready?: boolean;
 }
 
 interface GuidedTourPersistenceState {
@@ -67,6 +69,7 @@ const clampStepIndex = (stepIndex: number, totalSteps: number) => {
 export function useGuidedTour<T extends GuidedTourStep>({
   steps,
   storageKey,
+  ready = true,
 }: UseGuidedTourOptions<T>) {
   const [viewportSize, setViewportSize] = useState(() => ({
     width: typeof window !== "undefined" ? window.innerWidth : 0,
@@ -92,21 +95,21 @@ export function useGuidedTour<T extends GuidedTourStep>({
   }, []);
 
   useEffect(() => {
+    if (!ready) return;
     const state = readGuidedTourState(storageKey);
+    if (state.seen) return;
 
-    if (!state.seen) {
-      const availableSteps = steps.filter((step) =>
-        Boolean(document.querySelector(step.target))
-      );
-      setTutorialSteps(availableSteps);
-      setShowTutorial(availableSteps.length > 0);
-      setTutorialStepIndex(0);
-      writeGuidedTourState(storageKey, {
-        seen: true,
-        lastStepIndex: availableSteps.length > 0 ? 0 : null,
-      });
-    }
-  }, [steps, storageKey]);
+    const availableSteps = steps.filter((step) =>
+      Boolean(document.querySelector(step.target))
+    );
+    // Sem alvo na tela, não conta como visto: a próxima visita tenta de novo.
+    if (availableSteps.length === 0) return;
+
+    setTutorialSteps(availableSteps);
+    setShowTutorial(true);
+    setTutorialStepIndex(0);
+    writeGuidedTourState(storageKey, { seen: true, lastStepIndex: 0 });
+  }, [ready, steps, storageKey]);
 
   const openTutorial = useCallback(() => {
     const availableSteps = steps.filter((step) =>

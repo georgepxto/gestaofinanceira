@@ -22,7 +22,7 @@ const DIVIDAS_TUTORIAL_STEPS: DividasTutorialStep[] = [
   {
     target: "[data-tour='dividas-header']",
     alvo: "Cabeçalho da aba",
-    titulo: "Visão de Dívidas em Aberto",
+    titulo: "Em aberto",
     descricao:
       "Aqui você acompanha tudo que ainda precisam te pagar e organiza a cobrança por status e pessoa.",
     placement: "below",

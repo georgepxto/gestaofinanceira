@@ -1,10 +1,10 @@
 export const TUTORIAL_TITLES = {
-  dashboard: "Tutorial da Dashboard",
-  gastos: "Tutorial de Empréstimos",
-  dividas: "Tutorial de Dívidas",
-  devedores: "Tutorial de Devedores",
-  contas: "Tutorial de Contas Bancárias",
+  dashboard: "Tutorial do Início",
+  gastos: "Tutorial dos empréstimos do mês",
+  dividas: "Tutorial das dívidas em aberto",
+  devedores: "Tutorial de quem te deve",
+  contas: "Tutorial de Contas e receitas",
   cartoes: "Tutorial de Cartões",
-  meusGastos: "Tutorial de Meus Gastos",
+  meusGastos: "Tutorial de Lançamentos",
   metas: "Tutorial de Metas",
 } as const;

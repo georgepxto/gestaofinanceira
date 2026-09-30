@@ -42,7 +42,7 @@ const METAS_TUTORIAL_STEPS: MetasTutorialStep[] = [
   {
     target: "[data-tour='metas-header']",
     alvo: "Cabeçalho da aba",
-    titulo: "Visão de Metas de Gasto",
+    titulo: "Metas",
     descricao:
       "Aqui você define limites mensais por categoria para acompanhar o consumo e evitar estouro de orçamento.",
     placement: "below",
@@ -143,6 +143,7 @@ export const MetasPage = () => {
   } = useGuidedTour<MetasTutorialStep>({
     steps: METAS_TUTORIAL_STEPS,
     storageKey: METAS_TUTORIAL_KEY,
+    ready: !loading,
   });
 
   usePageTutorialHelpButton({

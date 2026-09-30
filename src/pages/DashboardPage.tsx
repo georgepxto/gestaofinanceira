@@ -85,107 +85,87 @@ const DASHBOARD_TUTORIAL_KEY = "dashboard_tutorial_seen_v1";
 const DASHBOARD_TUTORIAL_STEPS: DashboardTutorialStep[] = [
   {
     target: "[data-tour='dashboard-header']",
-    alvo: "Cabeçalho da dashboard",
-    titulo: "Visão geral da Dashboard",
+    alvo: "Início",
+    titulo: "O resumo do seu mês",
     descricao:
-      "Esta tela resume sua vida financeira em um só lugar: saldos, valores a receber, metas e tendências.",
+      "Aqui você vê em segundos quanto sobra, quanto tem a receber e para onde o dinheiro foi.",
     placement: "below",
   },
   {
     target: "[data-tour='month-selector']",
     alvo: "Seletor de mês",
-    titulo: "Seletor de mês",
+    titulo: "Trocar o mês",
     descricao:
-      "Use as setas no topo para trocar o mês analisado. Os cartões e gráficos se atualizam automaticamente.",
+      "Use as setas para ver outro mês. Os números e as listas da tela acompanham.",
     placement: "below",
-  },
-  {
-    target: "[data-tour='card-saldo-total']",
-    alvo: "Saldo Total",
-    titulo: "Saldo total disponível",
-    descricao:
-      "Mostra o total somado de todas as suas contas bancárias. É o dinheiro que está realmente disponível agora.",
-    placement: "below",
-  },
-  {
-    target: "[data-tour='card-a-receber']",
-    alvo: "A Receber",
-    titulo: "Valores a receber neste mês",
-    descricao:
-      "Este cartão mostra quanto outras pessoas precisam te pagar neste mês. É a soma dos gastos compartilhados do período.",
-    placement: "below",
-  },
-  {
-    target: "[data-tour='card-receitas-fixas']",
-    alvo: "Receitas Fixas",
-    titulo: "Receitas fixas mensais",
-    descricao:
-      "Aqui entram as entradas recorrentes, como salários ou rendas fixas. Elas ajudam a projetar seu saldo futuro.",
-    placement: "below",
-  },
-  {
-    target: "[data-tour='card-gastos-fixos']",
-    alvo: "Gastos Fixos",
-    titulo: "Gastos fixos do mês",
-    descricao:
-      "São despesas recorrentes que acontecem todo mês, como aluguel, internet ou assinatura.",
-    placement: "below",
-  },
-  {
-    target: "[data-tour='fluxo-mensal']",
-    alvo: "Fluxo mensal",
-    titulo: "Fluxo mensal",
-    descricao:
-      "Mostra a diferença entre receitas e gastos fixos. Se ficar positivo, sobra dinheiro no mês.",
   },
   {
     target: "[data-tour='saldo-livre']",
     alvo: "Saldo livre",
     titulo: "Saldo livre",
     descricao:
-      "É o que sobra depois dos gastos fixos. Ajuda a entender quanto você realmente pode usar.",
+      "É o saldo das suas contas depois dos gastos fixos do mês. Fica vermelho quando o dinheiro não cobre os fixos.",
+    placement: "below",
   },
   {
-    target: "[data-tour='grafico-mensal']",
-    alvo: "Gráfico mensal",
-    titulo: "Meus gastos por mês",
+    target: "[data-tour='acoes-rapidas']",
+    alvo: "Atalhos",
+    titulo: "Atalhos",
     descricao:
-      "Esse gráfico mostra a evolução dos seus gastos pessoais nos últimos meses.",
+      "Lance um gasto, divida uma conta, registre uma receita ou pague a fatura sem sair do Início.",
+    placement: "below",
+  },
+  {
+    target: "[data-tour='card-saldo-total-mini']",
+    alvo: "Saldo total",
+    titulo: "Saldo total",
+    descricao:
+      "A soma do saldo de todas as suas contas, antes de descontar os fixos.",
+    placement: "below",
+  },
+  {
+    target: "[data-tour='card-a-receber']",
+    alvo: "A receber",
+    titulo: "A receber",
+    descricao:
+      "Quanto outras pessoas precisam te pagar neste mês, e quantas já acertaram.",
+    placement: "below",
+  },
+  {
+    target: "[data-tour='fluxo-mensal']",
+    alvo: "Sobra mensal",
+    titulo: "Sobra mensal",
+    descricao:
+      "Suas receitas fixas menos os gastos fixos. É o que sobra todo mês antes dos gastos do dia a dia.",
+    placement: "below",
   },
   {
     target: "[data-tour='ultimos-gastos']",
-    alvo: "Últimos gastos",
+    alvo: "Últimos lançamentos",
     titulo: "Últimos lançamentos",
     descricao:
-      "Aqui aparecem os gastos pessoais mais recentes e os valores de cada um.",
-  },
-  {
-    target: "[data-tour='trend-6meses-meus']",
-    alvo: "Tendência de gastos",
-    titulo: "Tendência de 6 meses",
-    descricao:
-      "Esse gráfico mostra como seus gastos evoluíram ao longo dos últimos 6 meses.",
-  },
-  {
-    target: "[data-tour='trend-6meses-compartilhados']",
-    alvo: "Compartilhados 6 meses",
-    titulo: "Gastos compartilhados",
-    descricao:
-      "Mostra a tendência dos valores a receber de gastos compartilhados nos últimos 6 meses.",
+      "Os gastos mais recentes do mês. Toque em \"Ver todos\" para a lista completa.",
   },
   {
     target: "[data-tour='metas-section']",
-    alvo: "Metas de gasto",
-    titulo: "Metas e alertas",
+    alvo: "Metas do mês",
+    titulo: "Metas do mês",
     descricao:
-      "Monitore metas por categoria e identifique rapidamente onde está perto de estourar o limite.",
+      "Quanto já foi de cada meta. O aviso aparece quando uma categoria passa de 80% do limite.",
+  },
+  {
+    target: "[data-tour='grafico-mensal']",
+    alvo: "Gastos dos últimos 6 meses",
+    titulo: "Últimos 6 meses",
+    descricao:
+      "Compare os meses. Alterne entre os seus gastos e os compartilhados.",
   },
   {
     target: "[data-tour='help-button']",
     alvo: "Botão de ajuda",
     titulo: "Precisa rever?",
     descricao:
-      "Clique no botão (?) no topo da Dashboard sempre que quiser abrir este tutorial novamente.",
+      "Toque no (?) no topo da tela sempre que quiser ver este tutorial de novo.",
   },
 ];
 
@@ -250,6 +230,7 @@ export const DashboardPage = () => {
   } = useGuidedTour<DashboardTutorialStep>({
     steps: DASHBOARD_TUTORIAL_STEPS,
     storageKey: DASHBOARD_TUTORIAL_KEY,
+    ready: !loading,
   });
 
   usePageTutorialHelpButton({
@@ -623,24 +604,22 @@ export const DashboardPage = () => {
       </div>
 
       {/* 2. Saldo livre, e 3. atalhos. */}
-      <div data-tour="card-saldo-total">
-        <BalanceHero
-          rotulo="Saldo livre"
-          valor={data.saldoLivre}
-          contexto={
-            <>
-              O que sobra depois dos fixos do mês · <span className="capitalize">{nomeDoMes}</span>
-            </>
-          }
-          data-tour="saldo-livre"
-        >
-          {acoes.length > 0 && (
-            <div className="mt-6 md:mt-8" data-tour="acoes-rapidas">
-              <ActionRow acoes={acoes} />
-            </div>
-          )}
-        </BalanceHero>
-      </div>
+      <BalanceHero
+        rotulo="Saldo livre"
+        valor={data.saldoLivre}
+        contexto={
+          <>
+            O que sobra depois dos fixos do mês · <span className="capitalize">{nomeDoMes}</span>
+          </>
+        }
+        data-tour="saldo-livre"
+      >
+        {acoes.length > 0 && (
+          <div className="mt-6 md:mt-8" data-tour="acoes-rapidas">
+            <ActionRow acoes={acoes} />
+          </div>
+        )}
+      </BalanceHero>
 
       {/* 4. Indicadores */}
       <KpiStrip>
@@ -679,9 +658,9 @@ export const DashboardPage = () => {
             />
           }
           meta={
-            <span data-tour="card-receitas-fixas">
+            <span>
               <span className="valor">{formatCurrency(data.receitasFixasMensais)}</span> entram,{" "}
-              <span className="valor" data-tour="card-gastos-fixos">
+              <span className="valor">
                 {formatCurrency(data.gastosFixosMensais)}
               </span>{" "}
               fixos
@@ -802,7 +781,7 @@ export const DashboardPage = () => {
           <SurfaceHeader
             titulo="Gastos dos últimos 6 meses"
             acao={
-              <span data-tour="trend-6meses-meus">
+              <span>
                 <SegmentedControl
                   rotulo="Série do gráfico"
                   tamanho="sm"
@@ -810,7 +789,7 @@ export const DashboardPage = () => {
                     { chave: "meus", rotulo: "Meus", ativo: serie === "meusGastos", onClick: () => setSerie("meusGastos") },
                     {
                       chave: "comp",
-                      rotulo: <span data-tour="trend-6meses-compartilhados">Compartilhados</span>,
+                      rotulo: "Compartilhados",
                       ativo: serie === "compartilhados",
                       onClick: () => setSerie("compartilhados"),
                     },
