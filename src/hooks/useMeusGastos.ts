@@ -10,7 +10,7 @@ import type { MeuGasto, MeuGastoForm, CartaoCredito } from "../types";
 import { formatCurrencyValue, parseCurrency } from "../utils/calculations";
 import { PARCELAS_MAX } from "../utils/constants";
 import { normalizarCategoria } from "../utils/categories";
-import { mesDoGasto } from "../utils/gastosDoMes";
+import { mesDoGasto, valorDaMinhaParte } from "../utils/gastosDoMes";
 import { inicioParaNovoRecorrente, manterSaldoAoMudar } from "../utils/saldo";
 import { avisarDadosMudaram, ouvirDadosMudaram } from "../utils/onboarding";
 import { ptBR } from "date-fns/locale";
@@ -120,6 +120,86 @@ async function removerEspelhosDoDividido(gasto: MeuGasto, datasPossiveis: string
     .in("descricao", pessoas.map((p) => `${nome} - ${p}`))
     .in("data_inicio", datasPossiveis);
   for (const row of data || []) await gastosFunctions.delete(row.id);
+}
+
+
+// ─── Fixo dividido ─────────────────────────────────────────────────────────
+// A assinatura que você paga inteira e os outros te devolvem (Apple One de
+// 104,90, sua parte 17,49). O fixo guarda as pessoas e a sua parte; cada pessoa
+// ganha uma cobrança mensal recorrente em A receber, Do mês.
+
+const pessoasDoGasto = (g: { dividido_com_pessoas?: string[]; dividido_com?: string | null }) =>
+  g.dividido_com_pessoas?.length ? g.dividido_com_pessoas : g.dividido_com ? [g.dividido_com] : [];
+
+/** O formulário é um gasto dividido — o comum ou o fixo com pessoas? */
+const formDivide = (f: MeuGastoForm) =>
+  f.categoria === "dividido" || (f.categoria === "fixo" && pessoasDoGasto(f).length > 0);
+
+/** dividido_com como o banco guarda: o nome, ou a lista em JSON quando são várias. */
+const divididoComParaBanco = (pessoas: string[]) =>
+  pessoas.length > 1 ? JSON.stringify(pessoas) : pessoas[0] || undefined;
+
+const mesesAte = (de: string, ate: Date) => {
+  const [a, m] = de.split("-").map(Number);
+  return (ate.getFullYear() - a) * 12 + (ate.getMonth() + 1 - m);
+};
+
+/** Uma cobrança recorrente por pessoa, a partir deste mês, no dia do fixo. */
+async function criarCobrancasDoFixo(
+  fixo: {
+    descricao: string;
+    valor: number;
+    minha_parte?: number;
+    dia_vencimento?: number;
+    tipo: "credito" | "debito";
+    categoria_gasto?: string;
+    pessoas: string[];
+  },
+  hoje = new Date()
+) {
+  if (!isSupabaseConfigured || !supabase || fixo.pessoas.length === 0) return;
+  const parte = Math.max(fixo.valor - (fixo.minha_parte ?? fixo.valor), 0) / fixo.pessoas.length;
+  if (parte <= 0) return;
+  const ultimo = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+  const dataInicio = format(
+    new Date(hoje.getFullYear(), hoje.getMonth(), Math.min(fixo.dia_vencimento || 1, ultimo)),
+    "yyyy-MM-dd"
+  );
+  for (const pessoa of fixo.pessoas) {
+    await gastosFunctions.create({
+      descricao: `${fixo.descricao} - ${pessoa}`,
+      pessoa,
+      valor_total: Math.round(parte * 100) / 100,
+      num_parcelas: 1,
+      data_inicio: dataInicio,
+      tipo: fixo.tipo,
+      categoria: fixo.categoria_gasto || categoriaPadraoAtual("gasto"), // ds-ok: o reserva é a categoria padrão, não o tipo
+      recorrente: true,
+      cartao_id: undefined,
+      conta_id: undefined,
+    });
+  }
+}
+
+/**
+ * Para as cobranças do fixo sem apagar os meses que já passaram: a recorrente
+ * vira parcelada até o mês anterior (ou até este, com `incluirMesAtual`). A
+ * que ainda nem chegou a valer é apagada.
+ */
+async function encerrarCobrancasDoFixo(fixo: MeuGasto, incluirMesAtual: boolean, hoje = new Date()) {
+  const pessoas = pessoasDoGasto(fixo);
+  if (!isSupabaseConfigured || !supabase || pessoas.length === 0) return;
+  const { data } = await supabase
+    .from("gastos")
+    .select("id, data_inicio")
+    .in("pessoa", pessoas)
+    .in("descricao", pessoas.map((p) => `${fixo.descricao} - ${p}`))
+    .eq("recorrente", true);
+  for (const c of data || []) {
+    const meses = mesesAte(c.data_inicio, hoje) + (incluirMesAtual ? 1 : 0);
+    if (meses <= 0) await gastosFunctions.delete(c.id);
+    else await supabase.from("gastos").update({ recorrente: false, num_parcelas: meses }).eq("id", c.id);
+  }
 }
 
 interface UseMeusGastosProps {
@@ -262,9 +342,10 @@ export function useMeusGastos({
       0
     );
 
+  // Fixo dividido conta a minha parte (o resto volta pelo A receber).
   const totalGastosFixos = gastosFixos
     .filter((g) => g.ativo !== false)
-    .reduce((acc, g) => acc + g.valor, 0);
+    .reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
 
   // Adicionar meu gasto
   const handleAddMeuGasto = async () => {
@@ -275,7 +356,7 @@ export function useMeusGastos({
     }
 
     let minhaParte = valor;
-    if (formMeuGasto.categoria === "dividido" && formMeuGasto.minha_parte) {
+    if (formDivide(formMeuGasto) && formMeuGasto.minha_parte) {
       minhaParte = parseCurrency(formMeuGasto.minha_parte);
     }
 
@@ -349,16 +430,9 @@ export function useMeusGastos({
           // Fixo conta do começo do mês em que foi cadastrado (utils/saldo).
           data: formMeuGasto.categoria === "fixo" ? inicioParaNovoRecorrente() : formMeuGasto.data,
           pago: formMeuGasto.tipo === "debito",
-          dividido_com:
-            formMeuGasto.categoria === "dividido"
-              ? formMeuGasto.dividido_com
-              : undefined,
-          dividido_com_pessoas:
-            formMeuGasto.categoria === "dividido"
-              ? formMeuGasto.dividido_com_pessoas
-              : undefined,
-          minha_parte:
-            formMeuGasto.categoria === "dividido" ? minhaParte : undefined,
+          dividido_com: formDivide(formMeuGasto) ? formMeuGasto.dividido_com : undefined,
+          dividido_com_pessoas: formDivide(formMeuGasto) ? formMeuGasto.dividido_com_pessoas : undefined,
+          minha_parte: formDivide(formMeuGasto) ? minhaParte : undefined,
           dia_vencimento:
             formMeuGasto.categoria === "fixo"
               ? parseInt(formMeuGasto.dia_vencimento)
@@ -379,6 +453,18 @@ export function useMeusGastos({
           // O saldo da conta sai do histórico (utils/saldo): nada a escrever aqui.
         }
         setMeusGastos((prev) => [...prev, novoGasto]);
+      }
+
+      if (formMeuGasto.categoria === "fixo" && formDivide(formMeuGasto)) {
+        await criarCobrancasDoFixo({
+          descricao: formMeuGasto.descricao,
+          valor,
+          minha_parte: minhaParte,
+          dia_vencimento: parseInt(formMeuGasto.dia_vencimento) || 1,
+          tipo: formMeuGasto.tipo,
+          categoria_gasto: formMeuGasto.categoria_gasto || undefined,
+          pessoas: pessoasDoGasto(formMeuGasto),
+        });
       }
 
       // Criar saldo devedor se for gasto dividido
@@ -482,7 +568,7 @@ export function useMeusGastos({
       setSaving(true);
       try {
         let minhaParte = valor;
-        if (formMeuGasto.categoria === "dividido" && formMeuGasto.minha_parte) {
+        if (formDivide(formMeuGasto) && formMeuGasto.minha_parte) {
           minhaParte = parseCurrency(formMeuGasto.minha_parte);
         }
 
@@ -564,14 +650,11 @@ export function useMeusGastos({
               categoria: formMeuGasto.categoria,
               categoria_gasto: formMeuGasto.categoria_gasto || undefined,
               data: formMeuGasto.categoria === "fixo" && inicioDoFixo ? inicioDoFixo : dataFormatada,
-              dividido_com:
-                formMeuGasto.categoria === "dividido"
-                  ? formMeuGasto.dividido_com
-                  : undefined,
-              minha_parte:
-                formMeuGasto.categoria === "dividido"
-                  ? minhaParte / novoNumParcelas
-                  : undefined,
+              // Todas as pessoas, não só a primeira: a edição perdia as outras.
+              dividido_com: formDivide(formMeuGasto)
+                ? divididoComParaBanco(pessoasDoGasto(formMeuGasto))
+                : undefined,
+              minha_parte: formDivide(formMeuGasto) ? minhaParte / novoNumParcelas : undefined,
               num_parcelas: novoNumParcelas,
               parcela_atual: numParcela,
               dia_vencimento:
@@ -640,6 +723,21 @@ export function useMeusGastos({
           primeiraOriginal.data,
           dataDoEspelho(primeiraOriginal.data, editandoMeuGasto.tipo, editandoMeuGasto.cartao_id, cartoes),
         ]);
+
+        // Fixo dividido: as cobranças antigas param no mês passado e as novas
+        // (valores, pessoas e parte de agora) valem a partir deste mês.
+        if (editandoMeuGasto.categoria === "fixo") await encerrarCobrancasDoFixo(editandoMeuGasto, false);
+        if (formMeuGasto.categoria === "fixo" && formDivide(formMeuGasto)) {
+          await criarCobrancasDoFixo({
+            descricao: formMeuGasto.descricao,
+            valor,
+            minha_parte: minhaParte,
+            dia_vencimento: parseInt(formMeuGasto.dia_vencimento) || 1,
+            tipo: formMeuGasto.tipo,
+            categoria_gasto: formMeuGasto.categoria_gasto || undefined,
+            pessoas: pessoasDoGasto(formMeuGasto),
+          });
+        }
 
         if (
           formMeuGasto.categoria === "dividido" &&
@@ -750,7 +848,12 @@ export function useMeusGastos({
         setSaving(true);
         try {
           // Excluir o fixo não devolve ao saldo o que ele já tirou da conta.
-          if (gastoParaExcluir.categoria === "fixo") await manterSaldoAoMudar(gastoParaExcluir, null);
+          if (gastoParaExcluir.categoria === "fixo") {
+            await manterSaldoAoMudar(gastoParaExcluir, null);
+            // As cobranças das pessoas param depois deste mês; os meses que já
+            // passaram continuam em A receber.
+            await encerrarCobrancasDoFixo(gastoParaExcluir, true);
+          }
 
           const primeira =
             parcelasRelacionadas.find((g) => (g.parcela_atual || 1) === 1) || gastoParaExcluir;
@@ -798,6 +901,21 @@ export function useMeusGastos({
       // meses em que ficou parado (utils/saldo).
       const updates: Partial<MeuGasto> = { ativo: novoStatus };
       await manterSaldoAoMudar(gasto, { ...gasto, ...updates });
+      // Dividido: desativar para as cobranças depois deste mês; reativar cria
+      // as cobranças de novo a partir deste mês.
+      if (novoStatus) {
+        await criarCobrancasDoFixo({
+          descricao: gasto.descricao,
+          valor: gasto.valor,
+          minha_parte: gasto.minha_parte,
+          dia_vencimento: gasto.dia_vencimento,
+          tipo: gasto.tipo,
+          categoria_gasto: gasto.categoria_gasto,
+          pessoas: pessoasDoGasto(gasto),
+        });
+      } else {
+        await encerrarCobrancasDoFixo(gasto, true);
+      }
       if (isSupabaseConfigured && supabase) {
         await meusGastosFunctions.update(id, updates);
       }

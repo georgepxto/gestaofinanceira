@@ -46,7 +46,8 @@ export function usePessoas({ user }: UsePessoasProps) {
 
   // Salvar pessoas no localStorage como backup
   useEffect(() => {
-    if (pessoasLoaded && pessoas.length > 0) {
+    // Vazia também: senão excluir a última pessoa a deixava no backup.
+    if (pessoasLoaded) {
       localStorage.setItem("pessoas", JSON.stringify(pessoas));
     }
   }, [pessoas, pessoasLoaded]);
@@ -81,19 +82,35 @@ export function usePessoas({ user }: UsePessoasProps) {
     }
   };
 
+  /**
+   * Cadastra uma pessoa pelo nome, sem passar pela tela de Por pessoa (o
+   * formulário de gasto dividido usa). Devolve o nome salvo ou um erro.
+   */
+  const adicionarPessoa = async (nomeBruto: string): Promise<{ nome?: string; erro?: string }> => {
+    const nome = nomeBruto.trim().replace(/\s+/g, " ");
+    if (!nome) return { erro: "Digite um nome." };
+    const existente = pessoas.find((p) => p.toLocaleLowerCase("pt-BR") === nome.toLocaleLowerCase("pt-BR"));
+    if (existente) return { nome: existente };
+    if (isSupabaseConfigured && supabase) {
+      const id = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`;
+      const ok = await pessoasFunctions.create({ id, nome });
+      if (!ok) return { erro: `Não foi possível salvar ${nome}.` };
+    }
+    setPessoas((prev) => [...prev, nome]);
+    return { nome };
+  };
+
   // Remover pessoa
   const handleRemovePessoa = async (nome: string) => {
-    if (pessoas.length > 1) {
-      if (isSupabaseConfigured && supabase) {
-        // Buscar ID da pessoa e deletar
-        const pessoasData = await pessoasFunctions.getAll();
-        const pessoaToDelete = pessoasData.find((p) => p.nome === nome);
-        if (pessoaToDelete) {
-          await pessoasFunctions.delete(pessoaToDelete.id);
-        }
+    if (isSupabaseConfigured && supabase) {
+      // Buscar ID da pessoa e deletar
+      const pessoasData = await pessoasFunctions.getAll();
+      const pessoaToDelete = pessoasData.find((p) => p.nome === nome);
+      if (pessoaToDelete) {
+        await pessoasFunctions.delete(pessoaToDelete.id);
       }
-      setPessoas((prev) => prev.filter((p) => p !== nome));
     }
+    setPessoas((prev) => prev.filter((p) => p !== nome));
   };
 
   return {
@@ -106,6 +123,7 @@ export function usePessoas({ user }: UsePessoasProps) {
     setShowAddPessoa,
     fetchPessoas,
     handleAddPessoa,
+    adicionarPessoa,
     handleRemovePessoa,
   };
 }

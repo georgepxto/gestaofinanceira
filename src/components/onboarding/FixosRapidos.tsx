@@ -45,12 +45,17 @@ export function FixosRapidos({ aberto, contas, onFechar }: FixosRapidosProps) {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  // Zera só ao abrir. Antes zerava a cada recarga da lista de contas — e ela
+  // recarrega quando a janela volta ao foco: o Alt+Tab apagava o digitado.
   useEffect(() => {
     if (!aberto) return;
     setLinhas([]);
     setErro(null);
-    setContaId(contas[0]?.id || "");
-  }, [aberto, contas]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberto]);
+  useEffect(() => {
+    if (aberto && !contas.some((c) => c.id === contaId)) setContaId(contas[0]?.id || "");
+  }, [aberto, contas, contaId]);
 
   const alternar = (s: (typeof SUGESTOES)[number]) =>
     setLinhas((ls) =>

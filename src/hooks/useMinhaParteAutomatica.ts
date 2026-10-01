@@ -18,7 +18,8 @@ export function useMinhaParteAutomatica(
   const ultimaAutomatica = useRef<string>("");
 
   useEffect(() => {
-    if (formData.categoria !== "dividido") return;
+    // Dividido, ou fixo com pessoas (a assinatura dividida).
+    if (formData.categoria !== "dividido" && formData.categoria !== "fixo") return;
 
     const pessoasSelecionadas = formData.dividido_com_pessoas || [];
     if (pessoasSelecionadas.length === 0) return;

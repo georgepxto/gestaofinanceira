@@ -394,7 +394,11 @@ export function TabMeuGasto({
                         </h3>
                         <MenuAcoes titulo={gasto.descricao} acoes={acoesDoFixo(gasto, isSuspenso)} className="-mt-1.5" />
                       </div>
-                      <p className={`valor text-xl mt-1 ${apagado ? "text-fg-2" : "text-fg"}`}>{formatCurrency(gasto.valor)}</p>
+                      {/* Dividido: a minha parte em destaque e o total embaixo. */}
+                      <p className={`valor text-xl mt-1 ${apagado ? "text-fg-2" : "text-fg"}`}>{formatCurrency(valorDaMinhaParte(gasto))}</p>
+                      {pessoas && gasto.minha_parte ? (
+                        <p className="valor text-xs text-fg-3 mt-0.5">de {formatCurrency(gasto.valor)}</p>
+                      ) : null}
                       <div className="mt-3 flex items-center justify-between gap-2">
                         <span className="text-xs text-fg-2 break-words">
                           vence dia {gasto.dia_vencimento}

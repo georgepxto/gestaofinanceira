@@ -22,6 +22,7 @@ import {
 } from "../ui/FormSheet";
 import { MoneyInput } from "../ui/MoneyInput";
 import { SegmentedControl } from "../ui/SegmentedControl";
+import { Button } from "../ui/Button";
 
 interface FormGastoProps {
   show: boolean;
@@ -32,6 +33,8 @@ interface FormGastoProps {
   cartoes?: CartaoCredito[];
   contas?: ContaBancaria[];
   pessoas?: string[];
+  /** Cadastra uma pessoa sem sair do formulário. */
+  onAdicionarPessoa?: (nome: string) => Promise<{ nome?: string; erro?: string }>;
   onClose: () => void;
   onFormChange: (data: MeuGastoForm) => void;
   onSubmit: () => void;
@@ -60,6 +63,7 @@ export const FormGasto: React.FC<FormGastoProps> = ({
   cartoes = [],
   contas = [],
   pessoas = [],
+  onAdicionarPessoa,
   onClose,
   onFormChange,
   onSubmit,
@@ -80,6 +84,22 @@ export const FormGasto: React.FC<FormGastoProps> = ({
       : categoriasDoForm.filter(
           (c, i) => i < VISIVEIS || chaveCategoria(c) === chaveCategoria(formData.categoria_gasto || "")
         );
+
+  // Fixo dividido (a assinatura que você paga e os outros te devolvem): liga
+  // com "Divide com alguém?". Abre ligado na edição de um fixo que já divide.
+  const [dividirFixo, setDividirFixo] = useState(false);
+  useEffect(() => {
+    if (show) setDividirFixo((formData.dividido_com_pessoas || []).length > 0 || !!formData.dividido_com);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show]);
+
+  // Pessoa nova direto daqui, sem ir até A receber.
+  const [novaPessoa, setNovaPessoa] = useState<string | null>(null);
+  const [erroPessoa, setErroPessoa] = useState<string | null>(null);
+  const [salvandoPessoa, setSalvandoPessoa] = useState(false);
+  useEffect(() => {
+    if (!show) { setNovaPessoa(null); setErroPessoa(null); }
+  }, [show]);
 
   // Gasto novo: sugere a última categoria usada e, com uma conta só, ela.
   useEffect(() => {
@@ -110,12 +130,33 @@ export const FormGasto: React.FC<FormGastoProps> = ({
   const set = (parcial: Partial<MeuGastoForm>) => onFormChange({ ...formData, ...parcial });
   const dividido = formData.categoria === "dividido";
   const fixo = formData.categoria === "fixo";
+  const divide = dividido || (fixo && dividirFixo);
   const credito = formData.tipo === "credito";
 
   const alternarPessoa = (pessoa: string) => {
     const atuais = formData.dividido_com_pessoas || [];
     const nova = atuais.includes(pessoa) ? atuais.filter((p) => p !== pessoa) : [...atuais, pessoa];
     set({ dividido_com_pessoas: nova, dividido_com: nova.length > 0 ? nova[0] : "" });
+  };
+
+  const salvarPessoa = async () => {
+    if (!onAdicionarPessoa || novaPessoa === null) return;
+    setSalvandoPessoa(true);
+    const { nome, erro } = await onAdicionarPessoa(novaPessoa);
+    setSalvandoPessoa(false);
+    if (erro || !nome) { setErroPessoa(erro || "Não foi possível salvar."); return; }
+    const atuais = formData.dividido_com_pessoas || [];
+    if (!atuais.includes(nome)) {
+      const nova = [...atuais, nome];
+      set({ dividido_com_pessoas: nova, dividido_com: nova[0] });
+    }
+    setNovaPessoa(null);
+    setErroPessoa(null);
+  };
+
+  const alternarDivisaoDoFixo = (ligar: boolean) => {
+    setDividirFixo(ligar);
+    if (!ligar) set({ dividido_com_pessoas: [], dividido_com: "", minha_parte: "" });
   };
 
   return (
@@ -159,29 +200,71 @@ export const FormGasto: React.FC<FormGastoProps> = ({
         </Chips>
       </Campo>
 
-      {dividido && (
+      {fixo && (
+        <Campo rotulo="Divide com alguém?">
+          <SegmentedControl
+            rotulo="Divide com alguém"
+            cheio
+            segmentos={[
+              { chave: "nao", rotulo: "Não", ativo: !dividirFixo, onClick: () => alternarDivisaoDoFixo(false) },
+              { chave: "sim", rotulo: "Sim, divido", ativo: dividirFixo, onClick: () => alternarDivisaoDoFixo(true) },
+            ]}
+          />
+        </Campo>
+      )}
+
+      {divide && (
         <>
           <Campo rotulo="Dividido com">
-            {pessoas.length > 0 ? (
-              <Chips>
-                {pessoas.map((pessoa) => (
-                  <Chip
-                    key={pessoa}
-                    ativo={(formData.dividido_com_pessoas || []).includes(pessoa)}
-                    onClick={() => alternarPessoa(pessoa)}
-                  >
-                    {pessoa}
-                  </Chip>
-                ))}
-              </Chips>
-            ) : (
-              <p className="text-sm text-fg-2">Nenhuma pessoa cadastrada. Cadastre em A receber, Por pessoa.</p>
+            <Chips>
+              {pessoas.map((pessoa) => (
+                <Chip
+                  key={pessoa}
+                  ativo={(formData.dividido_com_pessoas || []).includes(pessoa)}
+                  onClick={() => alternarPessoa(pessoa)}
+                >
+                  {pessoa}
+                </Chip>
+              ))}
+              {onAdicionarPessoa && novaPessoa === null && (
+                <Chip ativo={false} onClick={() => setNovaPessoa("")}>
+                  + Pessoa
+                </Chip>
+              )}
+            </Chips>
+            {novaPessoa !== null && (
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  value={novaPessoa}
+                  onChange={(e) => setNovaPessoa(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { e.preventDefault(); salvarPessoa(); }
+                    if (e.key === "Escape") { e.stopPropagation(); setNovaPessoa(null); }
+                  }}
+                  placeholder="Nome da pessoa"
+                  aria-label="Nome da pessoa"
+                  autoFocus
+                  className={campoClasse}
+                />
+                <Button tamanho="sm" onClick={salvarPessoa} carregando={salvandoPessoa} disabled={!novaPessoa.trim()}>
+                  Adicionar
+                </Button>
+              </div>
+            )}
+            {erroPessoa && <p role="alert" className="mt-1.5 text-xs text-danger-ink">{erroPessoa}</p>}
+            {pessoas.length === 0 && novaPessoa === null && (
+              <p className="mt-1.5 text-xs text-fg-3">Adicione quem divide com você.</p>
             )}
           </Campo>
           <Campo
-            rotulo="Sua parte"
+            rotulo={fixo ? "Sua parte por mês" : "Sua parte"}
             htmlFor="gasto-minha-parte"
-            dica="Dividida por igual entre você e as pessoas escolhidas. Dá para ajustar."
+            dica={
+              fixo
+                ? "Todo mês, a parte de cada pessoa vira uma cobrança em A receber, Do mês."
+                : "Dividida por igual entre você e as pessoas escolhidas. Dá para ajustar."
+            }
           >
             <MoneyInput id="gasto-minha-parte" value={formData.minha_parte} onChange={(minha_parte) => set({ minha_parte })} />
           </Campo>

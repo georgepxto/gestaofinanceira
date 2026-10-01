@@ -498,7 +498,7 @@ export const generateMeusGastosPDF = (
         g.descricao,
         g.tipo === "credito" ? "Crédito" : "Débito",
         normalizarCategoria(g.categoria_gasto) || "—",
-        formatCurrency(g.valor),
+        formatCurrency(g.minha_parte || g.valor),
       ]);
 
     autoTable(doc, {

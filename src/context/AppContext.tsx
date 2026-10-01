@@ -53,6 +53,7 @@ interface AppContextType {
   setShowAddPessoa: (show: boolean) => void;
   fetchPessoas: () => Promise<void>;
   handleAddPessoa: (onSuccess?: (nome: string) => void) => Promise<void>;
+  adicionarPessoa: (nome: string) => Promise<{ nome?: string; erro?: string }>;
   handleRemovePessoa: (nome: string) => Promise<void>;
 
   // Observações
@@ -219,6 +220,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setShowAddPessoa,
     fetchPessoas,
     handleAddPessoa,
+    adicionarPessoa,
     handleRemovePessoa,
   } = usePessoas({ user });
 
@@ -414,6 +416,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setShowAddPessoa,
     fetchPessoas,
     handleAddPessoa,
+    adicionarPessoa,
     handleRemovePessoa,
 
     // Observações

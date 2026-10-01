@@ -42,6 +42,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { MoneyInput } from "../components/ui/MoneyInput";
 import { FormSheet, Campo, Chip, Chips, campoClasse } from "../components/ui/FormSheet";
 import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
+import { valorDaMinhaParte } from "../utils/gastosDoMes";
 
 interface ContasTutorialStep {
   target: string;
@@ -446,7 +447,7 @@ export const ContasBancariasPage = () => {
   const mesSelStr = format(mesVisualizacao, "yyyy-MM");
   const totalGastosFixosMes = (gastosFixos || [])
     .filter((g) => fixoValeNoMes(g, mesSelStr))
-    .reduce((sum, g) => sum + g.valor, 0);
+    .reduce((sum, g) => sum + valorDaMinhaParte(g), 0);
   const sobraPrevista = totalRecebidoMes + totalPrevistoMes - totalGastosFixosMes;
 
   if (loading) return <PageLoadingState title="Carregando contas" />;

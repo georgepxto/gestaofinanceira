@@ -6,9 +6,9 @@ import type { CartaoCredito, MeuGasto } from "../types";
 // data de criação e a compra no crédito pela data da compra, e mostrava um
 // "Meus gastos" que não batia com Lançamentos.
 
-/** No dividido, o que conta é a minha parte. */
+/** No dividido — o comum e o fixo dividido —, o que conta é a minha parte. */
 export const valorDaMinhaParte = (g: MeuGasto) =>
-  g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor;
+  (g.categoria === "dividido" || g.categoria === "fixo") && g.minha_parte ? g.minha_parte : g.valor;
 
 /** Mês ("yyyy-MM") em que o gasto pesa: no crédito, o da fatura. */
 export function mesDoGasto(g: MeuGasto, cartoes: CartaoCredito[]): string {

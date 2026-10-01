@@ -279,16 +279,13 @@ export const PessoasPage = () => {
                       icone: <Banknote className="w-4 h-4" strokeWidth={1.5} />,
                       onClick: () => setShowPagamentoParcial(pessoa),
                     },
-                    ...(pessoas.length > 1
-                      ? [
-                          {
-                            rotulo: "Excluir",
-                            icone: <Trash2 className="w-4 h-4" strokeWidth={1.5} />,
-                            onClick: () => handleDelete(pessoa),
-                            tom: "perigo" as const,
-                          },
-                        ]
-                      : []),
+                    // Sem a trava de "sobrar uma": a última pessoa também sai.
+                    {
+                      rotulo: "Excluir",
+                      icone: <Trash2 className="w-4 h-4" strokeWidth={1.5} />,
+                      onClick: () => handleDelete(pessoa),
+                      tom: "perigo" as const,
+                    },
                   ]}
                   rodape={
                     <div className="pl-12 space-y-3">

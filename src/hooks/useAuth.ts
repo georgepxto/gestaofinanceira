@@ -40,7 +40,15 @@ export function useAuth() {
           return;
         }
       }
-      setUser(authUser);
+      // Ao voltar para a aba, o Supabase avisa "login" de novo com o mesmo
+      // usuário. Trocar o objeto fazia o app inteiro recarregar e os
+      // formulários abertos perderem o que estava digitado. Só troca quando
+      // é outra pessoa ou quando os dados dela mudaram (updated_at).
+      setUser((anterior) =>
+        anterior && authUser && anterior.id === authUser.id && anterior.updated_at === authUser.updated_at
+          ? anterior
+          : authUser
+      );
     });
 
     return () => subscription.unsubscribe();

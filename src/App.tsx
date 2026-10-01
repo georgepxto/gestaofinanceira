@@ -91,6 +91,7 @@ function AppContent() {
     handleSubmit,
     resetFormGasto,
     pessoas,
+    adicionarPessoa,
     
     // Divida form
     showFormDivida,
@@ -342,6 +343,7 @@ function AppContent() {
         cartoes={cartoes}
         contas={contas}
         pessoas={pessoas}
+        onAdicionarPessoa={adicionarPessoa}
         onClose={() => resetFormMeuGasto()}
         onFormChange={setFormMeuGasto}
         onSubmit={handleSaveMeuGasto}

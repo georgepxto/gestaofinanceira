@@ -320,7 +320,8 @@ export const DashboardPage = () => {
       // Calcular gastos fixos mensais
       const gastosFixos = (meusGastos as MeuGasto[] || [])
         .filter(g => g.categoria === "fixo" && g.ativo !== false);
-      const gastosFixosMensais = gastosFixos.reduce((acc, g) => acc + g.valor, 0);
+      // Fixo dividido: só a minha parte (a sobra é o que é meu).
+      const gastosFixosMensais = gastosFixos.reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
 
       // Calcular receitas fixas mensais
       const receitasFixas = (receitas as Receita[] || [])
@@ -408,7 +409,7 @@ export const DashboardPage = () => {
       // Gastos fixos ativos são recorrentes, então sempre contam
       const gastosFixosAtivos = (meusGastos as MeuGasto[] || [])
         .filter(g => g.categoria === 'fixo' && g.ativo !== false);
-      const gastosFixosMes = gastosFixosAtivos.reduce((acc, g) => acc + g.valor, 0);
+      const gastosFixosMes = gastosFixosAtivos.reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
       
       // Gastos variáveis (pessoais) do mês atual
       const gastosVariaveisMes = gastosDoMes
