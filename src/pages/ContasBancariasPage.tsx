@@ -3,14 +3,25 @@ import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus, Trash2, Pencil, Landmark, ArrowDownLeft } from "lucide-react";
-import { fixoValeNoMes, saldoDaConta } from "../utils/saldo";
+import {
+  carregarLivro,
+  corrigirSaldo,
+  fixoValeNoMes,
+  inicioParaNovoRecorrente,
+  manterSaldoAoMudar,
+  migrarContasLegadas,
+  receitaNoMes,
+  saldoDaConta,
+  timestampDoDia,
+  type Livro,
+} from "../utils/saldo";
 import { useAppContext } from "../context";
 import { PageHeader } from "../components/ui/PageHeader";
 import { SeletorMes } from "../components/ui/SeletorMes";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useGuidedTour, usePageTutorialHelpButton, useIsMobile } from "../hooks";
 import { supabase } from "../lib/supabase";
-import { formatCurrency, formatCurrencyValue, parseCurrency } from "../utils/calculations";
+import { formatCurrencyValue, parseCurrency } from "../utils/calculations";
 import { formatDinheiro, formatPercent } from "../utils/dinheiro";
 import { TIPOS_RECEITA, CATEGORIA_RECEITA_PADRAO } from "../utils/receitas";
 import { chaveCategoria, comCategoriaAtual } from "../utils/categories";
@@ -29,7 +40,7 @@ import { ProgressBar } from "../components/ui/ProgressBar";
 import { Pill } from "../components/ui/Pill";
 import { EmptyState } from "../components/ui/EmptyState";
 import { MoneyInput } from "../components/ui/MoneyInput";
-import { FormSheet, Campo, Chip, Chips, MaisOpcoes, campoClasse } from "../components/ui/FormSheet";
+import { FormSheet, Campo, Chip, Chips, campoClasse } from "../components/ui/FormSheet";
 import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
 
 interface ContasTutorialStep {
@@ -96,7 +107,7 @@ const CONTAS_TUTORIAL_STEPS: ContasTutorialStep[] = [
 ];
 
 export const ContasBancariasPage = () => {
-  const { user, setModalConfirm, setModalFeedback, mesVisualizacao, gastosFixos, meusGastosDoMes } = useAppContext();
+  const { user, setModalConfirm, setModalFeedback, mesVisualizacao, gastosFixos } = useAppContext();
   const { categorias: categoriasReceita } = useCategorias("receita");
 
   // Categoria pré-selecionada numa receita nova: "Outras Receitas" enquanto ela
@@ -109,6 +120,8 @@ export const ContasBancariasPage = () => {
 
   const [contas, setContas] = useState<ContaBancaria[]>([]);
   const [receitas, setReceitas] = useState<Receita[]>([]);
+  // Tudo que mexe no saldo (utils/saldo): o saldo é o histórico somado.
+  const [livro, setLivro] = useState<Livro>({ receitas: [], meusGastos: [], emprestimos: [], pagamentosFatura: [] });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -129,8 +142,18 @@ export const ContasBancariasPage = () => {
   // Fetches
   const fetchContas = useCallback(async () => {
     if (!supabase || !user) return;
-    const { data } = await supabase.from("contas_bancarias").select("*").order("nome");
-    setContas(data || []);
+    const [{ data }, novoLivro] = await Promise.all([
+      supabase.from("contas_bancarias").select("*").order("nome"),
+      carregarLivro(),
+    ]);
+    let lista = (data as ContaBancaria[]) || [];
+    // Contas do modelo antigo começam no modelo novo com o mesmo saldo de antes.
+    if (await migrarContasLegadas(lista, novoLivro)) {
+      const { data: migradas } = await supabase.from("contas_bancarias").select("*").order("nome");
+      lista = (migradas as ContaBancaria[]) || [];
+    }
+    setLivro(novoLivro);
+    setContas(lista);
   }, [user]);
 
   const fetchReceitas = useCallback(async () => {
@@ -190,9 +213,8 @@ export const ContasBancariasPage = () => {
     setSearchParams({}, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  // Saldo de hoje, pela mesma conta que o Início usa (utils/saldo).
-  const calcularSaldoConta = (conta: ContaBancaria) =>
-    saldoDaConta(conta, { receitas, gastosFixos: gastosFixos || [], meusGastos: meusGastosDoMes || [] });
+  // Saldo de hoje, do histórico — a mesma conta que o Início usa (utils/saldo).
+  const calcularSaldoConta = (conta: ContaBancaria) => saldoDaConta(conta, livro);
 
   // CRUD Conta
   const handleSubmitConta = async (e: React.FormEvent) => {
@@ -200,21 +222,21 @@ export const ContasBancariasPage = () => {
     if (!supabase || !user) return;
     setSaving(true);
     try {
-      const saldoInicial = parseCurrency(formConta.saldo_inicial);
-      const saldoAtual = parseCurrency(formConta.saldo_atual);
-      const dados = {
-        nome: formConta.nome.trim(),
-        banco: formConta.banco.trim(),
-        saldo_inicial: saldoInicial,
-        saldo_atual: saldoAtual,
-      };
+      const dados = { nome: formConta.nome.trim(), banco: formConta.banco.trim() };
       if (editandoConta) {
         await supabase.from("contas_bancarias").update(dados).eq("id", editandoConta.id);
+        // Corrigir o saldo à mão: a diferença vai para o saldo inicial, e o
+        // histórico continua somando por cima.
+        const desejado = parseCurrency(formConta.saldo_atual);
+        if (Math.abs(desejado - calcularSaldoConta(editandoConta)) > 0.004) {
+          await corrigirSaldo(editandoConta, livro, desejado);
+        }
       } else {
-        // Ao criar nova conta, saldo_atual começa igual ao saldo_inicial
+        // O saldo informado é o de hoje: o que aconteceu antes já está nele.
         await supabase.from("contas_bancarias").insert({
           ...dados,
-          saldo_atual: saldoInicial,
+          saldo_inicial: parseCurrency(formConta.saldo_inicial),
+          saldo_atual: null,
           user_id: user.id,
         });
       }
@@ -231,7 +253,7 @@ export const ContasBancariasPage = () => {
       nome: c.nome,
       banco: c.banco || "",
       saldo_inicial: formatCurrencyValue(c.saldo_inicial),
-      saldo_atual: formatCurrencyValue(c.saldo_atual || c.saldo_inicial),
+      saldo_atual: formatCurrencyValue(calcularSaldoConta(c)),
     });
     setEditandoConta(c);
     setShowModalConta(true);
@@ -286,49 +308,39 @@ export const ContasBancariasPage = () => {
         conta_id: formReceita.conta_id || null,
         data: new Date().toISOString().split("T")[0], // formato yyyy-MM-dd
       };
-      console.log("Salvando receita:", dados);
+      const recorrente = formReceita.tipo !== "avulso";
       if (editandoReceita) {
-        const { error } = await supabase.from("receitas").update(dados).eq("id", editandoReceita.id);
-        if (error) console.error("Erro update:", error);
-
-        // Se for avulso e a conta mudou, transferir o valor
-        if (editandoReceita.tipo === "avulso") {
-          const contaAntiga = editandoReceita.conta_id;
-          const contaNova = formReceita.conta_id;
-          const valorAntigo = editandoReceita.valor;
-
-          // Remover da conta antiga
-          if (contaAntiga) {
-            const conta = contas.find(c => c.id === contaAntiga);
-            if (conta) {
-              const novoSaldo = (conta.saldo_atual ?? conta.saldo_inicial) - valorAntigo;
-              await supabase.from("contas_bancarias").update({ saldo_atual: novoSaldo }).eq("id", contaAntiga);
-            }
-          }
-          // Adicionar na conta nova
-          if (contaNova) {
-            const conta = contas.find(c => c.id === contaNova);
-            if (conta) {
-              const novoSaldo = (conta.saldo_atual ?? conta.saldo_inicial) + valorReceita;
-              await supabase.from("contas_bancarias").update({ saldo_atual: novoSaldo }).eq("id", contaNova);
-            }
-          }
-          await fetchContas();
+        const antiga = editandoReceita;
+        const extra: Partial<Receita> = {};
+        if (antiga.tipo === "avulso" && recorrente) {
+          // Virou fixa/recorrente: conta do começo do mês.
+          extra.created_at = timestampDoDia(inicioParaNovoRecorrente());
+        } else if (antiga.tipo !== "avulso" && !recorrente) {
+          // Virou avulsa: é uma entrada de hoje.
+          extra.created_at = new Date().toISOString();
         }
+        // O que a receita já pôs na conta não muda com a edição (utils/saldo).
+        if (antiga.tipo !== "avulso") {
+          await manterSaldoAoMudar(antiga, {
+            ...antiga,
+            ...dados,
+            ...extra,
+            conta_id: dados.conta_id || "",
+            num_meses: dados.num_meses ?? undefined,
+          } as Receita);
+        }
+        const { error } = await supabase.from("receitas").update({ ...dados, ...extra }).eq("id", antiga.id);
+        if (error) throw error;
       } else {
-        const { error } = await supabase.from("receitas").insert({ ...dados, user_id: user.id });
-        if (error) console.error("Erro insert:", error);
-
-        // Se for receita avulsa, adicionar imediatamente ao saldo_atual da conta
-        if (formReceita.tipo === "avulso" && formReceita.conta_id) {
-          const conta = contas.find(c => c.id === formReceita.conta_id);
-          if (conta) {
-            const novoSaldo = (conta.saldo_atual ?? conta.saldo_inicial) + valorReceita;
-            await supabase.from("contas_bancarias").update({ saldo_atual: novoSaldo }).eq("id", formReceita.conta_id);
-            await fetchContas();
-          }
-        }
+        // Fixa/recorrente conta do começo do mês; avulsa, de hoje.
+        const { error } = await supabase.from("receitas").insert({
+          ...dados,
+          ...(recorrente ? { created_at: timestampDoDia(inicioParaNovoRecorrente()) } : {}),
+          user_id: user.id,
+        });
+        if (error) throw error;
       }
+      await fetchContas();
       await fetchReceitas();
       resetFormReceita();
       toast.success(editandoReceita ? "Receita atualizada com sucesso!" : "Receita adicionada com sucesso!");
@@ -347,38 +359,34 @@ export const ContasBancariasPage = () => {
   };
 
   const handleDeleteReceita = (r: Receita) => {
-    // A avulsa entrou direto no saldo_atual da conta ao ser criada: excluir tem
-    // que tirar de volta, senão a receita some e o dinheiro fica.
-    const conta = r.tipo === "avulso" && r.conta_id ? contas.find((c) => c.id === r.conta_id) : undefined;
     setModalConfirm({
       show: true,
       titulo: "Excluir receita",
-      mensagem: conta
-        ? `Excluir "${r.descricao}"? ${formatCurrency(r.valor)} saem do saldo de ${conta.nome}.`
-        : `Excluir "${r.descricao}"?`,
+      mensagem:
+        r.tipo === "avulso"
+          ? `Excluir "${r.descricao}"? Se ela tinha conta, o valor sai do saldo.`
+          : `Excluir "${r.descricao}"? Os meses que já entraram continuam no saldo.`,
       onConfirm: async () => {
         if (!supabase) return;
+        // Fixa/recorrente: o que já entrou fica na conta (utils/saldo).
+        if (r.tipo !== "avulso") await manterSaldoAoMudar(r, null);
         const { error } = await supabase.from("receitas").delete().eq("id", r.id);
         if (error) {
           toast.error(toActionableErrorMessage(error, "Não foi possível excluir a receita."));
           throw error;
         }
-        if (conta) {
-          const { data: atual } = await supabase
-            .from("contas_bancarias")
-            .select("saldo_atual, saldo_inicial")
-            .eq("id", conta.id)
-            .single();
-          if (atual) {
-            const base = atual.saldo_atual ?? atual.saldo_inicial ?? 0;
-            await supabase.from("contas_bancarias").update({ saldo_atual: base - r.valor }).eq("id", conta.id);
-          }
-          await fetchContas();
-        }
-        await fetchReceitas();
+        await Promise.all([fetchContas(), fetchReceitas()]);
       },
     });
   };
+
+  // Com uma conta só, a receita nova já vem nela: sem conta, ela não entra no saldo.
+  useEffect(() => {
+    if (showModalReceita && !editandoReceita && !formReceita.conta_id && contas.length === 1) {
+      setFormReceita((f) => ({ ...f, conta_id: contas[0].id }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showModalReceita, editandoReceita, contas]);
 
   const resetFormReceita = () => {
     setFormReceita({ conta_id: "", descricao: "", valor: "", categoria: categoriaReceitaInicial, tipo: "fixo", dia_recebimento: "1", num_meses: "12" });
@@ -409,8 +417,10 @@ export const ContasBancariasPage = () => {
     const mesHoje = format(hoje, "yyyy-MM");
     const ultimoDiaMesSel = new Date(mesVisualizacao.getFullYear(), mesVisualizacao.getMonth() + 1, 0).getDate();
 
+    // Só os meses em que a receita vale: depois do início e, na recorrente,
+    // dentro dos N meses (antes ela aparecia em todo mês, até nos passados).
     const programadas = receitas
-      .filter((r) => r.tipo === "fixo" || r.tipo === "recorrente")
+      .filter((r) => receitaNoMes(r, mesSel))
       .map((r) => {
         const dia = Math.min(r.dia_recebimento || 1, ultimoDiaMesSel);
         const recebida = mesSel < mesHoje ? true : mesSel > mesHoje ? false : dia <= hoje.getDate();
@@ -550,7 +560,7 @@ export const ContasBancariasPage = () => {
                     titulo={c.nome}
                     meta={
                       <>
-                        {c.banco || "Sem banco"} · inicial <span className="valor">{formatCurrency(c.saldo_inicial)}</span>
+                        {c.banco || "Sem banco"}
                       </>
                     }
                     valor={<span className={saldoConta < 0 ? "text-danger-ink" : ""}>{formatDinheiro(saldoConta)}</span>}
@@ -669,13 +679,19 @@ export const ContasBancariasPage = () => {
         podeEnviar={!!formConta.nome.trim()}
         valor={
           <div>
+            {/* Um campo só: o saldo de hoje. Ao criar, é o ponto de partida; ao
+                editar, corrige o saldo (a diferença vai para o ponto de partida). */}
             <MoneyInput
               tamanho="heroi"
-              value={formConta.saldo_inicial}
-              onChange={(saldo_inicial) => setFormConta({ ...formConta, saldo_inicial })}
-              aria-label="Saldo inicial"
+              value={editandoConta ? formConta.saldo_atual : formConta.saldo_inicial}
+              onChange={(v) =>
+                setFormConta(editandoConta ? { ...formConta, saldo_atual: v } : { ...formConta, saldo_inicial: v })
+              }
+              aria-label="Saldo de hoje"
             />
-            <p className="mt-2 text-center text-xs text-fg-3">Saldo inicial</p>
+            <p className="mt-2 text-center text-xs text-fg-3">
+              {editandoConta ? "Saldo de hoje. Mude para corrigir." : "Quanto tem na conta hoje"}
+            </p>
           </div>
         }
       >
@@ -700,15 +716,6 @@ export const ContasBancariasPage = () => {
             className={campoClasse}
           />
         </Campo>
-        {editandoConta && (
-          <Campo rotulo="Saldo atual" htmlFor="conta-saldo-atual" dica="Edite para corrigir o saldo à mão.">
-            <MoneyInput
-              id="conta-saldo-atual"
-              value={formConta.saldo_atual}
-              onChange={(saldo_atual) => setFormConta({ ...formConta, saldo_atual })}
-            />
-          </Campo>
-        )}
       </FormSheet>
 
       {/* Receita */}
@@ -790,24 +797,20 @@ export const ContasBancariasPage = () => {
             />
           </Campo>
         )}
+        {/* A conta é o que faz a receita entrar no saldo: fica à vista. */}
         {contas.length > 0 && (
-          <MaisOpcoes abertoInicial={!!formReceita.conta_id}>
-            <Campo rotulo="Conta" htmlFor="receita-conta">
-              <select
-                id="receita-conta"
-                value={formReceita.conta_id}
-                onChange={(e) => setFormReceita({ ...formReceita, conta_id: e.target.value })}
-                className={campoClasse}
-              >
-                <option value="">Sem conta vinculada</option>
-                {contas.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </select>
-            </Campo>
-          </MaisOpcoes>
+          <Campo rotulo="Entra em qual conta" dica="Sem conta, a receita não mexe no saldo.">
+            <Chips>
+              {contas.map((c) => (
+                <Chip key={c.id} ativo={formReceita.conta_id === c.id} onClick={() => setFormReceita({ ...formReceita, conta_id: c.id })}>
+                  {c.nome}
+                </Chip>
+              ))}
+              <Chip ativo={!formReceita.conta_id} onClick={() => setFormReceita({ ...formReceita, conta_id: "" })}>
+                Nenhuma
+              </Chip>
+            </Chips>
+          </Campo>
         )}
       </FormSheet>
 

@@ -18,7 +18,6 @@ import {
   Chips,
   EscolhaData,
   EscolhaParcelas,
-  MaisOpcoes,
   campoClasse,
 } from "../ui/FormSheet";
 import { MoneyInput } from "../ui/MoneyInput";
@@ -82,15 +81,21 @@ export const FormGasto: React.FC<FormGastoProps> = ({
           (c, i) => i < VISIVEIS || chaveCategoria(c) === chaveCategoria(formData.categoria_gasto || "")
         );
 
-  // Gasto novo sem categoria: sugere a última usada, se ela ainda existe.
+  // Gasto novo: sugere a última categoria usada e, com uma conta só, ela.
   useEffect(() => {
     if (!show) {
       setTodasCategorias(false);
       return;
     }
-    if (isEditing || formData.categoria_gasto) return;
-    const ultima = recentes.find((r) => categorias.some((c) => chaveCategoria(c) === chaveCategoria(r)));
-    if (ultima) onFormChange({ ...formData, categoria_gasto: ultima });
+    if (isEditing) return;
+    const patch: Partial<MeuGastoForm> = {};
+    if (!formData.categoria_gasto) {
+      const ultima = recentes.find((r) => categorias.some((c) => chaveCategoria(c) === chaveCategoria(r)));
+      if (ultima) patch.categoria_gasto = ultima;
+    }
+    // Com uma conta só, o gasto já sai dela: sem conta ele não entra no saldo.
+    if (!formData.conta_id && contas.length === 1) patch.conta_id = contas[0].id;
+    if (Object.keys(patch).length) onFormChange({ ...formData, ...patch });
     // Só na abertura: depois disso a escolha é da pessoa.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [show]);
@@ -262,28 +267,21 @@ export const FormGasto: React.FC<FormGastoProps> = ({
         <EscolhaData valor={formData.data} onChange={(data) => set({ data })} />
       )}
 
+      {/* A conta é o que faz o gasto entrar no saldo: fica à vista, não em
+          "Mais opções". Com uma conta só, ela já vem marcada. */}
       {!credito && contas.length > 0 && (
-        <MaisOpcoes abertoInicial={!!formData.conta_id}>
-          <Campo
-            rotulo="Conta bancária"
-            htmlFor="gasto-conta"
-            dica="Se escolher uma conta, o valor sai do saldo dela."
-          >
-            <select
-              id="gasto-conta"
-              value={formData.conta_id}
-              onChange={(e) => set({ conta_id: e.target.value })}
-              className={campoClasse}
-            >
-              <option value="">Nenhuma</option>
-              {contas.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome} {c.banco ? `(${c.banco})` : ""}
-                </option>
-              ))}
-            </select>
-          </Campo>
-        </MaisOpcoes>
+        <Campo rotulo="Sai de qual conta" dica="Sem conta, o gasto não mexe no saldo.">
+          <Chips>
+            {contas.map((c) => (
+              <Chip key={c.id} ativo={formData.conta_id === c.id} onClick={() => set({ conta_id: c.id })}>
+                {c.nome}
+              </Chip>
+            ))}
+            <Chip ativo={!formData.conta_id} onClick={() => set({ conta_id: "" })}>
+              Nenhuma
+            </Chip>
+          </Chips>
+        </Campo>
       )}
     </FormSheet>
   );

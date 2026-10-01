@@ -11,6 +11,7 @@ import { formatCurrencyValue, parseCurrency } from "../utils/calculations";
 import { PARCELAS_MAX } from "../utils/constants";
 import { normalizarCategoria } from "../utils/categories";
 import { mesDoGasto } from "../utils/gastosDoMes";
+import { inicioParaNovoRecorrente, manterSaldoAoMudar } from "../utils/saldo";
 import { ptBR } from "date-fns/locale";
 import { toast } from "../components/ui/Toaster";
 import { categoriaPadraoAtual } from "./useCategorias";
@@ -333,7 +334,8 @@ export function useMeusGastos({
           valor: valor,
           tipo: formMeuGasto.tipo,
           categoria: formMeuGasto.categoria,
-          data: formMeuGasto.data,
+          // Fixo conta do começo do mês em que foi cadastrado (utils/saldo).
+          data: formMeuGasto.categoria === "fixo" ? inicioParaNovoRecorrente() : formMeuGasto.data,
           pago: formMeuGasto.tipo === "debito",
           dividido_com:
             formMeuGasto.categoria === "dividido"
@@ -362,22 +364,7 @@ export function useMeusGastos({
           if (!created) {
             setModalFeedback({ show: true, titulo: "Erro", mensagem: "Não foi possível salvar seu gasto. Tente novamente.", tipo: "info" });
           }
-          // Se for débito e tiver conta selecionada, descontar do saldo
-          if (formMeuGasto.tipo === "debito" && formMeuGasto.conta_id) {
-            const { data: contaAtual } = await supabase
-              .from("contas_bancarias")
-              .select("saldo_atual")
-              .eq("id", formMeuGasto.conta_id)
-              .single();
-            
-            if (contaAtual) {
-              const novoSaldo = (contaAtual.saldo_atual || 0) - valor;
-              await supabase
-                .from("contas_bancarias")
-                .update({ saldo_atual: novoSaldo })
-                .eq("id", formMeuGasto.conta_id);
-            }
-          }
+          // O saldo da conta sai do histórico (utils/saldo): nada a escrever aqui.
         }
         setMeusGastos((prev) => [...prev, novoGasto]);
       }
@@ -502,6 +489,23 @@ export function useMeusGastos({
 
         const novoValorParcela = valor / novoNumParcelas;
 
+        // Fixo: mudar valor, dia, conta ou tipo não reescreve os meses que já
+        // passaram (utils/saldo). Virar fixo agora conta do começo do mês.
+        let inicioDoFixo: string | null = null;
+        if (editandoMeuGasto.categoria === "fixo") {
+          inicioDoFixo = editandoMeuGasto.data;
+          await manterSaldoAoMudar(editandoMeuGasto, {
+            ...editandoMeuGasto,
+            categoria: formMeuGasto.categoria,
+            tipo: formMeuGasto.tipo,
+            valor: novoValorParcela,
+            dia_vencimento: parseInt(formMeuGasto.dia_vencimento) || 1,
+            conta_id: formMeuGasto.tipo === "debito" ? formMeuGasto.conta_id || undefined : undefined,
+          });
+        } else if (formMeuGasto.categoria === "fixo") {
+          inicioDoFixo = inicioParaNovoRecorrente();
+        }
+
         const descricaoBaseOriginal = editandoMeuGasto.descricao.replace(
           /\s*\(\d+\/\d+\)$/,
           ""
@@ -547,7 +551,7 @@ export function useMeusGastos({
               tipo: formMeuGasto.tipo,
               categoria: formMeuGasto.categoria,
               categoria_gasto: formMeuGasto.categoria_gasto || undefined,
-              data: dataFormatada,
+              data: formMeuGasto.categoria === "fixo" && inicioDoFixo ? inicioDoFixo : dataFormatada,
               dividido_com:
                 formMeuGasto.categoria === "dividido"
                   ? formMeuGasto.dividido_com
@@ -575,95 +579,6 @@ export function useMeusGastos({
             if (existente) {
               if (isSupabaseConfigured && supabase) {
                 await meusGastosFunctions.update(existente.id, dadosAtualizados);
-                
-                // Se for débito, verificar mudança de conta para descontar/estornar saldo
-                if (formMeuGasto.tipo === "debito") {
-                  const contaAntiga = existente.conta_id;
-                  const contaNova = formMeuGasto.conta_id || "";
-                  const valorAntigo = existente.valor || 0;
-                  
-                  // Caso 1: Tinha conta e removeu → estornar
-                  if (contaAntiga && !contaNova) {
-                    const { data: conta } = await supabase
-                      .from("contas_bancarias")
-                      .select("saldo_atual")
-                      .eq("id", contaAntiga)
-                      .single();
-                    
-                    if (conta) {
-                      const saldoEstornado = (conta.saldo_atual || 0) + valorAntigo;
-                      await supabase
-                        .from("contas_bancarias")
-                        .update({ saldo_atual: saldoEstornado })
-                        .eq("id", contaAntiga);
-                    }
-                  }
-                  // Caso 2: Não tinha conta e agora tem → descontar
-                  else if (!contaAntiga && contaNova) {
-                    const { data: conta } = await supabase
-                      .from("contas_bancarias")
-                      .select("saldo_atual")
-                      .eq("id", contaNova)
-                      .single();
-                    
-                    if (conta) {
-                      const novoSaldo = (conta.saldo_atual || 0) - novoValorParcela;
-                      await supabase
-                        .from("contas_bancarias")
-                        .update({ saldo_atual: novoSaldo })
-                        .eq("id", contaNova);
-                    }
-                  }
-                  // Caso 3: Mesma conta mas valor mudou → ajustar diferença
-                  else if (contaAntiga && contaNova && contaAntiga === contaNova && valorAntigo !== novoValorParcela) {
-                    const { data: conta } = await supabase
-                      .from("contas_bancarias")
-                      .select("saldo_atual")
-                      .eq("id", contaNova)
-                      .single();
-                    
-                    if (conta) {
-                      const diferenca = novoValorParcela - valorAntigo;
-                      const novoSaldo = (conta.saldo_atual || 0) - diferenca;
-                      await supabase
-                        .from("contas_bancarias")
-                        .update({ saldo_atual: novoSaldo })
-                        .eq("id", contaNova);
-                    }
-                  }
-                  // Caso 4: Mudou de conta → estornar antiga e descontar nova
-                  else if (contaAntiga && contaNova && contaAntiga !== contaNova) {
-                    // Estornar conta antiga
-                    const { data: contaAntigaData } = await supabase
-                      .from("contas_bancarias")
-                      .select("saldo_atual")
-                      .eq("id", contaAntiga)
-                      .single();
-                    
-                    if (contaAntigaData) {
-                      const saldoEstornado = (contaAntigaData.saldo_atual || 0) + valorAntigo;
-                      await supabase
-                        .from("contas_bancarias")
-                        .update({ saldo_atual: saldoEstornado })
-                        .eq("id", contaAntiga);
-                    }
-                    
-                    // Descontar nova conta
-                    const { data: contaNovaData } = await supabase
-                      .from("contas_bancarias")
-                      .select("saldo_atual")
-                      .eq("id", contaNova)
-                      .single();
-                    
-                    if (contaNovaData) {
-                      const novoSaldo = (contaNovaData.saldo_atual || 0) - novoValorParcela;
-                      await supabase
-                        .from("contas_bancarias")
-                        .update({ saldo_atual: novoSaldo })
-                        .eq("id", contaNova);
-                    }
-                  }
-                }
               }
               setMeusGastos((prev) =>
                 prev.map((g) =>
@@ -822,6 +737,9 @@ export function useMeusGastos({
       onConfirm: async () => {
         setSaving(true);
         try {
+          // Excluir o fixo não devolve ao saldo o que ele já tirou da conta.
+          if (gastoParaExcluir.categoria === "fixo") await manterSaldoAoMudar(gastoParaExcluir, null);
+
           const primeira =
             parcelasRelacionadas.find((g) => (g.parcela_atual || 1) === 1) || gastoParaExcluir;
           await removerEspelhosDoDividido(gastoParaExcluir, [
@@ -832,21 +750,6 @@ export function useMeusGastos({
           for (const parcela of parcelasRelacionadas) {
             if (isSupabaseConfigured && supabase) {
               await meusGastosFunctions.delete(parcela.id);
-              // Espelho da criação: débito com conta saiu do saldo_atual quando
-              // foi lançado, então volta quando é excluído.
-              if (parcela.tipo === "debito" && parcela.conta_id) {
-                const { data: conta } = await supabase
-                  .from("contas_bancarias")
-                  .select("saldo_atual")
-                  .eq("id", parcela.conta_id)
-                  .single();
-                if (conta) {
-                  await supabase
-                    .from("contas_bancarias")
-                    .update({ saldo_atual: (conta.saldo_atual || 0) + (parcela.valor || 0) })
-                    .eq("id", parcela.conta_id);
-                }
-              }
             }
           }
 
@@ -875,16 +778,20 @@ export function useMeusGastos({
     const gasto = meusGastos.find((g) => g.id === id);
     if (!gasto) return;
 
-    const novoStatus = !gasto.ativo;
+    const novoStatus = gasto.ativo === false;
 
     setSaving(true);
     try {
+      // Desativar não devolve o que o fixo já tirou; reativar não cobra os
+      // meses em que ficou parado (utils/saldo).
+      const updates: Partial<MeuGasto> = { ativo: novoStatus };
+      await manterSaldoAoMudar(gasto, { ...gasto, ...updates });
       if (isSupabaseConfigured && supabase) {
-        await meusGastosFunctions.update(id, { ativo: novoStatus });
+        await meusGastosFunctions.update(id, updates);
       }
 
       setMeusGastos((prev) =>
-        prev.map((g) => (g.id === id ? { ...g, ativo: novoStatus } : g))
+        prev.map((g) => (g.id === id ? { ...g, ...updates } : g))
       );
 
       if (onRefreshGastos) {

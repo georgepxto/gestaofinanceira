@@ -105,7 +105,8 @@ export interface ContaBancaria {
   nome: string;
   banco?: string;
   saldo_inicial: number;
-  saldo_atual?: number;
+  /** Modelo antigo. Nulo nas contas já migradas: o saldo é calculado (utils/saldo). */
+  saldo_atual?: number | null;
   user_id?: string;
   created_at?: string;
 }

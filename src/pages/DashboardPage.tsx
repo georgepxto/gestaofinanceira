@@ -4,7 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { Link, useLocation } from "react-router-dom";
 import { Plus, Users, Wallet, CreditCard, Receipt, Gauge, PieChart as IconePizza, BarChart3 } from "lucide-react";
 import { useAppContext } from "../context";
-import { fixosAindaPorSair, saldoDaConta } from "../utils/saldo";
+import { fixosAindaPorSair, migrarContasLegadas, receitaNoMes, saldoDaConta, type Livro } from "../utils/saldo";
 import { gastosPessoaisDoMes, valorDaMinhaParte } from "../utils/gastosDoMes";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
@@ -256,6 +256,7 @@ export const DashboardPage = () => {
         { data: receitas },
         { data: gastosCompartilhados },
         { data: cartoesRaw },
+        { data: pagamentosFatura },
       ] = await Promise.all([
         supabase.from("contas_bancarias").select("*"),
         supabase.from("saldos_devedores").select("*"),
@@ -263,17 +264,25 @@ export const DashboardPage = () => {
         supabase.from("receitas").select("*"),
         supabase.from("gastos").select("*"),
         supabase.from("cartoes_credito").select("*"),
+        supabase.from("pagamentos_fatura").select("conta_id, valor_pago, created_at"),
       ]);
       const cartoes = (cartoesRaw as CartaoCredito[]) || [];
 
-      // Saldo de hoje, pela mesma conta que Contas usa (utils/saldo).
+      // Saldo de hoje, calculado do histórico — a mesma conta de Contas (utils/saldo).
       const todosMeusGastos = (meusGastos as MeuGasto[]) || [];
       const todosFixos = todosMeusGastos.filter((g) => g.categoria === "fixo");
-      const saldoTotal = ((contas as ContaBancaria[]) || []).reduce(
-        (acc, c) =>
-          acc + saldoDaConta(c, { receitas: (receitas as Receita[]) || [], gastosFixos: todosFixos, meusGastos: todosMeusGastos }),
-        0
-      );
+      const livro: Livro = {
+        receitas: (receitas as Receita[]) || [],
+        meusGastos: todosMeusGastos,
+        emprestimos: (gastosCompartilhados as Gasto[]) || [],
+        pagamentosFatura: pagamentosFatura || [],
+      };
+      let listaContas = (contas as ContaBancaria[]) || [];
+      if (await migrarContasLegadas(listaContas, livro)) {
+        const { data: migradas } = await supabase.from("contas_bancarias").select("*");
+        listaContas = (migradas as ContaBancaria[]) || [];
+      }
+      const saldoTotal = listaContas.reduce((acc, c) => acc + saldoDaConta(c, livro), 0);
 
       // Calcular total devido (saldos devedores ativos)
       const totalDevido = (saldosDevedores as SaldoDevedor[] || [])
@@ -287,7 +296,7 @@ export const DashboardPage = () => {
 
       // Calcular receitas fixas mensais
       const receitasFixas = (receitas as Receita[] || [])
-        .filter(r => r.tipo === "fixo" || r.tipo === "recorrente");
+        .filter(r => receitaNoMes(r, format(mesVisualizacao, "yyyy-MM")));
       const receitasFixasMensais = receitasFixas.reduce((acc, r) => acc + r.valor, 0);
 
       // Saldo livre: o saldo de hoje menos os fixos do mês que ainda vão sair.

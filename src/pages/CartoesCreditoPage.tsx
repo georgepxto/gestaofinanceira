@@ -515,10 +515,7 @@ export const CartoesCreditoPage = () => {
       const conta = contas.find(c => c.id === contaPagamento);
       if (!conta) return;
       
-      // Descontar valor da conta bancária
-      const novoSaldo = (conta.saldo_atual || conta.saldo_inicial) - valorPago;
-      await supabase.from("contas_bancarias").update({ saldo_atual: novoSaldo }).eq("id", contaPagamento);
-      
+      // O registro do pagamento é o que tira o valor da conta (utils/saldo).
       // Registrar pagamento de fatura
       await supabase.from("pagamentos_fatura").insert({
         cartao_id: cartaoSelecionado.id,
@@ -556,22 +553,7 @@ export const CartoesCreditoPage = () => {
         if (!supabase) return;
         setSaving(true);
         try {
-          // Buscar o pagamento para saber o valor e a conta
-          const { data: pagamento } = await supabase.from("pagamentos_fatura")
-            .select("*")
-            .eq("cartao_id", cartaoSelecionado.id)
-            .eq("mes", mesFatura)
-            .single();
-          
-          if (pagamento && pagamento.conta_id && pagamento.valor_pago) {
-            // Devolver valor à conta bancária
-            const conta = contas.find(c => c.id === pagamento.conta_id);
-            if (conta) {
-              const novoSaldo = (conta.saldo_atual || conta.saldo_inicial) + pagamento.valor_pago;
-              await supabase.from("contas_bancarias").update({ saldo_atual: novoSaldo }).eq("id", pagamento.conta_id);
-            }
-          }
-          
+          // Apagar o registro devolve o valor à conta (utils/saldo).
           // Remover registro de pagamento
           await supabase.from("pagamentos_fatura")
             .delete()

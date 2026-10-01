@@ -186,38 +186,6 @@ export function useGastos({
 
         if (updateError) throw updateError;
         
-        // Se for débito, verificar mudança de conta para descontar/estornar saldo
-        if (formData.tipo === "debito") {
-          const contaAntiga = editandoGasto.conta_id;
-          const contaNova = formData.conta_id || "";
-          const valorAntigo = editandoGasto.valor_total || 0;
-          
-          // Caso 1: Tinha conta e removeu → estornar
-          if (contaAntiga && !contaNova) {
-            const { data: conta } = await supabase.from("contas_bancarias").select("saldo_atual").eq("id", contaAntiga).single();
-            if (conta) await supabase.from("contas_bancarias").update({ saldo_atual: (conta.saldo_atual || 0) + valorAntigo }).eq("id", contaAntiga);
-          }
-          // Caso 2: Não tinha conta e agora tem → descontar
-          else if (!contaAntiga && contaNova) {
-            const { data: conta } = await supabase.from("contas_bancarias").select("saldo_atual").eq("id", contaNova).single();
-            if (conta) await supabase.from("contas_bancarias").update({ saldo_atual: (conta.saldo_atual || 0) - valorNumerico }).eq("id", contaNova);
-          }
-          // Caso 3: Mesma conta mas valor mudou → ajustar diferença
-          else if (contaAntiga && contaNova && contaAntiga === contaNova && valorAntigo !== valorNumerico) {
-            const { data: conta } = await supabase.from("contas_bancarias").select("saldo_atual").eq("id", contaNova).single();
-            if (conta) {
-              const diferenca = valorNumerico - valorAntigo;
-              await supabase.from("contas_bancarias").update({ saldo_atual: (conta.saldo_atual || 0) - diferenca }).eq("id", contaNova);
-            }
-          }
-          // Caso 4: Mudou de conta → estornar antiga e descontar nova
-          else if (contaAntiga && contaNova && contaAntiga !== contaNova) {
-            const { data: contaAntigaData } = await supabase.from("contas_bancarias").select("saldo_atual").eq("id", contaAntiga).single();
-            if (contaAntigaData) await supabase.from("contas_bancarias").update({ saldo_atual: (contaAntigaData.saldo_atual || 0) + valorAntigo }).eq("id", contaAntiga);
-            const { data: contaNovaData } = await supabase.from("contas_bancarias").select("saldo_atual").eq("id", contaNova).single();
-            if (contaNovaData) await supabase.from("contas_bancarias").update({ saldo_atual: (contaNovaData.saldo_atual || 0) - valorNumerico }).eq("id", contaNova);
-          }
-        }
         
         await fetchGastos();
         setEditandoGasto(null);
@@ -241,11 +209,6 @@ export function useGastos({
 
         if (insertError) throw insertError;
         
-        // Se for débito e tiver conta selecionada, descontar do saldo
-        if (formData.tipo === "debito" && formData.conta_id) {
-          const { data: conta } = await supabase.from("contas_bancarias").select("saldo_atual").eq("id", formData.conta_id).single();
-          if (conta) await supabase.from("contas_bancarias").update({ saldo_atual: (conta.saldo_atual || 0) - valorNumerico }).eq("id", formData.conta_id);
-        }
         
         await fetchGastos();
       }
@@ -325,16 +288,6 @@ export function useGastos({
         try {
           setError(null);
           
-          // Buscar o gasto para verificar se precisa estornar saldo
-          const gastoParaExcluir = gastos.find(g => g.id === id);
-          if (gastoParaExcluir && gastoParaExcluir.tipo === "debito" && gastoParaExcluir.conta_id) {
-            const { data: conta } = await supabase.from("contas_bancarias").select("saldo_atual").eq("id", gastoParaExcluir.conta_id).single();
-            if (conta) {
-              const saldoEstornado = (conta.saldo_atual || 0) + gastoParaExcluir.valor_total;
-              await supabase.from("contas_bancarias").update({ saldo_atual: saldoEstornado }).eq("id", gastoParaExcluir.conta_id);
-            }
-          }
-
           const { error: deleteError } = await supabase
             .from("gastos")
             .delete()
