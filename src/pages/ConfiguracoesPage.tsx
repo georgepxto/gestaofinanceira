@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Trash2, Sun, Moon, ChevronDown, KeyRound, Download } from "lucide-react";
+import { Trash2, Sun, Moon, ChevronDown, KeyRound, Download, LogOut, ShieldCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAppContext } from "../context";
@@ -26,7 +27,7 @@ interface Contagens {
 }
 
 export const ConfiguracoesPage = () => {
-  const { user, handleLogout, setModalFeedback } = useAppContext();
+  const { user, handleLogout, setModalFeedback, isAdmin } = useAppContext();
   const { theme, setTheme } = useTheme();
 
   const [novoNome, setNovoNome] = useState(user?.user_metadata?.nome || "");
@@ -378,6 +379,28 @@ export const ConfiguracoesPage = () => {
               Alterar senha
             </Button>
           </Linha>
+          {/* No celular não há barra lateral: Admin e sair moram aqui. No
+              desktop continuam no rodapé da barra. */}
+          {isAdmin && (
+            <div className="md:hidden">
+              <Linha titulo="Admin" detalhe="Usuários e funções liberadas.">
+                <Link
+                  to="/admin"
+                  className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded bg-surface-2 text-fg text-sm font-medium hover:bg-surface-3 transition-colors"
+                >
+                  <ShieldCheck className="w-4 h-4" strokeWidth={1.5} />
+                  Abrir
+                </Link>
+              </Linha>
+            </div>
+          )}
+          <div className="md:hidden">
+            <Linha titulo="Sair da conta" detalhe="Seus dados continuam salvos.">
+              <Button onClick={handleLogout} icone={<LogOut className="w-4 h-4" strokeWidth={1.5} />}>
+                Sair
+              </Button>
+            </Linha>
+          </div>
         </Surface>
       </section>
 

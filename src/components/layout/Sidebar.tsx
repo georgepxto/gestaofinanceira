@@ -1,6 +1,6 @@
 import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { X, LogOut, PanelLeftClose, PanelLeftOpen, Plus, Home, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
+import { LogOut, PanelLeftClose, PanelLeftOpen, Plus, Home, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
 import { HedgeMark } from "../landing/HedgeMark";
 import { Logo } from "../ui/Logo";
 import { Avatar } from "../ui/Avatar";
@@ -12,9 +12,6 @@ import { useAppContext } from "../../context";
 interface SidebarProps {
   onLogout: () => void;
   onLancar: () => void;
-  /** Gaveta da conta no celular (aberta pelo avatar da barra do topo). */
-  aberta: boolean;
-  onFechar: () => void;
   /** Desktop: barra reduzida a 72px. Mora no Layout, que desloca o conteúdo. */
   recolhida: boolean;
   onRecolher: (recolhida: boolean) => void;
@@ -23,17 +20,13 @@ interface SidebarProps {
 }
 
 /**
- * Barra lateral do desktop (240px) e, no celular, a gaveta da conta.
- *
- * No celular os destinos moram na barra inferior; aqui sobra o que é conta —
- * Configurações, Admin e sair. Repetir a lista de telas na gaveta é o que faz
- * app de celular parecer painel de administração.
+ * Barra lateral do desktop (240px, ou 72px recolhida). No celular não existe:
+ * os destinos moram na barra inferior, Configurações na engrenagem do topo e
+ * sair da conta dentro de Configurações.
  */
 export const Sidebar: React.FC<SidebarProps> = ({
   onLogout,
   onLancar,
-  aberta,
-  onFechar,
   recolhida,
   onRecolher,
   userName,
@@ -46,14 +39,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const visibleGroups = gruposVisiveis(isAdmin, features);
   const showConfiguracoes = features.configuracoes || isAdmin;
   const podeLancar = isAdmin || features.meus_gastos;
-
-  // Esc fecha a gaveta do celular.
-  useEffect(() => {
-    if (!aberta) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onFechar();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [aberta, onFechar]);
 
   // ── Indicador deslizante ─────────────────────────────────────────────
   // Um único traço de 2px para a barra inteira: VIAJA do item que estava ativo
@@ -123,7 +108,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ref={(el) => {
           itemRefs.current[path] = el;
         }}
-        onClick={onFechar}
         title={recolhida ? label : undefined}
         aria-current={ativo ? "page" : undefined}
         className={`flex items-center min-h-[44px] md:min-h-[36px] px-4 text-[15px] md:text-sm transition-colors duration-300 ${
@@ -151,31 +135,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Fundo da gaveta (celular) */}
-      {aberta && (
-        <div
-          className="md:hidden fixed inset-0 z-overlay bg-scrim animate-[fundo-entra_150ms_ease-out]"
-          aria-hidden="true"
-          /* ds-ok: fundo de dispensa. Teclado fecha no Esc e no botão da gaveta — o fundo não entra na ordem de foco de propósito */
-          onClick={onFechar}
-        />
-      )}
-
       <aside
         ref={asideRef}
         aria-label="Navegação"
         className={`
-          fixed top-0 left-0 h-full z-modal flex flex-col bg-page
-          transition-[transform,width] duration-[250ms] ease-out
-          w-72 ${aberta ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0 md:z-sticky ${recolhida ? "md:w-[72px]" : "md:w-60"}
-          max-md:bg-surface-1
+          hidden md:flex fixed top-0 left-0 h-full z-sticky flex-col bg-page
+          transition-[width] duration-[250ms] ease-out
+          ${recolhida ? "md:w-[72px]" : "md:w-60"}
         `}
       >
         {/* Topo: logo e recolher */}
         <div className={`h-16 shrink-0 flex items-center justify-between px-4 ${recolhida ? "md:justify-center md:px-0" : ""}`}>
-          {/* No celular a gaveta é a conta, e o título diz isso. */}
-          <span className="md:hidden text-base font-medium text-fg">Conta</span>
           {recolhida ? (
             // Recolhida: o símbolo é o botão de abrir. No hover e no foco ele
             // vira o ícone de expandir, no mesmo lugar onde ficava o de recolher.
@@ -194,13 +164,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </span>
           )}
 
-          <button
-            onClick={onFechar}
-            aria-label="Fechar"
-            className="md:hidden w-11 h-11 -mr-2 rounded flex items-center justify-center text-fg-2 hover:text-fg transition-colors"
-          >
-            <X className="w-5 h-5" strokeWidth={1.5} />
-          </button>
           {!recolhida && (
             <button
               onClick={() => onRecolher(true)}

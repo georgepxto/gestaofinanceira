@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
@@ -23,10 +23,8 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail }) => {
   const [helpButton, setHelpButton] = useState<TutorialHelpButtonConfig | null>(null);
-  const [contaAberta, setContaAberta] = useState(false);
   const [recolhida, setRecolhida] = useState(false);
   const navigate = useNavigate();
-  const fecharConta = useCallback(() => setContaAberta(false), []);
 
   // Contrato pequeno de propósito: lançar leva à tela de Lançamentos com o
   // formulário aberto. O "Lançar" da barra lateral e o "+" do celular chamam isto.
@@ -52,12 +50,10 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
     <TutorialHelpContext.Provider value={{ helpButton, setHelpButton }}>
       <AcaoPrincipalProvider>
         <div className="min-h-screen bg-page text-fg">
-          <TopBar onAbrirConta={() => setContaAberta(true)} userName={userName} userEmail={userEmail} />
+          <TopBar onLogout={onLogout} />
           <Sidebar
             onLogout={onLogout}
             onLancar={abrirLancamento}
-            aberta={contaAberta}
-            onFechar={fecharConta}
             recolhida={recolhida}
             onRecolher={setRecolhida}
             userName={userName}
