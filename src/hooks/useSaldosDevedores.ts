@@ -213,8 +213,8 @@ export function useSaldosDevedores({
   };
 
   // Registrar pagamento de dívida
-  const handlePagamento = async (dividaId: string, contaId?: string) => {
-    const valor = parseCurrency(valorPagamento);
+  const handlePagamento = async (dividaId: string, contaId?: string, valorDireto?: number, silencioso = false) => {
+    const valor = valorDireto ?? parseCurrency(valorPagamento);
     if (valor <= 0) {
       setModalFeedback({
         show: true,
@@ -286,7 +286,7 @@ export function useSaldosDevedores({
       setValorPagamento("");
       setObsPagamento("");
       setShowPagamento(null);
-      setModalFeedback({
+      if (!silencioso) setModalFeedback({
         show: true,
         titulo: "Sucesso",
         tipo: "sucesso",
@@ -609,7 +609,7 @@ export function useSaldosDevedores({
         titulo: "Fechamento desfeito",
         mensagem: `O fechamento do mês de ${pessoa} foi desfeito. Os pagamentos parciais foram removidos.${
           fechamento.saldoDevedorId 
-            ? ` A cobrança de ${formatCurrency(fechamento.valorDevedor)} saiu de Em aberto.` 
+            ? ` A cobrança de ${formatCurrency(fechamento.valorDevedor)} saiu de Cobranças.` 
             : ""
         }`,
         tipo: "info",

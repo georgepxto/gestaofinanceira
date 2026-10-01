@@ -25,7 +25,7 @@ const GASTOS_TUTORIAL_STEPS: GastosTutorialStep[] = [
     alvo: "Cabeçalho da aba",
     titulo: "Do mês",
     descricao:
-      "Nesta tela você acompanha os valores emprestados no mês, com foco no que ainda precisa receber.",
+      "O que você emprestou ou dividiu no mês escolhido, item por item. Quanto cada pessoa deve no total fica em Pessoas.",
     placement: "below",
   },
   {
@@ -63,7 +63,7 @@ const GASTOS_TUTORIAL_STEPS: GastosTutorialStep[] = [
     alvo: "Filtros",
     titulo: "Filtros inteligentes",
     descricao:
-      "Filtre os lançamentos por devedor, tipo (crédito/débito) e dia para encontrar rapidamente o que precisa.",
+      "Filtre por pessoa, tipo e dia. Escolhendo uma pessoa, aparece o mês dela com as ações de pagar e fechar o mês.",
   },
   {
     target: "[data-tour='gastos-lista']",
@@ -182,7 +182,7 @@ export const GastosPage = () => {
       <PageHeader
         data-tour="gastos-header"
         title="Do mês"
-        description="O que você emprestou neste mês, organizado por pessoa."
+        description="O que você emprestou ou dividiu no mês, item por item."
         action={
           <div className={classeAcoesCabecalho} data-tour="gastos-actions">
             <SeletorMes data-tour="gastos-navegacao-mes" />

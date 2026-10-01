@@ -111,8 +111,10 @@ export function usePagamentosParciais({
   );
 
   // Adicionar pagamento parcial
-  const handleAddPagamentoParcial = async (pessoa: string, contaId?: string) => {
-    const valor = parseCurrency(valorPagamentoParcial);
+  // `valorDireto` e `silencioso`: o pagamento de Pessoas divide um valor entre
+  // o mês e as cobranças e mostra um aviso só no fim.
+  const handleAddPagamentoParcial = async (pessoa: string, contaId?: string, valorDireto?: number, silencioso = false) => {
+    const valor = valorDireto ?? parseCurrency(valorPagamentoParcial);
     if (valor <= 0) {
       setError("Valor de pagamento inválido.");
       return;
@@ -123,7 +125,7 @@ export function usePagamentosParciais({
     const jaPago = getTotalPagoParcial(pessoa);
     const restante = totalDevido - jaPago;
 
-    if (valor > restante) {
+    if (valor > restante + 0.009) {
       setError(`O valor não pode ser maior que ${formatCurrency(restante)}.`);
       return;
     }
@@ -165,7 +167,7 @@ export function usePagamentosParciais({
       setShowPagamentoParcial(null);
       setError(null);
 
-      toast.success(`${pessoa} pagou ${formatCurrency(valor)}.\nFalta: ${formatCurrency(restante - valor)}`);
+      if (!silencioso) toast.success(`${pessoa} pagou ${formatCurrency(valor)}.\nFalta: ${formatCurrency(restante - valor)}`);
     } finally {
       setSaving(false);
     }

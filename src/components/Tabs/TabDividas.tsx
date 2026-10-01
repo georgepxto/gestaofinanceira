@@ -13,6 +13,7 @@ import { Pill } from "../ui/Pill";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
+import { useAppContext } from "../../context";
 
 interface TabDividasProps {
   saldosDevedores: SaldoDevedor[];
@@ -52,6 +53,7 @@ export function TabDividas({
   children,
 }: TabDividasProps) {
   const pendentes = filtroStatusDivida === "pendentes";
+  const { setShowFormDivida } = useAppContext();
 
   const trocarStatus = (status: "pendentes" | "pagos") => {
     setFiltroStatusDivida(status);
@@ -69,6 +71,21 @@ export function TabDividas({
       return temNoStatus ? { valor: pessoa, rotulo: <>{pessoa} <span className="valor text-xs text-fg-3">{formatCurrency(valor)}</span></> } : null;
     })
     .filter((f): f is { valor: string; rotulo: JSX.Element } => f !== null);
+
+  // Nenhuma cobrança ainda: um aviso e uma ação, em vez de um R$ 0,00 grande,
+  // abas e filtros vazios.
+  if (saldosDevedores.length === 0) {
+    return (
+      <Surface as="section" data-tour="dividas-total-card">
+        <EmptyState
+          Icone={Inbox}
+          frase="Nenhuma cobrança ainda."
+          detalhe="Aparecem aqui as dívidas que você cadastra e o que sobra quando fecha o mês de alguém em Do mês."
+          acao={<Button onClick={() => setShowFormDivida(true)}>Nova cobrança</Button>}
+        />
+      </Surface>
+    );
+  }
 
   return (
     <div className="space-y-6 md:space-y-8">

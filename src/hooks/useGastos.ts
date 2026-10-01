@@ -33,6 +33,8 @@ export function useGastos({
   const [gastos, setGastos] = useState<Gasto[]>([]);
   const [parcelasAtivas, setParcelasAtivas] = useState<ParcelaAtiva[]>([]);
   const [resumoMensal, setResumoMensal] = useState<ResumoMensal[]>([]);
+  const [parcelasDoMes, setParcelasDoMes] = useState<ParcelaAtiva[]>([]);
+  const [resumoDoMes, setResumoDoMes] = useState<ResumoMensal[]>([]);
   const [totalMes, setTotalMes] = useState<number>(0);
   const [showForm, setShowForm] = useState<boolean>(false);
   const [editandoGasto, setEditandoGasto] = useState<Gasto | null>(null);
@@ -126,6 +128,10 @@ export function useGastos({
   // Recalcular parcelas ativas quando muda o mês, os gastos ou os filtros
   useEffect(() => {
     let parcelas = getParcelasAtivas(gastos, mesVisualizacao);
+    // O mês inteiro, sem os filtros da tela Do mês: Pessoas e os pagamentos
+    // não podem mudar de número porque alguém filtrou a lista.
+    setParcelasDoMes(parcelas);
+    setResumoDoMes(calcularResumoMensal(parcelas));
     
     // Apply filters
     if (filtroPessoaGasto) {
@@ -339,6 +345,8 @@ export function useGastos({
     gastos,
     parcelasAtivas,
     resumoMensal,
+    parcelasDoMes,
+    resumoDoMes,
     totalMes,
     showForm,
     setShowForm,

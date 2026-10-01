@@ -77,7 +77,7 @@ export const FormGastoModal: React.FC<FormGastoModalProps> = ({
         />
       </Campo>
 
-      <Campo rotulo="Pessoa" dica="Cadastre pessoas em A receber, Por pessoa.">
+      <Campo rotulo="Pessoa" dica="Cadastre pessoas em A receber, Pessoas.">
         {pessoas.length > 0 ? (
           <Chips>
             {pessoas.map((p) => (

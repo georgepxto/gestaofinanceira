@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Trash2, Banknote, Users } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAppContext } from "../context";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageHeader } from "../components/ui/PageHeader";
-import { SeletorMes } from "../components/ui/SeletorMes";
 import { useGuidedTour, usePageTutorialHelpButton, useIsMobile } from "../hooks";
 import { formatCurrency } from "../utils/calculations";
 import { formatPercent } from "../utils/dinheiro";
+import { pendenciasDaPessoa } from "../utils/receber";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { Button } from "../components/ui/Button";
 import { Avatar } from "../components/ui/Avatar";
@@ -18,9 +18,10 @@ import { AnimatedNumber } from "../components/ui/AnimatedNumber";
 import { Surface, SurfaceHeader } from "../components/ui/Surface";
 import { ListGroup, ListRow } from "../components/ui/ListRow";
 import { ProgressBar } from "../components/ui/ProgressBar";
-import { Pill } from "../components/ui/Pill";
 import { EmptyState } from "../components/ui/EmptyState";
+import { PainelDetalhe } from "../components/ui/PainelDetalhe";
 import { FormSheet, Campo, campoClasse } from "../components/ui/FormSheet";
+import { RegistrarPagamento } from "../components/receber/RegistrarPagamento";
 import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
 
 interface DevedoresTutorialStep {
@@ -31,63 +32,53 @@ interface DevedoresTutorialStep {
   placement?: "above" | "below";
 }
 
-const DEVEDORES_TUTORIAL_KEY = "devedores_tutorial_seen_v1";
+const DEVEDORES_TUTORIAL_KEY = "devedores_tutorial_seen_v2";
 
 const DEVEDORES_TUTORIAL_STEPS: DevedoresTutorialStep[] = [
   {
     target: "[data-tour='devedores-header']",
     alvo: "Cabeçalho da aba",
-    titulo: "Por pessoa",
+    titulo: "Pessoas",
     descricao:
-      "Aqui você gerencia pessoas com valores em aberto e compara o que cada uma deve de uma olhada.",
+      "Quanto cada pessoa te deve no total: o que falta do mês mais as cobranças em aberto. Sempre o mês de hoje.",
     placement: "below",
   },
   {
     target: "[data-tour='devedores-btn-novo']",
-    alvo: "Botão Novo Devedor",
+    alvo: "Botão Nova pessoa",
     titulo: "Adicionar pessoa",
-    descricao:
-      "Use este botão para cadastrar um novo devedor e começar a acompanhar os valores pendentes dele.",
+    descricao: "Cadastre quem divide gastos com você ou pega dinheiro emprestado.",
     placement: "below",
   },
   {
-    target: "[data-tour='devedores-mes']",
-    alvo: "Navegação mensal",
-    titulo: "Troca de período",
-    descricao:
-      "Altere o mês para comparar empréstimos e dívidas pendentes em diferentes períodos.",
-  },
-  {
     target: "[data-tour='devedores-resumo-total']",
-    alvo: "Resumo total",
-    titulo: "Panorama geral",
-    descricao:
-      "O que te devem no total, o que você emprestou neste mês e o que já voltou. Cada número conta uma coisa: não some.",
+    alvo: "Resumo",
+    titulo: "Panorama",
+    descricao: "O total que te devem e quem deve mais.",
   },
   {
     target: "[data-tour='devedores-lista']",
-    alvo: "Comparativo por pessoa",
-    titulo: "Comparativo por pessoa",
+    alvo: "Lista de pessoas",
+    titulo: "Quem te deve",
     descricao:
-      "Cada pessoa mostra o que está em aberto e quanto do mês já pagou. Toque na linha para ver os itens.",
+      "Toque numa pessoa para ver o que ela pegou neste mês, as cobranças e os pagamentos — e registrar um pagamento.",
   },
   {
     target: "[data-tour='devedores-item-acoes']",
     alvo: "Ações por pessoa",
     titulo: "Ações rápidas",
-    descricao:
-      "No menu da linha você registra pagamentos e exclui o devedor.",
+    descricao: "No menu da linha você registra um pagamento ou exclui a pessoa.",
   },
   {
     target: "[data-tour='devedores-help-button']",
     alvo: "Botão de ajuda",
     titulo: "Rever tutorial",
-    descricao:
-      "Toque no (?) para ver este guia de novo.",
+    descricao: "Toque no (?) para ver este guia de novo.",
   },
 ];
 
 export const PessoasPage = () => {
+  const ctx = useAppContext();
   const {
     pessoas,
     novaPessoa,
@@ -95,21 +86,32 @@ export const PessoasPage = () => {
     handleAddPessoa,
     handleRemovePessoa,
     setModalConfirm,
-    resumoMensal,
     saldosDevedores,
-    parcelasAtivas,
-    getTotalPagoParcial,
-    isMesFechado,
-    setShowPagamentoParcial,
+    getPagamentosParciais,
     mesVisualizacao,
-  } = useAppContext();
+    irParaHoje,
+    setFiltroPessoaGasto,
+    setFiltroPessoaDivida,
+    setFiltroStatusDivida,
+  } = ctx;
+  const navigate = useNavigate();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [pessoaExpandida, setPessoaExpandida] = useState<string | null>(null);
+  const [pessoaAberta, setPessoaAberta] = useState<string | null>(null);
+  const [pagando, setPagando] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  // "Novo devedor" é o botão laranja desta tela no desktop.
+  // "Nova pessoa" é o botão laranja desta tela no desktop.
   useAcaoPrincipalDaPagina(!isMobile);
+
+  // Pessoas é sempre hoje: o total de cada um usa o mês corrente, então a tela
+  // não tem seletor de mês e volta para o mês atual ao abrir.
+  useEffect(() => {
+    if (format(mesVisualizacao, "yyyy-MM") !== format(new Date(), "yyyy-MM")) irParaHoje();
+    // Só ao abrir a tela.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const {
     viewportSize,
     showTutorial,
@@ -131,8 +133,8 @@ export const PessoasPage = () => {
 
   usePageTutorialHelpButton({
     onClick: openTutorial,
-    title: "Ver tutorial de Por pessoa",
-    ariaLabel: "Ver tutorial de Por pessoa",
+    title: "Ver tutorial de Pessoas",
+    ariaLabel: "Ver tutorial de Pessoas",
     dataTour: "devedores-help-button",
   });
 
@@ -156,39 +158,43 @@ export const PessoasPage = () => {
     });
   };
 
-  // Estoque × fluxo, nunca somados: dívida em aberto é saldo acumulado;
-  // empréstimos do mês são o fluxo do período.
-  const getEstatisticasPessoa = (nome: string) => {
-    const resumoPessoa = resumoMensal.find((r) => r.pessoa === nome);
-    const dividasPendentes = saldosDevedores.filter((d) => d.pessoa === nome && d.valor_atual > 0);
+  const mesNome = format(mesVisualizacao, "MMMM", { locale: ptBR });
+  const linhas = pessoas
+    .map((nome) => ({ nome, p: pendenciasDaPessoa(nome, ctx) }))
+    .sort((a, b) => b.p.total - a.p.total || a.nome.localeCompare(b.nome));
+  const totalGeral = linhas.reduce((s, l) => s + l.p.total, 0);
+  const devendo = linhas.filter((l) => l.p.total > 0);
+  const maior = devendo[0];
 
-    const emprestimosMes = resumoPessoa?.total || 0;
-    const qtdItensMes = resumoPessoa?.quantidade || 0;
-    const dividaAberta = dividasPendentes.reduce((sum, d) => sum + d.valor_atual, 0);
-    const qtdCobrancas = dividasPendentes.length;
-    const pagoMes = getTotalPagoParcial(nome);
-    const quitada = emprestimosMes > 0 && pagoMes >= emprestimosMes;
-    const fechado = isMesFechado(nome);
+  const aberta = linhas.find((l) => l.nome === pessoaAberta) ?? null;
 
-    return { emprestimosMes, qtdItensMes, dividaAberta, qtdCobrancas, dividasPendentes, pagoMes, quitada, fechado };
+  // Pagamentos recebidos da pessoa: os do mês e os das cobranças, do mais novo
+  // para o mais antigo.
+  const recebidos = (nome: string) => {
+    const doMes = getPagamentosParciais(nome).map((pg, i) => {
+      const [d, m, a] = (pg.data || "").split("/");
+      return { chave: `m${i}`, data: a ? `${a}-${m}-${d}` : pg.data, valor: pg.valor, origem: `empréstimos de ${mesNome}` };
+    });
+    const deCobrancas = saldosDevedores
+      .filter((s) => s.pessoa === nome)
+      .flatMap((s) => (s.historico || []).map((h) => ({ chave: `c${h.id}`, data: h.data, valor: h.valor, origem: s.descricao })));
+    return [...doMes, ...deCobrancas].sort((x, y) => (y.data || "").localeCompare(x.data || "")).slice(0, 8);
+  };
+  const dataCurta = (iso: string) => {
+    const [a, m, d] = (iso || "").split("-").map(Number);
+    return a && m && d ? format(new Date(a, m - 1, d), "d 'de' MMM", { locale: ptBR }) : iso;
   };
 
-  const totalEmprestimosMes = resumoMensal.reduce((sum, r) => sum + r.total, 0);
-  const pessoasComEmprestimos = resumoMensal.filter((r) => r.total > 0).length;
-  const totalDividasGeral = saldosDevedores
-    .filter((d) => d.valor_atual > 0)
-    .reduce((sum, d) => sum + d.valor_atual, 0);
-  const pessoasComDivida = new Set(saldosDevedores.filter((d) => d.valor_atual > 0).map((d) => d.pessoa)).size;
-  const totalRecebidoMes = pessoas.reduce((sum, p) => sum + getTotalPagoParcial(p), 0);
-
-  const pessoasOrdenadas = [...pessoas].sort(
-    (a, b) => getEstatisticasPessoa(b).dividaAberta - getEstatisticasPessoa(a).dividaAberta
-  );
-
-  const mesNome = format(mesVisualizacao, "MMMM", { locale: ptBR });
-
-  const toggleExpand = (nome: string) => {
-    setPessoaExpandida(pessoaExpandida === nome ? null : nome);
+  const verEmDoMes = (nome: string) => {
+    setFiltroPessoaGasto(nome);
+    setPessoaAberta(null);
+    navigate("/a-receber/mes");
+  };
+  const verEmCobrancas = (nome: string) => {
+    setFiltroStatusDivida("pendentes");
+    setFiltroPessoaDivida(nome);
+    setPessoaAberta(null);
+    navigate("/a-receber/aberto");
   };
 
   return (
@@ -196,170 +202,79 @@ export const PessoasPage = () => {
       {/* HEADER_PAGINA */}
       <PageHeader
         data-tour="devedores-header"
-        title="Por pessoa"
-        description="Quem deve o quê, de uma olhada."
-        nota="Dívida em aberto é o que te devem no total, somando todos os meses. Empréstimos do mês contam só este mês. Não some os dois."
+        title="Pessoas"
+        description="Quanto cada pessoa te deve, somando o mês e as cobranças."
         action={
-          <>
-            <SeletorMes data-tour="devedores-mes" />
-            <Button
-              variante={isMobile ? "secundario" : "principal"}
-              onClick={() => setShowAddForm(true)}
-              data-tour="devedores-btn-novo"
-              icone={<Plus className="w-4 h-4" strokeWidth={1.75} />}
-            >
-              Novo devedor
-            </Button>
-          </>
+          <Button
+            variante={isMobile ? "secundario" : "principal"}
+            onClick={() => setShowAddForm(true)}
+            data-tour="devedores-btn-novo"
+            icone={<Plus className="w-4 h-4" strokeWidth={1.75} />}
+          >
+            Nova pessoa
+          </Button>
         }
       />
 
-      {/* FAIXA_RESUMO — estoque e fluxo lado a lado, nunca somados */}
       <KpiStrip data-tour="devedores-resumo-total">
         <Kpi
-          rotulo="Dívidas em aberto"
-          valor={<AnimatedNumber valor={totalDividasGeral} className="text-[20px]" />}
-          meta={`${pessoasComDivida} ${pessoasComDivida === 1 ? "pessoa" : "pessoas"}`}
+          rotulo="Te devem no total"
+          valor={<AnimatedNumber valor={totalGeral} className="text-[20px]" />}
+          meta={devendo.length === 0 ? "ninguém deve nada" : `${devendo.length} ${devendo.length === 1 ? "pessoa" : "pessoas"}`}
         />
-        <Kpi
-          rotulo={`Empréstimos de ${mesNome}`}
-          valor={<AnimatedNumber valor={totalEmprestimosMes} className="text-[20px]" />}
-          meta={`${pessoasComEmprestimos} ${pessoasComEmprestimos === 1 ? "pessoa" : "pessoas"}`}
-        />
-        <Kpi
-          rotulo="Recebido no mês"
-          valor={<AnimatedNumber valor={totalRecebidoMes} className="text-[20px]" />}
-          meta="pagamentos registrados"
-        />
+        {maior && (
+          <Kpi
+            rotulo="Quem deve mais"
+            valor={<AnimatedNumber valor={maior.p.total} className="text-[20px]" />}
+            meta={maior.nome}
+          />
+        )}
       </KpiStrip>
 
-      {/* Uma linha por pessoa, ordenada pela dívida em aberto */}
       <Surface as="section" data-tour="devedores-lista">
-        <SurfaceHeader titulo="Pessoas" descricao="Da maior dívida em aberto para a menor." className="mb-1" />
+        <SurfaceHeader titulo="Quem te deve" descricao="Abra uma pessoa para ver o que ela pegou, as cobranças e os pagamentos." className="mb-1" />
 
         {pessoas.length === 0 ? (
           <EmptyState
             Icone={Users}
-            frase="Nenhum devedor cadastrado."
-            acao={<Button onClick={() => setShowAddForm(true)}>Novo devedor</Button>}
+            frase="Nenhuma pessoa cadastrada."
+            acao={<Button onClick={() => setShowAddForm(true)}>Nova pessoa</Button>}
           />
         ) : (
           <ListGroup>
-            {pessoasOrdenadas.map((pessoa) => {
-              const stats = getEstatisticasPessoa(pessoa);
-              const isExpanded = pessoaExpandida === pessoa;
-              const parcelasPessoa = parcelasAtivas.filter((p) => p.gasto.pessoa === pessoa);
-              // Só a dívida em aberto (saldo): somar o fluxo do mês daria um
-              // número sem significado. O mês aparece na barra, embaixo.
-              const emAberto = stats.dividaAberta;
-
+            {linhas.map(({ nome, p }) => {
+              const partes = [
+                p.mes.falta > 0 && `${formatCurrency(p.mes.falta)} de ${mesNome}`,
+                p.emCobrancas > 0 && `${formatCurrency(p.emCobrancas)} em ${p.cobrancas.length === 1 ? "cobrança" : "cobranças"}`,
+              ].filter(Boolean);
               return (
                 <ListRow
-                  key={pessoa}
+                  key={nome}
                   dataTour="devedores-item-acoes"
-                  iconeCru={<Avatar nome={pessoa} />}
-                  titulo={pessoa}
-                  meta={
-                    <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                      <span>
-                        {stats.qtdItensMes} {stats.qtdItensMes === 1 ? "item" : "itens"} no mês · {stats.qtdCobrancas}{" "}
-                        {stats.qtdCobrancas === 1 ? "cobrança" : "cobranças"}
-                      </span>
-                      {stats.fechado ? <Pill>fechado</Pill> : stats.quitada ? <Pill>quitada</Pill> : null}
-                    </span>
-                  }
-                  valor={formatCurrency(emAberto)}
-                  subvalor="em aberto"
-                  pago={emAberto === 0 && (stats.quitada || stats.fechado)}
-                  onAbrir={() => toggleExpand(pessoa)}
-                  expandido={isExpanded}
+                  iconeCru={<Avatar nome={nome} />}
+                  titulo={nome}
+                  meta={partes.length > 0 ? partes.join(" · ") : "não deve nada"}
+                  valor={formatCurrency(p.total)}
+                  subvalor={p.total > 0 ? "deve no total" : undefined}
+                  pago={p.total === 0}
+                  onAbrir={() => setPessoaAberta(nome)}
                   acoes={[
-                    {
-                      rotulo: "Registrar pagamento",
-                      icone: <Banknote className="w-4 h-4" strokeWidth={1.5} />,
-                      onClick: () => setShowPagamentoParcial(pessoa),
-                    },
-                    // Sem a trava de "sobrar uma": a última pessoa também sai.
+                    ...(p.total > 0
+                      ? [
+                          {
+                            rotulo: "Registrar pagamento",
+                            icone: <Banknote className="w-4 h-4" strokeWidth={1.5} />,
+                            onClick: () => setPagando(nome),
+                          },
+                        ]
+                      : []),
                     {
                       rotulo: "Excluir",
                       icone: <Trash2 className="w-4 h-4" strokeWidth={1.5} />,
-                      onClick: () => handleDelete(pessoa),
+                      onClick: () => handleDelete(nome),
                       tom: "perigo" as const,
                     },
                   ]}
-                  rodape={
-                    <div className="pl-12 space-y-3">
-                      {stats.emprestimosMes > 0 && (
-                        <div>
-                          <ProgressBar
-                            progresso
-                            valor={stats.pagoMes}
-                            maximo={stats.emprestimosMes}
-                            rotulo={`${pessoa} pagou ${formatPercent(stats.pagoMes / stats.emprestimosMes)} do mês`}
-                          />
-                          <p className="mt-1.5 text-xs text-fg-2">
-                            pagou <span className="valor">{formatCurrency(stats.pagoMes)}</span> de{" "}
-                            <span className="valor">{formatCurrency(stats.emprestimosMes)}</span> do mês
-                          </p>
-                        </div>
-                      )}
-
-                      {isExpanded && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 pt-1">
-                          <ListGroup titulo="Cobranças em aberto">
-                            {stats.dividasPendentes.length === 0 ? (
-                              <li className="py-3 text-sm text-fg-2 list-none">Nenhuma cobrança em aberto.</li>
-                            ) : (
-                              stats.dividasPendentes.map((d) => {
-                                const pago = Math.max(d.valor_original - d.valor_atual, 0);
-                                return (
-                                  <ListRow
-                                    key={d.id}
-                                    titulo={d.descricao}
-                                    meta={`pago ${formatCurrency(pago)} de ${formatCurrency(d.valor_original)}`}
-                                    valor={formatCurrency(d.valor_atual)}
-                                    rodape={
-                                      <ProgressBar
-                                        progresso
-                                        valor={pago}
-                                        maximo={d.valor_original}
-                                        rotulo={`${d.descricao}: ${formatPercent(d.valor_original > 0 ? pago / d.valor_original : 0)} pago`}
-                                      />
-                                    }
-                                  />
-                                );
-                              })
-                            )}
-                          </ListGroup>
-                          <ListGroup titulo={`Empréstimos de ${mesNome}`}>
-                            {parcelasPessoa.length === 0 ? (
-                              <li className="py-3 text-sm text-fg-2 list-none">Nenhum empréstimo neste mês.</li>
-                            ) : (
-                              parcelasPessoa.map(({ gasto, parcela_atual, valor_parcela }) => (
-                                <ListRow
-                                  key={gasto.id}
-                                  titulo={gasto.descricao}
-                                  meta={`parcela ${parcela_atual}/${gasto.num_parcelas} · total ${formatCurrency(gasto.valor_total)}`}
-                                  valor={formatCurrency(valor_parcela)}
-                                />
-                              ))
-                            )}
-                          </ListGroup>
-                          <div className="md:col-span-2 flex items-center gap-2 flex-wrap pt-3">
-                            <Button tamanho="sm" onClick={() => setShowPagamentoParcial(pessoa)}>
-                              Registrar pagamento
-                            </Button>
-                            <Link
-                              to="/a-receber/mes"
-                              className="h-11 md:h-9 px-3 inline-flex items-center text-sm text-fg-2 hover:text-fg transition-colors"
-                            >
-                              Ver lançamentos
-                            </Link>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  }
                 />
               );
             })}
@@ -367,16 +282,138 @@ export const PessoasPage = () => {
         )}
       </Surface>
 
-      {/* Novo devedor */}
+      {/* A pessoa: o que pegou no mês, as cobranças e o que já pagou. */}
+      <PainelDetalhe
+        aberto={!!aberta}
+        titulo={aberta?.nome ?? ""}
+        resumo={
+          aberta &&
+          (aberta.p.total > 0 ? (
+            <>
+              deve <span className="valor text-fg">{formatCurrency(aberta.p.total)}</span> no total
+            </>
+          ) : (
+            "não deve nada"
+          ))
+        }
+        onFechar={() => setPessoaAberta(null)}
+      >
+        {aberta && (
+          <div className="py-4 space-y-6">
+            {aberta.p.total > 0 && (
+              <Button variante="principal" cheio onClick={() => setPagando(aberta.nome)} icone={<Banknote className="w-4 h-4" strokeWidth={1.5} />}>
+                Registrar pagamento
+              </Button>
+            )}
+
+            <section>
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-sm text-fg capitalize">{mesNome}</h3>
+                <button type="button" onClick={() => verEmDoMes(aberta.nome)} className="text-xs text-fg-2 hover:text-fg underline underline-offset-2 transition-colors min-h-[44px] md:min-h-0">
+                  Ver em Do mês
+                </button>
+              </div>
+              {aberta.p.mes.itens.length === 0 ? (
+                <p className="mt-2 text-sm text-fg-2">Nada emprestado ou dividido neste mês.</p>
+              ) : (
+                <>
+                  <ul className="mt-1 divide-y divide-line">
+                    {aberta.p.mes.itens.map(({ gasto, parcela_atual, valor_parcela }) => (
+                      <li key={gasto.id} className="flex items-baseline justify-between gap-4 py-2.5">
+                        <span className="min-w-0">
+                          <span className="block text-sm text-fg break-words">{gasto.descricao}</span>
+                          {gasto.num_parcelas > 1 && (
+                            <span className="block text-xs text-fg-3 mt-0.5">parcela {parcela_atual}/{gasto.num_parcelas}</span>
+                          )}
+                        </span>
+                        <span className="valor text-sm text-fg shrink-0">{formatCurrency(valor_parcela)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-xs text-fg-2">
+                    {aberta.p.mes.fechado ? (
+                      "Mês fechado: o que faltava foi para Cobranças."
+                    ) : aberta.p.mes.falta > 0 ? (
+                      <>
+                        pagou <span className="valor">{formatCurrency(aberta.p.mes.pago)}</span> de{" "}
+                        <span className="valor">{formatCurrency(aberta.p.mes.total)}</span> · falta{" "}
+                        <span className="valor text-fg">{formatCurrency(aberta.p.mes.falta)}</span>
+                      </>
+                    ) : (
+                      "Pagou tudo deste mês."
+                    )}
+                  </p>
+                </>
+              )}
+            </section>
+
+            <section>
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-sm text-fg">Cobranças em aberto</h3>
+                {aberta.p.cobrancas.length > 0 && (
+                  <button type="button" onClick={() => verEmCobrancas(aberta.nome)} className="text-xs text-fg-2 hover:text-fg underline underline-offset-2 transition-colors min-h-[44px] md:min-h-0">
+                    Ver em Cobranças
+                  </button>
+                )}
+              </div>
+              {aberta.p.cobrancas.length === 0 ? (
+                <p className="mt-2 text-sm text-fg-2">Nenhuma cobrança em aberto.</p>
+              ) : (
+                <ul className="mt-1 divide-y divide-line">
+                  {aberta.p.cobrancas.map((c) => {
+                    const pago = Math.max(c.valor_original - c.valor_atual, 0);
+                    return (
+                      <li key={c.id} className="py-2.5">
+                        <div className="flex items-baseline justify-between gap-4">
+                          <span className="text-sm text-fg break-words min-w-0">{c.descricao}</span>
+                          <span className="valor text-sm text-fg shrink-0">{formatCurrency(c.valor_atual)}</span>
+                        </div>
+                        {pago > 0 && (
+                          <div className="mt-2">
+                            <ProgressBar progresso valor={pago} maximo={c.valor_original} rotulo={`${c.descricao}: ${formatPercent(pago / c.valor_original)} pago`} />
+                            <p className="mt-1 text-xs text-fg-3">
+                              pagou <span className="valor">{formatCurrency(pago)}</span> de <span className="valor">{formatCurrency(c.valor_original)}</span>
+                            </p>
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+
+            {recebidos(aberta.nome).length > 0 && (
+              <section>
+                <h3 className="text-sm text-fg">Pagamentos recebidos</h3>
+                <ul className="mt-1 divide-y divide-line">
+                  {recebidos(aberta.nome).map((r) => (
+                    <li key={r.chave} className="flex items-baseline justify-between gap-4 py-2.5">
+                      <span className="min-w-0 text-xs text-fg-2 break-words">
+                        {dataCurta(r.data)} · {r.origem}
+                      </span>
+                      <span className="valor text-sm text-fg shrink-0">+{formatCurrency(r.valor)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </div>
+        )}
+      </PainelDetalhe>
+
+      <RegistrarPagamento pessoa={pagando} onFechar={() => setPagando(null)} />
+
+      {/* Nova pessoa */}
       <FormSheet
         aberto={showAddForm}
-        titulo="Novo devedor"
+        titulo="Nova pessoa"
         onFechar={() => {
           setShowAddForm(false);
           setNovaPessoa("");
         }}
         onEnviar={handleAdd}
-        rotuloEnviar="Adicionar devedor"
+        rotuloEnviar="Adicionar pessoa"
         enviando={adding}
         podeEnviar={!!novaPessoa.trim()}
       >

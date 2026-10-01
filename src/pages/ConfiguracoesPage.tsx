@@ -204,35 +204,44 @@ export const ConfiguracoesPage = () => {
 
     setResetingAccount(true);
     try {
+      // Em ordem de dependência, uma de cada vez: primeiro o que aponta para
+      // outra tabela, por último contas e cartões. Apagando tudo em paralelo,
+      // a conta podia falhar por ainda ter gastos ligados a ela — e o Zerar
+      // dizia "pronto" deixando a conta e a receita para trás.
       const tables = [
-        "gastos",
-        "pessoas",
-        "saldos_devedores",
-        "meus_gastos",
-        "observacoes_mes",
-        "pagamentos_parciais",
-        "contas_bancarias",
-        "receitas",
-        "cartoes_credito",
-        "transacoes_cartao",
+        "receitas_confirmacoes",
         "pagamentos_fatura",
+        "transacoes_cartao",
+        "pagamentos_parciais",
+        "observacoes_mes",
+        "saldos_devedores",
+        "gastos",
+        "meus_gastos",
+        "receitas",
         "metas_gasto",
         "categorias_usuario",
-        "receitas_confirmacoes",
+        "pessoas",
+        "cartoes_credito",
+        "contas_bancarias",
       ];
 
-      await Promise.all(
-        tables.map((table) =>
-          supabase!.from(table).delete().eq("user_id", user.id)
-        )
-      );
+      const falhas: string[] = [];
+      for (const table of tables) {
+        const { error } = await supabase.from(table).delete().eq("user_id", user.id);
+        // Tabela de migração ainda não rodada: não há o que apagar.
+        const tabelaNaoExiste = error && (error.code === "42P01" || error.code === "PGRST205" || /does not exist|Could not find the table/i.test(error.message));
+        if (error && !tabelaNaoExiste) falhas.push(table);
+      }
+      if (falhas.length > 0) {
+        throw new Error(`Não foi possível apagar tudo (${falhas.join(", ")}). Tente de novo.`);
+      }
 
       // Zerar é recomeçar como quem acabou de criar a conta: as boas-vindas e
       // os primeiros passos voltam, e o que o navegador lembrava sai também.
       await recomecarOnboarding();
       try {
         Object.keys(localStorage)
-          .filter((k) => k.endsWith("_tutorial_seen_v1") || k === "hedge_categorias_recentes_v1" || k === "meusGastos" || k === "saldosDevedores")
+          .filter((k) => /_tutorial_seen_v\d+$/.test(k) || k === "hedge_categorias_recentes_v1" || k === "meusGastos" || k === "saldosDevedores")
           .forEach((k) => localStorage.removeItem(k));
       } catch {
         /* sem armazenamento: nada a limpar */

@@ -1,5 +1,8 @@
 import { Pencil, Trash2, CreditCard, Wallet, Undo2, MessageSquare, CheckCircle, Banknote, Receipt } from "lucide-react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useAppContext } from "../../context";
+import { Button } from "../ui/Button";
 import { PageErrorState, PageLoadingState } from "../ui/AsyncState";
 import type { ParcelaAtiva, ResumoMensal } from "../../types";
 import type { PagamentoParcial } from "../../types/extended";
@@ -8,9 +11,8 @@ import { formatPercent, rotuloDia } from "../../utils/dinheiro";
 import { toActionableErrorMessage } from "../../utils/feedbackMessages";
 import { KpiStrip, Kpi } from "../ui/KpiStrip";
 import { AnimatedNumber } from "../ui/AnimatedNumber";
-import { Valor } from "../ui/Valor";
 import { Surface, SurfaceHeader } from "../ui/Surface";
-import { ListGroup, ListRow, type Acao } from "../ui/ListRow";
+import { ListGroup, ListRow } from "../ui/ListRow";
 import { ProgressBar } from "../ui/ProgressBar";
 import { Pill } from "../ui/Pill";
 import { Avatar } from "../ui/Avatar";
@@ -82,6 +84,11 @@ export function TabGastos({
   const totalRecebido = resumoMensal.reduce((sum, r) => sum + getTotalPagoParcial(r.pessoa), 0);
   const totalAReceber = Math.max(totalMes - totalRecebido, 0);
   const mesChave = format(mesVisualizacao, "yyyy-MM");
+  const nomeMes = format(mesVisualizacao, "MMMM", { locale: ptBR });
+  // Os chips de pessoa mostram o total do mês de cada uma — sem os filtros.
+  const { resumoDoMes } = useAppContext();
+  const totalDoMes = (pessoa: string) => resumoDoMes.find((r) => r.pessoa === pessoa)?.total || 0;
+  const resumoPessoa = filtroPessoaGasto ? resumoDoMes.find((r) => r.pessoa === filtroPessoaGasto) : undefined;
 
   // Lançamentos por dia do mês na tela (a parcela cai no mesmo dia da primeira).
   const porDia: { dia: number; parcelas: ParcelaAtiva[] }[] = [];
@@ -110,138 +117,116 @@ export function TabGastos({
       {/* FAIXA_RESUMO */}
       <KpiStrip data-tour="gastos-resumo-cards">
         <Kpi
-          rotulo="A receber"
-          data-tour="gastos-card-total"
-          valor={<AnimatedNumber valor={totalAReceber} className="text-[20px]" />}
-          meta="falta entrar neste mês"
-        />
-        <Kpi
-          rotulo="Emprestado"
+          rotulo={`Emprestado em ${nomeMes}`}
           valor={<AnimatedNumber valor={totalMes} className="text-[20px]" />}
           meta={`${parcelasAtivas.length} ${parcelasAtivas.length === 1 ? "lançamento" : "lançamentos"}`}
         />
-        <Kpi rotulo="Recebido" valor={<AnimatedNumber valor={totalRecebido} className="text-[20px]" />} meta="pagamentos do período" />
-        <Kpi rotulo="Devedores" valor={<Valor porte="medio">{resumoMensal.length}</Valor>} meta="com lançamentos no mês" />
+        <Kpi rotulo="Recebido" valor={<AnimatedNumber valor={totalRecebido} className="text-[20px]" />} meta={`pagamentos de ${nomeMes}`} />
+        <Kpi
+          rotulo="Falta receber"
+          data-tour="gastos-card-total"
+          valor={<AnimatedNumber valor={totalAReceber} className="text-[20px]" />}
+          meta={`só de ${nomeMes}`}
+        />
       </KpiStrip>
 
-      {/* Uma linha por pessoa, com o estado do mês e as ações num menu */}
-      {resumoMensal.length > 0 && (
-        <Surface as="section">
-          <SurfaceHeader titulo="Por pessoa" className="mb-1" />
-          <ListGroup>
-            {resumoMensal.map((resumo) => {
-              const obs = observacoesMes[getObsKey(resumo.pessoa)];
-              const pagamentos = getPagamentosParciais(resumo.pessoa);
-              const totalPago = getTotalPagoParcial(resumo.pessoa);
-              const restante = resumo.total - totalPago;
-              const temPagamentos = pagamentos.length > 0;
-              const estaQuitado = temPagamentos && restante <= 0;
-              const estaFechado = isMesFechado(resumo.pessoa);
-              const mesFechadoData = getMesFechado(resumo.pessoa);
-              const quitadoOuFechadoSemDivida =
-                estaQuitado || (estaFechado && !!mesFechadoData && mesFechadoData.valorDevedor === 0);
-
-              const acoes = ([
-                ...(!estaQuitado && !estaFechado
-                  ? [
-                      {
-                        rotulo: "Registrar pagamento",
-                        icone: <Banknote className="w-4 h-4" strokeWidth={1.5} />,
-                        onClick: () => {
-                          setShowPagamentoParcial(resumo.pessoa);
-                          setValorPagamentoParcial("");
-                        },
-                      },
-                    ]
-                  : []),
-                {
-                  rotulo: obs ? "Editar observação" : "Adicionar observação",
-                  icone: <MessageSquare className="w-4 h-4" strokeWidth={1.5} />,
-                  onClick: () => handleAbrirObs(resumo.pessoa),
-                },
-                ...(temPagamentos
-                  ? [
-                      {
-                        rotulo: "Desfazer último pagamento",
-                        icone: <Undo2 className="w-4 h-4" strokeWidth={1.5} />,
-                        onClick: () => handleDesfazerPagamentoParcial(resumo.pessoa),
-                      },
-                    ]
-                  : []),
-                estaFechado
-                  ? {
-                      rotulo: "Desfazer fechamento",
-                      icone: <Undo2 className="w-4 h-4" strokeWidth={1.5} />,
-                      onClick: () => handleDesfazerFechamento(resumo.pessoa),
-                    }
-                  : !estaQuitado
-                    ? {
-                        rotulo: "Fechar mês",
-                        icone: <CheckCircle className="w-4 h-4" strokeWidth={1.5} />,
-                        onClick: () => {
-                          setShowFecharMes(resumo.pessoa);
-                          setValorPagoFecharMes("");
-                        },
-                      }
-                    : null,
-              ] as (Acao | null)[]).filter((a): a is Acao => a !== null);
-
-              return (
-                <ListRow
-                  key={resumo.pessoa}
-                  iconeCru={<Avatar nome={resumo.pessoa} />}
-                  titulo={resumo.pessoa}
-                  meta={
-                    <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                      <span>
-                        {resumo.quantidade} {resumo.quantidade === 1 ? "item" : "itens"}
-                      </span>
-                      {quitadoOuFechadoSemDivida ? (
-                        <Pill>quitado</Pill>
-                      ) : estaFechado ? (
-                        <Pill>fechado</Pill>
-                      ) : temPagamentos ? (
-                        <Pill tom="atencao">parcial</Pill>
-                      ) : (
-                        <Pill tom="atencao">em aberto</Pill>
-                      )}
-                    </span>
-                  }
-                  valor={formatCurrency(Math.max(restante, 0))}
-                  subvalor="a receber"
-                  pago={quitadoOuFechadoSemDivida}
-                  acoes={acoes}
-                  rodape={
-                    <div className="pl-12 space-y-2">
-                      <ProgressBar
-                        progresso
-                        valor={totalPago}
-                        maximo={resumo.total}
-                        rotulo={`${resumo.pessoa} pagou ${formatPercent(resumo.total > 0 ? totalPago / resumo.total : 0)}`}
-                      />
-                      <p className="text-xs text-fg-2">
-                        {estaFechado && mesFechadoData && mesFechadoData.valorDevedor > 0 ? (
-                          <>
-                            mês fechado · <span className="valor">{formatCurrency(mesFechadoData.valorDevedor)}</span> foi para cobranças
-                          </>
-                        ) : temPagamentos ? (
-                          <>
-                            pagou <span className="valor">{formatCurrency(totalPago)}</span> de{" "}
-                            <span className="valor">{formatCurrency(resumo.total)}</span>
-                          </>
-                        ) : (
-                          "nenhum pagamento registrado"
-                        )}
-                      </p>
-                      {obs && <p className="text-xs text-fg-3 whitespace-pre-wrap break-words">{obs}</p>}
-                    </div>
-                  }
-                />
-              );
-            })}
-          </ListGroup>
-        </Surface>
-      )}
+      {/* Filtrando uma pessoa: o mês dela e as ações do mês (pagar, fechar).
+          A lista de todas as pessoas mora em Pessoas — aqui não se repete. */}
+      {filtroPessoaGasto && resumoPessoa && (() => {
+        const pessoa = filtroPessoaGasto;
+        const obs = observacoesMes[getObsKey(pessoa)];
+        const pagamentos = getPagamentosParciais(pessoa);
+        const totalPago = getTotalPagoParcial(pessoa);
+        const restante = resumoPessoa.total - totalPago;
+        const temPagamentos = pagamentos.length > 0;
+        const estaQuitado = temPagamentos && restante <= 0.009;
+        const estaFechado = isMesFechado(pessoa);
+        const mesFechadoData = getMesFechado(pessoa);
+        return (
+          <Surface as="section" data-tour="gastos-pessoa">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar nome={pessoa} />
+                <div className="min-w-0">
+                  <p className="text-[15px] md:text-sm text-fg break-words">{pessoa} em {nomeMes}</p>
+                  <p className="text-xs text-fg-2 mt-0.5">
+                    {resumoPessoa.quantidade} {resumoPessoa.quantidade === 1 ? "item" : "itens"}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="valor text-fg">{formatCurrency(Math.max(restante, 0))}</p>
+                <p className="text-xs text-fg-2 mt-0.5">{estaFechado ? "mês fechado" : estaQuitado ? "quitado" : "falta"}</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <ProgressBar
+                progresso
+                valor={totalPago}
+                maximo={resumoPessoa.total}
+                rotulo={`${pessoa} pagou ${formatPercent(resumoPessoa.total > 0 ? totalPago / resumoPessoa.total : 0)}`}
+              />
+              <p className="mt-1.5 text-xs text-fg-2">
+                {estaFechado && mesFechadoData && mesFechadoData.valorDevedor > 0 ? (
+                  <>
+                    <span className="valor">{formatCurrency(mesFechadoData.valorDevedor)}</span> foi para Cobranças
+                  </>
+                ) : (
+                  <>
+                    pagou <span className="valor">{formatCurrency(totalPago)}</span> de{" "}
+                    <span className="valor">{formatCurrency(resumoPessoa.total)}</span>
+                  </>
+                )}
+              </p>
+              {obs && <p className="mt-1 text-xs text-fg-3 whitespace-pre-wrap break-words">{obs}</p>}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {!estaQuitado && !estaFechado && (
+                <Button
+                  tamanho="sm"
+                  icone={<Banknote className="w-4 h-4" strokeWidth={1.5} />}
+                  onClick={() => {
+                    setShowPagamentoParcial(pessoa);
+                    setValorPagamentoParcial("");
+                  }}
+                >
+                  Registrar pagamento do mês
+                </Button>
+              )}
+              {estaFechado ? (
+                <Button tamanho="sm" variante="fantasma" icone={<Undo2 className="w-4 h-4" strokeWidth={1.5} />} onClick={() => handleDesfazerFechamento(pessoa)}>
+                  Desfazer fechamento
+                </Button>
+              ) : (
+                !estaQuitado && (
+                  <Button
+                    tamanho="sm"
+                    variante="secundario"
+                    icone={<CheckCircle className="w-4 h-4" strokeWidth={1.5} />}
+                    onClick={() => {
+                      setShowFecharMes(pessoa);
+                      setValorPagoFecharMes("");
+                    }}
+                  >
+                    Fechar mês
+                  </Button>
+                )
+              )}
+              {temPagamentos && !estaFechado && (
+                <Button tamanho="sm" variante="fantasma" icone={<Undo2 className="w-4 h-4" strokeWidth={1.5} />} onClick={() => handleDesfazerPagamentoParcial(pessoa)}>
+                  Desfazer último pagamento
+                </Button>
+              )}
+              <Button tamanho="sm" variante="fantasma" icone={<MessageSquare className="w-4 h-4" strokeWidth={1.5} />} onClick={() => handleAbrirObs(pessoa)}>
+                {obs ? "Editar observação" : "Observação"}
+              </Button>
+            </div>
+            {!estaFechado && !estaQuitado && (
+              <p className="mt-3 text-xs text-fg-3">Fechar o mês encerra {nomeMes}: o que faltar vira uma cobrança em Cobranças.</p>
+            )}
+          </Surface>
+        );
+      })()}
 
       {loading && <PageLoadingState compact title="Carregando lançamentos" />}
 
@@ -258,12 +243,17 @@ export function TabGastos({
           />
 
           <div className="space-y-2 mb-2" data-tour="gastos-filtros">
+            {pessoas.length > 0 && (
             <FilterChips
               rotulo="Filtrar por devedor"
-              filtros={[{ valor: "", rotulo: "Todos" }, ...pessoas.map((p) => ({ valor: p, rotulo: p }))]}
+              filtros={[
+                { valor: "", rotulo: "Todos" },
+                ...pessoas.map((p) => ({ valor: p, rotulo: totalDoMes(p) > 0 ? `${p} · ${formatCurrency(totalDoMes(p))}` : p })),
+              ]}
               ativo={filtroPessoaGasto}
               onChange={setFiltroPessoaGasto}
             />
+            )}
             <FilterChips
               rotulo="Filtrar por tipo"
               filtros={[

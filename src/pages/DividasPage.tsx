@@ -22,9 +22,9 @@ const DIVIDAS_TUTORIAL_STEPS: DividasTutorialStep[] = [
   {
     target: "[data-tour='dividas-header']",
     alvo: "Cabeçalho da aba",
-    titulo: "Em aberto",
+    titulo: "Cobranças",
     descricao:
-      "Aqui você acompanha tudo que ainda precisam te pagar e organiza a cobrança por status e pessoa.",
+      "As dívidas que ficaram: as que você cadastrou e o resto dos meses fechados. Não dependem de mês.",
     placement: "below",
   },
   {
@@ -122,8 +122,8 @@ export const DividasPage = () => {
 
   usePageTutorialHelpButton({
     onClick: openTutorial,
-    title: "Ver tutorial de Em aberto",
-    ariaLabel: "Ver tutorial de Em aberto",
+    title: "Ver tutorial de Cobranças",
+    ariaLabel: "Ver tutorial de Cobranças",
     dataTour: "dividas-help-button",
   });
 
@@ -132,8 +132,8 @@ export const DividasPage = () => {
       {/* HEADER_PAGINA */}
       <PageHeader
         data-tour="dividas-header"
-        title="Em aberto"
-        description="O que ainda precisam te pagar, com o progresso de cada cobrança."
+        title="Cobranças"
+        description="Dívidas que ficaram, sem mês: as que você cadastrou e o resto dos meses fechados."
         action={
           <Button
             variante={isMobile ? "secundario" : "principal"}

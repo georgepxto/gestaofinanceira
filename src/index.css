@@ -74,11 +74,11 @@
   /* Chegada que desacelera até parar: o traço da navegação, o destaque das
      abas e a tela que entra usam a mesma curva e o mesmo tempo. */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur-viagem: 460ms;
+  --dur-viagem: 320ms;
   /* O traço da navegação e o destaque das abas deslizam com uma curva mais
      longa: o olho acompanha o caminho em vez de ver um salto. */
   --ease-viagem: cubic-bezier(0.22, 1, 0.36, 1);
-  --dur-traco: 560ms;
+  --dur-traco: 440ms;
 
   color-scheme: dark;
 }
@@ -330,12 +330,12 @@ input[type="date"]::-webkit-date-and-time-value {
   animation: tela-entra var(--dur-viagem) var(--ease-out-expo) backwards;
 }
 
-.tela[data-direcao="frente"] { --tela-x: 28px; }
-.tela[data-direcao="tras"] { --tela-x: -28px; }
+.tela[data-direcao="frente"] { --tela-x: 20px; }
+.tela[data-direcao="tras"] { --tela-x: -20px; }
 
 @media (min-width: 768px) {
-  .tela[data-direcao="frente"] { --tela-x: 0; --tela-y: 14px; }
-  .tela[data-direcao="tras"] { --tela-x: 0; --tela-y: -14px; }
+  .tela[data-direcao="frente"] { --tela-x: 0; --tela-y: 10px; }
+  .tela[data-direcao="tras"] { --tela-x: 0; --tela-y: -10px; }
 }
 
 /* O traço da navegação e o papel das abas: deslizam (transform) e ajustam o

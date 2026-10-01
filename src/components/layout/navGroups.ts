@@ -51,8 +51,8 @@ export const NAV_GROUPS: NavGroup[] = [
     icon: Coins,
     prefix: "/a-receber",
     items: [
-      { path: "/a-receber/pessoas", label: "Por pessoa", feature: "pessoas", icon: Users },
-      { path: "/a-receber/aberto", label: "Em aberto", feature: "saldo_devedor", icon: Hourglass },
+      { path: "/a-receber/pessoas", label: "Pessoas", feature: "pessoas", icon: Users },
+      { path: "/a-receber/aberto", label: "Cobranças", feature: "saldo_devedor", icon: Hourglass },
       { path: "/a-receber/mes", label: "Do mês", feature: "gastos_compartilhados", icon: CalendarDays },
     ],
   },

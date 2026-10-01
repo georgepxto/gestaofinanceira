@@ -100,7 +100,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  const NavItem = ({ path, label, Icone }: { path: string; label: string; Icone: LucideIcon }) => {
+  // Dois níveis, para dar para ver o que é seção e o que é aba:
+  // - topo (Início, Configurações e o nome das seções): ícone + nome;
+  // - aba de uma seção: só o nome, recuado para começar onde o nome da seção
+  //   começa. Recolhida, tudo vira ícone, e o fio separa as seções.
+  const NavItem = ({ path, label, Icone, topo = false }: { path: string; label: string; Icone: LucideIcon; topo?: boolean }) => {
     const ativo = isPathActive(path);
     return (
       <NavLink
@@ -110,13 +114,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }}
         title={recolhida ? label : undefined}
         aria-current={ativo ? "page" : undefined}
-        className={`flex items-center min-h-[44px] md:min-h-[36px] px-4 text-[15px] md:text-sm transition-colors duration-300 ${
-          ativo ? "text-fg" : "text-fg-2 hover:text-fg"
-        } ${recolhida ? "md:justify-center md:px-0" : ""}`}
+        className={`flex items-center gap-3 min-h-[44px] md:min-h-[36px] text-[15px] md:text-sm transition-colors duration-300 ${
+          ativo ? "text-fg font-medium" : "text-fg-2 hover:text-fg"
+        } ${recolhida ? "md:justify-center md:px-0" : topo ? "px-4" : "pl-[46px] pr-4"}`}
       >
-        {/* Recolhida, o item vira ícone; expandida, é só o nome. */}
         <Icone
-          className={`hidden w-[18px] h-[18px] ${recolhida ? "md:block" : ""}`}
+          className={`w-[18px] h-[18px] shrink-0 ${topo || recolhida ? "block" : "hidden"}`}
           strokeWidth={1.5}
           aria-hidden="true"
         />
@@ -125,9 +128,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
-  const GroupLabel = ({ children }: { children: React.ReactNode }) => (
+  const GroupLabel = ({ children, Icone, para }: { children: React.ReactNode; Icone: LucideIcon; para: string }) => (
     <>
-      <p className={`px-4 pt-5 pb-1 text-xs text-fg-3 ${recolhida ? "md:sr-only" : ""}`}>{children}</p>
+      {/* A seção: ícone + nome em peso médio, acima das abas recuadas. Clicar
+          leva à primeira aba — parece link, então funciona como link. */}
+      <NavLink
+        to={para}
+        tabIndex={-1}
+        className={`group flex items-center gap-3 px-4 pt-5 pb-1 min-h-[36px] text-sm font-medium text-fg hover:text-fg-2 transition-colors ${recolhida ? "md:sr-only" : ""}`}
+      >
+        <Icone className="w-[18px] h-[18px] shrink-0 text-fg-3" strokeWidth={1.5} aria-hidden="true" />
+        {children}
+      </NavLink>
       {/* Recolhida, o nome do grupo vira um fio entre os blocos de ícones. */}
       {recolhida && <span className="hidden md:block mx-5 my-2 h-px bg-line" aria-hidden="true" />}
     </>
@@ -209,10 +221,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           className="relative hidden md:flex md:flex-1 min-h-0 overflow-y-auto py-2 flex-col"
           onScroll={medirIndicador}
         >
-          {(isAdmin || features.dashboard) && <NavItem path="/" label="Início" Icone={Home} />}
+          {(isAdmin || features.dashboard) && <NavItem path="/" label="Início" Icone={Home} topo />}
           {visibleGroups.map((group) => (
             <div key={group.label} className="flex flex-col">
-              <GroupLabel>{group.label}</GroupLabel>
+              <GroupLabel Icone={group.icon} para={group.items[0].path}>{group.label}</GroupLabel>
               {group.items.map((item) => (
                 <NavItem key={item.path} path={item.path} label={item.label} Icone={item.icon} />
               ))}
@@ -222,8 +234,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Rodapé: configurações e usuário */}
         <div className="relative shrink-0 mt-auto md:mt-0 py-3 flex flex-col">
-          {isAdmin && <NavItem path="/admin" label="Admin" Icone={ShieldCheck} />}
-          {showConfiguracoes && <NavItem path="/configuracoes" label="Configurações" Icone={Settings} />}
+          {isAdmin && <NavItem path="/admin" label="Admin" Icone={ShieldCheck} topo />}
+          {showConfiguracoes && <NavItem path="/configuracoes" label="Configurações" Icone={Settings} topo />}
 
           <div className={`flex items-center gap-3 mt-2 px-4 min-h-[48px] ${recolhida ? "md:justify-center md:px-0" : ""}`}>
             <Avatar nome={userName || userEmail} tamanho={32} />

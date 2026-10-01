@@ -45,6 +45,7 @@ import {
   type DadosFatura,
 } from "../utils/fatura";
 import { comAbertura, salvarCartao } from "../utils/cartaoAbertura";
+import { ouvirDadosMudaram } from "../utils/onboarding";
 import { CamposDoBanco, erroDoBanco } from "../components/cartoes/CamposDoBanco";
 
 /** "2026-09-29" como data local — `new Date(string)` leria em UTC e voltaria um dia. */
@@ -229,6 +230,16 @@ export const CartoesCreditoPage = () => {
         .finally(() => setLoading(false));
     }
   }, [user, fetchCartoes, fetchTransacoes, fetchContas, fetchMeusGastos, fetchGastosCompartilhados, fetchPagamentosFatura]);
+
+  // Gasto lançado por cima desta tela (o "Lançar" global): a fatura e o limite
+  // se atualizam sem sair daqui.
+  useEffect(
+    () => ouvirDadosMudaram(() => {
+      fetchMeusGastos();
+      fetchGastosCompartilhados();
+    }),
+    [fetchMeusGastos, fetchGastosCompartilhados]
+  );
   const {
     viewportSize,
     showTutorial,
@@ -652,8 +663,22 @@ export const CartoesCreditoPage = () => {
         }
       />
 
+      {/* Nenhum cartão: um aviso e uma ação. Sem seletor de "Todos", sem
+          fatura e limite zerados — pareciam dado quebrado. */}
+      {cartoesState.length === 0 && (
+        <Surface as="section">
+          <EmptyState
+            Icone={CreditCard}
+            frase="Nenhum cartão ainda."
+            detalhe="Cadastre um cartão para ver a fatura de cada mês e quanto do limite já foi usado."
+            acao={<Button onClick={abrirNovoCartao}>Novo cartão</Button>}
+          />
+        </Surface>
+      )}
+
       {/* Seletor de cartões: retângulos com o ponto do banco. No celular rola
           na horizontal com snap, e o próximo cartão aparece pela metade. */}
+      {cartoesState.length > 0 && (
       <div
         className="sem-barra -mx-4 px-4 md:mx-0 md:px-0 scroll-px-4 flex gap-2 overflow-x-auto snap-x snap-mandatory"
         data-tour="cartoes-lista"
@@ -694,8 +719,10 @@ export const CartoesCreditoPage = () => {
         ))}
       </div>
 
+      )}
+
       {/* Todos: faturas em aberto e o limite somado de todos os cartões */}
-      {cartaoSelecionado === null && (
+      {cartaoSelecionado === null && cartoesState.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 items-start">
           <div className="space-y-6">
             <BalanceHero

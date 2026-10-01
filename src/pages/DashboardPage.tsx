@@ -626,7 +626,10 @@ export const DashboardPage = () => {
         ]
       : []),
     ...(pode("contas_bancarias") ? [{ rotulo: "Nova receita", Icone: Wallet, to: "/carteira/contas?receita=1" }] : []),
-    ...(pode("cartoes_credito") ? [{ rotulo: "Pagar fatura", Icone: CreditCard, to: "/carteira/cartoes?pagar=1" }] : []),
+    // Sem cartão não há fatura para pagar: o atalho leva a lugar nenhum.
+    ...(pode("cartoes_credito") && inicioDeConta.temCartao
+      ? [{ rotulo: "Pagar fatura", Icone: CreditCard, to: "/carteira/cartoes?pagar=1" }]
+      : []),
   ];
 
   const semConta = inicioDeConta.contas.length === 0;
@@ -700,10 +703,6 @@ export const DashboardPage = () => {
 
       <ConfirmarEntradas itens={pendentes} contas={inicioDeConta.contas} onResponder={setPedidoResposta} />
 
-      {mostrarPassos && (
-        <PrimeirosPassos passos={passos} onDispensar={() => marcarOnboarding(onboarding, { passosDispensados: true })} />
-      )}
-
       {/* 2. Saldo de hoje — o que está nas contas agora — e 3. atalhos. */}
       <BalanceHero
         rotulo="Saldo hoje"
@@ -723,6 +722,12 @@ export const DashboardPage = () => {
           </div>
         )}
       </BalanceHero>
+
+      {/* Primeiros passos logo abaixo do saldo, numa linha: progresso e o
+          próximo passo. A resposta da tela (o saldo) vem antes. */}
+      {mostrarPassos && (
+        <PrimeirosPassos passos={passos} onDispensar={() => marcarOnboarding(onboarding, { passosDispensados: true })} />
+      )}
 
       {/* 4. O fim do mês: saldo de hoje + o que entra − o que sai. */}
       {previsao && inicioDeConta.contas.length > 0 && <ExtratoPrevisao previsao={previsao} dataTour="previsao" />}

@@ -296,7 +296,7 @@ function AppContent() {
                 <Route path="*" element={<Navigate to={features.meus_gastos ? "lancamentos" : "metas"} replace />} />
               </Route>
             )}
-            {/* A receber — Por pessoa + Em aberto + Do mês */}
+            {/* A receber — Pessoas + Cobranças + Do mês */}
             {(features.gastos_compartilhados || features.saldo_devedor || features.pessoas) && (
               <Route path="/a-receber" element={<NaRuaPage />}>
                 {features.pessoas && <Route path="pessoas" element={<PessoasPage />} />}

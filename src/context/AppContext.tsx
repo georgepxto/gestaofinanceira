@@ -71,6 +71,9 @@ interface AppContextType {
   // Gastos
   parcelasAtivas: ParcelaAtiva[];
   resumoMensal: ResumoMensal[];
+  /** O mês inteiro, sem os filtros de Do mês (Pessoas e pagamentos). */
+  parcelasDoMes: ParcelaAtiva[];
+  resumoDoMes: ResumoMensal[];
   totalMes: number;
   showForm: boolean;
   setShowForm: (show: boolean) => void;
@@ -100,7 +103,7 @@ interface AppContextType {
   savingPagParcial: boolean;
   getPagamentosParciais: (pessoa: string) => PagamentoParcial[];
   getTotalPagoParcial: (pessoa: string) => number;
-  handleAddPagamentoParcial: (pessoa: string, contaId?: string) => Promise<void>;
+  handleAddPagamentoParcial: (pessoa: string, contaId?: string, valorDireto?: number, silencioso?: boolean) => Promise<void>;
   handleDesfazerPagamentoParcial: (pessoa: string) => void;
 
   // Saldos Devedores
@@ -133,7 +136,7 @@ interface AppContextType {
   totalDividasQuitadas: number;
   pessoasComDividas: string[];
   handleAddDivida: () => Promise<void>;
-  handlePagamento: (dividaId: string, contaId?: string) => Promise<void>;
+  handlePagamento: (dividaId: string, contaId?: string, valorDireto?: number, silencioso?: boolean) => Promise<void>;
   handleDesfazerPagamento: (dividaId: string, pagamentoId: string, valor: number) => void;
   handleDeleteDivida: (id: string) => void;
   handleFecharMes: (pessoa: string, contaId?: string) => Promise<void>;
@@ -240,6 +243,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const {
     parcelasAtivas,
     resumoMensal,
+    parcelasDoMes,
+    resumoDoMes,
     totalMes,
     showForm,
     setShowForm,
@@ -284,7 +289,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     getObsKey,
     setModalConfirm,
     setModalFeedback,
-    resumoMensal,
+    resumoMensal: resumoDoMes,
     setError: setErrorGastos,
   });
 
@@ -328,7 +333,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   } = useSaldosDevedores({
     user,
     mesVisualizacao,
-    resumoMensal,
+    resumoMensal: resumoDoMes,
     getTotalPagoParcial,
     getObsKey,
     getMesAtual,
@@ -434,6 +439,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Gastos
     parcelasAtivas,
     resumoMensal,
+    parcelasDoMes,
+    resumoDoMes,
     totalMes,
     showForm,
     setShowForm,

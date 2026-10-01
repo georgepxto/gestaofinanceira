@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, Suspense } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
+import { useAppContext } from "../../context";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { NotificationBell } from "./NotificationBell";
@@ -24,11 +25,12 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail }) => {
   const [helpButton, setHelpButton] = useState<TutorialHelpButtonConfig | null>(null);
   const [recolhida, setRecolhida] = useState(false);
-  const navigate = useNavigate();
 
-  // Contrato pequeno de propósito: lançar leva à tela de Lançamentos com o
-  // formulário aberto. O "Lançar" da barra lateral e o "+" do celular chamam isto.
-  const abrirLancamento = () => navigate("/gastos/lancamentos?novo=1");
+  // O "Lançar" da barra lateral e o "+" do celular abrem o formulário de gasto
+  // por cima da tela atual — ele vive no App, acima das rotas. Antes levavam
+  // para Lançamentos, e cancelar deixava a pessoa longe de onde estava.
+  const { setShowFormMeuGasto } = useAppContext();
+  const abrirLancamento = () => setShowFormMeuGasto(true);
 
   // Para que lado a tela nova entra: o mesmo para onde o traço da navegação
   // andou. Passada a chegada, volta a "nenhuma" — aí o esqueleto que vira
@@ -42,7 +44,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
     rotaAnterior.current = pathname;
     if (de === para) return;
     setDirecao(para > de ? "frente" : "tras");
-    const t = window.setTimeout(() => setDirecao("nenhuma"), 700);
+    const t = window.setTimeout(() => setDirecao("nenhuma"), 500);
     return () => window.clearTimeout(t);
   }, [pathname]);
 
