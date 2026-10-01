@@ -56,7 +56,7 @@ const GASTOS_TUTORIAL_STEPS: GastosTutorialStep[] = [
     alvo: "Cards de resumo",
     titulo: "Resumo do mês",
     descricao:
-      "Veja o total do mês e os cartões por devedor com status de pagamento, fechamento e observações.",
+      "O total do mês e uma linha por pessoa, com o que já pagou, observações e o fechamento do mês.",
   },
   {
     target: "[data-tour='gastos-filtros']",
@@ -84,7 +84,7 @@ const GASTOS_TUTORIAL_STEPS: GastosTutorialStep[] = [
     alvo: "Botão de ajuda",
     titulo: "Rever tutorial",
     descricao:
-      "Clique no (?) para abrir novamente esta explicação da aba Empréstimos do Mês.",
+      "Toque no (?) para ver este guia de novo.",
   },
 ];
 

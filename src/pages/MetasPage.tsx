@@ -74,7 +74,7 @@ const METAS_TUTORIAL_STEPS: MetasTutorialStep[] = [
     alvo: "Botão de ajuda",
     titulo: "Rever tutorial",
     descricao:
-      "Clique no (?) para abrir novamente este guia da aba Metas de Gasto.",
+      "Toque no (?) para ver este guia de novo.",
   },
 ];
 

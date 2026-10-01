@@ -37,7 +37,7 @@ const MEUS_GASTOS_TUTORIAL_STEPS: MeuGastoTutorialStep[] = [
     alvo: "Ações rápidas",
     titulo: "Botões principais",
     descricao:
-      "Nesta área você abre novo gasto, quita fatura em lote e exporta PDF quando disponível.",
+      "Aqui você lança um gasto novo e exporta o mês em PDF.",
     placement: "below",
   },
   {
@@ -45,7 +45,7 @@ const MEUS_GASTOS_TUTORIAL_STEPS: MeuGastoTutorialStep[] = [
     alvo: "Botão Novo",
     titulo: "Cadastrar gasto",
     descricao:
-      "Use este botão para lançar um novo gasto pessoal, fixo, dividido ou dívida.",
+      "Lance um gasto pessoal, dividido ou fixo. Escolha a conta de onde ele sai para entrar no saldo.",
     placement: "below",
   },
   // No mobile este passo é substituído pelo do `+` da barra inferior — ver
@@ -63,7 +63,7 @@ const MEUS_GASTOS_TUTORIAL_STEPS: MeuGastoTutorialStep[] = [
     alvo: "Resumo financeiro",
     titulo: "Cards de totais",
     descricao:
-      "Veja rapidamente os totais de crédito, débito, pagos e gastos fixos do mês selecionado.",
+      "Os totais do mês: crédito (pela fatura), débito, o que já foi pago e os fixos.",
   },
   {
     target: "[data-tour='eu-filtro-categoria']",
@@ -84,7 +84,7 @@ const MEUS_GASTOS_TUTORIAL_STEPS: MeuGastoTutorialStep[] = [
     alvo: "Gastos fixos",
     titulo: "Controle de fixos",
     descricao:
-      "Aqui você edita, pausa, reativa ou desativa gastos recorrentes mensalmente.",
+      "O que sai todo mês. No menu de cada um: pausar um mês, editar, desativar ou excluir. Mudar o valor não altera os meses que já passaram.",
   },
   {
     target: "[data-tour='eu-lista-gastos']",
@@ -105,7 +105,7 @@ const MEUS_GASTOS_TUTORIAL_STEPS: MeuGastoTutorialStep[] = [
     alvo: "Botão de ajuda",
     titulo: "Rever tutorial",
     descricao:
-      "Clique no (?) sempre que quiser abrir novamente esta explicação da aba Meus Gastos.",
+      "Toque no (?) para ver este guia de novo.",
   },
 ];
 

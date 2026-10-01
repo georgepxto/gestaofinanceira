@@ -61,14 +61,14 @@ const CARTOES_TUTORIAL_STEPS: CartoesTutorialStep[] = [
     alvo: "Lista de cartões",
     titulo: "Seleção de cartão",
     descricao:
-      "Escolha entre visão geral (Tudo) ou um cartão específico para entrar em detalhes da fatura.",
+      "Escolha entre a visão geral (Todos) ou um cartão específico para entrar em detalhes da fatura.",
   },
   {
     target: "[data-tour='cartoes-consolidado']",
     alvo: "Total consolidado",
     titulo: "Resumo geral",
     descricao:
-      "No modo Tudo você vê limite total, usado e disponível com barra de consumo consolidada.",
+      "Em Todos, o limite somado dos cartões: quanto já foi usado e quanto sobra.",
   },
   {
     target: "[data-tour='cartoes-limites-grid']",
@@ -103,7 +103,7 @@ const CARTOES_TUTORIAL_STEPS: CartoesTutorialStep[] = [
     alvo: "Botão de ajuda",
     titulo: "Rever tutorial",
     descricao:
-      "Clique no (?) para abrir novamente este guia da aba Cartões de Crédito.",
+      "Toque no (?) para ver este guia de novo.",
   },
 ];
 
@@ -595,6 +595,15 @@ export const CartoesCreditoPage = () => {
   const contaSugerida = (cartao: CartaoCredito) =>
     contas.find((c) => c.id === cartao.conta_id)?.id || (contas.length === 1 ? contas[0].id : "");
   const [searchParams, setSearchParams] = useSearchParams();
+  // Os primeiros passos do Início chegam com `?novo=1`: abre o formulário.
+  useEffect(() => {
+    if (loading || searchParams.get("novo") !== "1") return;
+    resetFormCartao();
+    setShowFormCartao(true);
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, searchParams]);
+
   useEffect(() => {
     if (loading || searchParams.get("pagar") !== "1") return;
     const comFatura = cartoesState.find((c) => getFaturaCartao(c.id) > 0 && !faturaQuitada(c.id));

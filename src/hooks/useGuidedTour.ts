@@ -13,6 +13,12 @@ interface UseGuidedTourOptions<T extends GuidedTourStep> {
   storageKey: string;
   /** Falso enquanto a página mostra o carregamento: os alvos ainda não existem. */
   ready?: boolean;
+  /**
+   * Abrir sozinho na primeira visita. Desligado: quem guia o começo são as
+   * boas-vindas e os primeiros passos do Início; o tutorial de cada tela fica
+   * no botão (?), para quem quiser.
+   */
+  abrirSozinho?: boolean;
 }
 
 interface GuidedTourPersistenceState {
@@ -70,6 +76,7 @@ export function useGuidedTour<T extends GuidedTourStep>({
   steps,
   storageKey,
   ready = true,
+  abrirSozinho = false,
 }: UseGuidedTourOptions<T>) {
   const [viewportSize, setViewportSize] = useState(() => ({
     width: typeof window !== "undefined" ? window.innerWidth : 0,
@@ -95,7 +102,7 @@ export function useGuidedTour<T extends GuidedTourStep>({
   }, []);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !abrirSozinho) return;
     const state = readGuidedTourState(storageKey);
     if (state.seen) return;
 
@@ -109,7 +116,7 @@ export function useGuidedTour<T extends GuidedTourStep>({
     setShowTutorial(true);
     setTutorialStepIndex(0);
     writeGuidedTourState(storageKey, { seen: true, lastStepIndex: 0 });
-  }, [ready, steps, storageKey]);
+  }, [ready, abrirSozinho, steps, storageKey]);
 
   const openTutorial = useCallback(() => {
     const availableSteps = steps.filter((step) =>

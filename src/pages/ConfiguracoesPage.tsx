@@ -16,6 +16,7 @@ import { KpiStrip, Kpi } from "../components/ui/KpiStrip";
 import { Valor } from "../components/ui/Valor";
 import { campoClasse } from "../components/ui/FormSheet";
 import { GerenciarCategorias } from "../components/GerenciarCategorias";
+import { recomecarOnboarding } from "../utils/onboarding";
 
 interface Contagens {
   lancamentos: number;
@@ -215,6 +216,7 @@ export const ConfiguracoesPage = () => {
         "transacoes_cartao",
         "pagamentos_fatura",
         "metas_gasto",
+        "categorias_usuario",
       ];
 
       await Promise.all(
@@ -223,10 +225,21 @@ export const ConfiguracoesPage = () => {
         )
       );
 
+      // Zerar é recomeçar como quem acabou de criar a conta: as boas-vindas e
+      // os primeiros passos voltam, e o que o navegador lembrava sai também.
+      await recomecarOnboarding();
+      try {
+        Object.keys(localStorage)
+          .filter((k) => k.endsWith("_tutorial_seen_v1") || k === "hedge_categorias_recentes_v1" || k === "meusGastos" || k === "saldosDevedores")
+          .forEach((k) => localStorage.removeItem(k));
+      } catch {
+        /* sem armazenamento: nada a limpar */
+      }
+
       setModalFeedback({
         show: true,
         titulo: "Dados zerados",
-        mensagem: "Todos os seus dados foram apagados e a conta foi zerada.",
+        mensagem: "Seus dados foram apagados. Você vai começar de novo, como no primeiro acesso.",
         tipo: "sucesso",
       });
 

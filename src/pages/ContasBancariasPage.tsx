@@ -59,7 +59,7 @@ const CONTAS_TUTORIAL_STEPS: ContasTutorialStep[] = [
     alvo: "Cabeçalho da aba",
     titulo: "Contas e receitas",
     descricao:
-      "Nesta tela você centraliza contas, receitas programadas e entradas do mês para controlar saldo com mais precisão.",
+      "Suas contas e o que entra nelas. O saldo de cada conta é o valor que você informou ao criar, mais o que entrou e menos o que saiu dela desde então.",
     placement: "below",
   },
   {
@@ -67,42 +67,42 @@ const CONTAS_TUTORIAL_STEPS: ContasTutorialStep[] = [
     alvo: "Navegação mensal",
     titulo: "Troca de período",
     descricao:
-      "Mude o mês para comparar receitas e evolução dos saldos entre períodos diferentes.",
+      "Mude o mês para ver as entradas e a previsão de outro mês. O saldo é sempre o de hoje.",
   },
   {
     target: "[data-tour='contas-cards']",
     alvo: "Cards de resumo",
     titulo: "Resumo rápido",
     descricao:
-      "Aqui você vê quantidade de contas, receitas do mês e saldo total consolidado.",
+      "O saldo de hoje somando todas as contas, o que já entrou neste mês e o que ainda vai entrar.",
   },
   {
     target: "[data-tour='contas-section-contas']",
     alvo: "Seção Minhas Contas",
     titulo: "Gestão de contas",
     descricao:
-      "Cadastre contas, ajuste dados e acompanhe saldo atual de cada uma com ações de editar e excluir.",
+      "O saldo de cada conta. Se não bater com o banco, edite a conta e digite o saldo de hoje: o app corrige.",
   },
   {
     target: "[data-tour='contas-btn-nova-conta']",
     alvo: "Botão Nova Conta",
     titulo: "Adicionar conta",
     descricao:
-      "Use este botão para registrar novas contas bancárias no seu controle financeiro.",
+      "Cadastre outra conta informando quanto tem nela hoje.",
   },
   {
     target: "[data-tour='contas-section-receitas']",
     alvo: "Entradas do mês",
     titulo: "Entradas do mês",
     descricao:
-      "Recebidas e previstas na mesma lista, ordenadas por dia — com receitas fixas, recorrentes e avulsas.",
+      "Recebidas e previstas, na ordem do dia. Só entra no saldo a receita com conta escolhida, no dia em que cai.",
   },
   {
     target: "[data-tour='contas-help-button']",
     alvo: "Botão de ajuda",
     titulo: "Rever tutorial",
     descricao:
-      "Clique no (?) para abrir novamente este guia da aba Contas Bancárias.",
+      "Toque no (?) para ver este guia de novo.",
   },
 ];
 

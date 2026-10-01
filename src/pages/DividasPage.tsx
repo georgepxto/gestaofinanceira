@@ -40,7 +40,7 @@ const DIVIDAS_TUTORIAL_STEPS: DividasTutorialStep[] = [
     alvo: "Card de total",
     titulo: "Resumo principal",
     descricao:
-      "O card mostra o total em aberto ou quitado, conforme o filtro de status ativo no momento.",
+      "O total do que ainda te devem, ou do que já foi quitado, conforme a escolha ao lado.",
   },
   {
     target: "[data-tour='dividas-filtro-status']",
@@ -75,7 +75,7 @@ const DIVIDAS_TUTORIAL_STEPS: DividasTutorialStep[] = [
     alvo: "Botão de ajuda",
     titulo: "Rever tutorial",
     descricao:
-      "Clique no (?) para abrir novamente este passo a passo da aba Dívidas em Aberto.",
+      "Toque no (?) para ver este guia de novo.",
   },
 ];
 

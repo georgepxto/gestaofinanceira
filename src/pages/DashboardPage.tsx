@@ -1,11 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { format, subMonths, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Plus, Users, Wallet, CreditCard, Receipt, Gauge, PieChart as IconePizza, BarChart3 } from "lucide-react";
 import { useAppContext } from "../context";
 import { fixosAindaPorSair, migrarContasLegadas, receitaNoMes, saldoDaConta, type Livro } from "../utils/saldo";
 import { gastosPessoaisDoMes, valorDaMinhaParte } from "../utils/gastosDoMes";
+import { lerOnboarding, marcarOnboarding, ouvirDadosMudaram } from "../utils/onboarding";
+import { BoasVindas } from "../components/onboarding/BoasVindas";
+import { FixosRapidos } from "../components/onboarding/FixosRapidos";
+import { ICONES_DOS_PASSOS, PrimeirosPassos, type Passo } from "../components/onboarding/PrimeirosPassos";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
 import { SeletorMes } from "../components/ui/SeletorMes";
@@ -188,6 +192,18 @@ export const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  // Primeiros passos: o que a pessoa já fez, lido dos dados.
+  const [inicioDeConta, setInicioDeConta] = useState({
+    contas: [] as ContaBancaria[],
+    temRenda: false,
+    temFixo: false,
+    temCartao: false,
+    temGasto: false,
+  });
+  const [mostrarBoasVindas, setMostrarBoasVindas] = useState(false);
+  const [mostrarFixos, setMostrarFixos] = useState(false);
+  const navigate = useNavigate();
+  const onboarding = lerOnboarding(user?.user_metadata);
   const [data, setData] = useState<DashboardData>({
     saldoTotal: 0,
     totalDevido: 0,
@@ -242,10 +258,15 @@ export const DashboardPage = () => {
     dataTour: "help-button",
   });
 
+  // O esqueleto só na primeira carga. Recargas (um lançamento novo, os
+  // primeiros passos) trocam os números no lugar, sem piscar a tela.
+  const jaCarregou = useRef(false);
+  const userId = user?.id;
+
   const fetchDashboardData = useCallback(async () => {
-    if (!supabase || !user) return;
-    
-    setLoading(true);
+    if (!supabase || !userId) return;
+
+    if (!jaCarregou.current) setLoading(true);
     setLoadError(null);
     try {
       // Buscar todos os dados em paralelo para acelerar o carregamento
@@ -283,6 +304,13 @@ export const DashboardPage = () => {
         listaContas = (migradas as ContaBancaria[]) || [];
       }
       const saldoTotal = listaContas.reduce((acc, c) => acc + saldoDaConta(c, livro), 0);
+      setInicioDeConta({
+        contas: listaContas,
+        temRenda: livro.receitas.some((r) => r.tipo !== "avulso"),
+        temFixo: todosFixos.length > 0,
+        temCartao: cartoes.length > 0,
+        temGasto: todosMeusGastos.some((g) => g.categoria !== "fixo"),
+      });
 
       // Calcular total devido (saldos devedores ativos)
       const totalDevido = (saldosDevedores as SaldoDevedor[] || [])
@@ -535,8 +563,11 @@ export const DashboardPage = () => {
       setLoadError(toActionableErrorMessage(err, "Não foi possível carregar os indicadores da dashboard."));
     } finally {
       setLoading(false);
+      jaCarregou.current = true;
     }
-  }, [user, mesVisualizacao]);
+    // Depende do id, não do objeto: gravar o onboarding no user_metadata troca
+    // o objeto do usuário e recarregava a tela inteira.
+  }, [userId, mesVisualizacao]);
 
   // Refresh ao montar o componente (quando navega de volta)
   useEffect(() => {
@@ -546,6 +577,15 @@ export const DashboardPage = () => {
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData, mesVisualizacao, refreshKey]);
+
+  // Lançamento feito pelo "+" ou pelos primeiros passos: recarrega os números.
+  useEffect(() => ouvirDadosMudaram(() => setRefreshKey((k) => k + 1)), []);
+
+  // Quem começa do zero (nenhuma conta) vê as boas-vindas uma vez.
+  useEffect(() => {
+    if (!loading && user && inicioDeConta.contas.length === 0 && !onboarding.boasVindasVista) setMostrarBoasVindas(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, inicioDeConta.contas.length, onboarding.boasVindasVista]);
 
   if (loading) {
     return (
@@ -596,6 +636,60 @@ export const DashboardPage = () => {
     ...(pode("cartoes_credito") ? [{ rotulo: "Pagar fatura", Icone: CreditCard, to: "/carteira/cartoes?pagar=1" }] : []),
   ];
 
+  const semConta = inicioDeConta.contas.length === 0;
+  const passos: Passo[] = [
+    {
+      chave: "conta",
+      titulo: "Sua conta",
+      detalhe: "Quanto tem nela hoje: é de onde o saldo parte.",
+      Icone: ICONES_DOS_PASSOS.conta,
+      feito: !semConta,
+      onFazer: () => setMostrarBoasVindas(true),
+    },
+    ...(pode("contas_bancarias")
+      ? [{
+          chave: "renda",
+          titulo: "Sua renda",
+          detalhe: semConta ? "Crie a conta primeiro: a renda entra nela." : "Salário ou o que entra todo mês, e o dia.",
+          Icone: ICONES_DOS_PASSOS.renda,
+          feito: inicioDeConta.temRenda,
+          onFazer: semConta ? undefined : () => navigate("/carteira/contas?receita=1"),
+        }]
+      : []),
+    ...(pode("meus_gastos")
+      ? [{
+          chave: "fixos",
+          titulo: "Seus gastos fixos",
+          detalhe: "Aluguel, internet, luz: o que sai todo mês.",
+          Icone: ICONES_DOS_PASSOS.fixos,
+          feito: inicioDeConta.temFixo,
+          onFazer: () => setMostrarFixos(true),
+        }]
+      : []),
+    ...(pode("cartoes_credito")
+      ? [{
+          chave: "cartao",
+          titulo: "Seu cartão de crédito",
+          detalhe: "Para acompanhar a fatura.",
+          Icone: ICONES_DOS_PASSOS.cartao,
+          feito: inicioDeConta.temCartao,
+          opcional: true,
+          onFazer: () => navigate("/carteira/cartoes?novo=1"),
+        }]
+      : []),
+    ...(pode("meus_gastos")
+      ? [{
+          chave: "gasto",
+          titulo: "Seu primeiro gasto",
+          detalhe: "Lance algo de hoje, mesmo pequeno.",
+          Icone: ICONES_DOS_PASSOS.gasto,
+          feito: inicioDeConta.temGasto,
+          onFazer: () => setShowFormMeuGasto(true),
+        }]
+      : []),
+  ];
+  const mostrarPassos = !onboarding.passosDispensados && passos.some((p) => !p.feito);
+
   const totalCategorias = data.gastosPorCategoria.reduce((acc, c) => acc + c.valor, 0);
   const topCategorias = data.gastosPorCategoria.slice(0, 6);
   const maxCategoria = Math.max(...topCategorias.map((c) => c.valor), 1);
@@ -610,6 +704,10 @@ export const DashboardPage = () => {
         <p className="text-[15px] text-fg-2">{primeiroNome ? `Olá, ${primeiroNome}` : "Olá"}</p>
         <SeletorMes data-tour="month-selector" />
       </div>
+
+      {mostrarPassos && (
+        <PrimeirosPassos passos={passos} onDispensar={() => marcarOnboarding(onboarding, { passosDispensados: true })} />
+      )}
 
       {/* 2. Saldo livre, e 3. atalhos. */}
       <BalanceHero
@@ -841,6 +939,24 @@ export const DashboardPage = () => {
           )}
         </Surface>
       </div>
+
+      {user && (
+        <BoasVindas
+          aberto={mostrarBoasVindas}
+          userId={user.id}
+          primeiroNome={primeiroNome}
+          onCriada={async () => {
+            setMostrarBoasVindas(false);
+            await marcarOnboarding(onboarding, { boasVindasVista: true });
+            setRefreshKey((k) => k + 1);
+          }}
+          onPular={() => {
+            setMostrarBoasVindas(false);
+            if (!onboarding.boasVindasVista) marcarOnboarding(onboarding, { boasVindasVista: true });
+          }}
+        />
+      )}
+      <FixosRapidos aberto={mostrarFixos} contas={inicioDeConta.contas} onFechar={() => setMostrarFixos(false)} />
 
       <GuidedTourOverlay
         show={showTutorial}

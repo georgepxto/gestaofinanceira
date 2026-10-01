@@ -83,7 +83,7 @@ const DEVEDORES_TUTORIAL_STEPS: DevedoresTutorialStep[] = [
     alvo: "Botão de ajuda",
     titulo: "Rever tutorial",
     descricao:
-      "Clique no (?) para abrir novamente esta explicação da aba Devedores.",
+      "Toque no (?) para ver este guia de novo.",
   },
 ];
 

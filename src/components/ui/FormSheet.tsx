@@ -33,6 +33,8 @@ interface FormSheetProps {
   valor?: ReactNode;
   /** Ação extra no rodapé, discreta (excluir, na edição). */
   acaoRodape?: ReactNode;
+  /** Rótulo do botão de fechar ("Pular por agora" nas boas-vindas). */
+  rotuloCancelar?: string;
   children: ReactNode;
 }
 
@@ -50,6 +52,7 @@ export function FormSheet({
   aviso,
   valor,
   acaoRodape,
+  rotuloCancelar = "Cancelar",
   children,
 }: FormSheetProps) {
   const painelRef = useFocusTrap<HTMLFormElement>(enviando ? undefined : onFechar, aberto);
@@ -164,7 +167,7 @@ export function FormSheet({
               {rotuloEnviar}
             </Button>
             <Button variante="fantasma" cheio onClick={onFechar} disabled={enviando}>
-              Cancelar
+              {rotuloCancelar}
             </Button>
             {acaoRodape}
           </div>

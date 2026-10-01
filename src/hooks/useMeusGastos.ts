@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { format, addMonths, subMonths, parseISO } from "date-fns";
 import {
   supabase,
@@ -12,6 +12,7 @@ import { PARCELAS_MAX } from "../utils/constants";
 import { normalizarCategoria } from "../utils/categories";
 import { mesDoGasto } from "../utils/gastosDoMes";
 import { inicioParaNovoRecorrente, manterSaldoAoMudar } from "../utils/saldo";
+import { avisarDadosMudaram, ouvirDadosMudaram } from "../utils/onboarding";
 import { ptBR } from "date-fns/locale";
 import { toast } from "../components/ui/Toaster";
 import { categoriaPadraoAtual } from "./useCategorias";
@@ -200,6 +201,17 @@ export function useMeusGastos({
       fetchMeusGastos();
     }
   }, [user, fetchMeusGastos]);
+
+  // Gasto criado fora deste gancho (os fixos dos primeiros passos): recarrega.
+  useEffect(() => ouvirDadosMudaram((origem) => origem !== "meusGastos" && fetchMeusGastos()), [fetchMeusGastos]);
+
+  // Toda mudança daqui avisa o Início, que recarrega os números.
+  const primeiraCarga = useRef(true);
+  useEffect(() => {
+    if (!meusGastosLoaded) return;
+    if (primeiraCarga.current) { primeiraCarga.current = false; return; }
+    avisarDadosMudaram("meusGastos");
+  }, [meusGastos, meusGastosLoaded]);
 
   // Salvar meus gastos no localStorage como backup
   useEffect(() => {
