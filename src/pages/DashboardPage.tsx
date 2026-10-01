@@ -195,6 +195,7 @@ export const DashboardPage = () => {
   // Primeiros passos: o que a pessoa já fez, lido dos dados.
   const [inicioDeConta, setInicioDeConta] = useState({
     contas: [] as ContaBancaria[],
+    cartoes: [] as CartaoCredito[],
     temRenda: false,
     temFixo: false,
     temCartao: false,
@@ -306,6 +307,7 @@ export const DashboardPage = () => {
       const saldoTotal = listaContas.reduce((acc, c) => acc + saldoDaConta(c, livro), 0);
       setInicioDeConta({
         contas: listaContas,
+        cartoes,
         temRenda: livro.receitas.some((r) => r.tipo !== "avulso"),
         temFixo: todosFixos.length > 0,
         temCartao: cartoes.length > 0,
@@ -957,7 +959,12 @@ export const DashboardPage = () => {
           }}
         />
       )}
-      <FixosRapidos aberto={mostrarFixos} contas={inicioDeConta.contas} onFechar={() => setMostrarFixos(false)} />
+      <FixosRapidos
+        aberto={mostrarFixos}
+        contas={inicioDeConta.contas}
+        cartoes={inicioDeConta.cartoes}
+        onFechar={() => setMostrarFixos(false)}
+      />
 
       <GuidedTourOverlay
         show={showTutorial}

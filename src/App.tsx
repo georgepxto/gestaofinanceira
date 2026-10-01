@@ -92,6 +92,7 @@ function AppContent() {
     resetFormGasto,
     pessoas,
     adicionarPessoa,
+    gastosFixos,
     
     // Divida form
     showFormDivida,
@@ -344,6 +345,7 @@ function AppContent() {
         contas={contas}
         pessoas={pessoas}
         onAdicionarPessoa={adicionarPessoa}
+        fixos={gastosFixos}
         onClose={() => resetFormMeuGasto()}
         onFormChange={setFormMeuGasto}
         onSubmit={handleSaveMeuGasto}

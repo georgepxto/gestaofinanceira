@@ -12,6 +12,7 @@ import {
 import { CATEGORIA_PADRAO, normalizarCategoria } from "../utils/categories";
 import { categoriaPadraoAtual } from "./useCategorias";
 import { PARCELAS_MAX } from "../utils/constants";
+import { ouvirDadosMudaram } from "../utils/onboarding";
 
 interface UseGastosProps {
   user: { id: string } | null;
@@ -93,6 +94,10 @@ export function useGastos({
       fetchGastos();
     }
   }, [user, fetchGastos]);
+
+  // Cobranças criadas fora daqui (o fixo dividido dos primeiros passos ou do
+  // formulário de gasto): recarrega para A receber não ficar desatualizado.
+  useEffect(() => ouvirDadosMudaram(() => { fetchGastos(); }), [fetchGastos]);
 
   // Sincronização em tempo real com Supabase (Realtime)
   useEffect(() => {

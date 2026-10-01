@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import type { MeuGastoForm, CartaoCredito, ContaBancaria } from "../../types";
+import type { MeuGasto, MeuGastoForm, CartaoCredito, ContaBancaria } from "../../types";
 import { useMinhaParteAutomatica } from "../../hooks";
 import { formatCurrency, parseCurrency } from "../../utils/calculations";
 import {
@@ -33,6 +33,8 @@ interface FormGastoProps {
   cartoes?: CartaoCredito[];
   contas?: ContaBancaria[];
   pessoas?: string[];
+  /** Os fixos que a pessoa já tem: avisar antes de lançar o mesmo de novo. */
+  fixos?: MeuGasto[];
   /** Cadastra uma pessoa sem sair do formulário. */
   onAdicionarPessoa?: (nome: string) => Promise<{ nome?: string; erro?: string }>;
   onClose: () => void;
@@ -64,6 +66,7 @@ export const FormGasto: React.FC<FormGastoProps> = ({
   contas = [],
   pessoas = [],
   onAdicionarPessoa,
+  fixos = [],
   onClose,
   onFormChange,
   onSubmit,
@@ -131,6 +134,13 @@ export const FormGasto: React.FC<FormGastoProps> = ({
   const dividido = formData.categoria === "dividido";
   const fixo = formData.categoria === "fixo";
   const divide = dividido || (fixo && dividirFixo);
+
+  // "Apple One" já é fixo? Lançar de novo conta duas vezes: avisa.
+  const semAcento = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+  const fixoIgual =
+    !isEditing && !fixo && semAcento(formData.descricao).length >= 3
+      ? fixos.find((g) => g.ativo !== false && semAcento(g.descricao) === semAcento(formData.descricao))
+      : undefined;
   const credito = formData.tipo === "credito";
 
   const alternarPessoa = (pessoa: string) => {
@@ -188,6 +198,11 @@ export const FormGasto: React.FC<FormGastoProps> = ({
           placeholder="Ex: mercado, Netflix, almoço"
           className={campoClasse}
         />
+        {fixoIgual && (
+          <p className="mt-1.5 text-xs text-accent-ink">
+            {fixoIgual.descricao} já está nos seus fixos e entra todo mês sozinho. Lançar aqui de novo conta duas vezes.
+          </p>
+        )}
       </Campo>
 
       <Campo rotulo="Tipo de gasto">

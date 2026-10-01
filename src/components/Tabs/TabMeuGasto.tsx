@@ -77,19 +77,20 @@ const dataLocal = (iso: string) => {
 function estadoDoFixo(gasto: MeuGasto, mes: Date, suspenso: boolean): { tom: TomPill; rotulo: string } {
   if (gasto.ativo === false) return { tom: "neutro", rotulo: "inativo" };
   if (suspenso) return { tom: "neutro", rotulo: "pausado" };
-  if (gasto.pago) return { tom: "neutro", rotulo: "pago" };
 
+  // O fixo acontece sozinho no dia (é assim que ele entra no saldo e na
+  // fatura), então o estado vem da data, não de um "pago" marcado uma vez só.
+  const feito = gasto.tipo === "credito" ? "na fatura" : "pago";
   const hoje = new Date();
-  if (isBefore(startOfMonth(mes), startOfMonth(hoje)) && !isSameMonth(mes, hoje)) {
-    return { tom: "perigo", rotulo: "vencido" };
-  }
-  if (!isSameMonth(mes, hoje)) return { tom: "neutro", rotulo: "pendente" };
+  if (isBefore(startOfMonth(mes), startOfMonth(hoje))) return { tom: "neutro", rotulo: feito };
+  if (!isSameMonth(mes, hoje)) return { tom: "neutro", rotulo: "a vencer" };
 
-  const falta = (gasto.dia_vencimento || 0) - hoje.getDate();
-  if (falta < 0) return { tom: "perigo", rotulo: "vencido" };
+  const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+  const falta = Math.min(gasto.dia_vencimento || 1, ultimoDia) - hoje.getDate();
+  if (falta < 0) return { tom: "neutro", rotulo: feito };
   if (falta === 0) return { tom: "atencao", rotulo: "vence hoje" };
   if (falta <= 3) return { tom: "atencao", rotulo: `vence em ${falta} ${falta === 1 ? "dia" : "dias"}` };
-  return { tom: "neutro", rotulo: "pendente" };
+  return { tom: "neutro", rotulo: "a vencer" };
 }
 
 interface TabMeuGastoProps {

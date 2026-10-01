@@ -280,7 +280,9 @@ export const CartoesCreditoPage = () => {
   const getTodasTransacoesDoMes = (cartaoId: string) => {
     const trans = getTransacoesDoMes(cartaoId).map(t => ({ ...t, origem: "transacao" as const }));
     const gastos = getGastosDoMes(cartaoId).map(g => ({
-      id: g.id, descricao: g.descricao, valor: g.minha_parte || g.valor, 
+      // Na fatura vai o valor cheio: é o que o banco cobra. A parte dos
+      // outros volta pelo A receber, não diminui a fatura.
+      id: g.id, descricao: g.descricao, valor: g.valor, 
       categoria: normalizarCategoria(g.categoria_gasto) || "Gasto",
       data: g.categoria === "fixo" ? format(mesVisualizacao, "yyyy-MM") + `-${String(Math.min(g.dia_vencimento || 1, new Date(mesVisualizacao.getFullYear(), mesVisualizacao.getMonth() + 1, 0).getDate())).padStart(2, "0")}` : g.data, 
       pago: g.pago, origem: "gasto" as const, pessoa: "",
@@ -298,10 +300,10 @@ export const CartoesCreditoPage = () => {
       const valorItem = g.valor_total / g.num_parcelas;
       const valorPagoItem = valorItem * percentualPago;
       const valorRestante = valorItem - valorPagoItem;
-      const pessoaQuitada = totalDevido > 0 && totalPago >= totalDevido;
       
-      // Se a fatura foi paga, todos os itens são considerados pagos (você pagou o banco)
-      const itemPago = faturaFoiPaga || pessoaQuitada;
+      // Pago na fatura é só quando a fatura foi paga ao banco. A pessoa ter te
+      // devolvido não tira o item da fatura.
+      const itemPago = faturaFoiPaga;
       const itemPagoParcial = !faturaFoiPaga && percentualPago > 0 && percentualPago < 1;
       
       return {
@@ -341,17 +343,11 @@ export const CartoesCreditoPage = () => {
     const compartilhados = gastosCompartilhados.filter(g => g.cartao_id === cartaoId && estaNoPeríodoFatura(g.data_inicio, cartaoId));
     // Só somar transações e gastos NÃO pagos na fatura pendente
     const totalTrans = trans.filter(t => !t.pago).reduce((sum, t) => sum + t.valor, 0);
-    const totalGastos = gastos.filter(g => !g.pago).reduce((sum, g) => sum + (g.minha_parte || g.valor), 0);
-    // Calcular valor RESTANTE de gastos compartilhados (descontando proporção já paga pela pessoa)
-    const totalCompartilhados = compartilhados.reduce((sum, g) => {
-      const resumoPessoa = resumoMensal.find(r => r.pessoa === g.pessoa);
-      const totalDevido = resumoPessoa?.total || 0;
-      const totalPago = getTotalPagoParcial(g.pessoa);
-      const percentualPago = totalDevido > 0 ? Math.min(totalPago / totalDevido, 1) : 0;
-      const valorItem = g.valor_total / g.num_parcelas;
-      const valorRestante = valorItem * (1 - percentualPago);
-      return sum + valorRestante;
-    }, 0);
+    // A fatura é o que o banco cobra: valor cheio de cada compra no cartão,
+    // inclusive a dividida e o empréstimo. O que as pessoas te devolvem entra
+    // pelo A receber — antes era descontado aqui e a fatura não batia.
+    const totalGastos = gastos.filter(g => !g.pago).reduce((sum, g) => sum + g.valor, 0);
+    const totalCompartilhados = compartilhados.reduce((sum, g) => sum + g.valor_total / g.num_parcelas, 0);
     
     const totalBruto = totalTrans + totalGastos + totalCompartilhados;
     // Descontar valor já pago da fatura
@@ -383,7 +379,7 @@ export const CartoesCreditoPage = () => {
       }
       return true;
     });
-    const totalGastos = gastosNaoPagos.reduce((sum, g) => sum + (g.minha_parte || g.valor), 0);
+    const totalGastos = gastosNaoPagos.reduce((sum, g) => sum + g.valor, 0);
     // Gastos compartilhados vinculados ao cartão (calculando valor RESTANTE)
     const compartilhadosCartao = gastosCompartilhados.filter(g => {
       if (g.cartao_id !== cartaoId) return false;
@@ -400,14 +396,8 @@ export const CartoesCreditoPage = () => {
       }
       return true;
     });
-    const totalCompartilhados = compartilhadosCartao.reduce((sum, g) => {
-      const resumoPessoa = resumoMensal.find(r => r.pessoa === g.pessoa);
-      const totalDevido = resumoPessoa?.total || 0;
-      const totalPago = getTotalPagoParcial(g.pessoa);
-      const percentualPago = totalDevido > 0 ? Math.min(totalPago / totalDevido, 1) : 0;
-      const valorRestante = g.valor_total * (1 - percentualPago);
-      return sum + valorRestante;
-    }, 0);
+    // Limite usado: valor cheio, como no banco.
+    const totalCompartilhados = compartilhadosCartao.reduce((sum, g) => sum + g.valor_total, 0);
     
     const totalBruto = dividaInicial + totalTrans + totalGastos + totalCompartilhados;
     // Descontar pagamentos de fatura
