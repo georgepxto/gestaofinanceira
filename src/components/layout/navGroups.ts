@@ -1,4 +1,4 @@
-import { Wallet, Receipt, Coins } from "lucide-react";
+import { Wallet, Receipt, Coins, Landmark, CreditCard, ScrollText, Gauge, Users, Hourglass, CalendarDays } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { UserFeatures } from "../../types/admin";
 
@@ -6,6 +6,8 @@ export interface NavChild {
   path: string;
   label: string;
   feature: keyof UserFeatures;
+  /** Só aparece com a barra lateral recolhida, no lugar do nome. */
+  icon: LucideIcon;
 }
 
 export interface NavGroup {
@@ -18,7 +20,8 @@ export interface NavGroup {
 
 /**
  * Grupos da navegação — os itens apontam para as sub-rotas reais que já
- * existem. Ícone só no rótulo do grupo; os itens são texto puro.
+ * existem. Expandida, a barra mostra os itens como texto; recolhida, como
+ * ícone (com o nome no title e para leitor de tela).
  *
  * Mora aqui, e não na Sidebar, porque a barra inferior do mobile e as pílulas
  * de sub-tela desenham esta mesma lista. Uma lista com três consumidores é a
@@ -30,8 +33,8 @@ export const NAV_GROUPS: NavGroup[] = [
     icon: Wallet,
     prefix: "/carteira",
     items: [
-      { path: "/carteira/contas", label: "Contas e receitas", feature: "contas_bancarias" },
-      { path: "/carteira/cartoes", label: "Cartões", feature: "cartoes_credito" },
+      { path: "/carteira/contas", label: "Contas e receitas", feature: "contas_bancarias", icon: Landmark },
+      { path: "/carteira/cartoes", label: "Cartões", feature: "cartoes_credito", icon: CreditCard },
     ],
   },
   {
@@ -39,8 +42,8 @@ export const NAV_GROUPS: NavGroup[] = [
     icon: Receipt,
     prefix: "/gastos",
     items: [
-      { path: "/gastos/lancamentos", label: "Lançamentos", feature: "meus_gastos" },
-      { path: "/gastos/metas", label: "Metas", feature: "metas" },
+      { path: "/gastos/lancamentos", label: "Lançamentos", feature: "meus_gastos", icon: ScrollText },
+      { path: "/gastos/metas", label: "Metas", feature: "metas", icon: Gauge },
     ],
   },
   {
@@ -48,9 +51,9 @@ export const NAV_GROUPS: NavGroup[] = [
     icon: Coins,
     prefix: "/a-receber",
     items: [
-      { path: "/a-receber/pessoas", label: "Por pessoa", feature: "pessoas" },
-      { path: "/a-receber/aberto", label: "Em aberto", feature: "saldo_devedor" },
-      { path: "/a-receber/mes", label: "Do mês", feature: "gastos_compartilhados" },
+      { path: "/a-receber/pessoas", label: "Por pessoa", feature: "pessoas", icon: Users },
+      { path: "/a-receber/aberto", label: "Em aberto", feature: "saldo_devedor", icon: Hourglass },
+      { path: "/a-receber/mes", label: "Do mês", feature: "gastos_compartilhados", icon: CalendarDays },
     ],
   },
 ];

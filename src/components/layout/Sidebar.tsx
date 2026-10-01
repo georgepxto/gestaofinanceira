@@ -1,6 +1,6 @@
 import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { X, LogOut, PanelLeftClose, PanelLeftOpen, Plus } from "lucide-react";
+import { X, LogOut, PanelLeftClose, PanelLeftOpen, Plus, Home, Settings, ShieldCheck, type LucideIcon } from "lucide-react";
 import { HedgeMark } from "../landing/HedgeMark";
 import { Logo } from "../ui/Logo";
 import { Avatar } from "../ui/Avatar";
@@ -74,7 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ...(showConfiguracoes ? ["/configuracoes"] : []),
   ];
 
-  useLayoutEffect(() => {
+  const medirIndicador = () => {
     const activePath = [...navPaths, ...rodapePaths].find(isPathActive);
     const el = activePath ? itemRefs.current[activePath] : null;
     if (!activePath || !el) {
@@ -86,6 +86,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       top: el.offsetTop + 8,
       altura: el.offsetHeight - 16,
     });
+  };
+
+  useLayoutEffect(() => {
+    medirIndicador();
+    // Ao recolher/expandir, a largura anima por 250ms e os nomes quebram em
+    // várias linhas no meio do caminho: a medida do início sai errada. Mede
+    // de novo quando a barra assenta.
+    const t = window.setTimeout(medirIndicador, 270);
+    return () => window.clearTimeout(t);
     // Deps enxutas de propósito: `navPaths` e `rodapePaths` são recriados a cada
     // render. O que de fato move o indicador está abaixo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -100,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       />
     ) : null;
 
-  const NavItem = ({ path, label }: { path: string; label: string }) => {
+  const NavItem = ({ path, label, Icone }: { path: string; label: string; Icone: LucideIcon }) => {
     const ativo = isPathActive(path);
     return (
       <NavLink
@@ -115,17 +124,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ativo ? "text-fg" : "text-fg-2 hover:text-fg"
         } ${recolhida ? "md:justify-center md:px-0" : ""}`}
       >
-        {/* Recolhida, o item vira a inicial. */}
-        <span className={`hidden ${recolhida ? "md:inline" : ""}`} aria-hidden="true">
-          {label.charAt(0)}
-        </span>
+        {/* Recolhida, o item vira ícone; expandida, é só o nome. */}
+        <Icone
+          className={`hidden w-[18px] h-[18px] ${recolhida ? "md:block" : ""}`}
+          strokeWidth={1.5}
+          aria-hidden="true"
+        />
         <span className={recolhida ? "md:sr-only" : ""}>{label}</span>
       </NavLink>
     );
   };
 
   const GroupLabel = ({ children }: { children: React.ReactNode }) => (
-    <p className={`px-4 pt-5 pb-1 text-xs text-fg-3 ${recolhida ? "md:sr-only" : ""}`}>{children}</p>
+    <>
+      <p className={`px-4 pt-5 pb-1 text-xs text-fg-3 ${recolhida ? "md:sr-only" : ""}`}>{children}</p>
+      {/* Recolhida, o nome do grupo vira um fio entre os blocos de ícones. */}
+      {recolhida && <span className="hidden md:block mx-5 my-2 h-px bg-line" aria-hidden="true" />}
+    </>
   );
 
   return (
@@ -154,9 +169,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className={`h-16 shrink-0 flex items-center justify-between px-4 ${recolhida ? "md:justify-center md:px-0" : ""}`}>
           {/* No celular a gaveta é a conta, e o título diz isso. */}
           <span className="md:hidden text-base font-medium text-fg">Conta</span>
-          <span className="hidden md:inline-flex">
-            {recolhida ? <HedgeMark className="h-[22px] w-auto text-accent" title="Hedge" /> : <Logo />}
-          </span>
+          {recolhida ? (
+            // Recolhida: o símbolo é o botão de abrir. No hover e no foco ele
+            // vira o ícone de expandir, no mesmo lugar onde ficava o de recolher.
+            <button
+              onClick={() => onRecolher(false)}
+              aria-label="Expandir barra lateral"
+              title="Expandir barra lateral"
+              className="group hidden md:flex w-10 h-10 rounded items-center justify-center text-fg-3 hover:text-fg hover:bg-surface-2 transition-colors"
+            >
+              <HedgeMark className="h-[22px] w-auto text-accent group-hover:hidden group-focus-visible:hidden" title="Hedge" />
+              <PanelLeftOpen className="hidden w-4 h-4 group-hover:block group-focus-visible:block" strokeWidth={1.5} />
+            </button>
+          ) : (
+            <span className="hidden md:inline-flex">
+              <Logo />
+            </span>
+          )}
 
           <button
             onClick={onFechar}
@@ -196,12 +225,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Destinos — só no desktop; no celular vivem na barra inferior. */}
         <nav className="relative hidden md:flex md:flex-1 min-h-0 overflow-y-auto py-2 flex-col">
           <Indicador area="nav" />
-          {(isAdmin || features.dashboard) && <NavItem path="/" label="Início" />}
+          {(isAdmin || features.dashboard) && <NavItem path="/" label="Início" Icone={Home} />}
           {visibleGroups.map((group) => (
             <div key={group.label} className="flex flex-col">
               <GroupLabel>{group.label}</GroupLabel>
               {group.items.map((item) => (
-                <NavItem key={item.path} path={item.path} label={item.label} />
+                <NavItem key={item.path} path={item.path} label={item.label} Icone={item.icon} />
               ))}
             </div>
           ))}
@@ -210,8 +239,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Rodapé: configurações e usuário */}
         <div className="relative shrink-0 mt-auto md:mt-0 py-3 flex flex-col">
           <Indicador area="rodape" />
-          {isAdmin && <NavItem path="/admin" label="Admin" />}
-          {showConfiguracoes && <NavItem path="/configuracoes" label="Configurações" />}
+          {isAdmin && <NavItem path="/admin" label="Admin" Icone={ShieldCheck} />}
+          {showConfiguracoes && <NavItem path="/configuracoes" label="Configurações" Icone={Settings} />}
 
           <div className={`flex items-center gap-3 mt-2 px-4 min-h-[48px] ${recolhida ? "md:justify-center md:px-0" : ""}`}>
             <Avatar nome={userName || userEmail} tamanho={32} />
@@ -232,15 +261,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </div>
 
-          {recolhida && (
-            <button
-              onClick={() => onRecolher(false)}
-              aria-label="Expandir barra lateral"
-              className="hidden md:flex mx-auto mt-2 w-8 h-8 rounded items-center justify-center text-fg-3 hover:text-fg hover:bg-surface-2 transition-colors"
-            >
-              <PanelLeftOpen className="w-4 h-4" strokeWidth={1.5} />
-            </button>
-          )}
         </div>
       </aside>
     </>
