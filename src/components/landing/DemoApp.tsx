@@ -1,371 +1,332 @@
-import { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
-import { Check, Home, Plus, Users } from "lucide-react";
-import { formatCurrencyInput, parseCurrency } from "../../utils/calculations";
-import { BalanceView } from "./BalanceView";
-import { activityOf } from "./LiveBalanceCard";
-import { brl } from "./format";
-import { useCountUp } from "./useCountUp";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { X } from "lucide-react";
+import { formatCurrency, formatCurrencyValue, parseCurrency } from "../../utils/calculations";
+import { Campo, Chip, Chips, campoClasse } from "../ui/FormSheet";
+import { MoneyInput } from "../ui/MoneyInput";
+import { SegmentedControl } from "../ui/SegmentedControl";
+import { Button } from "../ui/Button";
 import {
-  BASE_BALANCE,
-  BASE_SPENT,
-  CATS,
-  INITIAL_TXS,
-  applySpent,
-  round2,
-  type Budgeted,
-  type Spent,
-  type Tx,
-} from "./ledger";
+  AbasDaSecao,
+  BarraApp,
+  TelaCartao,
+  TelaContas,
+  TelaInicio,
+  TelaLancamentos,
+  TelaMetas,
+  TelaPessoas,
+  TopoApp,
+  type AbaApp,
+} from "./app/telas";
+import { LANCAMENTOS, METAS, PESSOAS, SALDO_HOJE, type Lancamento, type PessoaMock } from "./app/mock";
 
 /* ═══════════════════════════════════════════════════════════════════════
-   Demo do app na landing. Tudo acontece na memória do navegador: nada é
-   enviado, nada é gravado. A aba Início é a mesma BalanceView do hero, então
-   um lançamento feito aqui entra com a mesma animação (lista desliza, saldo
-   conta, barra anda).
+   Demo do app na landing: o app de verdade no celular — barra do topo, as
+   quatro abas e o "+", as abas de cada seção, o formulário de gasto e o
+   pagamento — montado com os componentes do app e dados fictícios. Tudo
+   acontece na memória do navegador: nada é enviado, nada é gravado.
    ═══════════════════════════════════════════════════════════════════════ */
 
-type Person = "você" | "Ana" | "Bruno";
-const PEOPLE: Person[] = ["você", "Ana", "Bruno"];
-type Shared = { id: number; desc: string; total: number; payer: Person; settled: Person[] };
-type Tab = "inicio" | "lancar" | "dividir";
+const CATEGORIAS = ["Alimentação", "Transporte", "Lazer", "Moradia"];
+const round2 = (v: number) => Math.round(v * 100) / 100;
 
-const INITIAL_SHARED: Shared[] = [
-  { id: 1, desc: "Aluguel", total: 3150, payer: "você", settled: ["Bruno"] },
-  { id: 2, desc: "Compra do mês", total: 412.8, payer: "Ana", settled: ["Bruno"] },
-];
-
-const cap = (p: Person) => (p === "você" ? "Você" : p);
-
-function debtsOf(shared: Shared[]) {
-  return shared.flatMap((e) =>
-    PEOPLE.filter((p) => p !== e.payer).map((p) => ({
-      key: `${e.id}-${p}`,
-      expId: e.id,
-      desc: e.desc,
-      from: p,
-      to: e.payer,
-      v: round2(e.total / PEOPLE.length),
-      settled: e.settled.includes(p),
-    })),
-  );
-}
-
-type State = {
-  txs: Tx[];
-  spent: Spent;
-  balance: number;
-  hot: Budgeted | null;
-  delta: number | null;
-  seq: number;
-  shared: Shared[];
-  nextId: number;
-  activity: string;
-};
-
-const INITIAL: State = {
-  txs: INITIAL_TXS,
-  spent: BASE_SPENT,
-  balance: BASE_BALANCE,
-  hot: null,
-  delta: null,
-  seq: 0,
-  shared: INITIAL_SHARED,
-  nextId: 100,
-  activity: "Bruno te pagou R$ 145,00",
-};
-
-const TABS: { id: Tab; label: string; Icon: typeof Home }[] = [
-  { id: "inicio", label: "Início", Icon: Home },
-  { id: "lancar", label: "Lançar", Icon: Plus },
-  { id: "dividir", label: "Dividir", Icon: Users },
-];
-const tabIndex = (t: Tab) => TABS.findIndex((x) => x.id === t);
-
-/** Tempo para a aba Início terminar de entrar antes de o lançamento chegar. */
-const ENTER_MS = 420;
+type Folha = null | { tipo: "gasto" } | { tipo: "pagamento"; pessoa: string };
 
 export function DemoApp() {
-  const [s, setS] = useState<State>(INITIAL);
-  // Abre em Lançar: o Início é o mesmo card que o hero acabou de mostrar.
-  const [tab, setTab] = useState<Tab>("lancar");
-  // De que lado a aba nova entra: da direita se ela fica à direita da anterior.
-  const [dir, setDir] = useState<1 | -1>(1);
-  const uid = useId();
-  const pending = useRef(0);
-  useEffect(() => () => clearTimeout(pending.current), []);
+  const [aba, setAba] = useState<AbaApp>("inicio");
+  const [subCarteira, setSubCarteira] = useState("Contas");
+  const [subGastos, setSubGastos] = useState("Lançamentos");
+  const [saldo, setSaldo] = useState(SALDO_HOJE);
+  const [lancamentos, setLancamentos] = useState<Lancamento[]>(LANCAMENTOS);
+  const [metas, setMetas] = useState(METAS);
+  const [pessoas, setPessoas] = useState<PessoaMock[]>(PESSOAS);
+  const [novos, setNovos] = useState<Set<number>>(new Set());
+  const [folha, setFolha] = useState<Folha>(null);
+  const proximoId = useRef(500);
+  const conteudoRef = useRef<HTMLDivElement>(null);
+  const pendente = useRef(0);
+  useEffect(() => () => clearTimeout(pendente.current), []);
 
-  const go = (next: Tab) => {
-    if (next === tab) return;
-    setDir(tabIndex(next) > tabIndex(tab) ? 1 : -1);
-    setTab(next);
+  const irPara = (a: AbaApp) => {
+    setAba(a);
+    conteudoRef.current?.scrollTo({ top: 0 });
   };
 
-  /** Entra um lançamento: mesma rota do hero (topo da lista, saldo, orçamento). */
-  const push = (st: State, t: Omit<Tx, "id">, countsInBudget = true): State => ({
-    ...st,
-    txs: [{ ...t, id: st.nextId }, ...st.txs].slice(0, 6),
-    spent: countsInBudget ? applySpent(st.spent, t) : st.spent,
-    balance: round2(st.balance + t.amt),
-    hot: countsInBudget && t.cat !== "receber" ? t.cat : null,
-    delta: t.amt,
-    seq: st.seq + 1,
-    nextId: st.nextId + 1,
-    activity: activityOf(t),
-  });
-
-  const lancar = (t: { name: string; cat: Budgeted; amt: number; dividir: boolean }) => {
-    // Primeiro a tela volta para o Início; o lançamento só entra quando ela já
-    // está à vista, para a lista deslizar e o saldo contar diante da pessoa.
-    go("inicio");
-    clearTimeout(pending.current);
-    pending.current = window.setTimeout(() => {
-      setS((st) => {
-        let next = push(st, { name: t.name, cat: t.cat, who: "você", amt: -t.amt });
-        if (t.dividir) {
-          next = { ...next, shared: [{ id: next.nextId, desc: t.name, total: t.amt, payer: "você", settled: [] }, ...next.shared], nextId: next.nextId + 1 };
-        }
-        return next;
-      });
-    }, ENTER_MS);
+  // A tela volta para o Início e só depois o lançamento entra, para o saldo
+  // contar e a linha deslizar diante da pessoa — como no app.
+  const depoisDeVoltar = (fn: () => void) => {
+    irPara("inicio");
+    clearTimeout(pendente.current);
+    pendente.current = window.setTimeout(fn, 380);
   };
 
-  const quitar = (expId: number, from: Person, to: Person, v: number, desc: string) => {
-    setS((st) => {
-      let next: State = {
-        ...st,
-        shared: st.shared.map((e) => (e.id === expId ? { ...e, settled: [...e.settled, from] } : e)),
-      };
-      // Acerto que envolve você mexe no saldo; entre os outros, só no grupo.
-      if (to === "você") next = push(next, { name: `Pix de ${from}, ${desc.toLowerCase()}`, cat: "receber", who: from, amt: v });
-      if (from === "você") next = push(next, { name: `Pix para ${to}, ${desc.toLowerCase()}`, cat: "casa", who: "você", amt: -v }, false);
-      return next;
+  const lancarGasto = (g: { descricao: string; categoria: string; valor: number; tipo: "debito" | "credito"; divide: boolean }) => {
+    setFolha(null);
+    const id = proximoId.current++;
+    const parte = g.divide ? round2(g.valor / 3) : g.valor;
+    depoisDeVoltar(() => {
+      setLancamentos((l) => [
+        { id, descricao: g.descricao, categoria: g.categoria, tipo: g.tipo, valor: g.valor, minhaParte: g.divide ? parte : undefined, pessoas: g.divide ? "Ana, Bruno" : undefined, dia: 28 },
+        ...l,
+      ]);
+      setNovos(new Set([id]));
+      if (g.tipo === "debito") setSaldo((s) => round2(s - g.valor));
+      setMetas((ms) => ms.map((m) => (m.categoria === g.categoria ? { ...m, gasto: round2(m.gasto + parte) } : m)));
+      if (g.divide) {
+        setPessoas((ps) => ps.map((p) => (p.nome === "Ana" || p.nome === "Bruno" ? { ...p, doMes: round2(p.doMes + parte) } : p)));
+      }
     });
   };
 
-  const panel = (id: Tab, children: ReactNode) => {
-    const on = tab === id;
-    // A que sai vai para o lado oposto ao que a nova entra.
-    const off = tabIndex(id) < tabIndex(tab) ? -1 : 1;
-    return (
-      <div
-        id={`${uid}-${id}`}
-        role="tabpanel"
-        aria-labelledby={`${uid}-tab-${id}`}
-        aria-hidden={!on}
-        data-on={on}
-        className="lp-panel overflow-y-auto px-6 pt-8 sm:px-8"
-        style={{ "--lp-panel-x": `${(on ? dir : off) * 18}px` } as CSSProperties}
-      >
-        {children}
-      </div>
-    );
+  const registrarPagamento = (nome: string, valor: number) => {
+    setFolha(null);
+    const id = proximoId.current++;
+    depoisDeVoltar(() => {
+      setSaldo((s) => round2(s + valor));
+      setPessoas((ps) =>
+        ps.map((p) => {
+          if (p.nome !== nome) return p;
+          // Quita primeiro o mês, depois as cobranças — como no app.
+          const doMes = Math.max(0, round2(p.doMes - valor));
+          const sobra = Math.max(0, round2(valor - p.doMes));
+          const emCobrancas = Math.max(0, round2(p.emCobrancas - sobra));
+          return { ...p, doMes, emCobrancas, cobrancas: emCobrancas > 0 ? p.cobrancas : 0 };
+        })
+      );
+      setLancamentos((l) => [{ id, descricao: `Pix de ${nome}`, categoria: nome, tipo: "debito", valor, dia: 28, entrada: true }, ...l]);
+      setNovos(new Set([id]));
+    });
   };
+
+  const devolver = Object.fromEntries(pessoas.map((p) => [p.nome, p.doMes]));
+  const pessoaDaFolha = folha?.tipo === "pagamento" ? pessoas.find((p) => p.nome === folha.pessoa) : undefined;
 
   return (
     <div className="mx-auto w-full max-w-[420px]">
-      {/* Celular: ocupa a tela abaixo da barra do topo, como o app aberto. */}
-      <div className="flex h-[clamp(600px,calc(100svh-64px),720px)] flex-col overflow-hidden bg-lp-surface sm:h-[680px] sm:rounded">
-        <div className="relative min-h-0 flex-1">
-          {panel(
-            "inicio",
-            <BalanceView
-              group="Apê 302"
-              month="Setembro"
-              balance={s.balance}
-              delta={s.delta}
-              rows={3}
-              activity={s.activity}
-              txs={s.txs}
-              spent={s.spent}
-              hot={s.hot}
-              seq={s.seq}
-            />,
-          )}
-          {panel("lancar", <LancarForm onSave={lancar} />)}
-          {panel("dividir", <Dividir shared={s.shared} onQuitar={quitar} />)}
+      {/* O celular: a tela do app inteira, no tema escuro dele. */}
+      <div className="app-escuro relative flex h-[clamp(620px,calc(100svh-64px),740px)] flex-col overflow-hidden bg-page sm:h-[720px] sm:rounded sm:ring-1 sm:ring-inset sm:ring-line">
+        <TopoApp />
+
+        {(aba === "carteira" || aba === "gastos") && (
+          <div className="shrink-0 px-4 pt-1 pb-3">
+            {aba === "carteira" ? (
+              <AbasDaSecao abas={["Contas", "Cartões"]} ativa={subCarteira} onTrocar={setSubCarteira} />
+            ) : (
+              <AbasDaSecao abas={["Lançamentos", "Metas"]} ativa={subGastos} onTrocar={setSubGastos} />
+            )}
+          </div>
+        )}
+
+        <div ref={conteudoRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6">
+          {/* `key`: cada tela entra com a mesma chegada do app. */}
+          <div key={`${aba}-${subCarteira}-${subGastos}`} className="tela" data-direcao="nenhuma">
+            <div className={aba === "inicio" ? "pt-2" : ""}>
+              {aba === "inicio" && <TelaInicio saldo={saldo} devolver={devolver} ultimos={lancamentos.slice(0, 3)} novos={novos} />}
+              {aba === "carteira" && (subCarteira === "Contas" ? <TelaContas saldo={saldo} /> : <TelaCartao />)}
+              {aba === "gastos" && (subGastos === "Lançamentos" ? <TelaLancamentos lancamentos={lancamentos} novos={novos} /> : <TelaMetas metas={metas} />)}
+              {aba === "receber" && <TelaPessoas pessoas={pessoas} onPagar={(nome) => setFolha({ tipo: "pagamento", pessoa: nome })} />}
+            </div>
+          </div>
         </div>
 
-        {/* Barra inferior, como no app. O traço corre até a aba ativa. */}
-        <div role="tablist" aria-label="Telas da demo" className="relative grid grid-cols-3" style={{ borderTop: "1px solid var(--lp-line)" }}>
-          <span
-            aria-hidden="true"
-            className="lp-tab-ink absolute left-0 top-[-1px] h-px w-1/3 bg-lp-fg"
-            style={{ transform: `translateX(${tabIndex(tab) * 100}%)` }}
-          />
-          {TABS.map(({ id, label, Icon }) => {
-            const on = tab === id;
-            return (
-              <button
-                key={id}
-                id={`${uid}-tab-${id}`}
-                type="button"
-                role="tab"
-                aria-selected={on}
-                aria-controls={`${uid}-${id}`}
-                onClick={() => go(id)}
-                className={`lp-tab flex h-16 flex-col items-center justify-center gap-1 text-[12px] ${on ? "text-lp-fg" : "text-lp-muted hover:text-lp-fg"}`}
-              >
-                <Icon className="h-5 w-5" strokeWidth={on ? 1.75 : 1.5} aria-hidden="true" />
-                {label}
-              </button>
-            );
-          })}
-        </div>
+        <BarraApp ativa={aba} onAba={irPara} onLancar={() => setFolha({ tipo: "gasto" })} />
+
+        {folha?.tipo === "gasto" && (
+          <FolhaDaDemo titulo="Novo gasto" onFechar={() => setFolha(null)}>
+            <FormularioGasto onSalvar={lancarGasto} onCancelar={() => setFolha(null)} />
+          </FolhaDaDemo>
+        )}
+        {folha?.tipo === "pagamento" && pessoaDaFolha && (
+          <FolhaDaDemo titulo="Registrar pagamento" onFechar={() => setFolha(null)}>
+            <FormularioPagamento pessoa={pessoaDaFolha} onSalvar={registrarPagamento} onCancelar={() => setFolha(null)} />
+          </FolhaDaDemo>
+        )}
       </div>
     </div>
   );
 }
 
-/* ── Lançar ──────────────────────────────────────────────────────────── */
-function LancarForm({ onSave }: { onSave: (t: { name: string; cat: Budgeted; amt: number; dividir: boolean }) => void }) {
-  const [valor, setValor] = useState("");
-  const [desc, setDesc] = useState("");
-  const [cat, setCat] = useState<Budgeted>("mercado");
-  const [dividir, setDividir] = useState(false);
-  const [erro, setErro] = useState("");
-  const id = useId();
+/* A folha do app (o <FormSheet>), mas presa dentro do celular da demo. */
+function FolhaDaDemo({ titulo, onFechar, children }: { titulo: string; onFechar: () => void; children: ReactNode }) {
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && onFechar();
+    document.addEventListener("keydown", esc);
+    return () => document.removeEventListener("keydown", esc);
+  }, [onFechar]);
+  return (
+    <div className="absolute inset-0 z-20">
+      <div
+        className="absolute inset-0 bg-scrim animate-[fundo-entra_240ms_ease-out]"
+        aria-hidden="true"
+        /* ds-ok: fundo de dispensa da folha da demo; Esc e o X fecham pelo teclado */
+        onClick={onFechar}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={titulo}
+        className="absolute inset-x-0 bottom-0 max-h-[92%] flex flex-col bg-surface-1 rounded-t animate-[sheet-sobe_380ms_var(--ease-out-expo)]"
+      >
+        <div className="shrink-0 h-6 flex items-center justify-center" aria-hidden="true">
+          <span className="w-9 h-1 rounded-sm bg-surface-3" />
+        </div>
+        <div className="shrink-0 flex items-start justify-between gap-3 px-5 pt-1">
+          <h3 className="text-lg font-medium text-fg">{titulo}</h3>
+          <button
+            type="button"
+            onClick={onFechar}
+            aria-label="Fechar"
+            className="w-11 h-11 -mr-3 -mt-2 shrink-0 rounded flex items-center justify-center text-fg-3 hover:text-fg transition-colors"
+          >
+            <X className="w-5 h-5" strokeWidth={1.5} />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
 
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    const v = parseCurrency(valor);
-    if (v <= 0) {
-      setErro("Digite quanto foi o gasto.");
-      return;
-    }
-    onSave({ name: desc.trim() || CATS[cat].label, cat, amt: v, dividir });
-    setValor("");
-    setDesc("");
-    setDividir(false);
-    setErro("");
-  };
+function Rodape({ rotulo, pode, onCancelar }: { rotulo: string; pode: boolean; onCancelar: () => void }) {
+  return (
+    <div className="shrink-0 px-5 pt-3 pb-4 border-t border-line grid gap-2">
+      <Button type="submit" variante="principal" cheio disabled={!pode}>
+        {rotulo}
+      </Button>
+      <Button variante="fantasma" cheio onClick={onCancelar}>
+        Cancelar
+      </Button>
+    </div>
+  );
+}
+
+function FormularioGasto({
+  onSalvar,
+  onCancelar,
+}: {
+  onSalvar: (g: { descricao: string; categoria: string; valor: number; tipo: "debito" | "credito"; divide: boolean }) => void;
+  onCancelar: () => void;
+}) {
+  const [valor, setValor] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [categoria, setCategoria] = useState("Alimentação");
+  const [tipo, setTipo] = useState<"debito" | "credito">("debito");
+  const [divide, setDivide] = useState(false);
+  const v = parseCurrency(valor || "0");
 
   return (
-    <form onSubmit={submit} noValidate>
-      <div className="text-[15px] font-medium">Novo gasto</div>
-
-      <label htmlFor={`${id}-v`} className="mt-7 block text-[13px] text-lp-muted">Valor</label>
-      <div className="lp-field mt-2 flex items-baseline gap-2">
-        <span className="lp-num text-[22px] text-lp-muted">R$</span>
-        <input
-          id={`${id}-v`}
-          inputMode="numeric"
-          autoComplete="off"
-          value={valor}
-          onChange={(e) => { setValor(formatCurrencyInput(e.target.value)); setErro(""); }}
-          placeholder="0,00"
-          aria-invalid={erro ? true : undefined}
-          aria-describedby={erro ? `${id}-err` : undefined}
-          className="lp-num lp-input lp-amount w-full min-w-0 bg-transparent pb-3 leading-none"
-        />
-      </div>
-      {erro && <p id={`${id}-err`} className="lp-swap mt-2 text-[13px] text-lp-fg">{erro}</p>}
-
-      <label htmlFor={`${id}-d`} className="mt-6 block text-[13px] text-lp-muted">Descrição</label>
-      <input
-        id={`${id}-d`}
-        autoComplete="off"
-        value={desc}
-        onChange={(e) => setDesc(e.target.value.slice(0, 40))}
-        placeholder="Ex.: feira da semana"
-        className="lp-input lp-field mt-1 w-full bg-transparent pb-3 pt-2 text-[16px]"
-      />
-
-      <fieldset className="mt-6">
-        <legend className="text-[13px] text-lp-muted">Categoria</legend>
-        <div className="lp-chip-row mt-3 flex flex-wrap gap-2">
-          {(["mercado", "casa", "lazer"] as Budgeted[]).map((c) => {
-            const { Icon, label } = CATS[c];
-            return (
-              <label key={c} className={`lp-chip ${cat === c ? "is-on" : ""}`}>
-                <input type="radio" name={`${id}-cat`} checked={cat === c} onChange={() => setCat(c)} className="sr-only" />
-                <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-                {label}
-              </label>
-            );
-          })}
+    <form
+      className="flex min-h-0 flex-1 flex-col"
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (v > 0) onSalvar({ descricao: descricao.trim() || categoria, categoria, valor: v, tipo, divide });
+      }}
+    >
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6">
+        <div className="pt-6 pb-7">
+          <MoneyInput tamanho="heroi" value={valor} onChange={setValor} aria-label="Valor" data-autofocus />
         </div>
-      </fieldset>
-
-      <label className={`lp-chip mt-6 w-full justify-between ${dividir ? "is-on" : ""}`}>
-        <span>Dividir com Ana e Bruno</span>
-        <input type="checkbox" checked={dividir} onChange={(e) => setDividir(e.target.checked)} className="sr-only" />
-        <span className="flex items-center gap-3">
-          <span key={String(dividir)} className="lp-swap text-[12px] text-lp-muted">
-            {dividir && parseCurrency(valor) > 0 ? (
-              <><span className="lp-num">{brl(parseCurrency(valor) / 3)}</span> cada</>
-            ) : dividir ? "3 partes" : "Só meu"}
-          </span>
-          {/* O estado do interruptor à vista, não só no texto */}
-          <span aria-hidden="true" className={`lp-switch ${dividir ? "is-on" : ""}`} />
-        </span>
-      </label>
-
-      <button type="submit" className="lp-btn mt-7 w-full">Lançar</button>
+        <div className="space-y-5">
+          <Campo rotulo="Descrição" htmlFor="demo-descricao">
+            <input
+              id="demo-descricao"
+              type="text"
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value.slice(0, 40))}
+              placeholder="Ex: mercado, Netflix, almoço"
+              className={campoClasse}
+            />
+          </Campo>
+          <Campo rotulo="Categoria">
+            <Chips>
+              {CATEGORIAS.map((c) => (
+                <Chip key={c} ativo={categoria === c} onClick={() => setCategoria(c)}>
+                  {c}
+                </Chip>
+              ))}
+            </Chips>
+          </Campo>
+          <Campo
+            rotulo="Divide com alguém?"
+            dica={divide && v > 0 ? <>Ana e Bruno · <span className="valor">{formatCurrency(round2(v / 3))}</span> cada, sua parte também</> : undefined}
+          >
+            <SegmentedControl
+              rotulo="Divide com alguém"
+              cheio
+              segmentos={[
+                { chave: "nao", rotulo: "Não", ativo: !divide, onClick: () => setDivide(false) },
+                { chave: "sim", rotulo: "Com Ana e Bruno", ativo: divide, onClick: () => setDivide(true) },
+              ]}
+            />
+          </Campo>
+          <Campo rotulo="Forma de pagamento">
+            <SegmentedControl
+              rotulo="Forma de pagamento"
+              cheio
+              segmentos={[
+                { chave: "debito", rotulo: "Débito", ativo: tipo === "debito", onClick: () => setTipo("debito") },
+                { chave: "credito", rotulo: "Crédito", ativo: tipo === "credito", onClick: () => setTipo("credito") },
+              ]}
+            />
+          </Campo>
+        </div>
+      </div>
+      <Rodape rotulo="Adicionar gasto" pode={v > 0} onCancelar={onCancelar} />
     </form>
   );
 }
 
-/* ── Dividir ─────────────────────────────────────────────────────────── */
-function Dividir({ shared, onQuitar }: { shared: Shared[]; onQuitar: (expId: number, from: Person, to: Person, v: number, desc: string) => void }) {
-  const debts = debtsOf(shared);
-  const aReceber = round2(
-    debts.filter((d) => !d.settled && d.to === "você").reduce((a, d) => a + d.v, 0) -
-      debts.filter((d) => !d.settled && d.from === "você").reduce((a, d) => a + d.v, 0),
-  );
-  // O número conta até o novo saldo do grupo a cada quitação.
-  const net = useCountUp<HTMLDivElement>(aReceber, (v) => `${v >= 0 ? "+" : "−"}${brl(v)}`);
+function FormularioPagamento({
+  pessoa,
+  onSalvar,
+  onCancelar,
+}: {
+  pessoa: PessoaMock;
+  onSalvar: (nome: string, valor: number) => void;
+  onCancelar: () => void;
+}) {
+  const total = round2(pessoa.doMes + pessoa.emCobrancas);
+  const [valor, setValor] = useState(formatCurrencyValue(total));
+  const v = parseCurrency(valor || "0");
+  const passou = v > total + 0.009;
+  const doMes = Math.min(v, pessoa.doMes);
+  const deCobranca = Math.max(0, Math.min(v - pessoa.doMes, pessoa.emCobrancas));
 
   return (
-    <div className="pb-6">
-      <div className="flex items-baseline justify-between">
-        <span className="text-[15px] font-medium">Apê 302</span>
-        <span className="text-[13px] text-lp-muted">Você, Ana e Bruno</span>
-      </div>
-
-      {/* Rótulo fixo: o sinal do número diz se é a receber (+) ou a pagar (−),
-          e ele continua certo durante a contagem, mesmo passando pelo zero. */}
-      <div className="mt-6 text-[13px] text-lp-muted">Seu saldo no grupo</div>
-      <div ref={net.ref} className="lp-num mt-1 text-[32px] leading-none">
-        {net.initial}
-      </div>
-      <span className="sr-only" aria-live="polite">
-        {aReceber >= 0 ? "Você tem a receber" : "Você deve no grupo"} {brl(aReceber)}
-      </span>
-
-      <div className="mt-8 text-[13px] text-lp-muted">Quem deve a quem</div>
-      <ul className="mt-2">
-        {debts.map((d) => (
-          <li key={d.key} className="flex min-h-[60px] items-center justify-between gap-3 py-1.5">
-            <div className="min-w-0">
-              <div className={`lp-fade-color truncate text-[14px] ${d.settled ? "text-lp-muted" : "text-lp-fg"}`}>
-                {d.to === "você" ? `${cap(d.from)} te deve` : `${cap(d.from)} deve a ${d.to}`}
+    <form
+      className="flex min-h-0 flex-1 flex-col"
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (v > 0 && !passou) onSalvar(pessoa.nome, v);
+      }}
+    >
+      <p className="px-5 mt-1 text-sm text-fg-2">
+        {pessoa.nome} deve <span className="valor">{formatCurrency(total)}</span> no total
+      </p>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6">
+        <div className="pt-6 pb-7">
+          <MoneyInput tamanho="heroi" value={valor} onChange={setValor} aria-label="Valor recebido" />
+        </div>
+        {!passou && v > 0 && (
+          <dl className="text-sm divide-y divide-line">
+            {doMes > 0 && (
+              <div className="flex items-baseline justify-between gap-4 py-2">
+                <dt className="text-fg-2">Outubro</dt>
+                <dd className="valor text-fg">{formatCurrency(doMes)}</dd>
               </div>
-              <div className="truncate text-[12px] text-lp-muted">{d.desc}</div>
-            </div>
-            <div className="flex shrink-0 items-center gap-3">
-              <span className={`lp-num lp-fade-color text-[14px] ${d.settled ? "text-lp-muted" : "text-lp-fg"}`}>{brl(d.v)}</span>
-              <span className="grid w-[84px] justify-items-end">
-                {d.settled ? (
-                  <span key="q" className="lp-swap flex items-center gap-1 text-[12px] text-lp-muted">
-                    <Check className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
-                    Quitado
-                  </span>
-                ) : (
-                  <button
-                    key="b"
-                    type="button"
-                    onClick={() => onQuitar(d.expId, d.from, d.to, d.v, d.desc)}
-                    aria-label={`Marcar como quitado: ${cap(d.from)} deve a ${d.to}, ${d.desc}`}
-                    className="lp-chip w-[84px] justify-center px-2 text-[12px]"
-                  >
-                    Quitar
-                  </button>
-                )}
-              </span>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+            )}
+            {deCobranca > 0 && (
+              <div className="flex items-baseline justify-between gap-4 py-2">
+                <dt className="text-fg-2">Cobrança de setembro</dt>
+                <dd className="valor text-fg">{formatCurrency(deCobranca)}</dd>
+              </div>
+            )}
+          </dl>
+        )}
+        {passou && <p className="text-sm text-danger-ink">O máximo aqui é {formatCurrency(total)}.</p>}
+      </div>
+      <Rodape rotulo="Confirmar pagamento" pode={v > 0 && !passou} onCancelar={onCancelar} />
+    </form>
   );
 }

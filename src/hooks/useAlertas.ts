@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { subMonths, startOfMonth, getDaysInMonth, getDate, parseISO } from "date-fns";
+import { subMonths, startOfMonth, getDaysInMonth, getDate, parseISO, differenceInCalendarMonths } from "date-fns";
 import { supabase } from "../lib/supabase";
 import { useAppContext } from "../context";
 import { formatCurrency, isGastoAtivoNoMes } from "../utils/calculations";
@@ -134,13 +134,13 @@ export const useAlertas = () => {
       }
 
       // c) Parcelas acabando este mês
+      // Só compra parcelada (2x ou mais, não recorrente) cuja ÚLTIMA parcela
+      // cai neste mês. Antes o Math.min contava também tudo o que já tinha
+      // acabado em meses passados — e saíam "308 parcelas acabam este mês".
       const parcelasAcabando = todosCompartilhados.filter((g) => {
-        const dataInicio = parseISO(g.data_inicio);
-        const mesesDesdeInicio = Math.floor(
-          (agora.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24 * 30)
-        );
-        const parcelaAtual = Math.min(mesesDesdeInicio + 1, g.num_parcelas);
-        return parcelaAtual === g.num_parcelas;
+        if (g.recorrente || (g.num_parcelas || 1) < 2) return false;
+        const parcelaDoMes = differenceInCalendarMonths(agora, parseISO(g.data_inicio)) + 1;
+        return parcelaDoMes === g.num_parcelas;
       });
       if (parcelasAcabando.length > 0) {
         novasAlertas.push({

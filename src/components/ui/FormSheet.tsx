@@ -186,6 +186,49 @@ export function FormSheet({
 
 /* ── Peças de formulário ───────────────────────────────────────────────── */
 
+/**
+ * Campo de número inteiro (dia do mês, parcela, quantos meses). Só aceita
+ * dígitos — o type="number" do navegador deixava digitar "1,1" e "1.2" — e
+ * não passa do máximo.
+ */
+export function CampoInteiro({
+  id,
+  value,
+  onChange,
+  min = 1,
+  max,
+  placeholder,
+}: {
+  id: string;
+  value: string;
+  onChange: (valor: string) => void;
+  min?: number;
+  max: number;
+  placeholder?: string;
+}) {
+  return (
+    <input
+      id={id}
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      autoComplete="off"
+      maxLength={String(max).length}
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => {
+        const digitos = e.target.value.replace(/\D/g, "");
+        if (!digitos) return onChange("");
+        onChange(String(Math.min(parseInt(digitos, 10), max)));
+      }}
+      onBlur={() => {
+        if (value && parseInt(value, 10) < min) onChange(String(min));
+      }}
+      className={`${campoClasse} valor`}
+    />
+  );
+}
+
 /** Classe dos campos de texto, select e data: --surface-2, fio --line, raio de 2px. */
 export const campoClasse =
   "w-full h-11 px-3 bg-surface-2 border border-line rounded-sm text-fg placeholder:text-fg-3 outline-none focus:border-fg-3 transition-colors disabled:opacity-50";

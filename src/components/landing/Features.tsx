@@ -24,7 +24,7 @@ const FEATURES: Feature[] = [
   {
     id: "f-compartilhados",
     title: "Gastos compartilhados",
-    text: "Quem pagou, quem deve e quem já acertou, sem planilha e sem cobrar ninguém no grupo.",
+    text: "Quanto cada pessoa te deve, somando o mês e as cobranças, e o que já voltou.",
     Crop: CropCompartilhados,
     photo: { src: "/landing/jantar.webp", w: 1200, h: 800, alt: "Amigos jantando juntos à mesa de um apartamento, com a janela aberta ao fundo.", pos: "50% 70%" },
     wide: true,

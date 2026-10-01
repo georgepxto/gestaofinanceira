@@ -28,7 +28,7 @@ import { PontoCategoria } from "../components/ui/PontoCategoria";
 import { EmptyState } from "../components/ui/EmptyState";
 import { MenuAcoes } from "../components/ui/MenuAcoes";
 import { MoneyInput } from "../components/ui/MoneyInput";
-import { FormSheet, Campo, Chip, Chips, campoClasse } from "../components/ui/FormSheet";
+import { CampoInteiro, FormSheet, Campo, Chip, Chips, campoClasse } from "../components/ui/FormSheet";
 import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
 import {
   aberturaDoCartao,
@@ -1123,27 +1123,19 @@ export const CartoesCreditoPage = () => {
         </Campo>
         <div className="grid grid-cols-2 gap-3">
           <Campo rotulo="Dia do vencimento" htmlFor="cartao-vencimento">
-            <input
+            <CampoInteiro
               id="cartao-vencimento"
-              type="number"
-              inputMode="numeric"
-              min="1"
-              max="31"
+              max={31}
               value={formCartao.dia_vencimento}
-              onChange={(e) => setFormCartao({ ...formCartao, dia_vencimento: e.target.value })}
-              className={`${campoClasse} valor`}
+              onChange={(v) => setFormCartao({ ...formCartao, dia_vencimento: v })}
             />
           </Campo>
           <Campo rotulo="Melhor dia de compra" htmlFor="cartao-melhor-dia">
-            <input
+            <CampoInteiro
               id="cartao-melhor-dia"
-              type="number"
-              inputMode="numeric"
-              min="1"
-              max="31"
+              max={31}
               value={formCartao.melhor_dia_compra}
-              onChange={(e) => setFormCartao({ ...formCartao, melhor_dia_compra: e.target.value })}
-              className={`${campoClasse} valor`}
+              onChange={(v) => setFormCartao({ ...formCartao, melhor_dia_compra: v })}
             />
           </Campo>
         </div>

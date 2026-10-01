@@ -30,7 +30,10 @@ export function rotuloProximaFatura(diaVencimento: number, melhorDia?: number) {
 export function erroDoBanco(limite: number, disponivel: string, fatura: string) {
   const disp = disponivel ? parseCurrency(disponivel) : null;
   const fat = fatura ? parseCurrency(fatura) : 0;
-  if (disp !== null && limite > 0 && disp > limite) return "O disponível não pode passar do limite.";
+  // Sem o limite não dá para saber quanto está usado: antes a conta saía
+  // "limite usado −R$ 7.000,00".
+  if (disp !== null && limite <= 0) return "Preencha o limite do cartão, lá em cima, para o Hedge calcular quanto já está usado.";
+  if (disp !== null && disp > limite) return "O disponível não pode passar do limite.";
   const usado = disp === null ? fat : limite - disp;
   if (disp !== null && fat > usado + 0.009)
     return `A fatura é maior que o limite usado (${formatCurrency(usado)}). Confira os dois valores no app do banco.`;

@@ -11,7 +11,7 @@ import {
 } from "../../utils/categories";
 import { useCategorias } from "../../hooks/useCategorias";
 import { PARCELAS_OPTIONS, PARCELAS_MAX } from "../../utils/constants";
-import {
+import { CampoInteiro,
   FormSheet,
   Campo,
   Chip,
@@ -395,15 +395,11 @@ export const FormGasto: React.FC<FormGastoProps> = ({
           htmlFor="gasto-parcela-proxima"
           dica="Está escrito na fatura do banco, ao lado da compra: 3/10 quer dizer parcela 3."
         >
-          <input
+          <CampoInteiro
             id="gasto-parcela-proxima"
-            type="number"
-            inputMode="numeric"
-            min="1"
             max={numParcelas}
             value={formData.parcela_proxima || ""}
-            onChange={(e) => set({ parcela_proxima: e.target.value })}
-            className={`${campoClasse} valor`}
+            onChange={(v) => set({ parcela_proxima: v })}
           />
           {valorParcela > 0 && (
             <p className="mt-2 text-xs text-fg-2 leading-relaxed">
@@ -426,16 +422,12 @@ export const FormGasto: React.FC<FormGastoProps> = ({
           não: cada parcela vai para a fatura certa sozinha. */}
       {antiga ? null : fixo ? (
         <Campo rotulo="Dia do vencimento" htmlFor="gasto-vencimento" dica="De 1 a 31.">
-          <input
+          <CampoInteiro
             id="gasto-vencimento"
-            type="number"
-            inputMode="numeric"
-            min="1"
-            max="31"
+            max={31}
             value={formData.dia_vencimento}
-            onChange={(e) => set({ dia_vencimento: e.target.value })}
+            onChange={(v) => set({ dia_vencimento: v })}
             placeholder="Ex: 10"
-            className={`${campoClasse} valor`}
           />
         </Campo>
       ) : (

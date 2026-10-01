@@ -9,7 +9,7 @@ import { useAppContext } from "../../context";
 import { inicioParaNovoRecorrente } from "../../utils/saldo";
 import { avisarDadosMudaram } from "../../utils/onboarding";
 import { criarCobrancasDoFixo, divididoComParaBanco } from "../../utils/fixoDividido";
-import { FormSheet, Campo, Chip, Chips, campoClasse } from "../ui/FormSheet";
+import { CampoInteiro, FormSheet, Campo, Chip, Chips, campoClasse } from "../ui/FormSheet";
 import { MoneyInput } from "../ui/MoneyInput";
 import { Button } from "../ui/Button";
 
@@ -236,16 +236,7 @@ export function FixosRapidos({ aberto, contas, cartoes, onFechar }: FixosRapidos
               <MoneyInput id={`fx-${l.id}`} value={l.valor} onChange={(v) => mudar(l.id, { valor: v })} />
             </Campo>
             <Campo rotulo="Dia" htmlFor={`fx-dia-${l.id}`}>
-              <input
-                id={`fx-dia-${l.id}`}
-                type="number"
-                inputMode="numeric"
-                min="1"
-                max="31"
-                value={l.dia}
-                onChange={(e) => mudar(l.id, { dia: e.target.value })}
-                className={`${campoClasse} valor`}
-              />
+              <CampoInteiro id={`fx-dia-${l.id}`} max={31} value={l.dia} onChange={(v) => mudar(l.id, { dia: v })} />
             </Campo>
           </div>
 

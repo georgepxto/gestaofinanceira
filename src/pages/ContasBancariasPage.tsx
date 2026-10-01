@@ -39,7 +39,7 @@ import { ProgressBar } from "../components/ui/ProgressBar";
 import { Pill } from "../components/ui/Pill";
 import { EmptyState } from "../components/ui/EmptyState";
 import { MoneyInput } from "../components/ui/MoneyInput";
-import { FormSheet, Campo, Chip, Chips, campoClasse } from "../components/ui/FormSheet";
+import { CampoInteiro, FormSheet, Campo, Chip, Chips, campoClasse } from "../components/ui/FormSheet";
 import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
 import { confirmarEntrada, desfazerEntrada } from "../utils/entradas";
 import { ouvirDadosMudaram } from "../utils/onboarding";
@@ -778,29 +778,21 @@ export const ContasBancariasPage = () => {
         </Campo>
         {formReceita.tipo !== "avulso" && (
           <Campo rotulo="Dia do recebimento" htmlFor="receita-dia" dica="De 1 a 31.">
-            <input
+            <CampoInteiro
               id="receita-dia"
-              type="number"
-              inputMode="numeric"
-              min="1"
-              max="31"
+              max={31}
               value={formReceita.dia_recebimento}
-              onChange={(e) => setFormReceita({ ...formReceita, dia_recebimento: e.target.value })}
-              className={`${campoClasse} valor`}
+              onChange={(v) => setFormReceita({ ...formReceita, dia_recebimento: v })}
             />
           </Campo>
         )}
         {formReceita.tipo === "recorrente" && (
           <Campo rotulo="Quantos meses" htmlFor="receita-meses" dica="De 1 a 60.">
-            <input
+            <CampoInteiro
               id="receita-meses"
-              type="number"
-              inputMode="numeric"
-              min="1"
-              max="60"
+              max={60}
               value={formReceita.num_meses}
-              onChange={(e) => setFormReceita({ ...formReceita, num_meses: e.target.value })}
-              className={`${campoClasse} valor`}
+              onChange={(v) => setFormReceita({ ...formReceita, num_meses: v })}
             />
           </Campo>
         )}

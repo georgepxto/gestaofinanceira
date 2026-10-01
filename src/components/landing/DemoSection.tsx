@@ -3,9 +3,9 @@ import { DemoApp } from "./DemoApp";
 import { Fade } from "./Fade";
 
 const TENTE = [
-  "Lance R$ 300 em Mercado e veja o orçamento entrar em alerta.",
-  "Divida um gasto com Ana e Bruno e confira quem deve a quem.",
-  "Marque o aluguel da Ana como quitado e veja o saldo subir.",
+  "Toque no + e lance R$ 100 em Alimentação. Depois veja a meta estourar em Gastos, Metas.",
+  "Lance um gasto dividido com Ana e Bruno e veja em A receber quanto cada um te deve.",
+  "Em A receber, toque na Ana e registre o pagamento: o saldo de hoje sobe no Início."
 ];
 
 export function DemoSection() {
@@ -32,8 +32,8 @@ export function DemoSection() {
         <Fade className="lg:self-end">
           <h2 className="lp-h2 max-w-[14ch]">Experimente antes de criar a conta.</h2>
           <p className="lp-lede mt-6 max-w-[42ch]">
-            Esta é a casa de exemplo "Apê 302". Lance, divida e quite como faria no app, a partir das sugestões
-            abaixo. Nada sai do seu navegador.
+            Este é o app de verdade, com a conta de exemplo da Marina. Lance, divida e receba como faria no seu
+            celular, a partir das sugestões abaixo. Nada sai do seu navegador.
           </p>
         </Fade>
 

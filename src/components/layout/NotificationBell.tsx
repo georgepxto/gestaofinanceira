@@ -12,6 +12,8 @@ import {
   Gauge,
 } from "lucide-react";
 import { useAlertas, type Alerta } from "../../hooks/useAlertas";
+import { useIsMobile } from "../../hooks";
+import { PainelDetalhe } from "../ui/PainelDetalhe";
 
 // A cor é o estado, não o assunto: perigo em --danger-ink, atenção em
 // --accent-ink, informação em --fg-2. O ícone diz o assunto, sempre em traço
@@ -39,6 +41,7 @@ export const NotificationBell = () => {
   const { user } = useAppContext();
   const { alertas, loading } = useAlertas();
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
   
   const getStorageKey = useCallback(
     () => `reppago_dismissed_notifications_${user?.id || 'guest'}`,
@@ -76,11 +79,11 @@ export const NotificationBell = () => {
         setIsOpen(false);
       }
     };
-    if (isOpen) {
+    if (isOpen && !isMobile) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen]);
+  }, [isOpen, isMobile]);
 
   const alertasVisiveis = alertas.filter(
     (a) => !dismissed.has(a.titulo + a.mensagem)
@@ -99,6 +102,47 @@ export const NotificationBell = () => {
     alertas.forEach((a) => newDismissed.add(a.titulo + a.mensagem));
     setDismissed(newDismissed);
   };
+
+  const conteudo = loading ? (
+    <p className="py-6 text-center text-sm text-fg-2">Carregando…</p>
+  ) : alertasVisiveis.length === 0 ? (
+    <div className="py-8 flex flex-col items-center gap-2 text-center">
+      <Bell className="w-5 h-5 text-fg-3" strokeWidth={1.5} />
+      <p className="text-sm text-fg-2">Nada novo por aqui.</p>
+    </div>
+  ) : (
+    <>
+      <ul className="divide-y divide-line">
+        {alertasVisiveis.map((alerta) => (
+          <li key={alerta.titulo + alerta.mensagem} className="py-3 flex items-start gap-3">
+            {/* O bloco de 36px das linhas do app; a cor do ícone é o estado. */}
+            <span className="w-9 h-9 shrink-0 rounded-sm bg-surface-2 flex items-center justify-center">
+              <AlertIcon alerta={alerta} />
+            </span>
+            <div className="flex-1 min-w-0 pt-0.5">
+              <p className="text-[15px] md:text-sm text-fg break-words">{alerta.titulo}</p>
+              <p className="text-xs text-fg-2 mt-0.5 break-words">{alerta.mensagem}</p>
+            </div>
+            <button
+              onClick={() => handleDismiss(alerta)}
+              aria-label={`Dispensar: ${alerta.titulo}`}
+              className="w-11 h-11 md:w-8 md:h-8 -mr-2 -mt-1 flex items-center justify-center rounded text-fg-3 hover:text-fg transition-colors shrink-0"
+            >
+              <X className="w-4 h-4 md:w-3.5 md:h-3.5" strokeWidth={1.5} />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <div className="py-3 border-t border-line flex justify-end">
+        <button
+          onClick={handleDismissAll}
+          className="min-h-[44px] md:min-h-[32px] px-2 -mr-2 rounded text-sm md:text-xs text-fg-2 hover:text-fg transition-colors"
+        >
+          Limpar tudo
+        </button>
+      </div>
+    </>
+  );
 
   return (
     <div className="relative" ref={panelRef}>
@@ -121,23 +165,29 @@ export const NotificationBell = () => {
         )}
       </button>
 
-      {isOpen && (
-        <div
-          role="dialog"
-          aria-label="Notificações"
-          className="absolute right-0 top-full mt-2 w-[calc(100vw-1rem)] max-w-[380px] bg-surface-2 border border-line rounded z-overlay overflow-hidden animate-[fundo-entra_150ms_ease-out]"
+      {/* Celular: o painel de baixo do app (largura toda, nunca cortado).
+          Desktop: a lista abre logo abaixo do sino, alinhada à direita. */}
+      {isMobile ? (
+        <PainelDetalhe
+          aberto={isOpen}
+          titulo="Notificações"
+          resumo={totalCount > 0 ? `${totalCount} ${totalCount === 1 ? "nova" : "novas"}` : undefined}
+          onFechar={() => setIsOpen(false)}
         >
-          <div className="flex items-center justify-between pl-4 pr-2 h-12 border-b border-line">
-            <h3 className="text-base font-medium text-fg">Notificações</h3>
-            <div className="flex items-center gap-1">
-              {totalCount > 0 && (
-                <button
-                  onClick={handleDismissAll}
-                  className="h-8 px-2 rounded text-xs text-fg-2 hover:text-fg transition-colors"
-                >
-                  Limpar tudo
-                </button>
-              )}
+          <div className="pt-2">{conteudo}</div>
+        </PainelDetalhe>
+      ) : (
+        isOpen && (
+          <div
+            role="dialog"
+            aria-label="Notificações"
+            className="absolute right-0 top-full mt-2 w-[380px] bg-surface-1 border border-line rounded z-overlay overflow-hidden animate-[fundo-entra_150ms_ease-out]"
+          >
+            <div className="flex items-center justify-between pl-4 pr-2 h-12 border-b border-line">
+              <h3 className="text-sm font-medium text-fg">
+                Notificações
+                {totalCount > 0 && <span className="ml-2 text-fg-3 font-normal">{totalCount}</span>}
+              </h3>
               <button
                 onClick={() => setIsOpen(false)}
                 aria-label="Fechar notificações"
@@ -146,40 +196,9 @@ export const NotificationBell = () => {
                 <X className="w-4 h-4" strokeWidth={1.5} />
               </button>
             </div>
+            <div className="max-h-[min(26rem,70vh)] overflow-y-auto px-4">{conteudo}</div>
           </div>
-
-          <div className="max-h-[min(24rem,70vh)] overflow-y-auto">
-            {loading ? (
-              <p className="p-6 text-center text-sm text-fg-2">Carregando…</p>
-            ) : alertasVisiveis.length === 0 ? (
-              <div className="p-8 flex flex-col items-center gap-2 text-center">
-                <Bell className="w-5 h-5 text-fg-3" strokeWidth={1.5} />
-                <p className="text-sm text-fg-2">Nada novo por aqui.</p>
-              </div>
-            ) : (
-              <ul className="divide-y divide-line">
-                {alertasVisiveis.map((alerta, i) => (
-                  <li key={i} className="pl-4 pr-2 py-3 flex items-start gap-3">
-                    <span className="mt-0.5">
-                      <AlertIcon alerta={alerta} />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm ${alerta.tipo === "info" ? "text-fg" : corDoAlerta(alerta)}`}>{alerta.titulo}</p>
-                      <p className="text-xs text-fg-2 mt-0.5">{alerta.mensagem}</p>
-                    </div>
-                    <button
-                      onClick={() => handleDismiss(alerta)}
-                      aria-label={`Dispensar: ${alerta.titulo}`}
-                      className="w-8 h-8 flex items-center justify-center rounded text-fg-3 hover:text-fg transition-colors shrink-0"
-                    >
-                      <X className="w-3.5 h-3.5" strokeWidth={1.5} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
+        )
       )}
     </div>
   );

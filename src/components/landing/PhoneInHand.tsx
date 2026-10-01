@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { DividirScreen } from "./app/screens";
+import { AbasDaSecao, BarraApp, TelaPessoas, TopoApp } from "./app/telas";
 
 /* ═══════════════════════════════════════════════════════════════════════
    Uma mão real segurando o celular, com a aba Dividir do app na tela.
@@ -41,7 +41,7 @@ export function PhoneInHand({ className = "" }: { className?: string }) {
     <div
       ref={rootRef}
       role="img"
-      aria-label="Mão segurando um celular com a aba Dividir do Hedge aberta: saldo de +R$ 912,40 no grupo Apê 302 e quem deve a quem."
+      aria-label="Mão segurando um celular com o Hedge aberto em A receber, Pessoas: quanto cada pessoa deve no total."
       className={`lp-phone relative aspect-square w-full ${className}`}
     >
       <img
@@ -57,7 +57,7 @@ export function PhoneInHand({ className = "" }: { className?: string }) {
       {/* A tela do app, recortada pela forma real da tela da foto */}
       <div aria-hidden="true" className="lp-phone-screen lp-force-dark absolute inset-0">
         <div
-          className="absolute overflow-hidden bg-lp-surface"
+          className="app-escuro absolute overflow-hidden bg-page"
           style={{ left: pct(BOX.x), top: pct(BOX.y), width: pct(BOX.w), height: pct(BOX.h) }}
         >
           <div
@@ -69,9 +69,14 @@ export function PhoneInHand({ className = "" }: { className?: string }) {
               <span className="lp-num">9:41</span>
               <span className="lp-num text-[11px]">5G</span>
             </div>
-            <div className="min-h-0 flex-1">
-              <DividirScreen />
+            <TopoApp />
+            <div className="shrink-0 px-4 pt-1 pb-3">
+              <AbasDaSecao abas={["Pessoas", "Cobranças", "Mês a mês"]} ativa="Pessoas" />
             </div>
+            <div className="min-h-0 flex-1 overflow-hidden px-4">
+              <TelaPessoas />
+            </div>
+            <BarraApp ativa="receber" />
           </div>
         </div>
       </div>

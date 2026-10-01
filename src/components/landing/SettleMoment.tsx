@@ -7,10 +7,10 @@ import { gsap } from "./useLandingMotion";
 
 /* ═══════════════════════════════════════════════════════════════════════
    A quebra de expectativa da página: a luz vira laranja e o texto vira a
-   própria conta que o Hedge faz. Os acertos do Apê 302 são as parcelas de
-   uma soma; o número gigante é o resultado dela. Com o scroll, as linhas
+   própria conta que o Hedge faz. O que cada pessoa deve são as parcelas de
+   uma soma; o número gigante é o resultado dela — o mesmo "Te devem no
+   total" da tela de Pessoas no celular ao lado. Com o scroll, as linhas
    entram uma a uma, o traço da soma se desenha e o total conta até o valor.
-   Mesmos dados do bloco de gastos compartilhados.
 
    Texto branco sobre o laranja, em corpo grande (24 px ou mais, o branco
    passa só como texto grande). Destaque em tinta escura (--lp-ink): o
@@ -20,11 +20,11 @@ import { gsap } from "./useLandingMotion";
 /* `name` é a pessoa da linha: vai na tinta de destaque. */
 type Line = { pre: string; name: string; post: string; what: string; op: "+" | "−" | null; v: number };
 const LINES: Line[] = [
-  { pre: "", name: "Ana", post: " te deve", what: "o aluguel", op: "+", v: 1050 },
-  { pre: "Você deve à ", name: "Ana", post: "", what: "o mercado", op: "−", v: 137.6 },
-  { pre: "", name: "Bruno", post: " já pagou", what: "o aluguel", op: null, v: 1050 },
+  { pre: "", name: "Ana", post: " te deve", what: "o aluguel e o jantar", op: "+", v: 1112 },
+  { pre: "", name: "Bruno", post: " deve isso", what: "e o mercado de setembro", op: "+", v: 1249.6 },
+  { pre: "", name: "Carla", post: " já pagou", what: "a parte dela", op: null, v: 0 },
 ];
-const NET = 1050 - 137.6;
+const NET = 1112 + 1249.6;
 
 export function SettleMoment() {
   const sumRef = useRef<HTMLDivElement>(null);
@@ -101,7 +101,7 @@ export function SettleMoment() {
             <div className="sm-rule mt-4 h-[2px] origin-left bg-lp-fg" aria-hidden="true" />
 
             <div className="sm-total mt-6">
-              <div className="text-[24px] leading-snug">Você recebe</div>
+              <div className="text-[24px] leading-snug">Te devem no total</div>
               <span className="sr-only">Mais {brl(NET)}</span>
               <span ref={numRef} aria-hidden="true" className="lp-num lp-giant mt-1 block text-lp-ink">
                 +{brl(NET)}
@@ -109,7 +109,7 @@ export function SettleMoment() {
             </div>
 
             <p className="mt-8 max-w-[26ch] text-[24px] leading-snug">
-              O Hedge refaz essa conta a cada gasto lançado no grupo.
+              O Hedge refaz essa conta a cada gasto dividido e a cada pagamento.
             </p>
           </div>
         </div>

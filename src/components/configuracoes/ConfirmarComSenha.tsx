@@ -16,8 +16,9 @@ interface ConfirmarComSenhaProps {
 /**
  * Confirmação de ação sem volta (zerar dados, excluir conta) pedindo a senha
  * da conta — prova que é a dona da conta, e não só alguém com o app aberto.
- * Quem entra com o Google não tem senha: aí confirma digitando o próprio
- * e-mail.
+ * A senha vem primeiro para todo mundo: conta do Google pode ter senha (criada
+ * em "Alterar senha") e o Supabase não avisa isso. Quem entra só com o Google
+ * troca para confirmar digitando o próprio e-mail.
  */
 export function ConfirmarComSenha({ aberto, titulo, aviso, rotuloEnviar, onConfirmar, onFechar }: ConfirmarComSenhaProps) {
   const { user } = useAppContext();
@@ -26,15 +27,24 @@ export function ConfirmarComSenha({ aberto, titulo, aviso, rotuloEnviar, onConfi
   const [enviando, setEnviando] = useState(false);
 
   const provedores: string[] = user?.app_metadata?.providers || (user?.app_metadata?.provider ? [user.app_metadata.provider] : []);
-  const temSenha = provedores.includes("email");
+  const doGoogle = provedores.includes("google");
+  const [modo, setModo] = useState<"senha" | "email">("senha");
+  const temSenha = modo === "senha";
   const email = user?.email || "";
 
   useEffect(() => {
     if (!aberto) {
       setValor("");
       setErro(null);
+      setModo("senha");
     }
   }, [aberto]);
+
+  const trocarModo = () => {
+    setModo((m) => (m === "senha" ? "email" : "senha"));
+    setValor("");
+    setErro(null);
+  };
 
   const enviar = async () => {
     if (!supabase || !valor) return;
@@ -71,7 +81,19 @@ export function ConfirmarComSenha({ aberto, titulo, aviso, rotuloEnviar, onConfi
       perigo
     >
       {temSenha ? (
-        <Campo rotulo="Sua senha" htmlFor="confirmar-senha" dica="A mesma que você usa para entrar no Hedge.">
+        <Campo
+          rotulo="Sua senha"
+          htmlFor="confirmar-senha"
+          dica={
+            doGoogle ? (
+              <button type="button" onClick={trocarModo} className="underline underline-offset-2 hover:text-fg transition-colors">
+                Entro só com o Google, sem senha
+              </button>
+            ) : (
+              "A mesma que você usa para entrar no Hedge."
+            )
+          }
+        >
           <input
             id="confirmar-senha"
             data-autofocus
@@ -83,7 +105,18 @@ export function ConfirmarComSenha({ aberto, titulo, aviso, rotuloEnviar, onConfi
           />
         </Campo>
       ) : (
-        <Campo rotulo="Seu e-mail" htmlFor="confirmar-email" dica="Você entra com o Google, então confirme com o e-mail da conta.">
+        <Campo
+          rotulo="Seu e-mail"
+          htmlFor="confirmar-email"
+          dica={
+            <>
+              Sem senha, confirme com o e-mail da conta.{" "}
+              <button type="button" onClick={trocarModo} className="underline underline-offset-2 hover:text-fg transition-colors">
+                Tenho senha
+              </button>
+            </>
+          }
+        >
           <input
             id="confirmar-email"
             data-autofocus

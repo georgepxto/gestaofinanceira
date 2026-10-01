@@ -5,8 +5,8 @@ import { gsap } from "./useLandingMotion";
 
 const PERGUNTAS = [
   { q: "Quanto eu tenho?", a: "O saldo de todas as contas que você cadastrou, somado num número só." },
-  { q: "Quanto me devem?", a: "O que você adiantou para alguém e ainda não voltou." },
-  { q: "Quanto posso gastar?", a: "O que sobra depois das faturas e contas do mês." },
+  { q: "Quanto me devem?", a: "O que as pessoas ainda vão te devolver neste mês, pessoa por pessoa." },
+  { q: "Quanto sobra no mês?", a: "O saldo de hoje mais o que entra, menos as contas e as faturas que ainda vencem." },
 ];
 
 export function DashboardSection() {

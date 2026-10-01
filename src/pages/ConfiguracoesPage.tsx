@@ -30,7 +30,7 @@ interface Contagens {
 export const ConfiguracoesPage = () => {
   const { user, handleLogout, setModalFeedback, isAdmin } = useAppContext();
   const provedores: string[] = user?.app_metadata?.providers || (user?.app_metadata?.provider ? [user.app_metadata.provider] : []);
-  const temSenha = provedores.includes("email");
+  const doGoogle = provedores.includes("google");
   const { theme, setTheme } = useTheme();
 
   const [novoNome, setNovoNome] = useState(user?.user_metadata?.nome || "");
@@ -366,14 +366,15 @@ export const ConfiguracoesPage = () => {
               </Button>
             </div>
           </div>
-          {/* Quem entra só com o Google não tem senha para trocar. */}
-          {temSenha && (
-            <Linha titulo="Senha" detalhe="Enviamos um link por e-mail para trocar.">
-              <Button onClick={handleAlterarSenha} carregando={sendingReset} icone={<KeyRound className="w-4 h-4" strokeWidth={1.5} />}>
-                Alterar senha
-              </Button>
-            </Linha>
-          )}
+          {/* Conta do Google também pode ter senha: o link serve para criar ou trocar. */}
+          <Linha
+            titulo="Senha"
+            detalhe={doGoogle ? "Você entra com o Google. Se quiser, crie uma senha por um link no e-mail." : "Enviamos um link por e-mail para trocar."}
+          >
+            <Button onClick={handleAlterarSenha} carregando={sendingReset} icone={<KeyRound className="w-4 h-4" strokeWidth={1.5} />}>
+              {doGoogle ? "Criar ou trocar senha" : "Alterar senha"}
+            </Button>
+          </Linha>
           {/* No celular não há barra lateral: Admin e sair moram aqui. No
               desktop continuam no rodapé da barra. */}
           {isAdmin && (
