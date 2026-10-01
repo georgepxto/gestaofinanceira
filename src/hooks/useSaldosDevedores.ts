@@ -206,7 +206,7 @@ export function useSaldosDevedores({
       setFormDivida({ pessoa: "", descricao: "", valor: "" });
       setShowFormDivida(false);
       setError(null);
-      toast.success("Dívida adicionada com sucesso!");
+      toast.success("Cobrança adicionada.");
     } finally {
       setSaving(false);
     }
@@ -321,7 +321,7 @@ export function useSaldosDevedores({
       confirmLabel: "Desfazer",
       mensagem: `Tem certeza que deseja desfazer este pagamento de ${formatCurrency(
         valorPagamentoParam
-      )}? O valor será adicionado de volta à dívida.`,
+      )}? O valor volta para a cobrança.`,
       onConfirm: async () => {
         setSaving(true);
         try {
@@ -370,9 +370,9 @@ export function useSaldosDevedores({
   const handleDeleteDivida = (id: string) => {
     setModalConfirm({
       show: true,
-      titulo: "Excluir dívida",
+      titulo: "Excluir cobrança",
       mensagem:
-        "Tem certeza que deseja excluir esta dívida? Esta ação não pode ser desfeita.",
+        "Tem certeza que deseja excluir esta cobrança? Esta ação não pode ser desfeita.",
       onConfirm: async () => {
         setSaving(true);
         try {

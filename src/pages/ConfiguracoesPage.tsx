@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Trash2, Sun, Moon, ChevronDown, KeyRound, Download, LogOut, ShieldCheck } from "lucide-react";
+import { Sun, Moon, ChevronDown, KeyRound, Download, LogOut, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -18,6 +18,7 @@ import { Valor } from "../components/ui/Valor";
 import { campoClasse } from "../components/ui/FormSheet";
 import { GerenciarCategorias } from "../components/GerenciarCategorias";
 import { recomecarOnboarding } from "../utils/onboarding";
+import { ConfirmarComSenha } from "../components/configuracoes/ConfirmarComSenha";
 
 interface Contagens {
   lancamentos: number;
@@ -28,22 +29,23 @@ interface Contagens {
 
 export const ConfiguracoesPage = () => {
   const { user, handleLogout, setModalFeedback, isAdmin } = useAppContext();
+  const provedores: string[] = user?.app_metadata?.providers || (user?.app_metadata?.provider ? [user.app_metadata.provider] : []);
+  const temSenha = provedores.includes("email");
   const { theme, setTheme } = useTheme();
 
   const [novoNome, setNovoNome] = useState(user?.user_metadata?.nome || "");
   const [savingNome, setSavingNome] = useState(false);
   const [sendingReset, setSendingReset] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [showExcluirConfirm, setShowExcluirConfirm] = useState(false);
+  const [, setDeletingAccount] = useState(false);
 
   // Acordeão de ações irreversíveis — FECHADO por padrão.
   const [showAcoesIrreversiveis, setShowAcoesIrreversiveis] = useState(false);
 
   // Zerar dados
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [resetConfirmText, setResetConfirmText] = useState("");
-  const [resetingAccount, setResetingAccount] = useState(false);
+  const [, setResetingAccount] = useState(false);
 
   const [contagens, setContagens] = useState<Contagens>({ lancamentos: 0, cartoes: 0, devedores: 0, metas: 0 });
 
@@ -189,17 +191,8 @@ export const ConfiguracoesPage = () => {
   };
 
   // Resetar conta
+  // Zerar: a senha já foi conferida no <ConfirmarComSenha>.
   const handleResetConta = async () => {
-    if (resetConfirmText !== "RESETAR") {
-      setModalFeedback({
-        show: true,
-        titulo: "Confirmação inválida",
-        mensagem: "Digite exatamente 'RESETAR' no campo para confirmar a limpeza de dados.",
-        tipo: "info",
-      });
-      return;
-    }
-
     if (!supabase || !user) return;
 
     setResetingAccount(true);
@@ -255,7 +248,6 @@ export const ConfiguracoesPage = () => {
       });
 
       setShowResetConfirm(false);
-      setResetConfirmText("");
       setTimeout(() => {
         window.location.reload();
       }, 1500);
@@ -273,17 +265,8 @@ export const ConfiguracoesPage = () => {
   };
 
   // Excluir conta
+  // Excluir: a senha já foi conferida no <ConfirmarComSenha>.
   const handleExcluirConta = async () => {
-    if (deleteConfirmText !== "EXCLUIR") {
-      setModalFeedback({
-        show: true,
-        titulo: "Confirmação inválida",
-        mensagem: "Digite exatamente 'EXCLUIR' no campo para confirmar a exclusão permanente.",
-        tipo: "info",
-      });
-      return;
-    }
-
     if (!supabase) return;
 
     setDeletingAccount(true);
@@ -330,7 +313,7 @@ export const ConfiguracoesPage = () => {
   const itensZerar = [
     { label: "lançamentos", quantidade: contagens.lancamentos },
     { label: "cartões", quantidade: contagens.cartoes },
-    { label: "devedores", quantidade: contagens.devedores },
+    { label: "pessoas", quantidade: contagens.devedores },
     { label: "metas", quantidade: contagens.metas },
   ];
 
@@ -383,11 +366,14 @@ export const ConfiguracoesPage = () => {
               </Button>
             </div>
           </div>
-          <Linha titulo="Senha" detalhe="Enviamos um link por e-mail para trocar.">
-            <Button onClick={handleAlterarSenha} carregando={sendingReset} icone={<KeyRound className="w-4 h-4" strokeWidth={1.5} />}>
-              Alterar senha
-            </Button>
-          </Linha>
+          {/* Quem entra só com o Google não tem senha para trocar. */}
+          {temSenha && (
+            <Linha titulo="Senha" detalhe="Enviamos um link por e-mail para trocar.">
+              <Button onClick={handleAlterarSenha} carregando={sendingReset} icone={<KeyRound className="w-4 h-4" strokeWidth={1.5} />}>
+                Alterar senha
+              </Button>
+            </Linha>
+          )}
           {/* No celular não há barra lateral: Admin e sair moram aqui. No
               desktop continuam no rodapé da barra. */}
           {isAdmin && (
@@ -456,7 +442,7 @@ export const ConfiguracoesPage = () => {
         <KpiStrip>
           <Kpi rotulo="Lançamentos" valor={<Valor porte="medio">{contagens.lancamentos}</Valor>} />
           <Kpi rotulo="Cartões" valor={<Valor porte="medio">{contagens.cartoes}</Valor>} />
-          <Kpi rotulo="Devedores" valor={<Valor porte="medio">{contagens.devedores}</Valor>} />
+          <Kpi rotulo="Pessoas" valor={<Valor porte="medio">{contagens.devedores}</Valor>} />
           <Kpi rotulo="Metas" valor={<Valor porte="medio">{contagens.metas}</Valor>} />
         </KpiStrip>
         <Button onClick={handleExportarDados} carregando={exporting} icone={<Download className="w-4 h-4" strokeWidth={1.5} />}>
@@ -467,111 +453,69 @@ export const ConfiguracoesPage = () => {
       {/* Categorias — fechado por padrão */}
       <GerenciarCategorias />
 
-      {/* Ações irreversíveis — fechado por padrão */}
+      {/* Zerar e excluir: fechado por padrão, discreto. Confirmar pede a senha. */}
       <Surface as="section" padding="nenhum">
         <button
           type="button"
           onClick={() => setShowAcoesIrreversiveis(!showAcoesIrreversiveis)}
           aria-expanded={showAcoesIrreversiveis}
-          className="w-full flex items-center gap-3 px-4 md:px-5 min-h-[64px] text-left rounded"
+          className="w-full flex items-center justify-between gap-3 px-4 md:px-5 min-h-[56px] text-left rounded text-[15px] md:text-sm text-fg-2 hover:text-fg transition-colors"
         >
-          <div className="flex-1 min-w-0 py-3">
-            <h2 className="text-base font-medium text-danger-ink">Ações irreversíveis</h2>
-            <p className="text-xs text-fg-2 mt-0.5">Zerar seus dados ou excluir a conta.</p>
-          </div>
+          Zerar dados ou excluir a conta
           <ChevronDown
-            className={`w-4 h-4 text-fg-3 shrink-0 transition-transform duration-150 ${showAcoesIrreversiveis ? "rotate-180" : ""}`}
+            className={`w-4 h-4 text-fg-3 shrink-0 viagem ${showAcoesIrreversiveis ? "rotate-180" : ""}`}
             strokeWidth={1.5}
             aria-hidden="true"
           />
         </button>
 
         {showAcoesIrreversiveis && (
-          <div className="px-4 md:px-5 pb-5 divide-y divide-line">
-            {/* Zerar dados */}
-            <div className="py-5 first:pt-0">
-              <h3 className="text-[15px] md:text-sm text-fg">Zerar meus dados</h3>
-              <p className="text-sm text-fg-2 mt-1">
-                Apaga para sempre{" "}
-                {itensZerar.map((item, i) => (
-                  <span key={item.label}>
-                    <span className="valor text-fg">{item.quantidade}</span> {item.label}
-                    {i < itensZerar.length - 2 ? ", " : i === itensZerar.length - 2 ? " e " : ""}
-                  </span>
-                ))}
-                . Seu login continua.
-              </p>
-              {!showResetConfirm ? (
-                <Button variante="fantasma" className="mt-3 -ml-4 !text-danger-ink" onClick={() => setShowResetConfirm(true)}
-                  icone={<Trash2 className="w-4 h-4" strokeWidth={1.5} />}
-                >
-                  Zerar meus dados
-                </Button>
-              ) : (
-                <div className="mt-3 space-y-3">
-                  <label htmlFor="config-resetar" className="block text-sm text-fg-2">
-                    Digite <span className="valor text-danger-ink">RESETAR</span> para confirmar.
-                  </label>
-                  <input
-                    id="config-resetar"
-                    type="text"
-                    value={resetConfirmText}
-                    onChange={(e) => setResetConfirmText(e.target.value.toUpperCase())}
-                    placeholder="RESETAR"
-                    className={`${campoClasse} valor max-w-xs`}
-                  />
-                  <div className="flex gap-2 flex-wrap">
-                    <Button
-                      variante="perigo"
-                      onClick={handleResetConta}
-                      disabled={resetConfirmText !== "RESETAR"}
-                      carregando={resetingAccount}
-                    >
-                      Zerar dados
-                    </Button>
-                    <Button
-                      variante="fantasma"
-                      onClick={() => {
-                        setShowResetConfirm(false);
-                        setResetConfirmText("");
-                      }}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
+          <div className="px-4 md:px-5 divide-y divide-line border-t border-line">
+            {[
+              { titulo: "Zerar meus dados", detalhe: "Apaga tudo o que você lançou. O login continua.", acao: "Zerar", abrir: () => setShowResetConfirm(true) },
+              { titulo: "Excluir minha conta", detalhe: "Apaga os dados e o login.", acao: "Excluir", abrir: () => setShowExcluirConfirm(true) },
+            ].map((l) => (
+              <div key={l.titulo} className="flex items-center justify-between gap-4 py-4">
+                <div className="min-w-0">
+                  <p className="text-[15px] md:text-sm text-fg">{l.titulo}</p>
+                  <p className="text-xs text-fg-2 mt-0.5">{l.detalhe}</p>
                 </div>
-              )}
-            </div>
-
-            {/* Excluir conta */}
-            <div className="py-5 last:pb-0">
-              <h3 className="text-[15px] md:text-sm text-fg">Excluir minha conta</h3>
-              <p className="text-sm text-fg-2 mt-1">Apaga tudo, inclusive o login. Não tem volta.</p>
-              <label htmlFor="config-excluir" className="block text-sm text-fg-2 mt-3 mb-2">
-                Digite <span className="valor text-danger-ink">EXCLUIR</span> para liberar o botão.
-              </label>
-              <input
-                id="config-excluir"
-                type="text"
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
-                placeholder="EXCLUIR"
-                className={`${campoClasse} valor max-w-xs`}
-              />
-              <Button
-                variante="perigo"
-                className="mt-3"
-                onClick={handleExcluirConta}
-                disabled={deleteConfirmText !== "EXCLUIR"}
-                carregando={deletingAccount}
-                icone={<Trash2 className="w-4 h-4" strokeWidth={1.5} />}
-              >
-                Excluir minha conta
-              </Button>
-            </div>
+                <Button variante="fantasma" className="shrink-0 -mr-3 !text-danger-ink" onClick={l.abrir}>
+                  {l.acao}
+                </Button>
+              </div>
+            ))}
           </div>
         )}
       </Surface>
+
+      <ConfirmarComSenha
+        aberto={showResetConfirm}
+        titulo="Zerar meus dados"
+        aviso={
+          <>
+            Apaga{" "}
+            {itensZerar.map((item, i) => (
+              <span key={item.label}>
+                <span className="valor">{item.quantidade}</span> {item.label}
+                {i < itensZerar.length - 2 ? ", " : i === itensZerar.length - 2 ? " e " : ""}
+              </span>
+            ))}
+            . O login continua, e você começa do zero.
+          </>
+        }
+        rotuloEnviar="Zerar dados"
+        onConfirmar={handleResetConta}
+        onFechar={() => setShowResetConfirm(false)}
+      />
+      <ConfirmarComSenha
+        aberto={showExcluirConfirm}
+        titulo="Excluir minha conta"
+        aviso="Apaga seus dados e o login. Não dá para desfazer."
+        rotuloEnviar="Excluir conta"
+        onConfirmar={handleExcluirConta}
+        onFechar={() => setShowExcluirConfirm(false)}
+      />
     </div>
   );
 };

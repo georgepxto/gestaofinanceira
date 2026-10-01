@@ -150,7 +150,7 @@ export const PessoasPage = () => {
     setModalConfirm({
       show: true,
       titulo: "Excluir pessoa",
-      mensagem: `Tem certeza que deseja excluir "${nome}"? Isso não afetará gastos ou dívidas já cadastradas.`,
+      mensagem: `Tem certeza que deseja excluir "${nome}"? Os lançamentos e as cobranças dela continuam salvos.`,
       onConfirm: () => {
         handleRemovePessoa(nome);
         setModalConfirm({ show: false, titulo: "", mensagem: "", onConfirm: () => {} });
@@ -173,7 +173,7 @@ export const PessoasPage = () => {
   const recebidos = (nome: string) => {
     const doMes = getPagamentosParciais(nome).map((pg, i) => {
       const [d, m, a] = (pg.data || "").split("/");
-      return { chave: `m${i}`, data: a ? `${a}-${m}-${d}` : pg.data, valor: pg.valor, origem: `empréstimos de ${mesNome}` };
+      return { chave: `m${i}`, data: a ? `${a}-${m}-${d}` : pg.data, valor: pg.valor, origem: mesNome };
     });
     const deCobrancas = saldosDevedores
       .filter((s) => s.pessoa === nome)
@@ -310,11 +310,11 @@ export const PessoasPage = () => {
               <div className="flex items-baseline justify-between gap-3">
                 <h3 className="text-sm text-fg capitalize">{mesNome}</h3>
                 <button type="button" onClick={() => verEmDoMes(aberta.nome)} className="text-xs text-fg-2 hover:text-fg underline underline-offset-2 transition-colors min-h-[44px] md:min-h-0">
-                  Ver em Do mês
+                  Ver em Mês a mês
                 </button>
               </div>
               {aberta.p.mes.itens.length === 0 ? (
-                <p className="mt-2 text-sm text-fg-2">Nada emprestado ou dividido neste mês.</p>
+                <p className="mt-2 text-sm text-fg-2">Nenhum lançamento neste mês.</p>
               ) : (
                 <>
                   <ul className="mt-1 divide-y divide-line">

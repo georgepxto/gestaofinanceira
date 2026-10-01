@@ -60,7 +60,6 @@ const FILTROS = [
   { valor: "", rotulo: "Todos" },
   { valor: "pessoal", rotulo: "Pessoal" },
   { valor: "dividido", rotulo: "Dividido" },
-  { valor: "divida", rotulo: "Dívida" },
   { valor: "fixo", rotulo: "Fixo" },
 ];
 
@@ -232,7 +231,7 @@ export function TabMeuGasto({
       <KpiStrip data-tour="eu-resumo-cards">
         <Kpi rotulo="Crédito" data-tour="eu-card-credito" valor={<Valor porte="medio">{formatCurrency(totalMeusGastosCredito)}</Valor>} />
         <Kpi rotulo="Débito" data-tour="eu-card-debito" valor={<Valor porte="medio">{formatCurrency(totalMeusGastosDebito)}</Valor>} />
-        <Kpi rotulo="Pago" data-tour="eu-card-pagos" valor={<Valor porte="medio">{formatCurrency(totalMeusGastosPagos)}</Valor>} />
+        <Kpi rotulo="Já pago" meta="débito e crédito quitado" data-tour="eu-card-pagos" valor={<Valor porte="medio">{formatCurrency(totalMeusGastosPagos)}</Valor>} />
         <Kpi rotulo="Fixos" data-tour="eu-card-fixos" valor={<Valor porte="medio">{formatCurrency(totalGastosFixos)}</Valor>} />
       </KpiStrip>
 

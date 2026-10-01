@@ -41,8 +41,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const podeLancar = isAdmin || features.meus_gastos;
 
   // ── Indicador deslizante ─────────────────────────────────────────────
-  // Um único traço de 2px para a barra inteira: VIAJA do item que estava ativo
-  // até o novo — da lista para Configurações e de volta, sem sumir no caminho.
+  // Um único traço laranja de 2px na borda esquerda da barra, na altura da aba
+  // ativa. VIAJA até a aba nova — da lista para Configurações e de volta.
   // Anda por transform (não por `top`) para deslizar macio. Depende da
   // fronteira de Suspense estar dentro do Layout: se a barra desmontasse a cada
   // chunk, teleportaria.
@@ -100,11 +100,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  // Dois níveis, para dar para ver o que é seção e o que é aba:
-  // - topo (Início, Configurações e o nome das seções): ícone + nome;
-  // - aba de uma seção: só o nome, recuado para começar onde o nome da seção
-  //   começa. Recolhida, tudo vira ícone, e o fio separa as seções.
-  const NavItem = ({ path, label, Icone, topo = false }: { path: string; label: string; Icone: LucideIcon; topo?: boolean }) => {
+  // Expandida: só texto, tudo na mesma margem do logo e do botão Lançar. A
+  // seção (Carteira, Gastos, A receber) é um título em peso médio, não
+  // clicável; as abas vêm logo abaixo em peso normal. A aba ativa fica em branco,
+  // marcada pelo traço laranja na borda, que desliza de uma aba para a outra.
+  // Recolhida: só as abas clicáveis viram ícone, e um fio separa as seções.
+  const NavItem = ({ path, label, Icone }: { path: string; label: string; Icone: LucideIcon; topo?: boolean }) => {
     const ativo = isPathActive(path);
     return (
       <NavLink
@@ -114,12 +115,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }}
         title={recolhida ? label : undefined}
         aria-current={ativo ? "page" : undefined}
-        className={`flex items-center gap-3 min-h-[44px] md:min-h-[36px] text-[15px] md:text-sm transition-colors duration-300 ${
+        className={`flex items-center min-h-[44px] md:min-h-[36px] text-[15px] md:text-sm transition-colors duration-300 ${
           ativo ? "text-fg font-medium" : "text-fg-2 hover:text-fg"
-        } ${recolhida ? "md:justify-center md:px-0" : topo ? "px-4" : "pl-[46px] pr-4"}`}
+        } ${recolhida ? "md:justify-center md:px-0" : "px-4"}`}
       >
         <Icone
-          className={`w-[18px] h-[18px] shrink-0 ${topo || recolhida ? "block" : "hidden"}`}
+          className={`hidden w-[18px] h-[18px] shrink-0 ${recolhida ? "md:block" : ""}`}
           strokeWidth={1.5}
           aria-hidden="true"
         />
@@ -128,18 +129,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
-  const GroupLabel = ({ children, Icone, para }: { children: React.ReactNode; Icone: LucideIcon; para: string }) => (
+  const GroupLabel = ({ children }: { children: React.ReactNode }) => (
     <>
-      {/* A seção: ícone + nome em peso médio, acima das abas recuadas. Clicar
-          leva à primeira aba — parece link, então funciona como link. */}
-      <NavLink
-        to={para}
-        tabIndex={-1}
-        className={`group flex items-center gap-3 px-4 pt-5 pb-1 min-h-[36px] text-sm font-medium text-fg hover:text-fg-2 transition-colors ${recolhida ? "md:sr-only" : ""}`}
-      >
-        <Icone className="w-[18px] h-[18px] shrink-0 text-fg-3" strokeWidth={1.5} aria-hidden="true" />
-        {children}
-      </NavLink>
+      <p className={`px-4 pt-5 pb-1 text-sm font-medium text-fg ${recolhida ? "md:sr-only" : ""}`}>{children}</p>
       {/* Recolhida, o nome do grupo vira um fio entre os blocos de ícones. */}
       {recolhida && <span className="hidden md:block mx-5 my-2 h-px bg-line" aria-hidden="true" />}
     </>
@@ -207,7 +199,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Destinos — só no desktop; no celular vivem na barra inferior. */}
         {indicador && (
           <span
-            className={`hidden md:block absolute left-0 top-0 z-10 w-[2px] bg-fg pointer-events-none ${
+            className={`hidden md:block absolute left-0 top-0 z-10 w-[2px] bg-accent pointer-events-none ${
               indicadorPronto
                 ? "viagem"
                 : ""
@@ -224,7 +216,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {(isAdmin || features.dashboard) && <NavItem path="/" label="Início" Icone={Home} topo />}
           {visibleGroups.map((group) => (
             <div key={group.label} className="flex flex-col">
-              <GroupLabel Icone={group.icon} para={group.items[0].path}>{group.label}</GroupLabel>
+              <GroupLabel>{group.label}</GroupLabel>
               {group.items.map((item) => (
                 <NavItem key={item.path} path={item.path} label={item.label} Icone={item.icon} />
               ))}

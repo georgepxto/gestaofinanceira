@@ -80,7 +80,7 @@ export function TabDividas({
         <EmptyState
           Icone={Inbox}
           frase="Nenhuma cobrança ainda."
-          detalhe="Aparecem aqui as dívidas que você cadastra e o que sobra quando fecha o mês de alguém em Do mês."
+          detalhe="Aparecem aqui as cobranças que você cadastra e o que sobra quando fecha o mês de alguém em Mês a mês."
           acao={<Button onClick={() => setShowFormDivida(true)}>Nova cobrança</Button>}
         />
       </Surface>
@@ -134,11 +134,11 @@ export function TabDividas({
         />
       </div>
 
-      {/* Filtro por devedor */}
+      {/* Filtro por pessoa */}
       {filtrosPessoa.length > 0 && (
         <div data-tour="dividas-filtro-pessoa">
           <FilterChips
-            rotulo="Filtrar por devedor"
+            rotulo="Filtrar por pessoa"
             filtros={[{ valor: "", rotulo: "Todos" }, ...filtrosPessoa]}
             ativo={filtroPessoaDivida}
             onChange={setFiltroPessoaDivida}

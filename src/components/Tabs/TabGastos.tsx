@@ -109,7 +109,7 @@ export function TabGastos({
       {error && (
         <PageErrorState
           compact
-          title="Não foi possível carregar os empréstimos"
+          title="Não foi possível carregar os lançamentos"
           description={toActionableErrorMessage(error, "Não foi possível carregar os lançamentos do mês.")}
         />
       )}
@@ -117,7 +117,7 @@ export function TabGastos({
       {/* FAIXA_RESUMO */}
       <KpiStrip data-tour="gastos-resumo-cards">
         <Kpi
-          rotulo={`Emprestado em ${nomeMes}`}
+          rotulo={`Lançado em ${nomeMes}`}
           valor={<AnimatedNumber valor={totalMes} className="text-[20px]" />}
           meta={`${parcelasAtivas.length} ${parcelasAtivas.length === 1 ? "lançamento" : "lançamentos"}`}
         />
@@ -245,7 +245,7 @@ export function TabGastos({
           <div className="space-y-2 mb-2" data-tour="gastos-filtros">
             {pessoas.length > 0 && (
             <FilterChips
-              rotulo="Filtrar por devedor"
+              rotulo="Filtrar por pessoa"
               filtros={[
                 { valor: "", rotulo: "Todos" },
                 ...pessoas.map((p) => ({ valor: p, rotulo: totalDoMes(p) > 0 ? `${p} · ${formatCurrency(totalDoMes(p))}` : p })),
@@ -270,7 +270,7 @@ export function TabGastos({
           {parcelasAtivas.length === 0 ? (
             <EmptyState
               Icone={Receipt}
-              frase="Nenhum empréstimo neste mês."
+              frase="Nenhum lançamento neste mês."
               detalhe={filtroPessoaGasto || filtroTipoGasto || filtroDiaGasto ? "Os filtros podem estar escondendo resultados." : undefined}
               compacto
             />

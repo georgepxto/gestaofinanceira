@@ -70,7 +70,7 @@ const MEUS_GASTOS_TUTORIAL_STEPS: MeuGastoTutorialStep[] = [
     alvo: "Filtro por categoria",
     titulo: "Filtro por tipo",
     descricao:
-      "Filtre os lançamentos por pessoal, dividido, dívida ou fixo para focar no que importa.",
+      "Filtre por pessoal, dividido ou fixo para focar no que importa.",
   },
   {
     target: "[data-tour='eu-filtro-dia']",
@@ -151,7 +151,7 @@ export const EuPage = () => {
               target: "[data-tour='barra-btn-novo']",
               alvo: "Botão de lançar",
               descricao:
-                "Use o + da barra de baixo para lançar um gasto pessoal, fixo, dividido ou dívida.",
+                "Use o + da barra de baixo para lançar um gasto pessoal, fixo ou dividido.",
             }
           : passo
       ),

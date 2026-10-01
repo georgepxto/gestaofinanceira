@@ -36,6 +36,8 @@ interface FormSheetProps {
   acaoRodape?: ReactNode;
   /** Rótulo do botão de fechar ("Pular por agora" nas boas-vindas). */
   rotuloCancelar?: string;
+  /** Ação sem volta (zerar, excluir): o botão principal fica vermelho. */
+  perigo?: boolean;
   children: ReactNode;
 }
 
@@ -54,6 +56,7 @@ export function FormSheet({
   valor,
   acaoRodape,
   rotuloCancelar = "Cancelar",
+  perigo = false,
   children,
 }: FormSheetProps) {
   const painelRef = useFocusTrap<HTMLFormElement>(enviando ? undefined : onFechar, aberto);
@@ -166,7 +169,7 @@ export function FormSheet({
             </p>
           )}
           <div className="grid gap-2">
-            <Button type="submit" variante="principal" cheio carregando={enviando} disabled={!podeEnviar}>
+            <Button type="submit" variante={perigo ? "perigo" : "principal"} cheio carregando={enviando} disabled={!podeEnviar}>
               {v.rotuloEnviar}
             </Button>
             <Button variante="fantasma" cheio onClick={onFechar} disabled={enviando}>

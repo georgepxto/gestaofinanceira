@@ -114,7 +114,7 @@ export const BottomBar = ({ onLancar }: BottomBarProps) => {
         {traco && (
           <span
             aria-hidden="true"
-            className={`absolute top-0 left-0 h-[2px] bg-fg pointer-events-none ${
+            className={`absolute top-0 left-0 h-[2px] bg-accent pointer-events-none ${
               tracoPronto
                 ? "viagem"
                 : ""

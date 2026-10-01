@@ -305,7 +305,7 @@ export const FormGasto: React.FC<FormGastoProps> = ({
             htmlFor="gasto-minha-parte"
             dica={
               fixo
-                ? "Todo mês, a parte de cada pessoa entra em A receber, Do mês."
+                ? "Todo mês, a parte de cada pessoa entra em A receber, Mês a mês."
                 : "Dividida por igual entre você e as pessoas escolhidas. Dá para ajustar."
             }
           >

@@ -24,7 +24,7 @@ const DIVIDAS_TUTORIAL_STEPS: DividasTutorialStep[] = [
     alvo: "Cabeçalho da aba",
     titulo: "Cobranças",
     descricao:
-      "As dívidas que ficaram: as que você cadastrou e o resto dos meses fechados. Não dependem de mês.",
+      "O que ficou para trás: cobranças que você cadastrou e o que sobrou de meses fechados. Não dependem de mês.",
     placement: "below",
   },
   {
@@ -51,10 +51,10 @@ const DIVIDAS_TUTORIAL_STEPS: DividasTutorialStep[] = [
   },
   {
     target: "[data-tour='dividas-filtro-pessoa']",
-    alvo: "Filtro por devedor",
+    alvo: "Filtro por pessoa",
     titulo: "Filtrar por pessoa",
     descricao:
-      "Selecione um devedor para ver só as cobranças dele e acompanhar saldo individual com precisão.",
+      "Escolha uma pessoa para ver só as cobranças dela.",
   },
   {
     target: "[data-tour='dividas-lista']",
@@ -133,7 +133,7 @@ export const DividasPage = () => {
       <PageHeader
         data-tour="dividas-header"
         title="Cobranças"
-        description="Dívidas que ficaram, sem mês: as que você cadastrou e o resto dos meses fechados."
+        description="O que ficou para trás: cobranças que você cadastrou e o que sobrou de meses fechados."
         action={
           <Button
             variante={isMobile ? "secundario" : "principal"}

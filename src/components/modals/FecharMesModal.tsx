@@ -53,7 +53,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
     <FormSheet
       aberto={show && !!pessoa}
       titulo="Fechar mês"
-      aviso={`${pessoa ?? ""} · ${formatMonthYear(mesVisualizacao)}. O que não for pago agora vira cobrança em aberto.`}
+      aviso={`${pessoa ?? ""} · ${formatMonthYear(mesVisualizacao)}. O que faltar vira uma cobrança, em Cobranças.`}
       onFechar={onClose}
       onEnviar={() => pessoa && onSubmit(pessoa, valorPago > 0 ? contaId || undefined : undefined)}
       rotuloEnviar="Fechar mês"
@@ -85,7 +85,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
           ...(valorPago > 0 ? [{ rotulo: "Paga agora", valor: formatCurrency(valorPago) }] : []),
           valorParaDebito > 0
             ? {
-                rotulo: "Vai para cobranças em aberto",
+                rotulo: "Vira cobrança",
                 valor: formatCurrency(valorParaDebito),
                 destaque: true,
                 tom: "atencao" as const,

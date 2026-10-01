@@ -38,7 +38,7 @@ export function RegistrarPagamento({ pessoa, onFechar }: RegistrarPagamentoProps
   const nomeMes = format(mesVisualizacao, "MMMM", { locale: ptBR });
   const alvos: Alvo[] = p
     ? [
-        ...(p.mes.falta > 0 ? [{ chave: "mes", rotulo: `Empréstimos de ${nomeMes}`, falta: p.mes.falta }] : []),
+        ...(p.mes.falta > 0 ? [{ chave: "mes", rotulo: nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1), falta: p.mes.falta }] : []),
         ...p.cobrancas.map((c) => ({ chave: c.id, rotulo: c.descricao, falta: c.valor_atual })),
       ]
     : [];

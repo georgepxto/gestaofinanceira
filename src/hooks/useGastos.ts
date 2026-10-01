@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { format } from "date-fns";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import type { Gasto, GastoForm, ParcelaAtiva, ResumoMensal } from "../types";
@@ -65,11 +65,15 @@ export function useGastos({
 
 
   // Buscar gastos do Supabase
+  // Só a primeira carga mostra o esqueleto. As recargas seguintes (outra tela
+  // avisou que os dados mudaram, ou o tempo real do Supabase) trocam os dados
+  // sem tirar a lista da tela — antes ela piscava duas, três vezes ao abrir.
+  const jaCarregou = useRef(false);
   const fetchGastos = useCallback(async () => {
     if (!supabase) return;
     
     try {
-      setLoading(true);
+      if (!jaCarregou.current) setLoading(true);
       setError(null);
 
       const { data, error: fetchError } = await supabase
@@ -86,6 +90,7 @@ export function useGastos({
         "Erro ao carregar gastos. Verifique sua conexão com o Supabase."
       );
     } finally {
+      jaCarregou.current = true;
       setLoading(false);
     }
   }, []);

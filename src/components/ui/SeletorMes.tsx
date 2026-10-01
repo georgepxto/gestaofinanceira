@@ -1,5 +1,6 @@
-import { isSameMonth } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { format, isSameMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { useAppContext } from "../../context";
 import { formatMesAno } from "../../utils/calculations";
 
@@ -19,15 +20,17 @@ interface SeletorMesProps {
  * Quem quer trocar de mês chama `navegarMes` no contexto, e todas as telas
  * seguem juntas.
  *
- * O "hoje" só aparece fora do mês corrente. Enquanto ficou sempre visível, era
- * um botão que na maior parte do tempo não fazia nada.
+ * Fora do mês corrente, o próprio nome do mês vira o "voltar para hoje",
+ * com um ícone pequeno ao lado. Antes era um botão "Hoje" que aparecia do
+ * nada e esticava o seletor; agora a largura é fixa e nada pula.
  */
 export const SeletorMes = ({ "data-tour": dataTour, className = "" }: SeletorMesProps) => {
   const { mesVisualizacao, navegarMes, irParaHoje } = useAppContext();
   const noMesCorrente = isSameMonth(mesVisualizacao, new Date());
+  const mesAtual = format(new Date(), "MMMM", { locale: ptBR });
 
   const seta =
-    "w-11 h-11 md:w-9 md:h-9 rounded-sm flex items-center justify-center text-fg-2 hover:text-fg hover:bg-surface-3 transition-colors";
+    "w-11 h-11 md:w-9 md:h-9 shrink-0 rounded-sm flex items-center justify-center text-fg-2 hover:text-fg hover:bg-surface-3 transition-colors";
 
   return (
     <div
@@ -38,18 +41,19 @@ export const SeletorMes = ({ "data-tour": dataTour, className = "" }: SeletorMes
         <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
       </button>
 
-      <span className="min-w-[124px] text-center text-sm text-fg capitalize" aria-live="polite">
-        {formatMesAno(mesVisualizacao)}
-      </span>
-
-      {!noMesCorrente && (
-        <button
-          onClick={irParaHoje}
-          className="h-7 px-2 rounded-sm text-xs text-fg-2 hover:text-fg bg-surface-1 transition-colors"
-        >
-          Hoje
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={irParaHoje}
+        disabled={noMesCorrente}
+        title={noMesCorrente ? undefined : `Voltar para ${mesAtual}`}
+        aria-label={noMesCorrente ? undefined : `${formatMesAno(mesVisualizacao)}. Voltar para ${mesAtual}`}
+        className="group w-[148px] h-11 md:h-9 inline-flex items-center justify-center gap-1.5 text-sm capitalize text-fg rounded-sm transition-colors enabled:hover:bg-surface-3 disabled:cursor-default"
+      >
+        <span aria-live="polite">{formatMesAno(mesVisualizacao)}</span>
+        {!noMesCorrente && (
+          <RotateCcw className="w-3 h-3 text-fg-3 group-hover:text-fg transition-colors" strokeWidth={1.75} aria-hidden="true" />
+        )}
+      </button>
 
       <button onClick={() => navegarMes("proximo")} aria-label="Próximo mês" className={seta}>
         <ChevronRight className="w-4 h-4" strokeWidth={1.5} />

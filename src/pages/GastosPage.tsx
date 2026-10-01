@@ -23,9 +23,9 @@ const GASTOS_TUTORIAL_STEPS: GastosTutorialStep[] = [
   {
     target: "[data-tour='gastos-header']",
     alvo: "Cabeçalho da aba",
-    titulo: "Do mês",
+    titulo: "Mês a mês",
     descricao:
-      "O que você emprestou ou dividiu no mês escolhido, item por item. Quanto cada pessoa deve no total fica em Pessoas.",
+      "Empréstimos e divisões do mês escolhido, item por item. Quanto cada pessoa deve no total fica em Pessoas.",
     placement: "below",
   },
   {
@@ -41,7 +41,7 @@ const GASTOS_TUTORIAL_STEPS: GastosTutorialStep[] = [
     alvo: "Botão Novo Empréstimo",
     titulo: "Novo empréstimo",
     descricao:
-      "Use este botão para registrar um novo valor a receber no mês atual.",
+      "Registre um empréstimo: algo que alguém pegou com você e vai devolver.",
     placement: "below",
   },
   {
@@ -49,14 +49,14 @@ const GASTOS_TUTORIAL_STEPS: GastosTutorialStep[] = [
     alvo: "Navegação de mês",
     titulo: "Troca de período",
     descricao:
-      "Navegue entre os meses para comparar evolução de empréstimos e cobranças.",
+      "Navegue entre os meses para ver os lançamentos de cada um.",
   },
   {
     target: "[data-tour='gastos-resumo-cards']",
     alvo: "Cards de resumo",
     titulo: "Resumo do mês",
     descricao:
-      "O total do mês e uma linha por pessoa, com o que já pagou, observações e o fechamento do mês.",
+      "Quanto foi lançado no mês, quanto já voltou e quanto falta receber.",
   },
   {
     target: "[data-tour='gastos-filtros']",
@@ -67,10 +67,10 @@ const GASTOS_TUTORIAL_STEPS: GastosTutorialStep[] = [
   },
   {
     target: "[data-tour='gastos-lista']",
-    alvo: "Lista de empréstimos",
+    alvo: "Lista de lançamentos",
     titulo: "Lançamentos do mês",
     descricao:
-      "A lista mostra cada lançamento com parcela, pessoa, valor e detalhes da cobrança.",
+      "Cada lançamento com pessoa, parcela e valor.",
   },
   {
     target: "[data-tour='gastos-item-acoes']",
@@ -147,8 +147,8 @@ export const GastosPage = () => {
 
   usePageTutorialHelpButton({
     onClick: openTutorial,
-    title: "Ver tutorial de Do mês",
-    ariaLabel: "Ver tutorial de Do mês",
+    title: "Ver tutorial de Mês a mês",
+    ariaLabel: "Ver tutorial de Mês a mês",
     dataTour: "gastos-help-button",
   });
 
@@ -181,8 +181,8 @@ export const GastosPage = () => {
       {/* HEADER_PAGINA */}
       <PageHeader
         data-tour="gastos-header"
-        title="Do mês"
-        description="O que você emprestou ou dividiu no mês, item por item."
+        title="Mês a mês"
+        description="Empréstimos e divisões de cada mês, item por item."
         action={
           <div className={classeAcoesCabecalho} data-tour="gastos-actions">
             <SeletorMes data-tour="gastos-navegacao-mes" />

@@ -14,7 +14,7 @@ interface FormDividaModalProps {
   onSubmit: () => void;
 }
 
-/** Cobrança em aberto: um valor que alguém te deve fora dos empréstimos do mês. */
+/** Cobrança: um valor que alguém te deve fora dos lançamentos do mês. */
 export const FormDividaModal: React.FC<FormDividaModalProps> = ({
   show,
   formData,
@@ -31,7 +31,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
     <FormSheet
       aberto={show}
       titulo="Nova cobrança"
-      aviso="Para o que alguém te deve fora dos empréstimos do mês e vai pagar aos poucos."
+      aviso="Para o que alguém te deve fora dos lançamentos do mês e vai pagar aos poucos."
       onFechar={onClose}
       onEnviar={onSubmit}
       rotuloEnviar="Adicionar cobrança"
@@ -42,7 +42,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
           tamanho="heroi"
           value={formData.valor}
           onChange={(valor) => set({ valor })}
-          aria-label="Valor da dívida"
+          aria-label="Valor da cobrança"
           data-autofocus
         />
       }
@@ -66,7 +66,7 @@ export const FormDividaModal: React.FC<FormDividaModalProps> = ({
           type="text"
           value={formData.descricao}
           onChange={(e) => set({ descricao: e.target.value })}
-          placeholder="Ex: empréstimo de janeiro, dívida do carro"
+          placeholder="Ex: conserto do carro, viagem de janeiro"
           className={campoClasse}
         />
       </Campo>
