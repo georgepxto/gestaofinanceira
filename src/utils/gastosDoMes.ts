@@ -1,4 +1,5 @@
-import { addMonths, format } from "date-fns";
+import { format } from "date-fns";
+import { getMesFaturaCartao } from "./calculations";
 import type { CartaoCredito, MeuGasto } from "../types";
 
 // Regras de "quanto eu gastei no mês", as mesmas em Lançamentos, Início e
@@ -10,13 +11,18 @@ import type { CartaoCredito, MeuGasto } from "../types";
 export const valorDaMinhaParte = (g: MeuGasto) =>
   (g.categoria === "dividido" || g.categoria === "fixo") && g.minha_parte ? g.minha_parte : g.valor;
 
-/** Mês ("yyyy-MM") em que o gasto pesa: no crédito, o da fatura. */
+/**
+ * Mês ("yyyy-MM") em que o gasto pesa: no crédito, o da fatura — pela mesma
+ * regra de Cartões (getMesFaturaCartao), que também olha o dia de vencimento.
+ * Antes daqui saía uma versão simplificada, e a mesma compra podia cair num mês
+ * em Lançamentos e em outro na fatura.
+ */
 export function mesDoGasto(g: MeuGasto, cartoes: CartaoCredito[]): string {
   if (g.tipo === "credito" && g.cartao_id) {
     const cartao = cartoes.find((c) => c.id === g.cartao_id);
-    if (cartao?.melhor_dia_compra) {
-      const [ano, mes, dia] = g.data.split("-").map(Number);
-      if (dia >= cartao.melhor_dia_compra) return format(addMonths(new Date(ano, mes - 1, dia), 1), "yyyy-MM");
+    if (cartao) {
+      const melhorDia = cartao.melhor_dia_compra || cartao.dia_vencimento;
+      return format(getMesFaturaCartao(g.data, melhorDia, cartao.dia_vencimento), "yyyy-MM");
     }
   }
   return g.data.substring(0, 7);

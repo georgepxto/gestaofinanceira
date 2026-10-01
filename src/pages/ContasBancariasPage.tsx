@@ -4,12 +4,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Plus, Trash2, Pencil, Landmark, ArrowDownLeft, Check, Clock, Coins, Undo2 } from "lucide-react";
 import {
-  carregarLivro,
   corrigirSaldo,
-  fixoValeNoMes,
   inicioParaNovoRecorrente,
   manterSaldoAoMudar,
-  migrarContasLegadas,
   receitaNoMes,
   estadoDaEntrada,
   saldoDaConta,
@@ -44,10 +41,11 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { MoneyInput } from "../components/ui/MoneyInput";
 import { FormSheet, Campo, Chip, Chips, campoClasse } from "../components/ui/FormSheet";
 import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
-import { valorDaMinhaParte } from "../utils/gastosDoMes";
 import { confirmarEntrada, desfazerEntrada } from "../utils/entradas";
 import { ouvirDadosMudaram } from "../utils/onboarding";
 import { RespostaEntrada, type PedidoResposta } from "../components/entradas/RespostaEntrada";
+import { carregarPrevisao, type Previsao } from "../utils/previsao";
+import { ExtratoPrevisao } from "../components/ui/ExtratoPrevisao";
 
 interface ContasTutorialStep {
   target: string;
@@ -113,7 +111,7 @@ const CONTAS_TUTORIAL_STEPS: ContasTutorialStep[] = [
 ];
 
 export const ContasBancariasPage = () => {
-  const { user, setModalConfirm, setModalFeedback, mesVisualizacao, gastosFixos } = useAppContext();
+  const { user, setModalConfirm, setModalFeedback, mesVisualizacao } = useAppContext();
   const { categorias: categoriasReceita } = useCategorias("receita");
 
   // Categoria pré-selecionada numa receita nova: "Outras Receitas" enquanto ela
@@ -128,6 +126,7 @@ export const ContasBancariasPage = () => {
   const [receitas, setReceitas] = useState<Receita[]>([]);
   // Tudo que mexe no saldo (utils/saldo): o saldo é o histórico somado.
   const [livro, setLivro] = useState<Livro>({ receitas: [], meusGastos: [], emprestimos: [], pagamentosFatura: [] });
+  const [previsao, setPrevisao] = useState<Previsao | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -146,20 +145,15 @@ export const ContasBancariasPage = () => {
   });
 
   // Fetches
+  // Contas, livro e previsão numa ida só — a mesma conta do Início
+  // (utils/previsao, que também migra contas do modelo antigo).
   const fetchContas = useCallback(async () => {
     if (!supabase || !user) return;
-    const [{ data }, novoLivro] = await Promise.all([
-      supabase.from("contas_bancarias").select("*").order("nome"),
-      carregarLivro(),
-    ]);
-    let lista = (data as ContaBancaria[]) || [];
-    // Contas do modelo antigo começam no modelo novo com o mesmo saldo de antes.
-    if (await migrarContasLegadas(lista, novoLivro)) {
-      const { data: migradas } = await supabase.from("contas_bancarias").select("*").order("nome");
-      lista = (migradas as ContaBancaria[]) || [];
-    }
-    setLivro(novoLivro);
-    setContas(lista);
+    const r = await carregarPrevisao();
+    if (!r) return;
+    setLivro(r.livro);
+    setContas(r.contas);
+    setPrevisao(r.previsao);
   }, [user]);
 
   const fetchReceitas = useCallback(async () => {
@@ -485,13 +479,6 @@ export const ContasBancariasPage = () => {
     return <Pill>prevista</Pill>;
   };
 
-  // Gastos fixos ativos (não suspensos) do mês selecionado — para a previsão.
-  const mesSelStr = format(mesVisualizacao, "yyyy-MM");
-  const totalGastosFixosMes = (gastosFixos || [])
-    .filter((g) => fixoValeNoMes(g, mesSelStr))
-    .reduce((sum, g) => sum + valorDaMinhaParte(g), 0);
-  const sobraPrevista = totalRecebidoMes + totalPrevistoMes - totalGastosFixosMes;
-
   if (loading) return <PageLoadingState title="Carregando contas" />;
 
   if (loadError) {
@@ -683,33 +670,9 @@ export const ContasBancariasPage = () => {
           )}
         </Surface>
 
-        {/* Previsão do mês: um extrato de cima para baixo. */}
-        <Surface as="section" className="lg:col-start-1">
-          <SurfaceHeader titulo="Previsão do mês" descricao="Se tudo entrar e sair como previsto." />
-          <dl className="text-[15px] md:text-sm">
-            {[
-              { rotulo: "Recebido", valor: formatDinheiro(totalRecebidoMes, { positivo: true }) },
-              { rotulo: "A receber", valor: formatDinheiro(totalPrevistoMes, { positivo: true }) },
-              { rotulo: "Gastos fixos", valor: formatDinheiro(-totalGastosFixosMes) },
-            ].map((l) => (
-              <div key={l.rotulo} className="flex items-baseline justify-between gap-4 py-2">
-                <dt className="text-fg-2">{l.rotulo}</dt>
-                <dd className="valor text-fg">{l.valor}</dd>
-              </div>
-            ))}
-            <div className="flex items-baseline justify-between gap-4 pt-4 mt-2 border-t border-line">
-              <dt className="text-fg">Sobra prevista</dt>
-              <dd>
-                <AnimatedNumber
-                  valor={sobraPrevista}
-                  positivo
-                  className={`text-[20px] ${sobraPrevista < 0 ? "text-danger-ink" : "text-fg"}`}
-                />
-              </dd>
-            </div>
-          </dl>
-          <p className="mt-3 text-xs text-fg-3">Receitas do mês menos os fixos. Não inclui gastos variáveis.</p>
-        </Surface>
+        {/* Até o fim do mês: o mesmo extrato do Início — saldo de hoje + o que
+            entra − o que sai. Sempre do mês atual. */}
+        {previsao && contas.length > 0 && <ExtratoPrevisao previsao={previsao} className="lg:col-start-1" />}
       </div>
 
       {/* Conta */}

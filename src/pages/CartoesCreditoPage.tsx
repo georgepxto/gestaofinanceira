@@ -30,6 +30,7 @@ import { MenuAcoes } from "../components/ui/MenuAcoes";
 import { MoneyInput } from "../components/ui/MoneyInput";
 import { FormSheet, Campo, Chip, Chips, MaisOpcoes, campoClasse } from "../components/ui/FormSheet";
 import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
+import { itensDaFatura, valorDaFatura, type DadosFatura } from "../utils/fatura";
 
 /** "2026-09-29" como data local — `new Date(string)` leria em UTC e voltaria um dia. */
 const dataLocal = (iso: string) => {
@@ -232,49 +233,16 @@ export const CartoesCreditoPage = () => {
     dataTour: "cartoes-help-button",
   });
 
-  // Calculações
-  // Verifica se uma data está dentro do período da fatura
-  const estaNoPeríodoFatura = (dataStr: string, cartaoId: string) => {
+  // A fatura vem de utils/fatura, a mesma conta que o Início usa.
+  const dadosFatura: DadosFatura = { meusGastos, transacoes, emprestimos: gastosCompartilhados, pagamentos: pagamentosFatura };
+  const mesFaturaVista = format(mesVisualizacao, "yyyy-MM");
+  const itensDoCartao = (cartaoId: string) => {
     const cartao = cartoesState.find((c) => c.id === cartaoId);
-    if (!cartao) return false;
-    
-    const melhorDia = cartao.melhor_dia_compra || cartao.dia_vencimento;
-    
-    const mesFatura = getMesFaturaCartao(dataStr, melhorDia, cartao.dia_vencimento);
-    const mesFaturaStr = format(mesFatura, "yyyy-MM");
-    const mesVisualizacaoStr = format(mesVisualizacao, "yyyy-MM");
-    
-    return mesFaturaStr === mesVisualizacaoStr;
+    return cartao ? itensDaFatura(cartao, mesFaturaVista, dadosFatura) : { transacoes: [], gastos: [], emprestimos: [] };
   };
-
-  const getTransacoesDoMes = (cartaoId: string) => {
-    return transacoes.filter(t => t.cartao_id === cartaoId && estaNoPeríodoFatura(t.data, cartaoId));
-  };
-
+  const getTransacoesDoMes = (cartaoId: string) => itensDoCartao(cartaoId).transacoes;
   // Pegar gastos do mês vinculados ao cartão (de meus_gastos)
-  const getGastosDoMes = (cartaoId: string) => {
-    return meusGastos.filter(g => {
-      if (g.cartao_id !== cartaoId) return false;
-      // Gastos fixos ativos aparecem sempre, desde que a fatura atual seja >= fatura de início
-      if (g.categoria === "fixo" && g.ativo) {
-        const cartao = cartoesState.find((c) => c.id === cartaoId);
-        if (!cartao) return false;
-        
-        const melhorDia = cartao.melhor_dia_compra || cartao.dia_vencimento;
-        const dataInicioFatura = getMesFaturaCartao(g.data, melhorDia, cartao.dia_vencimento);
-        const dataInicioStr = format(dataInicioFatura, "yyyy-MM");
-        const mesVisualizacaoStr = format(mesVisualizacao, "yyyy-MM");
-        
-        if (mesVisualizacaoStr >= dataInicioStr) {
-          const isSuspenso = g.meses_suspensos?.includes(mesVisualizacaoStr);
-          return !isSuspenso;
-        }
-        return false;
-      }
-      // Outros gastos filtram pelo período da fatura
-      return estaNoPeríodoFatura(g.data, cartaoId);
-    });
-  };
+  const getGastosDoMes = (cartaoId: string) => itensDoCartao(cartaoId).gastos;
 
   // Combinar transações + meus_gastos + gastos compartilhados para exibir
   const getTodasTransacoesDoMes = (cartaoId: string) => {
@@ -291,7 +259,7 @@ export const CartoesCreditoPage = () => {
     const mes = format(mesVisualizacao, "yyyy-MM");
     const faturaFoiPaga = pagamentosFatura.some(p => p.cartao_id === cartaoId && p.mes === mes);
     
-    const compartilhados = gastosCompartilhados.filter(g => g.cartao_id === cartaoId && estaNoPeríodoFatura(g.data_inicio, cartaoId)).map(g => {
+    const compartilhados = itensDoCartao(cartaoId).emprestimos.map(g => {
       // Verificar status de pagamento da pessoa
       const resumoPessoa = resumoMensal.find(r => r.pessoa === g.pessoa);
       const totalDevido = resumoPessoa?.total || 0;
@@ -330,29 +298,9 @@ export const CartoesCreditoPage = () => {
     return gasto?.categoria === "fixo";
   };
 
-  // Verificar quanto foi pago da fatura deste mês
-  const getPagamentoFaturaMes = (cartaoId: string) => {
-    const mes = format(mesVisualizacao, "yyyy-MM");
-    const pagamento = pagamentosFatura.find(p => p.cartao_id === cartaoId && p.mes === mes);
-    return pagamento?.valor_pago || 0;
-  };
-
   const getFaturaCartao = (cartaoId: string) => {
-    const trans = getTransacoesDoMes(cartaoId);
-    const gastos = getGastosDoMes(cartaoId);
-    const compartilhados = gastosCompartilhados.filter(g => g.cartao_id === cartaoId && estaNoPeríodoFatura(g.data_inicio, cartaoId));
-    // Só somar transações e gastos NÃO pagos na fatura pendente
-    const totalTrans = trans.filter(t => !t.pago).reduce((sum, t) => sum + t.valor, 0);
-    // A fatura é o que o banco cobra: valor cheio de cada compra no cartão,
-    // inclusive a dividida e o empréstimo. O que as pessoas te devolvem entra
-    // pelo A receber — antes era descontado aqui e a fatura não batia.
-    const totalGastos = gastos.filter(g => !g.pago).reduce((sum, g) => sum + g.valor, 0);
-    const totalCompartilhados = compartilhados.reduce((sum, g) => sum + g.valor_total / g.num_parcelas, 0);
-    
-    const totalBruto = totalTrans + totalGastos + totalCompartilhados;
-    // Descontar valor já pago da fatura
-    const valorPagoFatura = getPagamentoFaturaMes(cartaoId);
-    return Math.max(0, totalBruto - valorPagoFatura);
+    const cartao = cartoesState.find((c) => c.id === cartaoId);
+    return cartao ? valorDaFatura(cartao, mesFaturaVista, dadosFatura) : 0;
   };
 
   const getLimiteUsado = (cartaoId: string) => {

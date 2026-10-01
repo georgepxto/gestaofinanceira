@@ -111,7 +111,7 @@ export function usePagamentosParciais({
   );
 
   // Adicionar pagamento parcial
-  const handleAddPagamentoParcial = async (pessoa: string) => {
+  const handleAddPagamentoParcial = async (pessoa: string, contaId?: string) => {
     const valor = parseCurrency(valorPagamentoParcial);
     if (valor <= 0) {
       setError("Valor de pagamento inválido.");
@@ -141,6 +141,7 @@ export function usePagamentosParciais({
           mes,
           valor,
           data_pagamento: dataPagamento,
+          ...(contaId ? { conta_id: contaId } : {}),
         });
 
         if (result) {

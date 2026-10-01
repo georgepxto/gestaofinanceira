@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { formatCurrency } from "../../utils/calculations";
 import { FormSheet, Campo, Chip, Chips, campoClasse } from "../ui/FormSheet";
 import { MoneyInput } from "../ui/MoneyInput";
+import { EscolhaConta } from "../ui/EscolhaConta";
+import type { ContaBancaria } from "../../types";
 
 interface PagamentoModalProps {
   show: boolean;
@@ -15,7 +17,9 @@ interface PagamentoModalProps {
   onValorChange: (valor: string) => void;
   onObsChange: (obs: string) => void;
   onTudo: (valor: number) => void;
-  onSubmit: (dividaId: string) => void;
+  /** Contas para escolher onde o pagamento caiu. */
+  contas?: ContaBancaria[];
+  onSubmit: (dividaId: string, contaId?: string) => void;
 }
 
 /** Pagamento de uma cobrança em aberto. */
@@ -32,7 +36,15 @@ export const PagamentoModal: React.FC<PagamentoModalProps> = ({
   onObsChange,
   onTudo,
   onSubmit,
-}) => (
+  contas = [],
+}) => {
+  // Conta em que o pagamento caiu (com uma conta só, ela já vem marcada).
+  const [contaId, setContaId] = useState("");
+  useEffect(() => {
+    if (!show) setContaId("");
+  }, [show]);
+
+  return (
   <FormSheet
     aberto={show && !!dividaId}
     titulo="Registrar pagamento"
@@ -42,7 +54,7 @@ export const PagamentoModal: React.FC<PagamentoModalProps> = ({
       </>
     }
     onFechar={onClose}
-    onEnviar={() => dividaId && onSubmit(dividaId)}
+    onEnviar={() => dividaId && onSubmit(dividaId, contaId || undefined)}
     rotuloEnviar="Confirmar pagamento"
     enviando={saving}
     erro={error}
@@ -71,5 +83,7 @@ export const PagamentoModal: React.FC<PagamentoModalProps> = ({
         className={campoClasse}
       />
     </Campo>
+    <EscolhaConta contas={contas} valor={contaId} onChange={setContaId} aberto={show && !!dividaId} />
   </FormSheet>
-);
+  );
+};

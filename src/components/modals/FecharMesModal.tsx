@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { formatCurrency, formatCurrencyValue, parseCurrency, formatMonthYear } from "../../utils/calculations";
 import { FormSheet, Chip, Chips, Extrato } from "../ui/FormSheet";
 import { MoneyInput } from "../ui/MoneyInput";
+import { EscolhaConta } from "../ui/EscolhaConta";
+import type { ContaBancaria } from "../../types";
 
 interface FecharMesModalProps {
   show: boolean;
@@ -14,7 +16,9 @@ interface FecharMesModalProps {
   error: string | null;
   onClose: () => void;
   onValorChange: (valor: string) => void;
-  onSubmit: (pessoa: string) => void;
+  /** Contas para escolher onde o pagamento caiu. */
+  contas?: ContaBancaria[];
+  onSubmit: (pessoa: string, contaId?: string) => void;
 }
 
 /**
@@ -33,10 +37,17 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
   onClose,
   onValorChange,
   onSubmit,
+  contas = [],
 }) => {
   const restanteReal = totalDevido - jaPago;
   const valorPago = parseCurrency(valorPagoFecharMes);
   const valorParaDebito = Math.max(0, restanteReal - valorPago);
+  // Conta em que o pagamento caiu (com uma conta só, ela já vem marcada).
+  const [contaId, setContaId] = useState("");
+  useEffect(() => {
+    if (!show) setContaId("");
+  }, [show]);
+
 
   return (
     <FormSheet
@@ -44,7 +55,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
       titulo="Fechar mês"
       aviso={`${pessoa ?? ""} · ${formatMonthYear(mesVisualizacao)}. O que não for pago agora vira cobrança em aberto.`}
       onFechar={onClose}
-      onEnviar={() => pessoa && onSubmit(pessoa)}
+      onEnviar={() => pessoa && onSubmit(pessoa, valorPago > 0 ? contaId || undefined : undefined)}
       rotuloEnviar="Fechar mês"
       enviando={saving}
       erro={error}
@@ -82,6 +93,7 @@ export const FecharMesModal: React.FC<FecharMesModalProps> = ({
             : { rotulo: "Situação", valor: "Quitado", destaque: true },
         ]}
       />
+      {valorPago > 0 && <EscolhaConta contas={contas} valor={contaId} onChange={setContaId} aberto={show && !!pessoa} />}
     </FormSheet>
   );
 };

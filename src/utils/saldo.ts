@@ -27,6 +27,36 @@ import type { ContaBancaria, Gasto, MeuGasto, Receita } from "../types";
 // `saldo_atual` não é mais usado (fica nulo); ver `migrarContasLegadas`.
 // ═══════════════════════════════════════════════════════════════════════════
 
+/** Dinheiro que alguém te devolveu e caiu numa conta. */
+export interface Recebimento {
+  conta_id: string;
+  valor: number;
+  /** yyyy-MM-dd */
+  data: string;
+}
+
+/**
+ * Os pagamentos recebidos com conta: os do mês (pagamentos_parciais, data em
+ * dd/MM/yyyy) e os das cobranças em aberto (histórico de saldos_devedores).
+ */
+export function montarRecebimentos(
+  pagamentosParciais: { conta_id?: string | null; valor: number; data_pagamento: string }[],
+  saldosDevedores: { historico?: { conta_id?: string; valor: number; data: string }[] | null }[]
+): Recebimento[] {
+  const doMes = pagamentosParciais
+    .filter((p) => p.conta_id)
+    .map((p) => {
+      const [d, m, a] = p.data_pagamento.split("/");
+      return { conta_id: p.conta_id as string, valor: Number(p.valor) || 0, data: `${a}-${m}-${d}` };
+    });
+  const deCobrancas = saldosDevedores.flatMap((s) =>
+    (s.historico || [])
+      .filter((h) => h.conta_id)
+      .map((h) => ({ conta_id: h.conta_id as string, valor: Number(h.valor) || 0, data: diaLocal(h.data) }))
+  );
+  return [...doMes, ...deCobrancas];
+}
+
 /** A resposta para UM mês de UMA receita fixa/recorrente: caiu ou ainda não. */
 export interface ConfirmacaoReceita {
   receita_id: string;
@@ -49,6 +79,11 @@ export interface Livro {
   emprestimos: Gasto[];
   pagamentosFatura: { conta_id?: string | null; valor_pago: number; created_at?: string }[];
   confirmacoes?: ConfirmacaoReceita[];
+  /**
+   * Pagamentos que as pessoas te fizeram (A receber), com a conta em que
+   * caíram. Sem conta, o pagamento fica só no A receber.
+   */
+  recebimentos?: Recebimento[];
   /**
    * A partir de que dia a receita fixa/recorrente só entra no saldo depois de
    * confirmada. Antes disso (e quando é nulo: a tabela ainda não existe) ela
@@ -266,6 +301,11 @@ export function saldoDaConta(conta: ContaBancaria, livro: Livro, hoje = new Date
     if (p.conta_id === conta.id && noPeriodo(diaLocal(p.created_at))) saldo -= Number(p.valor_pago) || 0;
   }
 
+  // O que as pessoas te devolveram e caiu nesta conta.
+  for (const r of livro.recebimentos || []) {
+    if (r.conta_id === conta.id && noPeriodo(r.data)) saldo += r.valor;
+  }
+
   return Math.round(saldo * 100) / 100;
 }
 
@@ -412,12 +452,14 @@ export async function migrarContasLegadas(contas: ContaBancaria[], livro: Livro,
 /** Busca tudo que o saldo precisa, numa ida só. */
 export async function carregarLivro(): Promise<Livro> {
   if (!supabase) return { receitas: [], meusGastos: [], emprestimos: [], pagamentosFatura: [] };
-  const [r, g, e, p, conf] = await Promise.all([
+  const [r, g, e, p, conf, pp, sd] = await Promise.all([
     supabase.from("receitas").select("*"),
     supabase.from("meus_gastos").select("*"),
     supabase.from("gastos").select("*"),
     supabase.from("pagamentos_fatura").select("conta_id, valor_pago, created_at"),
     carregarConfirmacoes(),
+    supabase.from("pagamentos_parciais").select("*"),
+    supabase.from("saldos_devedores").select("historico"),
   ]);
   return {
     receitas: (r.data as Receita[]) || [],
@@ -425,6 +467,7 @@ export async function carregarLivro(): Promise<Livro> {
     emprestimos: (e.data as Gasto[]) || [],
     pagamentosFatura: p.data || [],
     ...conf,
+    recebimentos: montarRecebimentos(pp.data || [], sd.data || []),
   };
 }
 

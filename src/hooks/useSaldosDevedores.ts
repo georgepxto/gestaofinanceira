@@ -213,7 +213,7 @@ export function useSaldosDevedores({
   };
 
   // Registrar pagamento de dívida
-  const handlePagamento = async (dividaId: string) => {
+  const handlePagamento = async (dividaId: string, contaId?: string) => {
     const valor = parseCurrency(valorPagamento);
     if (valor <= 0) {
       setModalFeedback({
@@ -258,6 +258,8 @@ export function useSaldosDevedores({
           valor: valorFinal,
           data: format(new Date(), "yyyy-MM-dd"),
           observacao: obsPagamento || undefined,
+          // Conta em que caiu: faz o pagamento entrar no saldo (utils/saldo).
+          ...(contaId ? { conta_id: contaId } : {}),
         },
       ];
 
@@ -392,7 +394,7 @@ export function useSaldosDevedores({
   };
 
   // Fechar mês de uma pessoa
-  const handleFecharMes = async (pessoa: string) => {
+  const handleFecharMes = async (pessoa: string, contaId?: string) => {
     const resumoPessoa = resumoMensal.find((r) => r.pessoa === pessoa);
     if (!resumoPessoa) return;
 
@@ -431,6 +433,7 @@ export function useSaldosDevedores({
             mes,
             valor: valorPago,
             data_pagamento: dataPagamento,
+            ...(contaId ? { conta_id: contaId } : {}),
           });
 
           if (result) {

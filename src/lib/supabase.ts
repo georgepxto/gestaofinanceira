@@ -682,6 +682,8 @@ export interface PagamentoParcialDB {
   mes: string;
   valor: number;
   data_pagamento: string;
+  /** Conta em que o pagamento caiu — faz ele entrar no saldo. */
+  conta_id?: string | null;
 }
 
 export const pagamentosParciaisFunctions = {
@@ -707,11 +709,21 @@ export const pagamentosParciaisFunctions = {
     const user_id = await getCurrentUserId();
     if (!user_id) return null;
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("pagamentos_parciais")
       .insert([{ ...pagamento, user_id }])
       .select()
       .single();
+
+    // Sem a coluna conta_id (migração 20261002 ainda não rodada), grava sem ela.
+    if (error && "conta_id" in pagamento && /conta_id/.test(error.message || "")) {
+      const { conta_id: _ignorada, ...semConta } = pagamento;
+      ({ data, error } = await supabase
+        .from("pagamentos_parciais")
+        .insert([{ ...semConta, user_id }])
+        .select()
+        .single());
+    }
 
     if (error) {
       console.error("Erro ao criar pagamento parcial:", error);

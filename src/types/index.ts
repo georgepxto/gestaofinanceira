@@ -54,6 +54,8 @@ export interface PagamentoSaldo {
   valor: number;
   data: string;
   observacao?: string;
+  /** Conta em que o pagamento caiu — faz ele entrar no saldo. */
+  conta_id?: string;
 }
 
 export interface MeuGasto {

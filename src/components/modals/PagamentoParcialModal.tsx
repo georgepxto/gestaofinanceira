@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { formatCurrency, formatCurrencyValue, formatMonthYear } from "../../utils/calculations";
 import { FormSheet, Chip, Chips, Extrato } from "../ui/FormSheet";
 import { MoneyInput } from "../ui/MoneyInput";
+import { EscolhaConta } from "../ui/EscolhaConta";
+import type { ContaBancaria } from "../../types";
 
 interface PagamentoParcialModalProps {
   show: boolean;
@@ -14,7 +16,9 @@ interface PagamentoParcialModalProps {
   error: string | null;
   onClose: () => void;
   onValorChange: (valor: string) => void;
-  onSubmit: (pessoa: string) => void;
+  /** Contas para escolher onde o pagamento caiu. */
+  contas?: ContaBancaria[];
+  onSubmit: (pessoa: string, contaId?: string) => void;
 }
 
 /** Pagamento parcial do mês de uma pessoa. */
@@ -30,8 +34,15 @@ export const PagamentoParcialModal: React.FC<PagamentoParcialModalProps> = ({
   onClose,
   onValorChange,
   onSubmit,
+  contas = [],
 }) => {
   const restante = totalDevido - jaPago;
+  // Conta em que o pagamento caiu (com uma conta só, ela já vem marcada).
+  const [contaId, setContaId] = useState("");
+  useEffect(() => {
+    if (!show) setContaId("");
+  }, [show]);
+
 
   return (
     <FormSheet
@@ -39,7 +50,7 @@ export const PagamentoParcialModal: React.FC<PagamentoParcialModalProps> = ({
       titulo="Registrar pagamento"
       aviso={`${pessoa ?? ""} · ${formatMonthYear(mesVisualizacao)}`}
       onFechar={onClose}
-      onEnviar={() => pessoa && onSubmit(pessoa)}
+      onEnviar={() => pessoa && onSubmit(pessoa, contaId || undefined)}
       rotuloEnviar="Registrar"
       enviando={saving}
       podeEnviar={restante > 0}
@@ -75,6 +86,7 @@ export const PagamentoParcialModal: React.FC<PagamentoParcialModalProps> = ({
             : []),
         ]}
       />
+      <EscolhaConta contas={contas} valor={contaId} onChange={setContaId} aberto={show && !!pessoa} />
     </FormSheet>
   );
 };

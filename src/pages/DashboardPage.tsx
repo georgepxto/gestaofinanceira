@@ -4,15 +4,9 @@ import { ptBR } from "date-fns/locale";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Plus, Users, Wallet, CreditCard, Receipt, Gauge, PieChart as IconePizza, BarChart3 } from "lucide-react";
 import { useAppContext } from "../context";
-import {
-  carregarConfirmacoes,
-  entradasParaConfirmar,
-  fixosAindaPorSair,
-  migrarContasLegadas,
-  receitaNoMes,
-  saldoDaConta,
-  type Livro,
-} from "../utils/saldo";
+import { entradasParaConfirmar, receitaNoMes } from "../utils/saldo";
+import { carregarPrevisao, type Previsao } from "../utils/previsao";
+import { ExtratoPrevisao } from "../components/ui/ExtratoPrevisao";
 import { ConfirmarEntradas } from "../components/entradas/ConfirmarEntradas";
 import { RespostaEntrada, type PedidoResposta } from "../components/entradas/RespostaEntrada";
 import { gastosPessoaisDoMes, valorDaMinhaParte } from "../utils/gastosDoMes";
@@ -62,7 +56,6 @@ interface DashboardData {
   totalDevido: number;
   gastosFixosMensais: number;
   receitasFixasMensais: number;
-  saldoLivre: number;
   projecaoAnual: { mes: string; saldo: number }[];
   gastosPorCategoria: { categoria: string; valor: number }[];
   emprestadosPorPessoa: { pessoa: string; valor: number }[];
@@ -117,42 +110,38 @@ const DASHBOARD_TUTORIAL_STEPS: DashboardTutorialStep[] = [
   },
   {
     target: "[data-tour='saldo-livre']",
-    alvo: "Saldo livre",
-    titulo: "Saldo livre",
+    alvo: "Saldo hoje",
+    titulo: "Saldo hoje",
     descricao:
-      "O saldo das suas contas hoje, menos os gastos fixos que ainda vão sair neste mês. Fica vermelho quando o dinheiro não cobre os fixos.",
+      "O que está nas suas contas agora: o saldo que você informou mais o que entrou e menos o que saiu desde então.",
     placement: "below",
   },
   {
     target: "[data-tour='acoes-rapidas']",
     alvo: "Atalhos",
     titulo: "Atalhos",
-    descricao:
-      "Lance um gasto, divida uma conta, registre uma receita ou pague a fatura sem sair do Início.",
+    descricao: "Lance um gasto, divida uma conta, registre uma receita ou pague a fatura sem sair do Início.",
     placement: "below",
   },
   {
-    target: "[data-tour='card-saldo-total-mini']",
-    alvo: "Saldo total",
-    titulo: "Saldo total",
+    target: "[data-tour='previsao']",
+    alvo: "Até o fim do mês",
+    titulo: "Até o fim do mês",
     descricao:
-      "A soma do saldo de todas as suas contas hoje, o mesmo número de Contas e receitas.",
-    placement: "below",
+      "O saldo de hoje mais o que ainda vai entrar (salário, o que te devolvem) menos o que ainda vai sair (fixos, fatura). O total é quanto você deve ter no último dia.",
   },
   {
     target: "[data-tour='card-a-receber']",
     alvo: "A receber",
     titulo: "A receber",
-    descricao:
-      "Quanto outras pessoas precisam te pagar neste mês, e quantas já acertaram.",
+    descricao: "Quanto as pessoas ainda te devem deste mês, e quantas já acertaram.",
     placement: "below",
   },
   {
     target: "[data-tour='fluxo-mensal']",
-    alvo: "Sobra mensal",
-    titulo: "Sobra mensal",
-    descricao:
-      "Suas receitas fixas menos os gastos fixos. É o que sobra todo mês antes dos gastos do dia a dia.",
+    alvo: "Fixos do mês",
+    titulo: "Fixos do mês",
+    descricao: "A sua parte dos gastos fixos. No fixo dividido, conta só o que é seu.",
     placement: "below",
   },
   {
@@ -215,6 +204,7 @@ export const DashboardPage = () => {
   const [mostrarFixos, setMostrarFixos] = useState(false);
   // "O salário caiu?": as entradas que chegaram no dia e esperam resposta.
   const [pendentes, setPendentes] = useState<ReturnType<typeof entradasParaConfirmar>>([]);
+  const [previsao, setPrevisao] = useState<Previsao | null>(null);
   const [pedidoResposta, setPedidoResposta] = useState<PedidoResposta | null>(null);
   const navigate = useNavigate();
   const onboarding = lerOnboarding(user?.user_metadata);
@@ -223,7 +213,6 @@ export const DashboardPage = () => {
     totalDevido: 0,
     gastosFixosMensais: 0,
     receitasFixasMensais: 0,
-    saldoLivre: 0,
     projecaoAnual: [],
     gastosPorCategoria: [],
     emprestadosPorPessoa: [],
@@ -285,43 +274,31 @@ export const DashboardPage = () => {
     try {
       // Buscar todos os dados em paralelo para acelerar o carregamento
       const [
-        { data: contas },
         { data: saldosDevedores },
         { data: meusGastos },
         { data: receitas },
         { data: gastosCompartilhados },
         { data: cartoesRaw },
-        { data: pagamentosFatura },
-        confirmacoes,
+        previsaoCarregada,
       ] = await Promise.all([
-        supabase.from("contas_bancarias").select("*"),
         supabase.from("saldos_devedores").select("*"),
         supabase.from("meus_gastos").select("*"),
         supabase.from("receitas").select("*"),
         supabase.from("gastos").select("*"),
         supabase.from("cartoes_credito").select("*"),
-        supabase.from("pagamentos_fatura").select("conta_id, valor_pago, created_at"),
-        carregarConfirmacoes(),
+        carregarPrevisao(),
       ]);
       const cartoes = (cartoesRaw as CartaoCredito[]) || [];
 
-      // Saldo de hoje, calculado do histórico — a mesma conta de Contas (utils/saldo).
+      // Saldo de hoje e previsão do fim do mês — a mesma conta de Contas
+      // (utils/previsao, que usa utils/saldo).
       const todosMeusGastos = (meusGastos as MeuGasto[]) || [];
       const todosFixos = todosMeusGastos.filter((g) => g.categoria === "fixo");
-      const livro: Livro = {
-        receitas: (receitas as Receita[]) || [],
-        meusGastos: todosMeusGastos,
-        emprestimos: (gastosCompartilhados as Gasto[]) || [],
-        pagamentosFatura: pagamentosFatura || [],
-        ...confirmacoes,
-      };
+      if (!previsaoCarregada) throw new Error("Sem conexão com o banco.");
+      const { livro, contas: listaContas } = previsaoCarregada;
+      setPrevisao(previsaoCarregada.previsao);
       setPendentes(entradasParaConfirmar(livro));
-      let listaContas = (contas as ContaBancaria[]) || [];
-      if (await migrarContasLegadas(listaContas, livro)) {
-        const { data: migradas } = await supabase.from("contas_bancarias").select("*");
-        listaContas = (migradas as ContaBancaria[]) || [];
-      }
-      const saldoTotal = listaContas.reduce((acc, c) => acc + saldoDaConta(c, livro), 0);
+      const saldoTotal = previsaoCarregada.previsao.saldoHoje;
       setInicioDeConta({
         contas: listaContas,
         cartoes,
@@ -347,8 +324,6 @@ export const DashboardPage = () => {
         .filter(r => receitaNoMes(r, format(mesVisualizacao, "yyyy-MM")));
       const receitasFixasMensais = receitasFixas.reduce((acc, r) => acc + r.valor, 0);
 
-      // Saldo livre: o saldo de hoje menos os fixos do mês que ainda vão sair.
-      const saldoLivre = saldoTotal - fixosAindaPorSair(todosFixos);
 
       // Projeção anual (próximos 12 meses)
       const mesAtual = new Date().getMonth();
@@ -556,7 +531,6 @@ export const DashboardPage = () => {
         totalDevido,
         gastosFixosMensais,
         receitasFixasMensais,
-        saldoLivre,
         projecaoAnual,
         gastosPorCategoria,
         emprestadosPorPessoa,
@@ -630,7 +604,6 @@ export const DashboardPage = () => {
 
   const nomeDoMes = format(mesVisualizacao, "MMMM", { locale: ptBR });
   const primeiroNome = user?.user_metadata?.nome?.split(" ")[0] || "";
-  const sobraMensal = data.receitasFixasMensais - data.gastosFixosMensais;
   const variacaoGastos =
     data.totalGastosMesAnterior > 0
       ? (data.totalGastosMesAtual - data.totalGastosMesAnterior) / data.totalGastosMesAnterior
@@ -731,14 +704,16 @@ export const DashboardPage = () => {
         <PrimeirosPassos passos={passos} onDispensar={() => marcarOnboarding(onboarding, { passosDispensados: true })} />
       )}
 
-      {/* 2. Saldo livre, e 3. atalhos. */}
+      {/* 2. Saldo de hoje — o que está nas contas agora — e 3. atalhos. */}
       <BalanceHero
-        rotulo="Saldo livre"
-        valor={data.saldoLivre}
+        rotulo="Saldo hoje"
+        valor={data.saldoTotal}
         contexto={
-          <>
-            Seu saldo hoje, menos os fixos que ainda saem em {format(new Date(), "MMMM", { locale: ptBR })}
-          </>
+          inicioDeConta.contas.length === 0
+            ? "Cadastre uma conta para o saldo aparecer aqui."
+            : inicioDeConta.contas.length === 1
+              ? "O que está na sua conta agora."
+              : `O que está nas suas ${inicioDeConta.contas.length} contas agora.`
         }
         data-tour="saldo-livre"
       >
@@ -749,17 +724,15 @@ export const DashboardPage = () => {
         )}
       </BalanceHero>
 
-      {/* 4. Indicadores */}
+      {/* 4. O fim do mês: saldo de hoje + o que entra − o que sai. */}
+      {previsao && inicioDeConta.contas.length > 0 && <ExtratoPrevisao previsao={previsao} dataTour="previsao" />}
+
+      {/* 5. Indicadores */}
       <KpiStrip>
-        <Kpi
-          rotulo="Saldo total"
-          data-tour="card-saldo-total-mini"
-          valor={<AnimatedNumber valor={data.saldoTotal} className={`text-[20px] ${data.saldoTotal < 0 ? "text-danger-ink" : ""}`} />}
-        />
         <Kpi
           rotulo="A receber"
           data-tour="card-a-receber"
-          valor={<AnimatedNumber valor={data.totalEmprestimosMesAtual} className="text-[20px]" />}
+          valor={<AnimatedNumber valor={previsao?.vaoDevolver ?? 0} className="text-[20px]" />}
           meta={
             data.totalPessoas > 0
               ? `${data.pessoasQuitadas} de ${data.totalPessoas} ${data.totalPessoas === 1 ? "acertou" : "acertaram"}`
@@ -776,25 +749,18 @@ export const DashboardPage = () => {
           }
         />
         <Kpi
-          rotulo="Sobra mensal"
+          rotulo="Fixos do mês"
           data-tour="fluxo-mensal"
-          valor={
-            <AnimatedNumber
-              valor={sobraMensal}
-              positivo
-              className={`text-[20px] ${sobraMensal < 0 ? "text-danger-ink" : ""}`}
-            />
-          }
-          meta={
-            <span>
-              <span className="valor">{formatCurrency(data.receitasFixasMensais)}</span> entram,{" "}
-              <span className="valor">
-                {formatCurrency(data.gastosFixosMensais)}
-              </span>{" "}
-              fixos
-            </span>
-          }
+          valor={<AnimatedNumber valor={data.gastosFixosMensais} className="text-[20px]" />}
+          meta="a sua parte"
         />
+        {inicioDeConta.cartoes.length > 0 && (
+          <Kpi
+            rotulo="Fatura do cartão"
+            valor={<AnimatedNumber valor={previsao?.faturas ?? 0} className="text-[20px]" />}
+            meta="falta pagar este mês"
+          />
+        )}
       </KpiStrip>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 items-start">

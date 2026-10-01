@@ -399,11 +399,8 @@ function AppContent() {
               setErrorGastos(null);
             }}
             onValorChange={setValorPagamentoParcial}
-            onSubmit={() => {
-              if (showPagamentoParcial) {
-                handleAddPagamentoParcial(showPagamentoParcial);
-              }
-            }}
+            contas={contas}
+            onSubmit={(pessoa, contaId) => handleAddPagamentoParcial(pessoa, contaId)}
           />
         );
       })()}
@@ -429,7 +426,8 @@ function AppContent() {
           setErrorDividas(null);
         }}
         onValorChange={setValorPagoFecharMes}
-        onSubmit={(pessoa: string) => handleFecharMes(pessoa)}
+        contas={contas}
+        onSubmit={(pessoa, contaId) => handleFecharMes(pessoa, contaId)}
       />
 
       {/* Modal de Formulário de Gasto */}
@@ -478,7 +476,8 @@ function AppContent() {
         onValorChange={setValorPagamento}
         onObsChange={setObsPagamento}
         onTudo={(valor) => setValorPagamento(formatCurrencyValue(valor))}
-        onSubmit={handlePagamento}
+        contas={contas}
+        onSubmit={(dividaId, contaId) => handlePagamento(dividaId, contaId)}
       />
       <Toaster />
     </>
