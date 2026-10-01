@@ -2,6 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Geist Mono servida daqui, não do Google Fonts: a versão do Google não tem
+   o zero sem traço (ss09). Estes arquivos são o recorte latino da Geist Mono
+   1.7.2 (OFL, public/fonts/GEIST-OFL.txt) com o "0" já apontando para o zero
+   liso — vale em todo lugar que usa a fonte, sem font-feature-settings. */
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap; /* ds-ok: propriedade do @font-face, não a família antiga */
+  src: url('/fonts/geist-mono-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap; /* ds-ok: propriedade do @font-face, não a família antiga */
+  src: url('/fonts/geist-mono-500.woff2') format('woff2');
+}
+
 /* ═══════════════════════════════════════════════
    TOKENS
    A única fonte de cor do app. Componente não escreve hex: lê daqui, pelas

@@ -27,16 +27,14 @@
     <!-- Fontes sem bloquear a primeira pintura: o CSS entra como preload e vira
          stylesheet quando chega; até lá o texto aparece na fonte do sistema
          (display=swap). Duas famílias e só duas: Switzer (variável, para o
-         450 dos títulos) em todo texto e Geist Mono nos números. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+         450 dos títulos) em todo texto e Geist Mono nos números — esta vem de
+         /fonts (ver src/index.css), por causa do zero sem traço. -->
     <link rel="preconnect" href="https://api.fontshare.com">
     <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
     <!-- Os arquivos do primeiro quadro vêm em paralelo com o CSS, não depois
-         dele. Se o Fontshare/Google trocarem o arquivo, o preload só fica sem uso. -->
+         dele. Se o Fontshare trocar o arquivo, o preload só fica sem uso. -->
     <link rel="preload" as="font" type="font/woff2" crossorigin href="https://cdn.fontshare.com/wf/HJHZ26OECMTXRH7JXPFC7EVIHDSLT2RA/LJRNLR7WCPF3PY3SZ7B2LHNUTQMFNCHL/4MCJYGQDIOOXHWSIIB2OYNDBEALJSOGN.woff2">
-    <link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/geistmono/v6/or3nQ6H-1_WfwkMZI_qYFrcdmg.woff2">
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap" onload="this.onload=null;this.rel='stylesheet';window.__hedgeFontCss&&window.__hedgeFontCss()">
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/geist-mono-400.woff2">
     <link rel="preload" as="style" href="https://api.fontshare.com/v2/css?f[]=switzer@1&display=swap" onload="this.onload=null;this.rel='stylesheet';window.__hedgeFontCss&&window.__hedgeFontCss()">
     <!-- Fontes prontas: a entrada do hero (e do login) espera a Switzer para
          o título não aparecer na fonte do sistema e trocar na frente de
@@ -46,7 +44,7 @@
         var html = document.documentElement, done = false, css = 0;
         function ready() { if (!done) { done = true; html.classList.add("fonts-ready"); } }
         window.__hedgeFontCss = function () {
-          if (++css < 2) return;
+          if (++css < 1) return;
           try {
             Promise.all([
               document.fonts.load('400 1em "Switzer"'),
@@ -59,7 +57,6 @@
       })();
     </script>
     <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&display=swap">
       <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@1&display=swap">
     </noscript>
     <title>Hedge</title>
