@@ -8,7 +8,7 @@ import { TabMeuGasto } from "../components/Tabs";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
 import { supabase } from "../lib/supabase";
 import type { MetaGasto } from "../types";
-import { PageHeader } from "../components/ui/PageHeader";
+import { PageHeader, classeAcoesCabecalho } from "../components/ui/PageHeader";
 import { SeletorMes } from "../components/ui/SeletorMes";
 import { Button } from "../components/ui/Button";
 import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
@@ -232,7 +232,7 @@ export const EuPage = () => {
         title="Lançamentos"
         description="Suas despesas pessoais e gastos fixos do mês."
         action={
-          <div className="flex items-center gap-2 flex-wrap" data-tour="eu-actions">
+          <div className={classeAcoesCabecalho} data-tour="eu-actions">
             <SeletorMes data-tour="eu-navegacao-mes" />
             {features.exportar_pdf && (
               <Button

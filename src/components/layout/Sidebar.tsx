@@ -56,11 +56,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, [aberta, onFechar]);
 
   // ── Indicador deslizante ─────────────────────────────────────────────
-  // Um único traço de 2px por área (nav e rodapé) VIAJA até o item ativo com
-  // transição contínua de `top`. Depende da fronteira de Suspense estar dentro
-  // do Layout: se a barra desmontasse a cada chunk, teleportaria.
+  // Um único traço de 2px para a barra inteira: VIAJA do item que estava ativo
+  // até o novo — da lista para Configurações e de volta, sem sumir no caminho.
+  // Anda por transform (não por `top`) para deslizar macio. Depende da
+  // fronteira de Suspense estar dentro do Layout: se a barra desmontasse a cada
+  // chunk, teleportaria.
+  const asideRef = useRef<HTMLElement | null>(null);
   const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
-  const [indicador, setIndicador] = useState<{ area: "nav" | "rodape"; top: number; altura: number } | null>(null);
+  const [indicador, setIndicador] = useState<{ y: number; altura: number } | null>(null);
+  // Na primeira medida o traço aparece no lugar, sem viajar do topo.
+  const [indicadorPronto, setIndicadorPronto] = useState(false);
 
   const isPathActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
@@ -77,15 +82,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const medirIndicador = () => {
     const activePath = [...navPaths, ...rodapePaths].find(isPathActive);
     const el = activePath ? itemRefs.current[activePath] : null;
-    if (!activePath || !el) {
+    const aside = asideRef.current;
+    if (!activePath || !el || !aside || el.offsetParent === null) {
       setIndicador(null);
       return;
     }
-    setIndicador({
-      area: rodapePaths.includes(activePath) ? "rodape" : "nav",
-      top: el.offsetTop + 8,
-      altura: el.offsetHeight - 16,
-    });
+    const caixa = el.getBoundingClientRect();
+    setIndicador({ y: caixa.top - aside.getBoundingClientRect().top + 8, altura: caixa.height - 16 });
   };
 
   useLayoutEffect(() => {
@@ -100,14 +103,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, recolhida, isAdmin, showConfiguracoes, visibleGroups.length]);
 
-  const Indicador = ({ area }: { area: "nav" | "rodape" }) =>
-    indicador?.area === area ? (
-      <span
-        className="absolute left-0 w-[2px] bg-fg transition-[top,height] duration-300 ease-out"
-        style={{ top: indicador.top, height: indicador.altura }}
-        aria-hidden="true"
-      />
-    ) : null;
+  useEffect(() => {
+    if (indicador && !indicadorPronto) requestAnimationFrame(() => setIndicadorPronto(true));
+  }, [indicador, indicadorPronto]);
+
+  // Janela redimensionada ou lista rolada: o traço acompanha sem viajar.
+  useEffect(() => {
+    const remedir = () => medirIndicador();
+    window.addEventListener("resize", remedir);
+    return () => window.removeEventListener("resize", remedir);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   const NavItem = ({ path, label, Icone }: { path: string; label: string; Icone: LucideIcon }) => {
     const ativo = isPathActive(path);
@@ -120,7 +126,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         onClick={onFechar}
         title={recolhida ? label : undefined}
         aria-current={ativo ? "page" : undefined}
-        className={`flex items-center min-h-[44px] md:min-h-[36px] px-4 text-[15px] md:text-sm transition-colors ${
+        className={`flex items-center min-h-[44px] md:min-h-[36px] px-4 text-[15px] md:text-sm transition-colors duration-300 ${
           ativo ? "text-fg" : "text-fg-2 hover:text-fg"
         } ${recolhida ? "md:justify-center md:px-0" : ""}`}
       >
@@ -156,6 +162,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       <aside
+        ref={asideRef}
         aria-label="Navegação"
         className={`
           fixed top-0 left-0 h-full z-modal flex flex-col bg-page
@@ -223,8 +230,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* Destinos — só no desktop; no celular vivem na barra inferior. */}
-        <nav className="relative hidden md:flex md:flex-1 min-h-0 overflow-y-auto py-2 flex-col">
-          <Indicador area="nav" />
+        {indicador && (
+          <span
+            className={`hidden md:block absolute left-0 top-0 z-10 w-[2px] bg-fg pointer-events-none ${
+              indicadorPronto
+                ? "viagem"
+                : ""
+            }`}
+            style={{ transform: `translateY(${indicador.y}px)`, height: indicador.altura }}
+            aria-hidden="true"
+          />
+        )}
+
+        <nav
+          className="relative hidden md:flex md:flex-1 min-h-0 overflow-y-auto py-2 flex-col"
+          onScroll={medirIndicador}
+        >
           {(isAdmin || features.dashboard) && <NavItem path="/" label="Início" Icone={Home} />}
           {visibleGroups.map((group) => (
             <div key={group.label} className="flex flex-col">
@@ -238,7 +259,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Rodapé: configurações e usuário */}
         <div className="relative shrink-0 mt-auto md:mt-0 py-3 flex flex-col">
-          <Indicador area="rodape" />
           {isAdmin && <NavItem path="/admin" label="Admin" Icone={ShieldCheck} />}
           {showConfiguracoes && <NavItem path="/configuracoes" label="Configurações" Icone={Settings} />}
 

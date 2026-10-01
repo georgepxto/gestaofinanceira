@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useFocusTrap } from "../../hooks";
+import { usePresenca } from "../../hooks/usePresenca";
 
 interface PainelDetalheProps {
   aberto: boolean;
@@ -19,6 +20,9 @@ interface PainelDetalheProps {
  */
 export function PainelDetalhe({ aberto, titulo, resumo, onFechar, children }: PainelDetalheProps) {
   const painelRef = useFocusTrap<HTMLDivElement>(onFechar, aberto);
+  // Ao fechar, sai com o conteúdo de antes (quem chama costuma limpá-lo junto).
+  const presenca = usePresenca(aberto, { titulo, resumo, children });
+  const v = presenca.saindo ? presenca.congelado : { titulo, resumo, children };
 
   // Fundo parado enquanto o painel está aberto.
   useEffect(() => {
@@ -30,12 +34,13 @@ export function PainelDetalhe({ aberto, titulo, resumo, onFechar, children }: Pa
     };
   }, [aberto]);
 
-  if (!aberto) return null;
+  if (!presenca.montado) return null;
+  const saindo = presenca.saindo;
 
   return createPortal(
-    <div className="fixed inset-0 z-modal">
+    <div className={`fixed inset-0 z-modal ${saindo ? "pointer-events-none" : ""}`}>
       <div
-        className="absolute inset-0 bg-scrim animate-[fundo-entra_200ms_ease-out]"
+        className={`absolute inset-0 bg-scrim ${saindo ? "fundo-sai" : "fundo-entra"}`}
         aria-hidden="true"
         /* ds-ok: fundo de dispensa. Teclado fecha no Esc e no X — o fundo não entra na ordem de foco de propósito */
         onClick={onFechar}
@@ -45,18 +50,17 @@ export function PainelDetalhe({ aberto, titulo, resumo, onFechar, children }: Pa
         role="dialog"
         aria-modal="true"
         aria-labelledby="painel-detalhe-titulo"
-        className="absolute flex flex-col bg-surface-1
+        className={`absolute flex flex-col bg-surface-1
           inset-x-0 bottom-0 max-h-[85dvh] rounded-t
-          animate-[sheet-sobe_250ms_var(--ease-out-cubic)]
           md:inset-y-0 md:left-auto md:right-0 md:w-[440px] md:max-h-none md:rounded-none
-          md:animate-[sheet-direita_250ms_var(--ease-out-cubic)]"
+          ${saindo ? "painel-sai" : "painel-entra"}`}
       >
         <div className="shrink-0 flex items-start justify-between gap-3 px-5 md:px-6 pt-5 md:pt-6 pb-4 border-b border-line">
           <div className="min-w-0">
             <h2 id="painel-detalhe-titulo" className="text-lg font-medium text-fg">
-              {titulo}
+              {v.titulo}
             </h2>
-            {resumo && <p className="mt-1 text-sm text-fg-2">{resumo}</p>}
+            {v.resumo && <p className="mt-1 text-sm text-fg-2">{v.resumo}</p>}
           </div>
           <button
             type="button"
@@ -69,7 +73,7 @@ export function PainelDetalhe({ aberto, titulo, resumo, onFechar, children }: Pa
           </button>
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 md:px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-          {children}
+          {v.children}
         </div>
       </div>
     </div>,

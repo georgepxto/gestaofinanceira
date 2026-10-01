@@ -63,11 +63,17 @@ export function ProgressBar({ valor, maximo, rotulo, legenda, neutra = false, pr
       </div>
 
       {legenda && legenda.length > 0 && (
-        <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+        // No celular, três colunas de bordas alinhadas: a primeira à esquerda,
+        // a do meio centralizada e a última à direita, como a barra acima.
+        <dl
+          className="mt-3 grid grid-cols-3 gap-x-3 gap-y-2
+            [&>*:last-child]:text-right [&>*:nth-child(2):not(:last-child)]:text-center
+            md:flex md:flex-wrap md:gap-x-6 md:[&>*]:!text-left"
+        >
           {legenda.map((item) => (
             <div key={item.rotulo} className="min-w-0">
               <dt className="text-xs text-fg-3">{item.rotulo}</dt>
-              <dd className={`valor text-[15px] md:text-sm mt-0.5 ${item.tom === "perigo" ? "text-danger-ink" : "text-fg"}`}>
+              <dd className={`valor text-sm mt-0.5 ${item.tom === "perigo" ? "text-danger-ink" : "text-fg"}`}>
                 {item.valor}
               </dd>
             </div>

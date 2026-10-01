@@ -1,11 +1,12 @@
-import { useState, useCallback, Suspense } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { useState, useCallback, useEffect, useRef, Suspense } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { NotificationBell } from "./NotificationBell";
 import { BotaoAjuda } from "./BotaoAjuda";
 import { BottomBar } from "./BottomBar";
 import { SubPills } from "./SubPills";
+import { ordemDaRota } from "./navGroups";
 import { AparecerSeDemorar } from "./BootSplash";
 import { AcaoPrincipalProvider } from "./AcaoPrincipalContext";
 import { PageLoadingState } from "../ui/AsyncState";
@@ -30,6 +31,22 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
   // Contrato pequeno de propósito: lançar leva à tela de Lançamentos com o
   // formulário aberto. O "Lançar" da barra lateral e o "+" do celular chamam isto.
   const abrirLancamento = () => navigate("/gastos/lancamentos?novo=1");
+
+  // Para que lado a tela nova entra: o mesmo para onde o traço da navegação
+  // andou. Passada a chegada, volta a "nenhuma" — aí o esqueleto que vira
+  // conteúdo só esmaece, sem deslizar de novo.
+  const { pathname } = useLocation();
+  const [direcao, setDirecao] = useState<"frente" | "tras" | "nenhuma">("nenhuma");
+  const rotaAnterior = useRef(pathname);
+  useEffect(() => {
+    const de = ordemDaRota(rotaAnterior.current);
+    const para = ordemDaRota(pathname);
+    rotaAnterior.current = pathname;
+    if (de === para) return;
+    setDirecao(para > de ? "frente" : "tras");
+    const t = window.setTimeout(() => setDirecao("nenhuma"), 700);
+    return () => window.clearTimeout(t);
+  }, [pathname]);
 
   return (
     <TutorialHelpContext.Provider value={{ helpButton, setHelpButton }}>
@@ -66,9 +83,12 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
                   uma tela, só o conteúdo suspende — a barra lateral fica montada
                   e o indicador viaja em vez de teleportar. Passados 300ms, o
                   esqueleto entra no lugar certo. */}
-              <Suspense fallback={<AparecerSeDemorar><div className="px-4 md:px-8"><PageLoadingState /></div></AparecerSeDemorar>}>
-                <Outlet />
-              </Suspense>
+              {/* `key`: cada tela é um elemento novo, e a chegada roda de novo. */}
+              <div key={pathname} className="tela" data-direcao={direcao}>
+                <Suspense fallback={<AparecerSeDemorar><div className="px-4 md:px-8"><PageLoadingState /></div></AparecerSeDemorar>}>
+                  <Outlet />
+                </Suspense>
+              </div>
             </div>
           </main>
 

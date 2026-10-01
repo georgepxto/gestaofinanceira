@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { format, subDays } from "date-fns";
 import { ChevronDown, X } from "lucide-react";
 import { useFocusTrap } from "../../hooks";
+import { usePresenca } from "../../hooks/usePresenca";
 import { Button } from "./Button";
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -56,6 +57,9 @@ export function FormSheet({
   children,
 }: FormSheetProps) {
   const painelRef = useFocusTrap<HTMLFormElement>(enviando ? undefined : onFechar, aberto);
+  // Ao fechar, o painel desce (ou sai pela direita) com o conteúdo de antes.
+  const presenca = usePresenca(aberto, { titulo, aviso, valor, children, acaoRodape, rotuloEnviar });
+  const v = presenca.saindo ? presenca.congelado : { titulo, aviso, valor, children, acaoRodape, rotuloEnviar };
   const [arraste, setArraste] = useState(0);
   const inicioArraste = useRef<number | null>(null);
 
@@ -73,7 +77,8 @@ export function FormSheet({
     if (!aberto) setArraste(0);
   }, [aberto]);
 
-  if (!aberto) return null;
+  if (!presenca.montado) return null;
+  const saindo = presenca.saindo;
 
   // Alça de arraste (celular): puxar para baixo mais que 96px fecha.
   const aoTocar = (e: React.PointerEvent) => {
@@ -92,9 +97,9 @@ export function FormSheet({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-modal">
+    <div className={`fixed inset-0 z-modal ${saindo ? "pointer-events-none" : ""}`}>
       <div
-        className="absolute inset-0 bg-scrim animate-[fundo-entra_200ms_ease-out]"
+        className={`absolute inset-0 bg-scrim ${saindo ? "fundo-sai" : "fundo-entra"}`}
         aria-hidden="true"
         /* ds-ok: fundo de dispensa. Teclado fecha no Esc e no Cancelar — o fundo não entra na ordem de foco de propósito */
         onClick={enviando ? undefined : onFechar}
@@ -111,12 +116,10 @@ export function FormSheet({
           if (podeEnviar && !enviando) onEnviar();
         }}
         style={arraste ? { transform: `translateY(${arraste}px)`, transition: "none" } : undefined}
-        className="absolute flex flex-col bg-surface-1
+        className={`absolute flex flex-col bg-surface-1
           inset-x-0 bottom-0 max-h-[92dvh] rounded-t
-          animate-[sheet-sobe_250ms_var(--ease-out-cubic)]
           md:inset-y-0 md:left-auto md:right-0 md:w-[440px] md:max-h-none md:rounded-none
-          md:animate-[sheet-direita_250ms_var(--ease-out-cubic)]
-          transition-transform duration-200"
+          transition-transform duration-200 ${saindo ? "painel-sai" : "painel-entra"}`}
       >
         {/* Cabeçalho */}
         <div className="shrink-0">
@@ -133,9 +136,9 @@ export function FormSheet({
           <div className="flex items-start justify-between gap-3 px-5 md:px-6 pt-1 md:pt-6">
             <div className="min-w-0">
               <h2 id="form-sheet-titulo" className="text-lg font-medium text-fg">
-                {titulo}
+                {v.titulo}
               </h2>
-              {aviso && <p className="mt-1 text-sm text-fg-2">{aviso}</p>}
+              {v.aviso && <p className="mt-1 text-sm text-fg-2">{v.aviso}</p>}
             </div>
             <button
               type="button"
@@ -151,8 +154,8 @@ export function FormSheet({
 
         {/* Corpo */}
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 md:px-6 pb-6">
-          {valor && <div className="pt-6 pb-7">{valor}</div>}
-          <div className={`space-y-5 ${valor ? "" : "pt-5"}`}>{children}</div>
+          {v.valor && <div className="pt-6 pb-7">{v.valor}</div>}
+          <div className={`space-y-5 ${v.valor ? "" : "pt-5"}`}>{v.children}</div>
         </div>
 
         {/* Rodapé fixo */}
@@ -164,12 +167,12 @@ export function FormSheet({
           )}
           <div className="grid gap-2">
             <Button type="submit" variante="principal" cheio carregando={enviando} disabled={!podeEnviar}>
-              {rotuloEnviar}
+              {v.rotuloEnviar}
             </Button>
             <Button variante="fantasma" cheio onClick={onFechar} disabled={enviando}>
               {rotuloCancelar}
             </Button>
-            {acaoRodape}
+            {v.acaoRodape}
           </div>
         </div>
       </form>

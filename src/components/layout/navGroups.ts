@@ -62,6 +62,20 @@ export const NAV_GROUPS: NavGroup[] = [
  * Admin vê tudo; usuário comum só vê os itens cujas features estão ativas.
  * Grupo que ficou sem item nenhum não aparece — nem na sidebar, nem na barra.
  */
+/**
+ * A posição de uma rota na ordem da navegação (Início primeiro, Configurações
+ * por último). A tela nova entra do lado para onde a posição andou.
+ */
+export function ordemDaRota(pathname: string): number {
+  if (pathname === "/") return 0;
+  const filhos = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.path));
+  const i = filhos.findIndex((p) => pathname.startsWith(p));
+  if (i >= 0) return i + 1;
+  const grupo = NAV_GROUPS.findIndex((g) => pathname.startsWith(g.prefix));
+  if (grupo >= 0) return filhos.indexOf(NAV_GROUPS[grupo].items[0].path) + 1;
+  return filhos.length + 1;
+}
+
 export function gruposVisiveis(isAdmin: boolean, features: UserFeatures): NavGroup[] {
   return NAV_GROUPS.map((grupo) => ({
     ...grupo,

@@ -71,6 +71,14 @@
   --scrim: rgba(0, 0, 0, 0.6);
 
   --ease-out-cubic: cubic-bezier(0.33, 1, 0.68, 1);
+  /* Chegada que desacelera até parar: o traço da navegação, o destaque das
+     abas e a tela que entra usam a mesma curva e o mesmo tempo. */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-viagem: 460ms;
+  /* O traço da navegação e o destaque das abas deslizam com uma curva mais
+     longa: o olho acompanha o caminho em vez de ver um salto. */
+  --ease-viagem: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-traco: 560ms;
 
   color-scheme: dark;
 }
@@ -271,6 +279,71 @@ input[type="date"]::-webkit-date-and-time-value {
 @keyframes fundo-entra {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+/* Saídas: mais curtas que as entradas (200ms, acelerando) — fechar é
+   dispensar, não deve fazer esperar. */
+@keyframes sheet-desce {
+  from { transform: none; }
+  to   { transform: translateY(100%); }
+}
+
+@keyframes sheet-sai-direita {
+  from { transform: none; }
+  to   { transform: translateX(100%); }
+}
+
+@keyframes fundo-sai {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* Painel e formulário: entram desacelerando, saem acelerando. */
+.painel-entra { animation: sheet-sobe 380ms var(--ease-out-expo); }
+.painel-sai { animation: sheet-desce 200ms cubic-bezier(0.4, 0, 1, 1) forwards; }
+.fundo-entra { animation: fundo-entra 240ms ease-out; }
+.fundo-sai { animation: fundo-sai 200ms ease-in forwards; }
+
+@media (min-width: 768px) {
+  .painel-entra { animation-name: sheet-direita; }
+  .painel-sai { animation-name: sheet-sai-direita; }
+}
+
+/* A tela que entra vem do lado para onde o traço da navegação andou: tela
+   seguinte na lista entra da direita (celular) ou de baixo (desktop), tela
+   anterior do lado oposto. Só a chegada anima — a saída é instantânea, como
+   virar a página. Quando os dados chegam e o esqueleto vira conteúdo, a troca
+   é só um esmaecer (sem direção). Começa visível no fim: nada fica escondido
+   se a animação não rodar. */
+@keyframes tela-entra {
+  from {
+    opacity: 0;
+    transform: translate3d(var(--tela-x, 0), var(--tela-y, 0), 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tela > * {
+  animation: tela-entra var(--dur-viagem) var(--ease-out-expo) backwards;
+}
+
+.tela[data-direcao="frente"] { --tela-x: 28px; }
+.tela[data-direcao="tras"] { --tela-x: -28px; }
+
+@media (min-width: 768px) {
+  .tela[data-direcao="frente"] { --tela-x: 0; --tela-y: 14px; }
+  .tela[data-direcao="tras"] { --tela-x: 0; --tela-y: -14px; }
+}
+
+/* O traço da navegação e o papel das abas: deslizam (transform) e ajustam o
+   tamanho no mesmo ritmo. */
+.viagem {
+  transition-property: transform, width, height, opacity;
+  transition-duration: var(--dur-traco);
+  transition-timing-function: var(--ease-viagem);
 }
 
 /* Tudo desligado para quem pediu menos movimento. */

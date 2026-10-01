@@ -32,7 +32,7 @@ export const SeletorMes = ({ "data-tour": dataTour, className = "" }: SeletorMes
   return (
     <div
       data-tour={dataTour}
-      className={`inline-flex items-center bg-surface-2 rounded-sm ${className}`}
+      className={`inline-flex items-center justify-between bg-surface-2 rounded-sm ${className}`}
     >
       <button onClick={() => navegarMes("anterior")} aria-label="Mês anterior" className={seta}>
         <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />

@@ -1,5 +1,5 @@
 import { Plus, FileText } from "lucide-react";
-import { PageHeader } from "../components/ui/PageHeader";
+import { PageHeader, classeAcoesCabecalho } from "../components/ui/PageHeader";
 import { SeletorMes } from "../components/ui/SeletorMes";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
@@ -184,7 +184,7 @@ export const GastosPage = () => {
         title="Do mês"
         description="O que você emprestou neste mês, organizado por pessoa."
         action={
-          <div className="flex items-center gap-2 flex-wrap" data-tour="gastos-actions">
+          <div className={classeAcoesCabecalho} data-tour="gastos-actions">
             <SeletorMes data-tour="gastos-navegacao-mes" />
             {features.exportar_pdf && (
               <Button

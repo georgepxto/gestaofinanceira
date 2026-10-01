@@ -8,19 +8,17 @@ interface KpiStripProps {
 
 /**
  * De 2 a 4 indicadores. No desktop ficam em linha dentro de uma superfície; no
- * celular viram uma fileira que rola na horizontal com scroll-snap — empilhados,
- * ocupavam a primeira tela inteira antes do conteúdo.
- *
- * A fileira sangra até a borda da tela (o -mx-4 desfaz o respiro da página), e
- * o último indicador cortado pela borda é o que avisa que há mais.
+ * celular, numa grade de duas colunas com as bordas alinhadas às do resto da
+ * tela — o indicador que sobra sozinho ocupa a linha inteira. (A fileira que
+ * rolava de lado cortava o terceiro no meio e deixava a tela torta.)
  */
 export function KpiStrip({ children, className = "", "data-tour": dataTour }: KpiStripProps) {
   return (
     <div
       data-tour={dataTour}
-      className={`relative sem-barra -mx-4 px-4 scroll-px-4 flex gap-2 overflow-x-auto snap-x snap-mandatory
-        md:mx-0 md:px-5 md:py-5 md:gap-0 md:overflow-visible md:bg-surface-1 md:rounded
-        md:grid md:[grid-template-columns:repeat(auto-fit,minmax(0,1fr))] ${className}`}
+      className={`relative grid grid-cols-2 gap-2 [&>*:last-child:nth-child(odd)]:col-span-2
+        md:px-5 md:py-5 md:gap-0 md:bg-surface-1 md:rounded
+        md:[grid-template-columns:repeat(auto-fit,minmax(0,1fr))] md:[&>*:last-child:nth-child(odd)]:col-span-1 ${className}`}
     >
       {children}
     </div>
@@ -40,8 +38,8 @@ export function Kpi({ rotulo, valor, meta, "data-tour": dataTour }: KpiProps) {
   return (
     <div
       data-tour={dataTour}
-      className="snap-start shrink-0 w-[46%] min-w-[152px] bg-surface-1 rounded p-4
-        md:w-auto md:min-w-0 md:bg-transparent md:rounded-none md:p-0 md:pr-6"
+      className="min-w-0 bg-surface-1 rounded p-4
+        md:bg-transparent md:rounded-none md:p-0 md:pr-6"
     >
       <p className="text-xs text-fg-2">{rotulo}</p>
       <div className="mt-1.5 text-fg">{valor}</div>
