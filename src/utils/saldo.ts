@@ -27,6 +27,20 @@ import type { ContaBancaria, Gasto, MeuGasto, Receita } from "../types";
 // `saldo_atual` não é mais usado (fica nulo); ver `migrarContasLegadas`.
 // ═══════════════════════════════════════════════════════════════════════════
 
+/** A resposta para UM mês de UMA receita fixa/recorrente: caiu ou ainda não. */
+export interface ConfirmacaoReceita {
+  receita_id: string;
+  /** Mês da entrada prevista ("2026-10"), não o dia em que caiu. */
+  mes: string;
+  status: "recebida" | "adiada";
+  /** Dia em que caiu — pode ser antes do previsto (adiantamento). */
+  data_recebida?: string | null;
+  /** Quanto caiu, se diferente do previsto. */
+  valor?: number | null;
+  perguntar_em?: string | null;
+  perguntar_ate?: string | null;
+}
+
 export interface Livro {
   receitas: Receita[];
   /** Todos os gastos pessoais, fixos inclusive. */
@@ -34,6 +48,13 @@ export interface Livro {
   /** Empréstimos (tabela `gastos`). */
   emprestimos: Gasto[];
   pagamentosFatura: { conta_id?: string | null; valor_pago: number; created_at?: string }[];
+  confirmacoes?: ConfirmacaoReceita[];
+  /**
+   * A partir de que dia a receita fixa/recorrente só entra no saldo depois de
+   * confirmada. Antes disso (e quando é nulo: a tabela ainda não existe) ela
+   * entra sozinha no dia previsto, como sempre foi.
+   */
+  confirmacaoDesde?: string | null;
 }
 
 const ISO = "yyyy-MM-dd";
@@ -112,6 +133,104 @@ function ocorrenciasNoSaldo(item: MeuGasto | Receita, conta: ContaBancaria, hoje
   return todas.filter((d) => d >= desde);
 }
 
+/** Último dia do mês seguinte: até onde olhar para achar entrada adiantada. */
+const fimDoProximoMes = (hoje: Date) => format(new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0), ISO);
+
+type InfoConfirmacao = Pick<Livro, "confirmacoes" | "confirmacaoDesde">;
+
+/**
+ * O que a receita fixa/recorrente já pôs na conta até hoje. Antes de
+ * `confirmacaoDesde`, cada mês entra sozinho no dia previsto. Depois, só o mês
+ * confirmado entra — no dia em que caiu (pode ser antes do previsto) e no valor
+ * que caiu.
+ */
+function entradasDaReceita(r: Receita, conta: ContaBancaria, livro: InfoConfirmacao, hoje: Date) {
+  const de = inicioDaConta(conta);
+  const ate = hojeIso(hoje);
+  const desde = livro.confirmacaoDesde;
+  const previstas = ocorrencias(inicioDoRecorrente(r), r.dia_recebimento || 1, fimDoProximoMes(hoje), {
+    maxMeses: r.tipo === "recorrente" ? r.num_meses || 1 : undefined,
+  });
+  let total = 0;
+  for (const d of previstas) {
+    if (!desde || d < desde) {
+      if (d >= de && d <= ate) total += r.valor;
+      continue;
+    }
+    const c = livro.confirmacoes?.find(
+      (x) => x.receita_id === r.id && x.mes === d.substring(0, 7) && x.status === "recebida"
+    );
+    const caiu = c ? diaLocal(c.data_recebida) || d : "";
+    if (c && caiu >= de && caiu <= ate) total += Number(c.valor ?? r.valor) || 0;
+  }
+  return total;
+}
+
+export type StatusEntrada = "recebida" | "prevista" | "confirmar" | "adiada";
+
+export interface EstadoEntrada {
+  status: StatusEntrada;
+  dataPrevista: string;
+  dataRecebida?: string;
+  valor: number;
+  perguntarEm?: string;
+  perguntarAte?: string;
+  /** Anterior à confirmação: entrou sozinha no dia. */
+  automatica: boolean;
+}
+
+/** Em que pé está a entrada da receita no mês ("2026-10"). */
+export function estadoDaEntrada(r: Receita, mes: string, livro: InfoConfirmacao, hoje = new Date()): EstadoEntrada {
+  const [a, m] = mes.split("-").map(Number);
+  const dataPrevista = `${mes}-${String(diaNoMes(a, m - 1, r.dia_recebimento || 1)).padStart(2, "0")}`;
+  const hojeS = hojeIso(hoje);
+  const desde = livro.confirmacaoDesde;
+  if (!desde || dataPrevista < desde) {
+    return { status: dataPrevista <= hojeS ? "recebida" : "prevista", dataPrevista, valor: r.valor, automatica: true };
+  }
+  const c = livro.confirmacoes?.find((x) => x.receita_id === r.id && x.mes === mes);
+  if (c?.status === "recebida") {
+    return {
+      status: "recebida",
+      dataPrevista,
+      dataRecebida: diaLocal(c.data_recebida) || dataPrevista,
+      valor: Number(c.valor ?? r.valor) || 0,
+      automatica: false,
+    };
+  }
+  if (c?.status === "adiada" && c.perguntar_em) {
+    return {
+      status: diaLocal(c.perguntar_em) <= hojeS ? "confirmar" : "adiada",
+      dataPrevista,
+      valor: r.valor,
+      perguntarEm: diaLocal(c.perguntar_em),
+      perguntarAte: diaLocal(c.perguntar_ate) || undefined,
+      automatica: false,
+    };
+  }
+  return { status: dataPrevista <= hojeS ? "confirmar" : "prevista", dataPrevista, valor: r.valor, automatica: false };
+}
+
+/**
+ * Entradas que o app precisa perguntar se caíram: o dia previsto (ou o dia
+ * marcado para perguntar de novo) chegou e ainda não houve resposta. Olha o mês
+ * atual e o anterior, para não esquecer a que ficou para trás.
+ */
+export function entradasParaConfirmar(livro: Livro, hoje = new Date()) {
+  if (!livro.confirmacaoDesde) return [];
+  const meses = [format(new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1), "yyyy-MM"), format(hoje, "yyyy-MM")];
+  const lista: { receita: Receita; mes: string; estado: EstadoEntrada }[] = [];
+  for (const r of livro.receitas) {
+    if (r.tipo === "avulso") continue;
+    for (const mes of meses) {
+      if (!receitaNoMes(r, mes)) continue;
+      const estado = estadoDaEntrada(r, mes, livro, hoje);
+      if (estado.status === "confirmar") lista.push({ receita: r, mes, estado });
+    }
+  }
+  return lista.sort((x, y) => x.estado.dataPrevista.localeCompare(y.estado.dataPrevista));
+}
+
 /** Saldo da conta hoje. */
 export function saldoDaConta(conta: ContaBancaria, livro: Livro, hoje = new Date()): number {
   const de = inicioDaConta(conta);
@@ -124,7 +243,7 @@ export function saldoDaConta(conta: ContaBancaria, livro: Livro, hoje = new Date
     if (r.tipo === "avulso") {
       if (noPeriodo(diaLocal(r.created_at))) saldo += r.valor;
     } else {
-      saldo += r.valor * ocorrenciasNoSaldo(r, conta, hoje).length;
+      saldo += entradasDaReceita(r, conta, livro, hoje);
     }
   }
 
@@ -194,11 +313,11 @@ async function somarAoSaldoInicial(contaId: string, delta: number) {
 }
 
 /** Quanto o fixo/receita recorrente já mexeu no saldo da conta até hoje (com sinal). */
-function efeitoNaConta(item: MeuGasto | Receita | null, conta: ContaBancaria, hoje: Date): number {
+function efeitoNaConta(item: MeuGasto | Receita | null, conta: ContaBancaria, hoje: Date, confirmacao: InfoConfirmacao): number {
   if (!item || item.conta_id !== conta.id) return 0;
   if (ehFixo(item)) return fixoMexeNoSaldo(item) ? -item.valor * ocorrenciasNoSaldo(item, conta, hoje).length : 0;
   const r = item as Receita;
-  return r.tipo === "avulso" ? 0 : r.valor * ocorrenciasNoSaldo(r, conta, hoje).length;
+  return r.tipo === "avulso" ? 0 : entradasDaReceita(r, conta, confirmacao, hoje);
 }
 
 /**
@@ -218,12 +337,26 @@ export async function manterSaldoAoMudar(
   hoje = new Date()
 ) {
   if (!supabase) return;
+  // Receita: o que já caiu vem das confirmações, que a edição não muda.
+  let confirmacao: InfoConfirmacao = {};
+  if (!ehFixo(antes)) {
+    const [{ data: lista, error }, { data: auth }] = await Promise.all([
+      supabase.from("receitas_confirmacoes").select("*").eq("receita_id", antes.id),
+      supabase.auth.getUser(),
+    ]);
+    if (!error) {
+      confirmacao = {
+        confirmacoes: (lista as ConfirmacaoReceita[]) || [],
+        confirmacaoDesde: (auth.user?.user_metadata?.entradas_desde as string) || null,
+      };
+    }
+  }
   const ids = [...new Set([antes.conta_id, depois?.conta_id].filter(Boolean))] as string[];
   for (const id of ids) {
     const { data } = await supabase.from("contas_bancarias").select("*").eq("id", id).single();
     if (!data) continue;
     const conta = data as ContaBancaria;
-    const delta = efeitoNaConta(depois, conta, hoje) - efeitoNaConta(antes, conta, hoje);
+    const delta = efeitoNaConta(depois, conta, hoje, confirmacao) - efeitoNaConta(antes, conta, hoje, confirmacao);
     if (Math.abs(delta) > 0.004) await somarAoSaldoInicial(id, -delta);
   }
 }
@@ -279,16 +412,39 @@ export async function migrarContasLegadas(contas: ContaBancaria[], livro: Livro,
 /** Busca tudo que o saldo precisa, numa ida só. */
 export async function carregarLivro(): Promise<Livro> {
   if (!supabase) return { receitas: [], meusGastos: [], emprestimos: [], pagamentosFatura: [] };
-  const [r, g, e, p] = await Promise.all([
+  const [r, g, e, p, conf] = await Promise.all([
     supabase.from("receitas").select("*"),
     supabase.from("meus_gastos").select("*"),
     supabase.from("gastos").select("*"),
     supabase.from("pagamentos_fatura").select("conta_id, valor_pago, created_at"),
+    carregarConfirmacoes(),
   ]);
   return {
     receitas: (r.data as Receita[]) || [],
     meusGastos: (g.data as MeuGasto[]) || [],
     emprestimos: (e.data as Gasto[]) || [],
     pagamentosFatura: p.data || [],
+    ...conf,
   };
+}
+
+/**
+ * As confirmações e o dia a partir do qual elas valem. Sem a tabela (migração
+ * ainda não rodada), o recurso fica desligado e tudo segue como antes. Na
+ * primeira vez com a tabela, marca hoje como o começo — o que já aconteceu não
+ * passa a pedir confirmação.
+ */
+export async function carregarConfirmacoes(): Promise<InfoConfirmacao> {
+  if (!supabase) return { confirmacoes: [], confirmacaoDesde: null };
+  const [{ data, error }, { data: auth }] = await Promise.all([
+    supabase.from("receitas_confirmacoes").select("*"),
+    supabase.auth.getUser(),
+  ]);
+  if (error) return { confirmacoes: [], confirmacaoDesde: null };
+  let desde = (auth.user?.user_metadata?.entradas_desde as string) || null;
+  if (!desde && auth.user) {
+    desde = hojeIso(new Date());
+    await supabase.auth.updateUser({ data: { entradas_desde: desde } });
+  }
+  return { confirmacoes: (data as ConfirmacaoReceita[]) || [], confirmacaoDesde: desde };
 }

@@ -4,7 +4,17 @@ import { ptBR } from "date-fns/locale";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Plus, Users, Wallet, CreditCard, Receipt, Gauge, PieChart as IconePizza, BarChart3 } from "lucide-react";
 import { useAppContext } from "../context";
-import { fixosAindaPorSair, migrarContasLegadas, receitaNoMes, saldoDaConta, type Livro } from "../utils/saldo";
+import {
+  carregarConfirmacoes,
+  entradasParaConfirmar,
+  fixosAindaPorSair,
+  migrarContasLegadas,
+  receitaNoMes,
+  saldoDaConta,
+  type Livro,
+} from "../utils/saldo";
+import { ConfirmarEntradas } from "../components/entradas/ConfirmarEntradas";
+import { RespostaEntrada, type PedidoResposta } from "../components/entradas/RespostaEntrada";
 import { gastosPessoaisDoMes, valorDaMinhaParte } from "../utils/gastosDoMes";
 import { lerOnboarding, marcarOnboarding, ouvirDadosMudaram } from "../utils/onboarding";
 import { BoasVindas } from "../components/onboarding/BoasVindas";
@@ -203,6 +213,9 @@ export const DashboardPage = () => {
   });
   const [mostrarBoasVindas, setMostrarBoasVindas] = useState(false);
   const [mostrarFixos, setMostrarFixos] = useState(false);
+  // "O salário caiu?": as entradas que chegaram no dia e esperam resposta.
+  const [pendentes, setPendentes] = useState<ReturnType<typeof entradasParaConfirmar>>([]);
+  const [pedidoResposta, setPedidoResposta] = useState<PedidoResposta | null>(null);
   const navigate = useNavigate();
   const onboarding = lerOnboarding(user?.user_metadata);
   const [data, setData] = useState<DashboardData>({
@@ -279,6 +292,7 @@ export const DashboardPage = () => {
         { data: gastosCompartilhados },
         { data: cartoesRaw },
         { data: pagamentosFatura },
+        confirmacoes,
       ] = await Promise.all([
         supabase.from("contas_bancarias").select("*"),
         supabase.from("saldos_devedores").select("*"),
@@ -287,6 +301,7 @@ export const DashboardPage = () => {
         supabase.from("gastos").select("*"),
         supabase.from("cartoes_credito").select("*"),
         supabase.from("pagamentos_fatura").select("conta_id, valor_pago, created_at"),
+        carregarConfirmacoes(),
       ]);
       const cartoes = (cartoesRaw as CartaoCredito[]) || [];
 
@@ -298,7 +313,9 @@ export const DashboardPage = () => {
         meusGastos: todosMeusGastos,
         emprestimos: (gastosCompartilhados as Gasto[]) || [],
         pagamentosFatura: pagamentosFatura || [],
+        ...confirmacoes,
       };
+      setPendentes(entradasParaConfirmar(livro));
       let listaContas = (contas as ContaBancaria[]) || [];
       if (await migrarContasLegadas(listaContas, livro)) {
         const { data: migradas } = await supabase.from("contas_bancarias").select("*");
@@ -708,6 +725,8 @@ export const DashboardPage = () => {
         <SeletorMes data-tour="month-selector" />
       </div>
 
+      <ConfirmarEntradas itens={pendentes} contas={inicioDeConta.contas} onResponder={setPedidoResposta} />
+
       {mostrarPassos && (
         <PrimeirosPassos passos={passos} onDispensar={() => marcarOnboarding(onboarding, { passosDispensados: true })} />
       )}
@@ -959,6 +978,7 @@ export const DashboardPage = () => {
           }}
         />
       )}
+      <RespostaEntrada pedido={pedidoResposta} onFechar={() => setPedidoResposta(null)} />
       <FixosRapidos
         aberto={mostrarFixos}
         contas={inicioDeConta.contas}

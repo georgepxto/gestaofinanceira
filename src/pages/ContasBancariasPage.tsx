@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Trash2, Pencil, Landmark, ArrowDownLeft } from "lucide-react";
+import { Plus, Trash2, Pencil, Landmark, ArrowDownLeft, Check, Clock, Coins, Undo2 } from "lucide-react";
 import {
   carregarLivro,
   corrigirSaldo,
@@ -11,7 +11,9 @@ import {
   manterSaldoAoMudar,
   migrarContasLegadas,
   receitaNoMes,
+  estadoDaEntrada,
   saldoDaConta,
+  type EstadoEntrada,
   timestampDoDia,
   type Livro,
 } from "../utils/saldo";
@@ -43,6 +45,9 @@ import { MoneyInput } from "../components/ui/MoneyInput";
 import { FormSheet, Campo, Chip, Chips, campoClasse } from "../components/ui/FormSheet";
 import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
 import { valorDaMinhaParte } from "../utils/gastosDoMes";
+import { confirmarEntrada, desfazerEntrada } from "../utils/entradas";
+import { ouvirDadosMudaram } from "../utils/onboarding";
+import { RespostaEntrada, type PedidoResposta } from "../components/entradas/RespostaEntrada";
 
 interface ContasTutorialStep {
   target: string;
@@ -162,6 +167,9 @@ export const ContasBancariasPage = () => {
     const { data } = await supabase.from("receitas").select("*").order("created_at", { ascending: false });
     setReceitas(data || []);
   }, [user]);
+
+  // Resposta a "caiu?" (daqui ou do Início): recarrega saldo e entradas.
+  useEffect(() => ouvirDadosMudaram((origem) => { if (origem === "entradas") fetchContas(); }), [fetchContas]);
 
   useEffect(() => {
     if (user) {
@@ -415,33 +423,67 @@ export const ContasBancariasPage = () => {
   const entradasDoMes = useMemo(() => {
     const hoje = new Date();
     const mesSel = format(mesVisualizacao, "yyyy-MM");
-    const mesHoje = format(hoje, "yyyy-MM");
     const ultimoDiaMesSel = new Date(mesVisualizacao.getFullYear(), mesVisualizacao.getMonth() + 1, 0).getDate();
 
     // Só os meses em que a receita vale: depois do início e, na recorrente,
     // dentro dos N meses (antes ela aparecia em todo mês, até nos passados).
+    // Fixa/recorrente: recebida só depois de confirmada (ou, antes de as
+    // confirmações existirem, no dia). O valor é o que caiu de fato.
     const programadas = receitas
       .filter((r) => receitaNoMes(r, mesSel))
       .map((r) => {
+        const estado = estadoDaEntrada(r, mesSel, livro, hoje);
         const dia = Math.min(r.dia_recebimento || 1, ultimoDiaMesSel);
-        const recebida = mesSel < mesHoje ? true : mesSel > mesHoje ? false : dia <= hoje.getDate();
-        return { receita: r, dia, recebida };
+        return { receita: r, dia, recebida: estado.status === "recebida", valor: estado.valor, estado };
       });
 
     const avulsas = receitasFiltradas
       .filter((r) => r.tipo === "avulso")
       .map((r) => {
         const dia = r.created_at ? new Date(r.created_at).getDate() : r.dia_recebimento || 1;
-        return { receita: r, dia: dia || 1, recebida: true };
+        return { receita: r, dia: dia || 1, recebida: true, valor: r.valor, estado: undefined as EstadoEntrada | undefined };
       });
 
     return [...programadas, ...avulsas].sort((a, b) => a.dia - b.dia);
-  }, [receitas, receitasFiltradas, mesVisualizacao]);
+  }, [receitas, receitasFiltradas, mesVisualizacao, livro]);
 
   const entradasRecebidas = entradasDoMes.filter((e) => e.recebida);
   const entradasPrevistas = entradasDoMes.filter((e) => !e.recebida);
-  const totalRecebidoMes = entradasRecebidas.reduce((sum, e) => sum + e.receita.valor, 0);
-  const totalPrevistoMes = entradasPrevistas.reduce((sum, e) => sum + e.receita.valor, 0);
+  const totalRecebidoMes = entradasRecebidas.reduce((sum, e) => sum + e.valor, 0);
+  const totalPrevistoMes = entradasPrevistas.reduce((sum, e) => sum + e.valor, 0);
+
+  // Respostas a "caiu?" feitas daqui: adiantar, outro valor, ainda não, desfazer.
+  const [pedidoResposta, setPedidoResposta] = useState<PedidoResposta | null>(null);
+  const mesSelecionado = format(mesVisualizacao, "yyyy-MM");
+  const acoesDaEntrada = (r: Receita, estado: EstadoEntrada | undefined) => {
+    if (!estado || estado.automatica) return [];
+    const pedido = (modo: "valor" | "adiar") => setPedidoResposta({ receita: r, mes: mesSelecionado, dataPrevista: estado.dataPrevista, modo });
+    const hojeIso = format(new Date(), "yyyy-MM-dd");
+    if (estado.status === "recebida") {
+      return [{ rotulo: "Desfazer confirmação", icone: <Undo2 className="w-4 h-4" strokeWidth={1.5} />, onClick: () => desfazerEntrada(r, mesSelecionado) }];
+    }
+    const caiu = {
+      rotulo: estado.status === "confirmar" ? "Caiu" : "Já caiu",
+      icone: <Check className="w-4 h-4" strokeWidth={1.5} />,
+      // Prevista ou adiada: caiu hoje (adiantou). No dia: caiu no dia previsto.
+      onClick: () => confirmarEntrada(r, mesSelecionado, estado.status === "confirmar" && !estado.perguntarEm ? estado.dataPrevista : hojeIso),
+    };
+    const outro = { rotulo: "Caiu outro valor", icone: <Coins className="w-4 h-4" strokeWidth={1.5} />, onClick: () => pedido("valor") };
+    const depois = { rotulo: "Ainda não caiu", icone: <Clock className="w-4 h-4" strokeWidth={1.5} />, onClick: () => pedido("adiar") };
+    return estado.status === "prevista" ? [caiu, outro] : [caiu, outro, depois];
+  };
+  const pillDaEntrada = (estado: EstadoEntrada | undefined, recebida: boolean) => {
+    const dia = (iso?: string) => (iso ? Number(iso.substring(8, 10)) : 0);
+    if (!estado || estado.automatica) return recebida ? null : <Pill>prevista</Pill>;
+    if (estado.status === "recebida") {
+      return estado.dataRecebida && estado.dataRecebida !== estado.dataPrevista ? <Pill>caiu dia {dia(estado.dataRecebida)}</Pill> : null;
+    }
+    if (estado.status === "confirmar") return <Pill tom="atencao">confirmar</Pill>;
+    if (estado.status === "adiada") {
+      return <Pill>{estado.perguntarAte ? `entre dia ${dia(estado.perguntarEm)} e ${dia(estado.perguntarAte)}` : `pergunto dia ${dia(estado.perguntarEm)}`}</Pill>;
+    }
+    return <Pill>prevista</Pill>;
+  };
 
   // Gastos fixos ativos (não suspensos) do mês selecionado — para a previsão.
   const mesSelStr = format(mesVisualizacao, "yyyy-MM");
@@ -605,7 +647,7 @@ export const ContasBancariasPage = () => {
             />
           ) : (
             <ListGroup>
-              {entradasDoMes.map(({ receita: r, dia, recebida }) => {
+              {entradasDoMes.map(({ receita: r, dia, recebida, valor, estado }) => {
                 const contaNome = contas.find((c) => c.id === r.conta_id)?.nome || "Sem conta";
                 const tipoLabel = r.tipo === "avulso" ? "avulsa" : r.tipo === "fixo" ? "fixa" : `recorrente ${r.num_meses}x`;
                 return (
@@ -618,13 +660,14 @@ export const ContasBancariasPage = () => {
                         <span>
                           dia {String(dia).padStart(2, "0")} · {contaNome} · {tipoLabel}
                         </span>
-                        {!recebida && <Pill>prevista</Pill>}
+                        {pillDaEntrada(estado, recebida)}
                       </span>
                     }
-                    valor={formatDinheiro(r.valor, { positivo: true })}
+                    valor={formatDinheiro(valor, { positivo: true })}
                     recebido={recebida}
                     onAbrir={() => handleEditReceita(r)}
                     acoes={[
+                      ...acoesDaEntrada(r, estado),
                       { rotulo: "Editar", icone: <Pencil className="w-4 h-4" strokeWidth={1.5} />, onClick: () => handleEditReceita(r) },
                       {
                         rotulo: "Excluir",
@@ -814,6 +857,8 @@ export const ContasBancariasPage = () => {
           </Campo>
         )}
       </FormSheet>
+
+      <RespostaEntrada pedido={pedidoResposta} onFechar={() => setPedidoResposta(null)} />
 
       <GuidedTourOverlay
         show={showTutorial}

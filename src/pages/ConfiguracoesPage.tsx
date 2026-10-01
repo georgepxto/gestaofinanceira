@@ -217,6 +217,7 @@ export const ConfiguracoesPage = () => {
         "pagamentos_fatura",
         "metas_gasto",
         "categorias_usuario",
+        "receitas_confirmacoes",
       ];
 
       await Promise.all(
