@@ -23,6 +23,9 @@ import {
 import { MoneyInput } from "../ui/MoneyInput";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import { Button } from "../ui/Button";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { proximaFatura } from "../../utils/fatura";
 
 interface FormGastoProps {
   show: boolean;
@@ -143,6 +146,28 @@ export const FormGasto: React.FC<FormGastoProps> = ({
       : undefined;
   const credito = formData.tipo === "credito";
 
+  // Compra parcelada antiga (a TV que você já está pagando): o valor é o da
+  // parcela, como aparece na fatura do banco, e só entram as que faltam — as
+  // já pagas não viram gasto de novo.
+  const podeSerAntiga = !isEditing && credito && !fixo;
+  const antiga = podeSerAntiga && !!formData.compra_antiga;
+  const numParcelas = parseInt(formData.num_parcelas, 10) || 1;
+  const parcelaProxima = Math.min(Math.max(parseInt(formData.parcela_proxima || "", 10) || 1, 1), numParcelas);
+  const faltam = numParcelas - parcelaProxima + 1;
+  const valorParcela = parseCurrency(formData.valor);
+  const cartaoEscolhido = cartoes.find((c) => c.id === formData.cartao_id);
+  const mesDaProxima = cartaoEscolhido ? proximaFatura(cartaoEscolhido) : format(new Date(), "yyyy-MM");
+  const nomeMes = (mes: string, n = 0) => {
+    const d = parseISO(`${mes}-01`);
+    return format(new Date(d.getFullYear(), d.getMonth() + n, 1), "MMMM 'de' yyyy", { locale: ptBR });
+  };
+  const alternarAntiga = (ligar: boolean) =>
+    set(
+      ligar
+        ? { compra_antiga: true, num_parcelas: numParcelas > 1 ? formData.num_parcelas : "2", parcela_proxima: formData.parcela_proxima || "2" }
+        : { compra_antiga: false }
+    );
+
   const alternarPessoa = (pessoa: string) => {
     const atuais = formData.dividido_com_pessoas || [];
     const nova = atuais.includes(pessoa) ? atuais.filter((p) => p !== pessoa) : [...atuais, pessoa];
@@ -175,18 +200,21 @@ export const FormGasto: React.FC<FormGastoProps> = ({
       titulo={isEditing ? "Editar gasto" : "Novo gasto"}
       onFechar={onClose}
       onEnviar={enviar}
-      rotuloEnviar={isEditing ? "Salvar alterações" : fixo ? "Adicionar gasto fixo" : "Adicionar gasto"}
+      rotuloEnviar={isEditing ? "Salvar alterações" : fixo ? "Adicionar gasto fixo" : antiga ? "Adicionar parcelas que faltam" : "Adicionar gasto"}
       enviando={saving}
-      podeEnviar={!!formData.valor}
+      podeEnviar={!!formData.valor && (!antiga || numParcelas > 1)}
       erro={error}
       valor={
-        <MoneyInput
-          tamanho="heroi"
-          value={formData.valor}
-          onChange={(valor) => set({ valor })}
-          aria-label="Valor"
-          data-autofocus
-        />
+        <div>
+          <MoneyInput
+            tamanho="heroi"
+            value={formData.valor}
+            onChange={(valor) => set({ valor })}
+            aria-label={antiga ? "Valor de cada parcela" : "Valor"}
+            data-autofocus
+          />
+          {antiga && <p className="mt-2 text-center text-xs text-fg-3">Valor de cada parcela</p>}
+        </div>
       }
     >
       <Campo rotulo="Descrição" htmlFor="gasto-descricao">
@@ -335,19 +363,68 @@ export const FormGasto: React.FC<FormGastoProps> = ({
         </Campo>
       )}
 
+      {podeSerAntiga && (
+        <Campo rotulo="Quando comprou?">
+          <SegmentedControl
+            rotulo="Quando comprou"
+            cheio
+            segmentos={[
+              { chave: "nova", rotulo: "Compra nova", ativo: !antiga, onClick: () => alternarAntiga(false) },
+              { chave: "antiga", rotulo: "Já estou pagando", ativo: antiga, onClick: () => alternarAntiga(true) },
+            ]}
+          />
+        </Campo>
+      )}
+
       {credito && !fixo && (
         <EscolhaParcelas
-          valor={parseInt(formData.num_parcelas, 10) || 1}
-          onChange={(n) => set({ num_parcelas: String(n) })}
-          presets={PARCELAS_OPTIONS}
+          valor={numParcelas}
+          onChange={(n) =>
+            set({ num_parcelas: String(n), ...(antiga && parcelaProxima > n ? { parcela_proxima: String(n) } : {}) })
+          }
+          presets={antiga ? PARCELAS_OPTIONS.filter((n) => n > 1) : PARCELAS_OPTIONS}
           maximo={PARCELAS_MAX}
-          total={parseCurrency(formData.valor)}
+          total={antiga ? valorParcela * numParcelas : parseCurrency(formData.valor)}
           formatar={formatCurrency}
         />
       )}
 
-      {/* Gasto fixo não tem data: tem dia de vencimento. */}
-      {fixo ? (
+      {antiga && numParcelas > 1 && (
+        <Campo
+          rotulo={`Qual parcela vem na fatura de ${nomeMes(mesDaProxima).split(" de ")[0]}?`}
+          htmlFor="gasto-parcela-proxima"
+          dica="Está escrito na fatura do banco, ao lado da compra: 3/10 quer dizer parcela 3."
+        >
+          <input
+            id="gasto-parcela-proxima"
+            type="number"
+            inputMode="numeric"
+            min="1"
+            max={numParcelas}
+            value={formData.parcela_proxima || ""}
+            onChange={(e) => set({ parcela_proxima: e.target.value })}
+            className={`${campoClasse} valor`}
+          />
+          {valorParcela > 0 && (
+            <p className="mt-2 text-xs text-fg-2 leading-relaxed">
+              {faltam === 1 ? "Falta 1 parcela" : `Faltam ${faltam} parcelas`} de{" "}
+              <span className="valor">{formatCurrency(valorParcela)}</span>
+              {faltam > 1 && (
+                <>
+                  {" "}(<span className="valor">{formatCurrency(valorParcela * faltam)}</span>)
+                </>
+              )}
+              , {faltam === 1 ? `na fatura de ${nomeMes(mesDaProxima)}` : `de ${nomeMes(mesDaProxima)} a ${nomeMes(mesDaProxima, faltam - 1)}`}.
+              {parcelaProxima > 1 &&
+                ` ${parcelaProxima - 1 === 1 ? "A parcela já paga fica" : `As ${parcelaProxima - 1} já pagas ficam`} fora do Hedge.`}
+            </p>
+          )}
+        </Campo>
+      )}
+
+      {/* Gasto fixo não tem data: tem dia de vencimento. Compra antiga também
+          não: cada parcela vai para a fatura certa sozinha. */}
+      {antiga ? null : fixo ? (
         <Campo rotulo="Dia do vencimento" htmlFor="gasto-vencimento" dica="De 1 a 31.">
           <input
             id="gasto-vencimento"

@@ -11,6 +11,7 @@ import { formatCurrencyValue, parseCurrency } from "../utils/calculations";
 import { PARCELAS_MAX } from "../utils/constants";
 import { normalizarCategoria } from "../utils/categories";
 import { mesDoGasto, valorDaMinhaParte } from "../utils/gastosDoMes";
+import { dataNaFatura, proximaFatura } from "../utils/fatura";
 import { criarCobrancasDoFixo, divididoComParaBanco, encerrarCobrancasDoFixo, pessoasDoGasto } from "../utils/fixoDividido";
 import { inicioParaNovoRecorrente, manterSaldoAoMudar } from "../utils/saldo";
 import { avisarDadosMudaram, ouvirDadosMudaram } from "../utils/onboarding";
@@ -299,17 +300,36 @@ export function useMeusGastos({
       return;
     }
 
-    const valorParcela = valor / numParcelas;
+    // Compra parcelada antiga: o valor digitado é o da parcela e só as que
+    // faltam são lançadas, a partir da próxima fatura. As já pagas não viram
+    // gasto de novo — nem no mês, nem no limite.
+    const antiga =
+      formMeuGasto.tipo === "credito" && formMeuGasto.categoria !== "fixo" && !!formMeuGasto.compra_antiga && numParcelas > 1;
+    const primeiraParcela = antiga
+      ? Math.min(Math.max(parseInt(formMeuGasto.parcela_proxima || "1") || 1, 1), numParcelas)
+      : 1;
+    const faltam = numParcelas - primeiraParcela + 1;
+    const cartaoDaCompra = cartoes.find((c) => c.id === formMeuGasto.cartao_id);
+    const mesDaPrimeira = cartaoDaCompra ? proximaFatura(cartaoDaCompra) : format(new Date(), "yyyy-MM");
+    const dataDaParcelaAntiga = (i: number) => {
+      const mes = format(addMonths(parseISO(`${mesDaPrimeira}-01`), i - (primeiraParcela - 1)), "yyyy-MM");
+      return cartaoDaCompra ? dataNaFatura(cartaoDaCompra, mes) : `${mes}-01`;
+    };
+
+    const valorParcela = antiga ? valor : valor / numParcelas;
+    // Na compra antiga a parte é por parcela, como o valor.
+    const minhaParteDaParcela = antiga ? minhaParte : minhaParte / numParcelas;
+    const dataDaCompra = antiga ? dataDaParcelaAntiga(primeiraParcela - 1) : formMeuGasto.data;
 
     setSaving(true);
     try {
       if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
         const dataInicio = parseISO(formMeuGasto.data);
 
-        for (let i = 0; i < numParcelas; i++) {
+        for (let i = primeiraParcela - 1; i < numParcelas; i++) {
           // `parseISO` lê a data no fuso local; `new Date("aaaa-mm-dd")` a lê em UTC,
           // o que no Brasil vira a véspera — e, no dia 1º, o mês anterior.
-          const dataParcela = addMonths(dataInicio, i);
+          const dataParcela = antiga ? parseISO(dataDaParcelaAntiga(i)) : addMonths(dataInicio, i);
 
           const novoGasto: MeuGasto = {
             id: `${Date.now()}-${i}`,
@@ -329,7 +349,7 @@ export function useMeusGastos({
                 : undefined,
             minha_parte:
               formMeuGasto.categoria === "dividido"
-                ? minhaParte / numParcelas
+                ? minhaParteDaParcela
                 : undefined,
             num_parcelas: numParcelas,
             parcela_atual: i + 1,
@@ -405,8 +425,9 @@ export function useMeusGastos({
           : (formMeuGasto.dividido_com ? [formMeuGasto.dividido_com] : []);
 
         if (pessoasSelecionadas.length > 0) {
-          // Dividir apenas o restante após a minha parte entre as demais pessoas
-          const valorRestante = Math.max(valor - minhaParte, 0);
+          // Dividir apenas o restante após a minha parte entre as demais pessoas.
+          // Compra antiga: só as parcelas que faltam.
+          const valorRestante = antiga ? Math.max(valor - minhaParte, 0) * faltam : Math.max(valor - minhaParte, 0);
           const valorPorPessoa = valorRestante / pessoasSelecionadas.length;
           const descricaoGasto = formMeuGasto.descricao;
 
@@ -423,8 +444,8 @@ export function useMeusGastos({
               pessoa,
               descricaoParaEmprestimo,
               valorTotalPorPessoa,
-              numParcelas,
-              dataDoEspelho(formMeuGasto.data, formMeuGasto.tipo, formMeuGasto.cartao_id, cartoes),
+              antiga ? faltam : numParcelas,
+              dataDoEspelho(dataDaCompra, formMeuGasto.tipo, formMeuGasto.cartao_id, cartoes),
               formMeuGasto.categoria_gasto || undefined,
               formMeuGasto.tipo
             );
@@ -439,7 +460,7 @@ export function useMeusGastos({
       // Compra no crédito depois do melhor dia cai na fatura seguinte e some
       // da lista deste mês: avisar onde ela foi parar.
       const mesFatura = mesDoGasto(
-        { data: formMeuGasto.data, tipo: formMeuGasto.tipo, cartao_id: formMeuGasto.cartao_id } as MeuGasto,
+        { data: dataDaCompra, tipo: formMeuGasto.tipo, cartao_id: formMeuGasto.cartao_id } as MeuGasto,
         cartoes
       );
       if (formMeuGasto.categoria !== "fixo" && mesFatura !== format(mesVisualizacao, "yyyy-MM")) {
@@ -555,8 +576,13 @@ export function useMeusGastos({
           parcelasRelacionadas.length,
           novoNumParcelas
         );
+        // Compra antiga lançada só com as parcelas que faltavam: as anteriores
+        // foram pagas antes do Hedge e não voltam na edição.
+        const primeiraLancada = parcelasRelacionadas.length
+          ? Math.min(...parcelasRelacionadas.map((p) => p.parcela_atual || 1))
+          : 1;
 
-        for (let i = 0; i < maxParcelas; i++) {
+        for (let i = primeiraLancada - 1; i < maxParcelas; i++) {
           const numParcela = i + 1;
           const existente = parcelasRelacionadas.find(
             (p) => (p.parcela_atual || 1) === numParcela

@@ -94,6 +94,10 @@ export interface MeuGastoForm {
   num_parcelas: string;
   cartao_id: string;
   conta_id: string;
+  /** Compra parcelada antiga: o valor é o da parcela e só entram as que faltam. */
+  compra_antiga?: boolean;
+  /** Na compra antiga, a parcela que vem na próxima fatura. */
+  parcela_proxima?: string;
 }
 
 export interface SaldoDevedorForm {
@@ -150,10 +154,25 @@ export interface CartaoCredito {
   dia_vencimento: number;
   melhor_dia_compra?: number;
   limite: number;
+  /** Limite usado no dia da abertura (o mesmo que `abertura.usado`). */
   divida_inicial?: number;
+  /** O cartão como o banco mostrava no dia em que foi conferido (utils/fatura). */
+  abertura?: AberturaCartao | null;
   cor?: string;
   user_id?: string;
   created_at?: string;
+}
+
+/** O cartão no app do banco, num dia: o ponto de partida das contas do Hedge. */
+export interface AberturaCartao {
+  /** Dia em que a pessoa conferiu ("yyyy-MM-dd"). */
+  em: string;
+  /** A próxima fatura a pagar naquele dia ("yyyy-MM"). */
+  mes: string;
+  /** O que faltava pagar dessa fatura. */
+  fatura: number;
+  /** Limite usado: essa fatura mais as parcelas das próximas. */
+  usado: number;
 }
 
 export interface CartaoCreditoForm {
@@ -162,7 +181,10 @@ export interface CartaoCreditoForm {
   dia_vencimento: string;
   melhor_dia_compra: string;
   limite: string;
-  divida_inicial: string;
+  /** Limite disponível hoje, como o banco mostra. Em branco: sem mudança. */
+  disponivel: string;
+  /** O que falta pagar da próxima fatura. */
+  fatura_atual: string;
   cor: string;
 }
 

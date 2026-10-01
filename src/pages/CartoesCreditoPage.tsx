@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Trash2, Pencil, Check, Plus, CreditCard, Receipt, Users, Repeat } from "lucide-react";
+import { Trash2, Pencil, Check, Plus, CreditCard, Receipt, Users, Repeat, Scale } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAppContext } from "../context";
@@ -9,7 +9,7 @@ import { SeletorMes } from "../components/ui/SeletorMes";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useGuidedTour, usePageTutorialHelpButton, useIsMobile } from "../hooks";
 import { supabase } from "../lib/supabase";
-import { formatCurrency, formatCurrencyValue, parseCurrency, getMesFaturaCartao } from "../utils/calculations";
+import { formatCurrency, formatCurrencyValue, parseCurrency } from "../utils/calculations";
 import { formatDinheiro, formatPercent, rotuloDia } from "../utils/dinheiro";
 import { CORES_CARTAO, corDoCartao } from "../utils/cores";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
@@ -28,9 +28,24 @@ import { PontoCategoria } from "../components/ui/PontoCategoria";
 import { EmptyState } from "../components/ui/EmptyState";
 import { MenuAcoes } from "../components/ui/MenuAcoes";
 import { MoneyInput } from "../components/ui/MoneyInput";
-import { FormSheet, Campo, Chip, Chips, MaisOpcoes, campoClasse } from "../components/ui/FormSheet";
+import { FormSheet, Campo, Chip, Chips, campoClasse } from "../components/ui/FormSheet";
 import { useAcaoPrincipalDaPagina } from "../components/layout/AcaoPrincipalContext";
-import { itensDaFatura, valorDaFatura, type DadosFatura } from "../utils/fatura";
+import {
+  aberturaDoCartao,
+  faturaAntesDoHedge,
+  itensDaFatura,
+  limiteUsado,
+  novaAbertura,
+  pagoDaFatura,
+  proximaFatura,
+  resumoDaAbertura,
+  semDetalheRestante,
+  totalDaFatura,
+  valorDaFatura,
+  type DadosFatura,
+} from "../utils/fatura";
+import { comAbertura, salvarCartao } from "../utils/cartaoAbertura";
+import { CamposDoBanco, erroDoBanco } from "../components/cartoes/CamposDoBanco";
 
 /** "2026-09-29" como data local — `new Date(string)` leria em UTC e voltaria um dia. */
 const dataLocal = (iso: string) => {
@@ -129,20 +144,28 @@ export const CartoesCreditoPage = () => {
   const [editandoCartao, setEditandoCartao] = useState<CartaoCredito | null>(null);
   const [formCartao, setFormCartao] = useState<CartaoCreditoForm>({
     nome: "", conta_id: "", dia_vencimento: "10", melhor_dia_compra: "10",
-    limite: "", divida_inicial: "", cor: CORES_CARTAO[0],
+    limite: "", disponivel: "", fatura_atual: "", cor: CORES_CARTAO[0],
   });
+
+  // Conferir com o banco: os dois números do app do banco, hoje.
+  const [conferindo, setConferindo] = useState<CartaoCredito | null>(null);
+  const [bancoDisponivel, setBancoDisponivel] = useState("");
+  const [bancoFatura, setBancoFatura] = useState("");
 
   // Modal pagar fatura
   const [showPagarFatura, setShowPagarFatura] = useState(false);
   const [valorPagamento, setValorPagamento] = useState("");
   const [contaPagamento, setContaPagamento] = useState("");
-  const [pagamentosFatura, setPagamentosFatura] = useState<{cartao_id: string; mes: string; valor_pago: number; data_pagamento: string}[]>([]);
+  const [pagamentosFatura, setPagamentosFatura] = useState<{cartao_id: string; mes: string; valor_pago: number; created_at?: string}[]>([]);
 
   // Fetches
   const fetchCartoes = useCallback(async () => {
     if (!supabase || !user) return;
     const { data } = await supabase.from("cartoes_credito").select("*").order("nome");
-    setCartoesState(data || []);
+    const lista = await comAbertura((data as CartaoCredito[]) || []);
+    setCartoesState(lista);
+    // O cartão aberto acompanha o que acabou de ser salvo.
+    setCartaoSelecionado((atual) => (atual ? lista.find((c) => c.id === atual.id) || null : atual));
   }, [user]);
 
   const fetchTransacoes = useCallback(async () => {
@@ -187,7 +210,7 @@ export const CartoesCreditoPage = () => {
         cartao_id: p.cartao_id,
         mes: p.mes,
         valor_pago: p.valor_pago,
-        data_pagamento: p.created_at || "",
+        created_at: p.created_at || undefined,
       })));
     } catch (err) {
       console.error("Erro ao buscar pagamentos:", err);
@@ -303,54 +326,11 @@ export const CartoesCreditoPage = () => {
     return cartao ? valorDaFatura(cartao, mesFaturaVista, dadosFatura) : 0;
   };
 
+  // Limite usado como o banco conta (utils/fatura): parcelada ocupa o valor
+  // inteiro, fatura paga devolve, e o retrato do dia da conferência entra uma vez.
   const getLimiteUsado = (cartaoId: string) => {
-    const cartao = cartoesState.find(c => c.id === cartaoId);
-    if (!cartao) return 0;
-    const dividaInicial = cartao.divida_inicial || 0;
-    // Transações não pagas
-    const transNaoPagas = transacoes.filter(t => t.cartao_id === cartaoId && !t.pago);
-    const totalTrans = transNaoPagas.reduce((sum, t) => sum + t.valor, 0);
-    // Gastos (meus_gastos) não pagos vinculados ao cartão
-    const gastosNaoPagos = meusGastos.filter(g => {
-      if (g.cartao_id !== cartaoId || g.pago) return false;
-      
-      // Para gasto fixo, só consome limite se a data da fatura atual >= data da fatura de início
-      if (g.categoria === "fixo") {
-        const melhorDia = cartao.melhor_dia_compra || cartao.dia_vencimento;
-        const dataInicioFatura = getMesFaturaCartao(g.data, melhorDia, cartao.dia_vencimento);
-        const dataHojeFatura = getMesFaturaCartao(format(new Date(), "yyyy-MM-dd"), melhorDia, cartao.dia_vencimento);
-        
-        const dataInicioStr = format(dataInicioFatura, "yyyy-MM");
-        const dataHojeStr = format(dataHojeFatura, "yyyy-MM");
-        
-        if (dataHojeStr < dataInicioStr) return false;
-      }
-      return true;
-    });
-    const totalGastos = gastosNaoPagos.reduce((sum, g) => sum + g.valor, 0);
-    // Gastos compartilhados vinculados ao cartão (calculando valor RESTANTE)
-    const compartilhadosCartao = gastosCompartilhados.filter(g => {
-      if (g.cartao_id !== cartaoId) return false;
-      
-      if (g.recorrente) {
-        const melhorDia = cartao.melhor_dia_compra || cartao.dia_vencimento;
-        const dataInicioFatura = getMesFaturaCartao(g.data_inicio, melhorDia, cartao.dia_vencimento);
-        const dataHojeFatura = getMesFaturaCartao(format(new Date(), "yyyy-MM-dd"), melhorDia, cartao.dia_vencimento);
-        
-        const dataInicioStr = format(dataInicioFatura, "yyyy-MM");
-        const dataHojeStr = format(dataHojeFatura, "yyyy-MM");
-        
-        if (dataHojeStr < dataInicioStr) return false;
-      }
-      return true;
-    });
-    // Limite usado: valor cheio, como no banco.
-    const totalCompartilhados = compartilhadosCartao.reduce((sum, g) => sum + g.valor_total, 0);
-    
-    const totalBruto = dividaInicial + totalTrans + totalGastos + totalCompartilhados;
-    // Descontar pagamentos de fatura
-    const totalPagoFatura = pagamentosFatura.filter(p => p.cartao_id === cartaoId).reduce((sum, p) => sum + p.valor_pago, 0);
-    return Math.max(0, totalBruto - totalPagoFatura);
+    const cartao = cartoesState.find((c) => c.id === cartaoId);
+    return cartao ? limiteUsado(cartao, dadosFatura) : 0;
   };
 
   const getTotalConsolidado = () => {
@@ -371,14 +351,20 @@ export const CartoesCreditoPage = () => {
         dia_vencimento: parseInt(formCartao.dia_vencimento),
         melhor_dia_compra: parseInt(formCartao.melhor_dia_compra) || null,
         limite: parseCurrency(formCartao.limite),
-        divida_inicial: formCartao.divida_inicial ? parseCurrency(formCartao.divida_inicial) : 0,
         cor: formCartao.cor,
       };
-      if (editandoCartao) {
-        await supabase.from("cartoes_credito").update(dados).eq("id", editandoCartao.id);
-      } else {
-        await supabase.from("cartoes_credito").insert({ ...dados, user_id: user.id });
-      }
+      // Cartão novo nasce com o retrato de hoje — vazio se a pessoa não
+      // informou nada. Na edição o retrato só muda em "Conferir com o banco".
+      const abertura = editandoCartao
+        ? null
+        : novaAbertura(
+            dados,
+            dados.limite,
+            formCartao.disponivel ? parseCurrency(formCartao.disponivel) : null,
+            formCartao.fatura_atual ? parseCurrency(formCartao.fatura_atual) : null
+          );
+      const { error } = await salvarCartao(editandoCartao ? dados : { ...dados, user_id: user.id }, abertura, editandoCartao?.id);
+      if (error) throw error;
       await fetchCartoes();
       resetFormCartao();
       toast.success(editandoCartao ? "Cartão atualizado com sucesso!" : "Cartão adicionado com sucesso!");
@@ -387,11 +373,39 @@ export const CartoesCreditoPage = () => {
     } finally { setSaving(false); }
   };
 
+  const abrirConferir = (c: CartaoCredito) => {
+    setBancoDisponivel("");
+    setBancoFatura("");
+    setConferindo(c);
+  };
+
+  // O app do banco é a verdade: o retrato passa a ser o de hoje, e tudo o que
+  // foi lançado até hoje fica dentro dele.
+  const handleConferir = async () => {
+    if (!supabase || !conferindo) return;
+    setSaving(true);
+    try {
+      const abertura = novaAbertura(
+        conferindo,
+        conferindo.limite || 0,
+        bancoDisponivel ? parseCurrency(bancoDisponivel) : null,
+        bancoFatura ? parseCurrency(bancoFatura) : null
+      );
+      const { error } = await salvarCartao({}, abertura, conferindo.id);
+      if (error) throw error;
+      await fetchCartoes();
+      setConferindo(null);
+      toast.success("Cartão conferido com o banco.");
+    } catch (err) {
+      toast.error(toActionableErrorMessage(err, "Não foi possível salvar a conferência."));
+    } finally { setSaving(false); }
+  };
+
   const handleEditCartao = (c: CartaoCredito) => {
     setFormCartao({
       nome: c.nome, conta_id: c.conta_id || "", dia_vencimento: String(c.dia_vencimento),
       melhor_dia_compra: String(c.melhor_dia_compra || ""), limite: formatCurrencyValue(c.limite),
-      divida_inicial: c.divida_inicial ? formatCurrencyValue(c.divida_inicial) : "",
+      disponivel: "", fatura_atual: "",
       cor: c.cor || CORES_CARTAO[0],
     });
     setEditandoCartao(c);
@@ -421,7 +435,7 @@ export const CartoesCreditoPage = () => {
   };
 
   const resetFormCartao = () => {
-    setFormCartao({ nome: "", conta_id: "", dia_vencimento: "10", melhor_dia_compra: "10", limite: "", divida_inicial: "", cor: CORES_CARTAO[0] });
+    setFormCartao({ nome: "", conta_id: "", dia_vencimento: "10", melhor_dia_compra: "10", limite: "", disponivel: "", fatura_atual: "", cor: CORES_CARTAO[0] });
     setShowFormCartao(false);
     setEditandoCartao(null);
   };
@@ -468,7 +482,7 @@ export const CartoesCreditoPage = () => {
         cartao_id: cartaoSelecionado.id,
         mes: mesFatura,
         valor_pago: valorPago,
-        data_pagamento: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       }]);
       
       await fetchContas();
@@ -512,12 +526,11 @@ export const CartoesCreditoPage = () => {
     });
   };
 
-  // Verificar se a fatura do mês está quitada (verificando na tabela de pagamentos)
+  // Quitada: teve pagamento e não falta nada.
   const faturaQuitada = (cartaoId: string) => {
-    const mesFatura = format(mesVisualizacao, "yyyy-MM");
-    const faturaTotalVal = getFaturaCartao(cartaoId);
-    const pagamentoDoMes = pagamentosFatura.find(p => p.cartao_id === cartaoId && p.mes === mesFatura);
-    return pagamentoDoMes ? pagamentoDoMes.valor_pago >= faturaTotalVal : false;
+    const cartao = cartoesState.find((c) => c.id === cartaoId);
+    if (!cartao) return false;
+    return pagoDaFatura(cartao, mesFaturaVista, dadosFatura) > 0 && valorDaFatura(cartao, mesFaturaVista, dadosFatura) === 0;
   };
 
   const consolidado = getTotalConsolidado();
@@ -759,6 +772,18 @@ export const CartoesCreditoPage = () => {
           const quitada = faturaQuitada(cartaoSelecionado.id);
           const itens = getTodasTransacoesDoMes(cartaoSelecionado.id);
 
+          // O retrato do dia em que o cartão foi conferido com o banco.
+          const abertura = aberturaDoCartao(cartaoSelecionado);
+          const retrato = resumoDaAbertura(cartaoSelecionado, dadosFatura);
+          const antesDoHedge = faturaAntesDoHedge(cartaoSelecionado, mesFaturaVista);
+          const mesDoRetrato = mesFaturaVista === abertura.mes;
+          const semDetalheNoMes = mesDoRetrato ? retrato.semDetalheNoMes : 0;
+          const parcelasSemDetalhe = semDetalheRestante(cartaoSelecionado, dadosFatura);
+          const totalDoMes = totalDaFatura(cartaoSelecionado, mesFaturaVista, dadosFatura);
+          const diaDoRetrato = format(dataLocal(abertura.em), "d 'de' MMMM", { locale: ptBR });
+          const nomeMesDoRetrato = format(dataLocal(`${abertura.mes}-01`), "MMMM", { locale: ptBR });
+          const conferido = !!cartaoSelecionado.abertura || abertura.usado > 0;
+
           // Dias até o vencimento — só faz sentido olhando o mês corrente.
           const hoje = new Date();
           const hojeZero = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
@@ -795,7 +820,9 @@ export const CartoesCreditoPage = () => {
                     aoLado={
                       <span className="inline-flex flex-wrap gap-1.5">
                         {limite > 0 && usado > limite && <Pill tom="perigo">acima do limite</Pill>}
-                        {quitada ? (
+                        {antesDoHedge ? (
+                          <Pill>antes do Hedge</Pill>
+                        ) : quitada ? (
                           <Pill>quitada</Pill>
                         ) : mostraContagem && diasAteVencimento <= 5 ? (
                           <Pill tom="atencao">
@@ -812,6 +839,10 @@ export const CartoesCreditoPage = () => {
                         {cartaoSelecionado.melhor_dia_compra
                           ? ` · melhor dia para comprar: ${cartaoSelecionado.melhor_dia_compra}`
                           : ""}
+                        {antesDoHedge && " · venceu antes de o cartão entrar no Hedge, então conta como paga"}
+                        {!antesDoHedge && totalDoMes > fatura + 0.009 && !quitada && (
+                          <> · de <span className="valor">{formatCurrency(totalDoMes)}</span>, já pagou <span className="valor">{formatCurrency(totalDoMes - fatura)}</span></>
+                        )}
                         {quitada && (
                           <>
                             {" · "}
@@ -851,13 +882,27 @@ export const CartoesCreditoPage = () => {
                       </span>
                     }
                   />
-                  {cartaoSelecionado.divida_inicial && cartaoSelecionado.divida_inicial > 0 ? (
-                    <div className="flex items-center justify-between gap-3 mt-3 px-3 py-2.5 bg-surface-2 rounded-sm text-sm">
-                      <span className="text-fg-2">Saldo anterior</span>
-                      <span className="valor text-fg">{formatCurrency(cartaoSelecionado.divida_inicial)}</span>
+                  {/* O que o banco mostrava no dia da conferência e ninguém lançou. */}
+                  {semDetalheNoMes > 0 && (
+                    <div className="mt-3 px-3 py-2.5 bg-surface-2 rounded-sm">
+                      <div className="flex items-baseline justify-between gap-3 text-sm">
+                        <span className="text-fg">Sem detalhe</span>
+                        <span className="valor text-fg">{formatDinheiro(-semDetalheNoMes)}</span>
+                      </div>
+                      <p className="mt-1 text-xs text-fg-2">
+                        Parte da fatura que o banco mostrava em {diaDoRetrato} e que você não lançou. Lançar uma compra com data até
+                        esse dia tira daqui, sem contar duas vezes.
+                      </p>
                     </div>
-                  ) : null}
-                  {itens.length === 0 ? (
+                  )}
+                  {!antesDoHedge && mesFaturaVista > abertura.mes && parcelasSemDetalhe > 0 && (
+                    <p className="mt-3 text-xs text-fg-2">
+                      Esta fatura pode ter parcelas de compras antigas que você não lançou (
+                      <span className="valor">{formatCurrency(parcelasSemDetalhe)}</span> ao todo, nas próximas faturas). Elas já contam no
+                      limite. Lance cada uma como compra parcelada antiga para ver a fatura certa.
+                    </p>
+                  )}
+                  {itens.length === 0 && semDetalheNoMes === 0 ? (
                     <EmptyState Icone={Receipt} frase="Nenhuma transação nesta fatura." compacto />
                   ) : (
                     porDia.map(({ data, itens: doDia }) => (
@@ -866,6 +911,7 @@ export const CartoesCreditoPage = () => {
                           const fixo = t.origem === "gasto" && isGastoFixo(t.id);
                           const compartilhado = t.origem === "compartilhado";
                           const parcial = compartilhado && t.pagoParcial;
+                          const noRetrato = retrato.idsDoRetrato.has(`${t.origem}-${t.id}-${mesFaturaVista}`);
                           return (
                             <ListRow
                               key={`${t.origem}-${t.id}`}
@@ -885,11 +931,12 @@ export const CartoesCreditoPage = () => {
                                   {fixo && <Pill>fixo</Pill>}
                                   {compartilhado && !t.pago && !parcial && <Pill>emprestado · {t.pessoa}</Pill>}
                                   {parcial && <Pill tom="atencao">pagou {formatCurrency(t.valorPago || 0)}</Pill>}
+                                  {noRetrato && <Pill>já estava no banco</Pill>}
                                 </span>
                               }
                               valor={formatDinheiro(-t.valor)}
                               subvalor={parcial ? `falta ${formatCurrency(t.valorRestante || 0)}` : undefined}
-                              pago={t.pago}
+                              pago={t.pago || antesDoHedge}
                               acoes={
                                 t.origem === "transacao"
                                   ? [
@@ -920,6 +967,11 @@ export const CartoesCreditoPage = () => {
                       titulo={cartaoSelecionado.nome}
                       acoes={[
                         {
+                          rotulo: "Conferir com o banco",
+                          icone: <Scale className="w-4 h-4" strokeWidth={1.5} />,
+                          onClick: () => abrirConferir(cartaoSelecionado),
+                        },
+                        {
                           rotulo: "Editar",
                           icone: <Pencil className="w-4 h-4" strokeWidth={1.5} />,
                           onClick: () => handleEditCartao(cartaoSelecionado),
@@ -941,7 +993,6 @@ export const CartoesCreditoPage = () => {
                       rotulo: "Melhor dia para comprar",
                       valor: cartaoSelecionado.melhor_dia_compra ? `dia ${cartaoSelecionado.melhor_dia_compra}` : "não definido",
                     },
-                    { rotulo: "Dívida inicial", valor: formatCurrency(cartaoSelecionado.divida_inicial || 0) },
                     { rotulo: "Limite", valor: formatCurrency(limite) },
                   ].map((l) => (
                     <div key={l.rotulo} className="flex items-baseline justify-between gap-4 py-2 border-b border-line last:border-b-0">
@@ -950,6 +1001,41 @@ export const CartoesCreditoPage = () => {
                     </div>
                   ))}
                 </dl>
+
+                {/* O ponto de partida: o que o app do banco mostrava. */}
+                <div className="mt-4 pt-4 border-t border-line">
+                  {conferido ? (
+                    <>
+                      <p className="text-xs text-fg-2">Conferido com o banco em {diaDoRetrato}</p>
+                      <dl className="mt-2 text-sm">
+                        {[
+                          { rotulo: "Limite usado", valor: abertura.usado },
+                          { rotulo: `Fatura de ${nomeMesDoRetrato}`, valor: abertura.fatura },
+                        ].map((l) => (
+                          <div key={l.rotulo} className="flex items-baseline justify-between gap-4 py-1.5">
+                            <dt className="text-fg-2">{l.rotulo}</dt>
+                            <dd className="valor text-fg">{formatCurrency(l.valor)}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                      {retrato.semDetalheNoMes + parcelasSemDetalhe > 0.009 && (
+                        <p className="mt-2 text-xs text-fg-3">
+                          Ainda sem detalhe: <span className="valor">{formatCurrency(retrato.semDetalheNoMes + parcelasSemDetalhe)}</span>.
+                          Já conta no limite; lançar as compras antigas só mostra em que fatura cada uma cai.
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-fg-2">
+                      O limite ou a fatura não batem com o app do banco? Informe o que ele mostra e o Hedge acerta as contas.
+                    </p>
+                  )}
+                  <div className="mt-3">
+                    <Button variante="secundario" tamanho="sm" onClick={() => abrirConferir(cartaoSelecionado)}>
+                      Conferir com o banco
+                    </Button>
+                  </div>
+                </div>
               </Surface>
             </div>
           );
@@ -979,7 +1065,12 @@ export const CartoesCreditoPage = () => {
         onEnviar={() => handleSubmitCartao({ preventDefault() {} } as React.FormEvent)}
         rotuloEnviar={editandoCartao ? "Salvar alterações" : "Criar cartão"}
         enviando={saving}
-        podeEnviar={!!formCartao.nome.trim() && !!formCartao.limite && !!formCartao.dia_vencimento}
+        podeEnviar={
+          !!formCartao.nome.trim() &&
+          !!formCartao.limite &&
+          !!formCartao.dia_vencimento &&
+          (!!editandoCartao || !erroDoBanco(parseCurrency(formCartao.limite || "0"), formCartao.disponivel, formCartao.fatura_atual))
+        }
         valor={
           <div>
             <MoneyInput
@@ -1048,15 +1139,59 @@ export const CartoesCreditoPage = () => {
             })}
           </div>
         </Campo>
-        <MaisOpcoes abertoInicial={!!formCartao.divida_inicial}>
-          <Campo rotulo="Dívida inicial" htmlFor="cartao-divida" dica="O que já estava na fatura antes de você começar a usar o Hedge.">
-            <MoneyInput
-              id="cartao-divida"
-              value={formCartao.divida_inicial}
-              onChange={(divida_inicial) => setFormCartao({ ...formCartao, divida_inicial })}
+        {!editandoCartao && (
+          <div className="space-y-4 pt-2">
+            <div>
+              <p className="text-sm text-fg">Hoje, no app do banco</p>
+              <p className="mt-1 text-xs text-fg-3">
+                Opcional. Com estes dois números o Hedge começa com o limite e a fatura iguais aos do banco.
+              </p>
+            </div>
+            <CamposDoBanco
+              limite={parseCurrency(formCartao.limite || "0")}
+              diaVencimento={parseInt(formCartao.dia_vencimento) || 0}
+              melhorDia={parseInt(formCartao.melhor_dia_compra) || undefined}
+              disponivel={formCartao.disponivel}
+              fatura={formCartao.fatura_atual}
+              onDisponivel={(disponivel) => setFormCartao({ ...formCartao, disponivel })}
+              onFatura={(fatura_atual) => setFormCartao({ ...formCartao, fatura_atual })}
             />
-          </Campo>
-        </MaisOpcoes>
+          </div>
+        )}
+      </FormSheet>
+
+      {/* Conferir com o banco */}
+      <FormSheet
+        aberto={!!conferindo}
+        titulo="Conferir com o banco"
+        aviso={conferindo ? <>{conferindo.nome} · limite <span className="valor">{formatCurrency(conferindo.limite || 0)}</span></> : undefined}
+        onFechar={() => setConferindo(null)}
+        onEnviar={handleConferir}
+        rotuloEnviar="Salvar conferência"
+        enviando={saving}
+        podeEnviar={!!conferindo && (!!bancoDisponivel || !!bancoFatura) && !erroDoBanco(conferindo.limite || 0, bancoDisponivel, bancoFatura)}
+      >
+        {conferindo && (
+          <>
+            <p className="text-sm text-fg-2">
+              Abra o app do banco e copie os dois números. O Hedge passa a partir deles: tudo o que você lançou com data até hoje fica
+              dentro deles, e o que faltar lançar aparece como sem detalhe.
+            </p>
+            <CamposDoBanco
+              limite={conferindo.limite || 0}
+              diaVencimento={conferindo.dia_vencimento}
+              melhorDia={conferindo.melhor_dia_compra}
+              disponivel={bancoDisponivel}
+              fatura={bancoFatura}
+              onDisponivel={setBancoDisponivel}
+              onFatura={setBancoFatura}
+              hedge={{
+                disponivel: (conferindo.limite || 0) - limiteUsado(conferindo, dadosFatura),
+                fatura: valorDaFatura(conferindo, proximaFatura(conferindo), dadosFatura),
+              }}
+            />
+          </>
+        )}
       </FormSheet>
 
       {/* Pagar fatura */}
@@ -1095,6 +1230,11 @@ export const CartoesCreditoPage = () => {
               Fatura inteira · <span className="valor">{formatCurrency(getFaturaCartao(cartaoSelecionado.id))}</span>
             </Chip>
           </Chips>
+        )}
+        {cartaoSelecionado && mesFaturaVista > aberturaDoCartao(cartaoSelecionado).mes && semDetalheRestante(cartaoSelecionado, dadosFatura) > 0 && (
+          <p className="text-xs text-fg-2">
+            O banco cobra mais? Pague o valor do banco: a diferença sai das parcelas antigas que você não lançou.
+          </p>
         )}
         <Campo rotulo="Sai de qual conta">
           {contas.length > 0 ? (

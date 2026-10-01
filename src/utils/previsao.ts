@@ -2,7 +2,8 @@ import { format } from "date-fns";
 import { supabase } from "../lib/supabase";
 import type { CartaoCredito, ContaBancaria, Gasto, TransacaoCartao } from "../types";
 import { chaveMesPagamentoParcial, formatCurrency, formatMonthYear, isGastoAtivoNoMes } from "./calculations";
-import { itensDaFatura, valorDaFatura } from "./fatura";
+import { aberturaDoCartao, itensDaFatura, semDetalheRestante, valorDaFatura } from "./fatura";
+import { comAbertura } from "./cartaoAbertura";
 import {
   carregarLivro,
   estadoDaEntrada,
@@ -54,7 +55,7 @@ export interface DadosPrevisao {
   livro: Livro;
   cartoes: CartaoCredito[];
   transacoes: TransacaoCartao[];
-  pagamentosFatura: { cartao_id: string; mes: string; valor_pago: number }[];
+  pagamentosFatura: { cartao_id: string; mes: string; valor_pago: number; created_at?: string }[];
   /** Pagamentos do mês de hoje (pagamentos_parciais). */
   pagamentosDoMes: { pessoa: string; valor: number }[];
   /** Descrições das cobranças em aberto, para saber quem já teve o mês fechado. */
@@ -147,12 +148,14 @@ export function calcularPrevisao(d: DadosPrevisao, hoje = new Date()): Previsao 
     .map((c) => {
       const itens = itensDaFatura(c, mes, dadosFatura);
       const n = itens.transacoes.length + itens.gastos.length + itens.emprestimos.length;
+      // Parcelas antigas sem detalhe podem cair nesta fatura sem o Hedge saber.
+      const podeFaltar = mes > aberturaDoCartao(c).mes && semDetalheRestante(c, dadosFatura) > 0;
       const vence = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
       return {
         descricao: c.nome,
         valor: Math.round(valorDaFatura(c, mes, dadosFatura) * 100) / 100,
         dia: `${mes}-${String(Math.min(c.dia_vencimento || 1, vence)).padStart(2, "0")}`,
-        detalhe: `${n} ${n === 1 ? "compra" : "compras"} nesta fatura`,
+        detalhe: `${n} ${n === 1 ? "compra" : "compras"} nesta fatura${podeFaltar ? ", pode faltar parcela antiga sem detalhe" : ""}`,
       };
     })
     .filter((f) => f.valor > 0);
@@ -185,7 +188,7 @@ export async function carregarPrevisao(hoje = new Date()) {
       carregarLivro(),
       supabase.from("cartoes_credito").select("*"),
       supabase.from("transacoes_cartao").select("*"),
-      supabase.from("pagamentos_fatura").select("cartao_id, mes, valor_pago"),
+      supabase.from("pagamentos_fatura").select("cartao_id, mes, valor_pago, created_at"),
       supabase.from("pagamentos_parciais").select("pessoa, valor").eq("mes", chaveMesPagamentoParcial(hoje)),
       supabase.from("saldos_devedores").select("pessoa, descricao"),
     ]);
@@ -195,11 +198,12 @@ export async function carregarPrevisao(hoje = new Date()) {
     const { data } = await supabase.from("contas_bancarias").select("*").order("nome");
     contas = (data as ContaBancaria[]) || [];
   }
+  const cartoesComAbertura = await comAbertura((cartoes as CartaoCredito[]) || []);
   const previsao = calcularPrevisao(
     {
       contas,
       livro,
-      cartoes: (cartoes as CartaoCredito[]) || [],
+      cartoes: cartoesComAbertura,
       transacoes: (transacoes as TransacaoCartao[]) || [],
       pagamentosFatura: pagamentosFatura || [],
       pagamentosDoMes: pagamentosDoMes || [],
@@ -207,5 +211,5 @@ export async function carregarPrevisao(hoje = new Date()) {
     },
     hoje
   );
-  return { previsao, contas, livro, cartoes: (cartoes as CartaoCredito[]) || [] };
+  return { previsao, contas, livro, cartoes: cartoesComAbertura };
 }
