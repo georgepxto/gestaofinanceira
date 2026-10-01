@@ -155,7 +155,6 @@ export function DemoApp() {
         data-on={on}
         className="lp-panel overflow-y-auto px-6 pt-8 sm:px-8"
         style={{ "--lp-panel-x": `${(on ? dir : off) * 18}px` } as CSSProperties}
-        data-lenis-prevent
       >
         {children}
       </div>

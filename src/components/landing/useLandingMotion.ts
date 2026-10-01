@@ -54,7 +54,11 @@ export function useLandingMotion(rootRef: RefObject<HTMLElement>) {
     if (fine && !reduced) {
       // lerp em vez de duração fixa: cada quadro anda uma fração do que falta,
       // então o scroll desacelera continuamente, sem "degrau" no fim.
-      lenis = new Lenis({ lerp: 0.075, wheelMultiplier: 0.9, smoothWheel: true });
+      // allowNestedScroll: em cima de algo que rola por dentro (as telas da
+      // demo do app), o Lenis rola ele enquanto houver conteúdo e passa para a
+      // página quando acaba. Antes a demo tinha data-lenis-prevent: a roda não
+      // descia a página e, quando o navegador descia, o Lenis puxava de volta.
+      lenis = new Lenis({ lerp: 0.075, wheelMultiplier: 0.9, smoothWheel: true, allowNestedScroll: true });
       raf = (time: number) => lenis?.raf(time * 1000);
       gsap.ticker.add(raf);
       gsap.ticker.lagSmoothing(0);
