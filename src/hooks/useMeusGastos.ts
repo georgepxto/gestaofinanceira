@@ -11,6 +11,8 @@ import { formatCurrencyValue, parseCurrency } from "../utils/calculations";
 import { PARCELAS_MAX } from "../utils/constants";
 import { normalizarCategoria } from "../utils/categories";
 import { mesDoGasto } from "../utils/gastosDoMes";
+import { ptBR } from "date-fns/locale";
+import { toast } from "../components/ui/Toaster";
 import { categoriaPadraoAtual } from "./useCategorias";
 
 // (helper gerarId removed - not needed)
@@ -76,10 +78,28 @@ async function criarLancamentoEmprestimoDoMes(
  * Apaga as cobranças que um gasto dividido espelhou em A receber (tabela
  * `gastos`). Não há chave ligando os dois: o espelho é achado pelo nome que
  * `criarLancamentoEmprestimoDoMes` dá ("<descrição> - <pessoa>", com
- * " (N parcelas)" quando parcelado), pela pessoa e pela data da 1ª parcela.
+ * " (N parcelas)" quando parcelado), pela pessoa e pela data da 1ª parcela —
+ * a da compra ou a da fatura (espelhos antigos usavam a da compra).
  * Sem isto, excluir o gasto deixava a cobrança órfã e cada edição a duplicava.
  */
-async function removerEspelhosDoDividido(gasto: MeuGasto, dataPrimeiraParcela: string) {
+/**
+ * Data da cobrança espelho: a do mês em que a compra pesa. No crédito depois
+ * do melhor dia, a fatura é a do mês seguinte, e a cobrança da pessoa vai
+ * junto — antes ela caía no mês da compra e o gasto, na fatura seguinte.
+ */
+function dataDoEspelho(
+  dataIso: string,
+  tipo: string,
+  cartaoId: string | undefined,
+  cartoes: CartaoCredito[]
+): string {
+  const g = { data: dataIso, tipo, cartao_id: cartaoId } as MeuGasto;
+  return mesDoGasto(g, cartoes) === dataIso.substring(0, 7)
+    ? dataIso
+    : format(addMonths(parseISO(dataIso), 1), "yyyy-MM-dd");
+}
+
+async function removerEspelhosDoDividido(gasto: MeuGasto, datasPossiveis: string[]) {
   if (!isSupabaseConfigured || !supabase || gasto.categoria !== "dividido") return;
   const pessoas = gasto.dividido_com_pessoas?.length
     ? gasto.dividido_com_pessoas
@@ -96,7 +116,7 @@ async function removerEspelhosDoDividido(gasto: MeuGasto, dataPrimeiraParcela: s
     .select("id")
     .in("pessoa", pessoas)
     .in("descricao", pessoas.map((p) => `${nome} - ${p}`))
-    .eq("data_inicio", dataPrimeiraParcela);
+    .in("data_inicio", datasPossiveis);
   for (const row of data || []) await gastosFunctions.delete(row.id);
 }
 
@@ -393,7 +413,7 @@ export function useMeusGastos({
               descricaoParaEmprestimo,
               valorTotalPorPessoa,
               numParcelas,
-              formMeuGasto.data,
+              dataDoEspelho(formMeuGasto.data, formMeuGasto.tipo, formMeuGasto.cartao_id, cartoes),
               formMeuGasto.categoria_gasto || undefined,
               formMeuGasto.tipo
             );
@@ -403,6 +423,17 @@ export function useMeusGastos({
 
       if (onRefreshGastos) {
         await onRefreshGastos();
+      }
+
+      // Compra no crédito depois do melhor dia cai na fatura seguinte e some
+      // da lista deste mês: avisar onde ela foi parar.
+      const mesFatura = mesDoGasto(
+        { data: formMeuGasto.data, tipo: formMeuGasto.tipo, cartao_id: formMeuGasto.cartao_id } as MeuGasto,
+        cartoes
+      );
+      if (formMeuGasto.categoria !== "fixo" && mesFatura !== format(mesVisualizacao, "yyyy-MM")) {
+        const nomeMes = format(parseISO(`${mesFatura}-01`), "MMMM", { locale: ptBR });
+        toast.success(`Lançado na fatura de ${nomeMes}.`);
       }
 
       resetForm();
@@ -678,7 +709,10 @@ export function useMeusGastos({
         // são recriadas abaixo com os valores novos; se deixou de ser, somem.
         const primeiraOriginal =
           parcelasRelacionadas.find((g) => (g.parcela_atual || 1) === 1) || editandoMeuGasto;
-        await removerEspelhosDoDividido(editandoMeuGasto, primeiraOriginal.data);
+        await removerEspelhosDoDividido(editandoMeuGasto, [
+          primeiraOriginal.data,
+          dataDoEspelho(primeiraOriginal.data, editandoMeuGasto.tipo, editandoMeuGasto.cartao_id, cartoes),
+        ]);
 
         if (
           formMeuGasto.categoria === "dividido" &&
@@ -711,7 +745,7 @@ export function useMeusGastos({
                   descricaoParaSaldo,
                   valorTotalPorPessoa,
                   novoNumParcelas,
-                  formMeuGasto.data,
+                  dataDoEspelho(format(dataInicioReal, "yyyy-MM-dd"), formMeuGasto.tipo, formMeuGasto.cartao_id, cartoes),
                   formMeuGasto.categoria_gasto || undefined,
                   formMeuGasto.tipo
                 );
@@ -790,7 +824,10 @@ export function useMeusGastos({
         try {
           const primeira =
             parcelasRelacionadas.find((g) => (g.parcela_atual || 1) === 1) || gastoParaExcluir;
-          await removerEspelhosDoDividido(gastoParaExcluir, primeira.data);
+          await removerEspelhosDoDividido(gastoParaExcluir, [
+            primeira.data,
+            dataDoEspelho(primeira.data, gastoParaExcluir.tipo, gastoParaExcluir.cartao_id, cartoes),
+          ]);
 
           for (const parcela of parcelasRelacionadas) {
             if (isSupabaseConfigured && supabase) {
