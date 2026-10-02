@@ -31,7 +31,7 @@ export const CropCartoes = () => (
 );
 
 export const CropMetas = () => (
-  <ScreenCrop height={H} label="Tela de metas do Hedge: quanto já foi usado de cada meta; Alimentação está quase no limite. Dados fictícios.">
+  <ScreenCrop height={H} label="Tela de limites de gasto do Hedge: quanto já foi usado de cada limite; Alimentação está quase no limite. Dados fictícios.">
     <TelaApp className="p-4 sm:rounded">
       <TelaMetas />
     </TelaApp>

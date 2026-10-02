@@ -20,7 +20,7 @@ import { SeletorMes } from "../components/ui/SeletorMes";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useGuidedTour, usePageTutorialHelpButton, useIsMobile } from "../hooks";
 import { supabase } from "../lib/supabase";
-import { formatCurrencyValue, parseCurrency } from "../utils/calculations";
+import { formatCurrency, formatCurrencyValue, parseCurrency } from "../utils/calculations";
 import { formatDinheiro, formatPercent } from "../utils/dinheiro";
 import { TIPOS_RECEITA, CATEGORIA_RECEITA_PADRAO } from "../utils/receitas";
 import { chaveCategoria, comCategoriaAtual } from "../utils/categories";
@@ -648,6 +648,15 @@ export const ContasBancariasPage = () => {
                           dia {String(dia).padStart(2, "0")} · {contaNome} · {tipoLabel}
                         </span>
                         {pillDaEntrada(estado, recebida)}
+                        {/* Caiu outro valor: a diferença e o porquê ficam na entrada. */}
+                        {recebida && estado && Math.abs(estado.valor - estado.previsto) > 0.004 && (
+                          <span className="basis-full">
+                            <span className="valor">{formatCurrency(Math.abs(estado.valor - estado.previsto))}</span>{" "}
+                            {estado.valor < estado.previsto ? "a menos" : "a mais"} que os{" "}
+                            <span className="valor">{formatCurrency(estado.previsto)}</span> previstos
+                            {estado.motivo ? <> · {estado.motivo}</> : null}
+                          </span>
+                        )}
                       </span>
                     }
                     valor={formatDinheiro(valor, { positivo: true })}

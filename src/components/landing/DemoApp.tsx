@@ -111,7 +111,7 @@ export function DemoApp() {
             {aba === "carteira" ? (
               <AbasDaSecao abas={["Contas", "Cartões"]} ativa={subCarteira} onTrocar={setSubCarteira} />
             ) : (
-              <AbasDaSecao abas={["Lançamentos", "Metas"]} ativa={subGastos} onTrocar={setSubGastos} />
+              <AbasDaSecao abas={["Lançamentos", "Limites"]} ativa={subGastos} onTrocar={setSubGastos} />
             )}
           </div>
         )}

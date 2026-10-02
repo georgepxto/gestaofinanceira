@@ -420,7 +420,7 @@ export const generateMeusGastosPDF = (
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...TINTA);
-    doc.text("Metas de gasto", 14, yPos);
+    doc.text("Limites de gasto", 14, yPos);
     yPos += 8;
 
     metas.forEach(meta => {

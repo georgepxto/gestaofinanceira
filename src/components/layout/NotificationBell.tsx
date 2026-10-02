@@ -31,7 +31,7 @@ const AlertIcon = ({ alerta }: { alerta: Alerta }) => {
   if (alerta.titulo.includes("subiu")) return <TrendingUp {...props} />;
   if (alerta.titulo.includes("receita") || alerta.titulo.includes("gastou")) return <Receipt {...props} />;
   if (alerta.titulo.includes("parcela")) return <CalendarCheck {...props} />;
-  if (alerta.titulo.includes("Meta") || alerta.titulo.includes("superam")) return <Gauge {...props} />;
+  if (alerta.titulo.includes("Limite de") || alerta.titulo.includes("superam")) return <Gauge {...props} />;
   if (alerta.tipo === "danger") return <AlertTriangle {...props} />;
   if (alerta.tipo === "warning") return <AlertCircle {...props} />;
   return <Info {...props} />;

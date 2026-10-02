@@ -96,7 +96,7 @@ export const FEATURE_LABELS: Record<keyof UserFeatures, string> = {
   pessoas: "Pessoas",
   contas_bancarias: "Contas Bancárias",
   cartoes_credito: "Cartões de Crédito",
-  metas: "Metas de Gasto",
+  metas: "Limites de gasto",
   exportar_pdf: "Exportar PDF",
   configuracoes: "Configurações",
 };

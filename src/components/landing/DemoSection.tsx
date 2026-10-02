@@ -3,7 +3,7 @@ import { DemoApp } from "./DemoApp";
 import { Fade } from "./Fade";
 
 const TENTE = [
-  "Toque no + e lance R$ 100 em Alimentação. Depois veja a meta estourar em Gastos, Metas.",
+  "Toque no + e lance R$ 100 em Alimentação. Depois veja o limite estourar em Gastos, Limites.",
   "Lance um gasto dividido com Ana e Bruno e veja em A receber quanto cada um te deve.",
   "Em A receber, toque na Ana e registre o pagamento: o saldo de hoje sobe no Início."
 ];

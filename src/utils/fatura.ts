@@ -13,7 +13,9 @@ import type { AberturaCartao, CartaoCredito, Gasto, MeuGasto, TransacaoCartao } 
 // usado. Tudo o que foi comprado até esse dia já está dentro desse retrato —
 // lançar depois uma compra antiga (ou um fixo que já tinha sido cobrado) só
 // explica o retrato, não soma de novo. O que o retrato tem e ninguém lançou
-// fica como "sem detalhe".
+// fica como "sem detalhe". Se a pessoa informou também as faturas seguintes,
+// mês a mês, o "sem detalhe" de cada uma cai na fatura certa; o que sobrar do
+// limite usado fica sem mês.
 
 export interface DadosFatura {
   meusGastos: MeuGasto[];
@@ -199,12 +201,25 @@ export function resumoDaAbertura(cartao: CartaoCredito, d: DadosFatura) {
   const lancadoNoMes = noMes.reduce((s, c) => s + c.valor, 0);
   const lancadoDepois = depois.reduce((s, c) => s + c.valor, 0);
   const semDetalheNoMes = Math.max(0, a.fatura - lancadoNoMes);
-  const semDetalheDepois = Math.max(0, a.usado - Math.max(a.fatura, lancadoNoMes) - lancadoDepois);
+  // Faturas seguintes informadas: o que o banco mostra no mês e ninguém lançou.
+  const semDetalhePorMes: Record<string, number> = {};
+  Object.entries(a.seguintes || {}).forEach(([mes, valor]) => {
+    if (mes <= a.mes || !(valor > 0)) return;
+    const lancado = depois.filter((c) => c.mes === mes).reduce((s, c) => s + c.valor, 0);
+    const falta = centavos(Math.max(0, valor - lancado));
+    if (falta > 0) semDetalhePorMes[mes] = falta;
+  });
+  const semDetalheDosMeses = Object.values(semDetalhePorMes).reduce((s, v) => s + v, 0);
+  // O que sobra do limite usado depois de tudo o que tem mês: fica sem mês.
+  const semDetalheDepois = Math.max(0, a.usado - Math.max(a.fatura, lancadoNoMes) - lancadoDepois - semDetalheDosMeses);
   return {
     abertura: a,
     lancadoNoMes: centavos(lancadoNoMes),
     lancadoDepois: centavos(lancadoDepois),
     semDetalheNoMes: centavos(semDetalheNoMes),
+    /** Das faturas seguintes informadas, o que ninguém lançou, por mês. */
+    semDetalhePorMes,
+    semDetalheDosMeses: centavos(semDetalheDosMeses),
     semDetalheDepois: centavos(semDetalheDepois),
     /** Ids que já estavam no retrato — "já estava na fatura". */
     idsDoRetrato: new Set(doRetrato.map((c) => `${c.origem}-${c.id}-${c.mes}`)),
@@ -214,13 +229,20 @@ export function resumoDaAbertura(cartao: CartaoCredito, d: DadosFatura) {
 /** Fatura que venceu antes de o cartão entrar no Hedge: já foi paga. */
 export const faturaAntesDoHedge = (cartao: CartaoCredito, mes: string) => mes < aberturaDoCartao(cartao).mes;
 
+/** O que o banco mostrava para a fatura do mês e ninguém lançou. */
+export function semDetalheDaFatura(cartao: CartaoCredito, mes: string, d: DadosFatura) {
+  const a = aberturaDoCartao(cartao);
+  if (mes < a.mes) return 0;
+  const r = resumoDaAbertura(cartao, d);
+  return mes === a.mes ? r.semDetalheNoMes : r.semDetalhePorMes[mes] || 0;
+}
+
 /** O total da fatura do mês, antes dos pagamentos. */
 export function totalDaFatura(cartao: CartaoCredito, mes: string, d: DadosFatura) {
   const a = aberturaDoCartao(cartao);
   if (mes < a.mes) return 0;
   const itens = cobrancas(cartao, mes, mes, d).filter((c) => !(mes === a.mes && pagoAntes(c, a)));
-  const semDetalhe = mes === a.mes ? resumoDaAbertura(cartao, d).semDetalheNoMes : 0;
-  return centavos(itens.reduce((s, c) => s + c.valor, 0) + semDetalhe);
+  return centavos(itens.reduce((s, c) => s + c.valor, 0) + semDetalheDaFatura(cartao, mes, d));
 }
 
 /** Quanto do mês já foi pago: pelo registro de pagamento ou marcando os lançamentos. */
@@ -250,8 +272,9 @@ export function limiteUsado(cartao: CartaoCredito, d: DadosFatura, hoje = hojeIs
   const comprado = lista.filter((c) => c.compra <= hoje && !pagoAntes(c, a)).reduce((s, c) => s + c.valor, 0);
   const meses = new Set<string>(lista.map((c) => c.mes));
   d.pagamentos.filter((p) => p.cartao_id === cartao.id && p.mes >= a.mes).forEach((p) => meses.add(p.mes));
+  Object.keys(r.semDetalhePorMes).forEach((mes) => meses.add(mes));
   const devolvido = [...meses].reduce((s, mes) => s + pagoDaFatura(cartao, mes, d), 0);
-  return centavos(Math.max(0, r.semDetalheNoMes + r.semDetalheDepois + comprado - devolvido));
+  return centavos(Math.max(0, r.semDetalheNoMes + r.semDetalheDosMeses + r.semDetalheDepois + comprado - devolvido));
 }
 
 /**
@@ -273,8 +296,27 @@ export function novaAbertura(
   limite: number,
   disponivel: number | null,
   fatura: number | null,
-  hoje = hojeIso()
+  hoje = hojeIso(),
+  /** As faturas depois da próxima, na ordem: [a do mês seguinte, a do outro, ...]. */
+  seguintes: number[] = []
 ): AberturaCartao {
-  const usado = disponivel === null ? fatura || 0 : Math.max(0, limite - disponivel);
-  return { em: hoje, mes: proximaFatura(cartao as CartaoCredito, hoje), fatura: fatura || 0, usado: Math.max(usado, fatura || 0) };
+  const mes = proximaFatura(cartao as CartaoCredito, hoje);
+  const porMes: Record<string, number> = {};
+  seguintes.forEach((v, i) => {
+    if (v > 0) porMes[somarMeses(mes, i + 1)] = centavos(v);
+  });
+  const somaSeguintes = Object.values(porMes).reduce((s, v) => s + v, 0);
+  // Sem o disponível, o limite usado é o que a pessoa informou, mês a mês.
+  const usado = disponivel === null ? (fatura || 0) + somaSeguintes : Math.max(0, limite - disponivel);
+  return {
+    em: hoje,
+    mes,
+    fatura: fatura || 0,
+    usado: centavos(Math.max(usado, (fatura || 0) + somaSeguintes)),
+    ...(somaSeguintes > 0 ? { seguintes: porMes } : {}),
+  };
 }
+
+/** O mês ("yyyy-MM") da fatura `n` meses depois da próxima. */
+export const faturaDepoisDaProxima = (cartao: { dia_vencimento: number; melhor_dia_compra?: number | null }, n: number, hoje = hojeIso()) =>
+  somarMeses(proximaFatura(cartao as CartaoCredito, hoje), n);

@@ -173,6 +173,12 @@ export interface AberturaCartao {
   fatura: number;
   /** Limite usado: essa fatura mais as parcelas das próximas. */
   usado: number;
+  /**
+   * As faturas depois dessa, mês a mês ("yyyy-MM" → valor), como o app do
+   * banco mostra. Opcional: sem elas, o que passa da próxima fatura fica só no
+   * limite, sem mês.
+   */
+  seguintes?: Record<string, number>;
 }
 
 export interface CartaoCreditoForm {

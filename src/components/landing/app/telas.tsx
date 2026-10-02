@@ -315,7 +315,7 @@ export function TelaMetas({ metas = METAS }: { metas?: typeof METAS }) {
   return (
     <div className="space-y-6">
       <BalanceHero
-        rotulo={<>Usado nas metas · {MES}</>}
+        rotulo={<>Usado dos limites · {MES}</>}
         valor={total}
         complemento={`de ${formatCurrency(limite)}`}
         perigoSeNegativo={false}
@@ -330,7 +330,7 @@ export function TelaMetas({ metas = METAS }: { metas?: typeof METAS }) {
           <ProgressBar
             valor={total}
             maximo={limite}
-            rotulo="Total das metas"
+            rotulo="Total dos limites"
             legenda={[
               { rotulo: "Estouradas", valor: metas.filter((m) => estado(m) === "estourou").length },
               { rotulo: "Quase no limite", valor: metas.filter((m) => estado(m) === "quase").length },
@@ -340,7 +340,7 @@ export function TelaMetas({ metas = METAS }: { metas?: typeof METAS }) {
         </div>
       </BalanceHero>
       <Surface as="section">
-        <SurfaceHeader titulo="Suas metas" descricao="Da mais perto de estourar para a mais tranquila." className="mb-1" />
+        <SurfaceHeader titulo="Seus limites" descricao="Da mais perto de estourar para a mais tranquila." className="mb-1" />
         <ListGroup>
           {ordenadas.map((m) => {
             const e = estado(m);

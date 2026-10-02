@@ -98,7 +98,7 @@ export function LiveBalanceCard() {
     // é limitado à altura da tela e a base dissolve em vez de invadir a seção
     // seguinte.
     <div ref={rootRef} className="lp-screen relative mx-auto w-full max-w-[440px] overflow-hidden lg:max-h-[calc(100svh-150px)]">
-      <div role="img" aria-label="O Hedge com o saldo de hoje, os últimos lançamentos e as metas se atualizando a cada lançamento. Dados fictícios.">
+      <div role="img" aria-label="O Hedge com o saldo de hoje, os últimos lançamentos e os limites se atualizando a cada lançamento. Dados fictícios.">
         <div aria-hidden="true">
           <TelaApp className="px-10 pt-12 pb-16">
             <div className="flex items-baseline justify-between gap-4">
@@ -118,7 +118,7 @@ export function LiveBalanceCard() {
             </ListGroup>
 
             <div className="mt-7">
-              <p className="text-xs text-fg-3 mb-1">Metas do mês</p>
+              <p className="text-xs text-fg-3 mb-1">Limites do mês</p>
               {metas.map((m) => (
                 <div key={m.categoria} className="py-2.5">
                   <div className="flex items-baseline justify-between gap-4 text-sm">
@@ -128,7 +128,7 @@ export function LiveBalanceCard() {
                     </span>
                   </div>
                   <div className="mt-2">
-                    <ProgressBar valor={m.gasto} maximo={m.limite} rotulo={`${m.categoria}: meta do mês`} />
+                    <ProgressBar valor={m.gasto} maximo={m.limite} rotulo={`${m.categoria}: limite do mês`} />
                   </div>
                 </div>
               ))}

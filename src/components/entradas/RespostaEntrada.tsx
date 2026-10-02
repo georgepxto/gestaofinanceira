@@ -23,6 +23,10 @@ const OPCOES_ADIAR = [
   { dias: 10, rotulo: "Em 10 dias" },
 ];
 
+// Os motivos mais comuns, para um toque; o campo aceita qualquer outro.
+const MOTIVOS_MENOS = ["Desconto", "Vale", "Adiantamento", "Faltas"];
+const MOTIVOS_MAIS = ["Hora extra", "Bônus", "Comissão", "Reajuste"];
+
 const diaCurto = (iso: string) => format(parseISO(iso), "d 'de' MMMM", { locale: ptBR });
 
 /**
@@ -33,6 +37,7 @@ const diaCurto = (iso: string) => format(parseISO(iso), "d 'de' MMMM", { locale:
 export function RespostaEntrada({ pedido, onFechar }: { pedido: PedidoResposta | null; onFechar: () => void }) {
   const hoje = format(new Date(), "yyyy-MM-dd");
   const [valor, setValor] = useState("");
+  const [motivo, setMotivo] = useState("");
   const [dataCaiu, setDataCaiu] = useState(hoje);
   const [escolha, setEscolha] = useState<string>("1");
   const [diaExato, setDiaExato] = useState(daquiA(3));
@@ -44,6 +49,7 @@ export function RespostaEntrada({ pedido, onFechar }: { pedido: PedidoResposta |
   useEffect(() => {
     if (!pedido) return;
     setValor(formatCurrencyValue(pedido.receita.valor));
+    setMotivo("");
     setDataCaiu(pedido.dataPrevista <= hoje ? pedido.dataPrevista : hoje);
     setEscolha("1");
     setDiaExato(daquiA(3));
@@ -58,12 +64,14 @@ export function RespostaEntrada({ pedido, onFechar }: { pedido: PedidoResposta |
 
   const intervaloInvalido = escolha === "intervalo" && (!de || !ate || ate < de || de <= hoje);
   const diaInvalido = escolha === "dia" && (!diaExato || diaExato <= hoje);
+  // Quanto caiu a mais ou a menos que o cadastrado: fica registrado com o motivo.
+  const diferenca = Math.round((parseCurrency(valor) - receita.valor) * 100) / 100;
 
   const enviar = async () => {
     setEnviando(true);
     const r =
       modo === "valor"
-        ? await confirmarEntrada(receita, mes, dataCaiu, parseCurrency(valor))
+        ? await confirmarEntrada(receita, mes, dataCaiu, parseCurrency(valor), motivo)
         : escolha === "dia"
           ? await adiarEntrada(receita, mes, diaExato)
           : escolha === "intervalo"
@@ -92,9 +100,41 @@ export function RespostaEntrada({ pedido, onFechar }: { pedido: PedidoResposta |
       valor={modo === "valor" ? <MoneyInput tamanho="heroi" value={valor} onChange={setValor} aria-label="Quanto caiu" data-autofocus /> : undefined}
     >
       {modo === "valor" ? (
-        <Campo rotulo="Caiu no dia" htmlFor="entrada-dia" dica="Pode ser antes do dia previsto.">
-          <input id="entrada-dia" type="date" max={hoje} value={dataCaiu} onChange={(e) => setDataCaiu(e.target.value)} className={campoClasse} />
-        </Campo>
+        <>
+          {diferenca !== 0 && parseCurrency(valor) > 0 && (
+            <p className="text-sm text-fg-2">
+              <span className="valor text-fg">{formatCurrency(Math.abs(diferenca))}</span>{" "}
+              {diferenca < 0 ? "a menos" : "a mais"} que o previsto.
+            </p>
+          )}
+          {diferenca !== 0 && parseCurrency(valor) > 0 && (
+            <Campo
+              rotulo={diferenca < 0 ? "Por que veio menos?" : "Por que veio mais?"}
+              htmlFor="entrada-motivo"
+              dica="Opcional. Fica anotado na entrada, para você lembrar quando olhar este mês de novo."
+            >
+              <Chips>
+                {(diferenca < 0 ? MOTIVOS_MENOS : MOTIVOS_MAIS).map((m) => (
+                  <Chip key={m} ativo={motivo === m} onClick={() => setMotivo(motivo === m ? "" : m)}>
+                    {m}
+                  </Chip>
+                ))}
+              </Chips>
+              <input
+                id="entrada-motivo"
+                type="text"
+                value={motivo}
+                maxLength={80}
+                onChange={(e) => setMotivo(e.target.value)}
+                placeholder={diferenca < 0 ? "Ex: desconto do plano de saúde" : "Ex: hora extra de setembro"}
+                className={`${campoClasse} mt-2`}
+              />
+            </Campo>
+          )}
+          <Campo rotulo="Caiu no dia" htmlFor="entrada-dia" dica="Pode ser antes do dia previsto.">
+            <input id="entrada-dia" type="date" max={hoje} value={dataCaiu} onChange={(e) => setDataCaiu(e.target.value)} className={campoClasse} />
+          </Campo>
+        </>
       ) : (
         <>
           <Campo rotulo="Perguntar de novo">

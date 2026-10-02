@@ -167,7 +167,7 @@ export const useAlertas = () => {
         if (gastoAtual > meta.limite) {
           novasAlertas.push({
             tipo: "danger",
-            titulo: `Meta de ${meta.categoria} estourada`,
+            titulo: `Limite de ${meta.categoria} estourado`,
             mensagem: `${formatCurrency(gastoAtual)} de ${formatCurrency(meta.limite)} (${((gastoAtual / meta.limite - 1) * 100).toFixed(0)}% acima).`,
           });
         }

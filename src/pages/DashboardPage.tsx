@@ -153,10 +153,10 @@ const DASHBOARD_TUTORIAL_STEPS: DashboardTutorialStep[] = [
   },
   {
     target: "[data-tour='metas-section']",
-    alvo: "Metas do mês",
-    titulo: "Metas do mês",
+    alvo: "Limites do mês",
+    titulo: "Limites do mês",
     descricao:
-      "Quanto já foi de cada meta. O aviso aparece quando uma categoria passa de 80% do limite.",
+      "Quanto já foi gasto de cada limite por categoria. O aviso aparece quando uma categoria passa de 80% do limite.",
   },
   {
     target: "[data-tour='grafico-mensal']",
@@ -802,11 +802,11 @@ export const DashboardPage = () => {
         {/* 6. Metas do mês */}
         <Surface as="section" data-tour="metas-section">
           <SurfaceHeader
-            titulo="Metas do mês"
+            titulo="Limites do mês"
             acao={
               data.metasGasto.length > 0 ? (
-                <Link to="/gastos/metas" className="inline-flex items-center min-h-[44px] -my-3 md:min-h-0 md:my-0 hover:text-fg transition-colors">
-                  Ver metas
+                <Link to="/gastos/limites" className="inline-flex items-center min-h-[44px] -my-3 md:min-h-0 md:my-0 hover:text-fg transition-colors">
+                  Ver limites
                 </Link>
               ) : undefined
             }
@@ -841,7 +841,7 @@ export const DashboardPage = () => {
               })}
             </ul>
           ) : (
-            <EmptyState Icone={Gauge} frase="Nenhuma meta definida." detalhe="Crie metas por categoria em Gastos, Metas." compacto />
+            <EmptyState Icone={Gauge} frase="Nenhum limite definido." detalhe="Diga quanto pode gastar por mês em cada categoria, em Gastos, Limites." compacto />
           )}
         </Surface>
 

@@ -39,6 +39,7 @@ import {
   pagoDaFatura,
   proximaFatura,
   resumoDaAbertura,
+  semDetalheDaFatura,
   semDetalheRestante,
   totalDaFatura,
   valorDaFatura,
@@ -152,6 +153,9 @@ export const CartoesCreditoPage = () => {
   const [conferindo, setConferindo] = useState<CartaoCredito | null>(null);
   const [bancoDisponivel, setBancoDisponivel] = useState("");
   const [bancoFatura, setBancoFatura] = useState("");
+  // As faturas depois da próxima, mês a mês: no cartão novo e na conferência.
+  const [faturasSeguintes, setFaturasSeguintes] = useState<string[]>([]);
+  const [bancoSeguintes, setBancoSeguintes] = useState<string[]>([]);
 
   // Modal pagar fatura
   const [showPagarFatura, setShowPagarFatura] = useState(false);
@@ -372,7 +376,9 @@ export const CartoesCreditoPage = () => {
             dados,
             dados.limite,
             formCartao.disponivel ? parseCurrency(formCartao.disponivel) : null,
-            formCartao.fatura_atual ? parseCurrency(formCartao.fatura_atual) : null
+            formCartao.fatura_atual ? parseCurrency(formCartao.fatura_atual) : null,
+            undefined,
+            faturasSeguintes.map((v) => (v ? parseCurrency(v) : 0))
           );
       const { error } = await salvarCartao(editandoCartao ? dados : { ...dados, user_id: user.id }, abertura, editandoCartao?.id);
       if (error) throw error;
@@ -387,6 +393,7 @@ export const CartoesCreditoPage = () => {
   const abrirConferir = (c: CartaoCredito) => {
     setBancoDisponivel("");
     setBancoFatura("");
+    setBancoSeguintes([]);
     setConferindo(c);
   };
 
@@ -400,7 +407,9 @@ export const CartoesCreditoPage = () => {
         conferindo,
         conferindo.limite || 0,
         bancoDisponivel ? parseCurrency(bancoDisponivel) : null,
-        bancoFatura ? parseCurrency(bancoFatura) : null
+        bancoFatura ? parseCurrency(bancoFatura) : null,
+        undefined,
+        bancoSeguintes.map((v) => (v ? parseCurrency(v) : 0))
       );
       const { error } = await salvarCartao({}, abertura, conferindo.id);
       if (error) throw error;
@@ -447,6 +456,7 @@ export const CartoesCreditoPage = () => {
 
   const resetFormCartao = () => {
     setFormCartao({ nome: "", conta_id: "", dia_vencimento: "10", melhor_dia_compra: "10", limite: "", disponivel: "", fatura_atual: "", cor: CORES_CARTAO[0] });
+    setFaturasSeguintes([]);
     setShowFormCartao(false);
     setEditandoCartao(null);
   };
@@ -804,7 +814,7 @@ export const CartoesCreditoPage = () => {
           const retrato = resumoDaAbertura(cartaoSelecionado, dadosFatura);
           const antesDoHedge = faturaAntesDoHedge(cartaoSelecionado, mesFaturaVista);
           const mesDoRetrato = mesFaturaVista === abertura.mes;
-          const semDetalheNoMes = mesDoRetrato ? retrato.semDetalheNoMes : 0;
+          const semDetalheNoMes = semDetalheDaFatura(cartaoSelecionado, mesFaturaVista, dadosFatura);
           const parcelasSemDetalhe = semDetalheRestante(cartaoSelecionado, dadosFatura);
           const totalDoMes = totalDaFatura(cartaoSelecionado, mesFaturaVista, dadosFatura);
           const diaDoRetrato = format(dataLocal(abertura.em), "d 'de' MMMM", { locale: ptBR });
@@ -917,12 +927,13 @@ export const CartoesCreditoPage = () => {
                         <span className="valor text-fg">{formatDinheiro(-semDetalheNoMes)}</span>
                       </div>
                       <p className="mt-1 text-xs text-fg-2">
-                        Parte da fatura que o banco mostrava em {diaDoRetrato} e que você não lançou. Lançar uma compra com data até
-                        esse dia tira daqui, sem contar duas vezes.
+                        {mesDoRetrato
+                          ? `Parte da fatura que o banco mostrava em ${diaDoRetrato} e que você não lançou. Lançar uma compra com data até esse dia tira daqui, sem contar duas vezes.`
+                          : `O valor que você informou para esta fatura em ${diaDoRetrato}, menos o que já lançou nela. Lançar uma compra antiga tira daqui, sem contar duas vezes.`}
                       </p>
                     </div>
                   )}
-                  {!antesDoHedge && mesFaturaVista > abertura.mes && parcelasSemDetalhe > 0 && (
+                  {!antesDoHedge && mesFaturaVista > abertura.mes && parcelasSemDetalhe > 0 && semDetalheNoMes === 0 && (
                     <p className="mt-3 text-xs text-fg-2">
                       Esta fatura pode ter parcelas de compras antigas que você não lançou (
                       <span className="valor">{formatCurrency(parcelasSemDetalhe)}</span> ao todo, nas próximas faturas). Elas já contam no
@@ -1038,6 +1049,12 @@ export const CartoesCreditoPage = () => {
                         {[
                           { rotulo: "Limite usado", valor: abertura.usado },
                           { rotulo: `Fatura de ${nomeMesDoRetrato}`, valor: abertura.fatura },
+                          ...Object.entries(abertura.seguintes || {})
+                            .sort(([a], [b]) => a.localeCompare(b))
+                            .map(([mes, valor]) => ({
+                              rotulo: `Fatura de ${format(dataLocal(`${mes}-01`), "MMMM", { locale: ptBR })}`,
+                              valor,
+                            })),
                         ].map((l) => (
                           <div key={l.rotulo} className="flex items-baseline justify-between gap-4 py-1.5">
                             <dt className="text-fg-2">{l.rotulo}</dt>
@@ -1045,9 +1062,10 @@ export const CartoesCreditoPage = () => {
                           </div>
                         ))}
                       </dl>
-                      {retrato.semDetalheNoMes + parcelasSemDetalhe > 0.009 && (
+                      {retrato.semDetalheNoMes + retrato.semDetalheDosMeses + parcelasSemDetalhe > 0.009 && (
                         <p className="mt-2 text-xs text-fg-3">
-                          Ainda sem detalhe: <span className="valor">{formatCurrency(retrato.semDetalheNoMes + parcelasSemDetalhe)}</span>.
+                          Ainda sem detalhe:{" "}
+                          <span className="valor">{formatCurrency(retrato.semDetalheNoMes + retrato.semDetalheDosMeses + parcelasSemDetalhe)}</span>.
                           Já conta no limite; lançar as compras antigas só mostra em que fatura cada uma cai.
                         </p>
                       )}
@@ -1096,7 +1114,7 @@ export const CartoesCreditoPage = () => {
           !!formCartao.nome.trim() &&
           !!formCartao.limite &&
           !!formCartao.dia_vencimento &&
-          (!!editandoCartao || !erroDoBanco(parseCurrency(formCartao.limite || "0"), formCartao.disponivel, formCartao.fatura_atual))
+          (!!editandoCartao || !erroDoBanco(parseCurrency(formCartao.limite || "0"), formCartao.disponivel, formCartao.fatura_atual, faturasSeguintes))
         }
         valor={
           <div>
@@ -1163,7 +1181,7 @@ export const CartoesCreditoPage = () => {
             <div>
               <p className="text-sm text-fg">Hoje, no app do banco</p>
               <p className="mt-1 text-xs text-fg-3">
-                Opcional. Com estes dois números o Hedge começa com o limite e a fatura iguais aos do banco.
+                Opcional. Com estes números o Hedge começa com o limite e as faturas iguais aos do banco.
               </p>
             </div>
             <CamposDoBanco
@@ -1174,6 +1192,8 @@ export const CartoesCreditoPage = () => {
               fatura={formCartao.fatura_atual}
               onDisponivel={(disponivel) => setFormCartao({ ...formCartao, disponivel })}
               onFatura={(fatura_atual) => setFormCartao({ ...formCartao, fatura_atual })}
+              seguintes={faturasSeguintes}
+              onSeguintes={setFaturasSeguintes}
             />
           </div>
         )}
@@ -1188,7 +1208,11 @@ export const CartoesCreditoPage = () => {
         onEnviar={handleConferir}
         rotuloEnviar="Salvar conferência"
         enviando={saving}
-        podeEnviar={!!conferindo && (!!bancoDisponivel || !!bancoFatura) && !erroDoBanco(conferindo.limite || 0, bancoDisponivel, bancoFatura)}
+        podeEnviar={
+          !!conferindo &&
+          (!!bancoDisponivel || !!bancoFatura || bancoSeguintes.some((v) => !!v)) &&
+          !erroDoBanco(conferindo.limite || 0, bancoDisponivel, bancoFatura, bancoSeguintes)
+        }
       >
         {conferindo && (
           <>
@@ -1204,6 +1228,8 @@ export const CartoesCreditoPage = () => {
               fatura={bancoFatura}
               onDisponivel={setBancoDisponivel}
               onFatura={setBancoFatura}
+              seguintes={bancoSeguintes}
+              onSeguintes={setBancoSeguintes}
               hedge={{
                 disponivel: (conferindo.limite || 0) - limiteUsado(conferindo, dadosFatura),
                 fatura: valorDaFatura(conferindo, proximaFatura(conferindo), dadosFatura),

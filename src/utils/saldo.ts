@@ -67,6 +67,8 @@ export interface ConfirmacaoReceita {
   data_recebida?: string | null;
   /** Quanto caiu, se diferente do previsto. */
   valor?: number | null;
+  /** Por que caiu outro valor ("vale", "hora extra"). */
+  motivo?: string | null;
   perguntar_em?: string | null;
   perguntar_ate?: string | null;
 }
@@ -208,6 +210,10 @@ export interface EstadoEntrada {
   dataPrevista: string;
   dataRecebida?: string;
   valor: number;
+  /** O valor cadastrado da receita, para mostrar a diferença do que caiu. */
+  previsto: number;
+  /** Por que caiu outro valor. */
+  motivo?: string;
   perguntarEm?: string;
   perguntarAte?: string;
   /** Anterior à confirmação: entrou sozinha no dia. */
@@ -221,7 +227,7 @@ export function estadoDaEntrada(r: Receita, mes: string, livro: InfoConfirmacao,
   const hojeS = hojeIso(hoje);
   const desde = livro.confirmacaoDesde;
   if (!desde || dataPrevista < desde) {
-    return { status: dataPrevista <= hojeS ? "recebida" : "prevista", dataPrevista, valor: r.valor, automatica: true };
+    return { status: dataPrevista <= hojeS ? "recebida" : "prevista", dataPrevista, valor: r.valor, previsto: r.valor, automatica: true };
   }
   const c = livro.confirmacoes?.find((x) => x.receita_id === r.id && x.mes === mes);
   if (c?.status === "recebida") {
@@ -230,6 +236,8 @@ export function estadoDaEntrada(r: Receita, mes: string, livro: InfoConfirmacao,
       dataPrevista,
       dataRecebida: diaLocal(c.data_recebida) || dataPrevista,
       valor: Number(c.valor ?? r.valor) || 0,
+      previsto: r.valor,
+      motivo: c.motivo || undefined,
       automatica: false,
     };
   }
@@ -238,12 +246,13 @@ export function estadoDaEntrada(r: Receita, mes: string, livro: InfoConfirmacao,
       status: diaLocal(c.perguntar_em) <= hojeS ? "confirmar" : "adiada",
       dataPrevista,
       valor: r.valor,
+      previsto: r.valor,
       perguntarEm: diaLocal(c.perguntar_em),
       perguntarAte: diaLocal(c.perguntar_ate) || undefined,
       automatica: false,
     };
   }
-  return { status: dataPrevista <= hojeS ? "confirmar" : "prevista", dataPrevista, valor: r.valor, automatica: false };
+  return { status: dataPrevista <= hojeS ? "confirmar" : "prevista", dataPrevista, valor: r.valor, previsto: r.valor, automatica: false };
 }
 
 /**

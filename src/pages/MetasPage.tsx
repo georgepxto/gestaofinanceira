@@ -43,31 +43,31 @@ const METAS_TUTORIAL_STEPS: MetasTutorialStep[] = [
   {
     target: "[data-tour='metas-header']",
     alvo: "Cabeçalho da aba",
-    titulo: "Metas",
+    titulo: "Limites de gasto",
     descricao:
-      "Aqui você define limites mensais por categoria para acompanhar o consumo e evitar estouro de orçamento.",
+      "Aqui você define quanto se permite gastar por mês em cada categoria. Não é dinheiro guardado: é um teto, e a conta recomeça todo mês.",
     placement: "below",
   },
   {
     target: "[data-tour='metas-form']",
-    alvo: "Botão Nova meta",
-    titulo: "Criar nova meta",
+    alvo: "Botão Novo limite",
+    titulo: "Criar novo limite",
     descricao:
-      "Escolha a categoria e o limite do mês. Para mudar uma meta, toque nela na lista.",
+      "Escolha a categoria e quanto pode gastar nela por mês. Para mudar um limite, toque nele na lista.",
   },
   {
     target: "[data-tour='metas-lista']",
-    alvo: "Lista de metas",
-    titulo: "Metas cadastradas",
+    alvo: "Lista de limites",
+    titulo: "Limites cadastrados",
     descricao:
-      "Aqui ficam todas as metas já criadas, ordenadas por risco de estouro, com o consumo do mês em cada barra.",
+      "Aqui ficam todos os limites, do mais perto de estourar para o mais tranquilo, com o gasto do mês em cada barra.",
   },
   {
     target: "[data-tour='metas-item-remover']",
-    alvo: "Remover meta",
-    titulo: "Excluir meta",
+    alvo: "Remover limite",
+    titulo: "Excluir limite",
     descricao:
-      "Cada meta tem editar e excluir: no desktop ao passar o mouse, no celular no menu da linha.",
+      "Cada limite tem editar e excluir: no desktop ao passar o mouse, no celular no menu da linha.",
   },
   {
     target: "[data-tour='metas-help-button']",
@@ -116,7 +116,7 @@ export const MetasPage = () => {
       if (error) throw error;
       setMetas(data || []);
     } catch (err) {
-      setLoadError(toActionableErrorMessage(err, "Não foi possível carregar as metas."));
+      setLoadError(toActionableErrorMessage(err, "Não foi possível carregar os limites."));
     } finally {
       if (showLoading) {
         setLoading(false);
@@ -149,8 +149,8 @@ export const MetasPage = () => {
 
   usePageTutorialHelpButton({
     onClick: openTutorial,
-    title: "Ver tutorial de Metas",
-    ariaLabel: "Ver tutorial de Metas",
+    title: "Ver tutorial de Limites",
+    ariaLabel: "Ver tutorial de Limites",
     dataTour: "metas-help-button",
   });
 
@@ -182,11 +182,11 @@ export const MetasPage = () => {
       setFormAberto(false);
       await fetchMetas(false);
       toast.success(
-        metaEmEdicao ? "Meta atualizada com sucesso." : "Meta salva com sucesso."
+        metaEmEdicao ? "Limite atualizado." : "Limite criado."
       );
     } catch (err) {
       console.error("Erro ao salvar meta:", err);
-      toast.error(toActionableErrorMessage(err, "Não foi possível salvar a meta."));
+      toast.error(toActionableErrorMessage(err, "Não foi possível salvar o limite."));
     } finally {
       setSavingMeta(false);
     }
@@ -195,8 +195,8 @@ export const MetasPage = () => {
   const handleDeleteMeta = (meta: MetaGasto) => {
     setModalConfirm({
       show: true,
-      titulo: "Excluir meta",
-      mensagem: `Deseja realmente excluir a meta de "${meta.categoria}"?`,
+      titulo: "Excluir limite",
+      mensagem: `Excluir o limite de "${meta.categoria}"?`,
       onConfirm: async () => {
         if (!supabase) return;
         try {
@@ -211,7 +211,7 @@ export const MetasPage = () => {
           }
         } catch (err) {
           console.error("Erro ao excluir meta:", err);
-          toast.error(toActionableErrorMessage(err, "Não foi possível excluir a meta."));
+          toast.error(toActionableErrorMessage(err, "Não foi possível excluir o limite."));
           throw err;
         }
       },
@@ -269,13 +269,13 @@ export const MetasPage = () => {
   const noControle = linhas.filter((l) => l.pct < 80);
 
   if (loading) {
-    return <PageLoadingState title="Carregando metas" />;
+    return <PageLoadingState title="Carregando limites" />;
   }
 
   if (loadError) {
     return (
       <PageErrorState
-        title="Não foi possível abrir as metas"
+        title="Não foi possível abrir os limites"
         description={loadError}
         onAction={() => fetchMetas(true)}
         actionLabel="Tentar de novo"
@@ -294,8 +294,8 @@ export const MetasPage = () => {
       {/* HEADER_PAGINA */}
       <PageHeader
         data-tour="metas-header"
-        title="Metas"
-        description="Seus limites por categoria e quanto de cada um você já usou."
+        title="Limites de gasto"
+        description="Quanto você se permite gastar por mês em cada categoria. Não é dinheiro guardado: é um teto, e a conta recomeça todo mês."
         action={
           <>
             <SeletorMes />
@@ -305,7 +305,7 @@ export const MetasPage = () => {
               data-tour="metas-form"
               icone={<Plus className="w-4 h-4" strokeWidth={1.75} />}
             >
-              Nova meta
+              Novo limite
             </Button>
           </>
         }
@@ -314,7 +314,7 @@ export const MetasPage = () => {
       {/* Orçado vs. usado */}
       {linhas.length > 0 && (
         <BalanceHero
-          rotulo={<>Usado nas metas · {formatMesAno(mesVisualizacao)}</>}
+          rotulo={<>Usado dos limites · {formatMesAno(mesVisualizacao)}</>}
           valor={totalGasto}
           complemento={`de ${formatCurrency(totalLimite)}`}
           perigoSeNegativo={false}
@@ -335,7 +335,7 @@ export const MetasPage = () => {
             <ProgressBar
               valor={totalGasto}
               maximo={totalLimite}
-              rotulo={`Total das metas: ${formatPercent(pctTotal / 100)} usado`}
+              rotulo={`Total dos limites: ${formatPercent(pctTotal / 100)} usado`}
               legenda={[
                 {
                   rotulo: "Estouradas",
@@ -352,7 +352,7 @@ export const MetasPage = () => {
 
       {/* Suas metas, da mais arriscada para a mais tranquila */}
       <Surface as="section" data-tour="metas-lista">
-        <SurfaceHeader titulo="Suas metas" descricao="Da mais perto de estourar para a mais tranquila." className="mb-1" />
+        <SurfaceHeader titulo="Seus limites" descricao="Da mais perto de estourar para a mais tranquila." className="mb-1" />
         {linhas.length > 0 ? (
           <ListGroup>
             {linhas.map((linha) => {
@@ -415,9 +415,9 @@ export const MetasPage = () => {
         ) : (
           <EmptyState
             Icone={Gauge}
-            frase="Nenhuma meta ainda."
-            detalhe="Crie um limite por categoria para ver quanto já foi usado."
-            acao={<Button onClick={abrirNovaMeta}>Nova meta</Button>}
+            frase="Nenhum limite ainda."
+            detalhe="Defina quanto pode gastar por mês em uma categoria, como Alimentação, e veja quanto já foi."
+            acao={<Button onClick={abrirNovaMeta}>Novo limite</Button>}
           />
         )}
       </Surface>
@@ -425,7 +425,7 @@ export const MetasPage = () => {
       {/* Nova / editar meta */}
       <FormSheet
         aberto={formAberto}
-        titulo={metaEmEdicao ? "Editar meta" : "Nova meta"}
+        titulo={metaEmEdicao ? "Editar limite" : "Novo limite"}
         aviso={
           metaEmEdicao
             ? undefined
@@ -433,7 +433,7 @@ export const MetasPage = () => {
         }
         onFechar={handleCancelarEdicao}
         onEnviar={handleSaveMeta}
-        rotuloEnviar={metaEmEdicao ? "Salvar alterações" : "Criar meta"}
+        rotuloEnviar={metaEmEdicao ? "Salvar alterações" : "Criar limite"}
         enviando={savingMeta}
         podeEnviar={!!novaMeta.categoria.trim() && !!novaMeta.limite}
         valor={
@@ -459,7 +459,7 @@ export const MetasPage = () => {
               ))}
             </Chips>
           ) : (
-            <p className="text-sm text-fg-2">Todas as categorias já têm meta.</p>
+            <p className="text-sm text-fg-2">Todas as categorias já têm limite.</p>
           )}
         </Campo>
       </FormSheet>

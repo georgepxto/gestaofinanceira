@@ -161,6 +161,18 @@ export const FormGasto: React.FC<FormGastoProps> = ({
     const d = parseISO(`${mes}-01`);
     return format(new Date(d.getFullYear(), d.getMonth() + n, 1), "MMMM 'de' yyyy", { locale: ptBR });
   };
+  // O que não fecha, dito no próprio campo — e o botão só libera quando fecha.
+  const parcelaDigitada = parseInt(formData.parcela_proxima || "", 10);
+  const erroParcela =
+    antiga && numParcelas > 1 && parcelaDigitada > numParcelas
+      ? `A compra tem ${numParcelas} parcelas: a da fatura vai de 1 a ${numParcelas}.`
+      : null;
+  const valorDaConta = parseCurrency(formData.valor);
+  const erroParte =
+    divide && valorDaConta > 0 && parseCurrency(formData.minha_parte || "") > valorDaConta + 0.004
+      ? `Sua parte não pode passar do valor ${antiga ? "da parcela" : "da conta"} (${formatCurrency(valorDaConta)}).`
+      : null;
+
   const alternarAntiga = (ligar: boolean) =>
     set(
       ligar
@@ -202,7 +214,7 @@ export const FormGasto: React.FC<FormGastoProps> = ({
       onEnviar={enviar}
       rotuloEnviar={isEditing ? "Salvar alterações" : fixo ? "Adicionar gasto fixo" : antiga ? "Adicionar parcelas que faltam" : "Adicionar gasto"}
       enviando={saving}
-      podeEnviar={!!formData.valor && (!antiga || numParcelas > 1)}
+      podeEnviar={!!formData.valor && (!antiga || numParcelas > 1) && !erroParcela && !erroParte}
       erro={error}
       valor={
         <div>
@@ -310,6 +322,7 @@ export const FormGasto: React.FC<FormGastoProps> = ({
             }
           >
             <MoneyInput id="gasto-minha-parte" value={formData.minha_parte} onChange={(minha_parte) => set({ minha_parte })} />
+            {erroParte && <p role="alert" className="mt-1.5 text-xs text-danger-ink">{erroParte}</p>}
           </Campo>
         </>
       )}
@@ -401,7 +414,8 @@ export const FormGasto: React.FC<FormGastoProps> = ({
             value={formData.parcela_proxima || ""}
             onChange={(v) => set({ parcela_proxima: v })}
           />
-          {valorParcela > 0 && (
+          {erroParcela && <p role="alert" className="mt-1.5 text-xs text-danger-ink">{erroParcela}</p>}
+          {valorParcela > 0 && !erroParcela && (
             <p className="mt-2 text-xs text-fg-2 leading-relaxed">
               {faltam === 1 ? "Falta 1 parcela" : `Faltam ${faltam} parcelas`} de{" "}
               <span className="valor">{formatCurrency(valorParcela)}</span>

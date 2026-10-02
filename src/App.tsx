@@ -287,13 +287,14 @@ function AppContent() {
             <Route path="/" element={
               features.dashboard ? <DashboardPage /> : <Navigate to={features.meus_gastos ? "/gastos/lancamentos" : "/configuracoes"} replace />
             } />
-            {/* Gastos — Lançamentos + Metas */}
+            {/* Gastos — Lançamentos + Limites (as antigas Metas) */}
             {(features.meus_gastos || features.metas) && (
               <Route path="/gastos" element={<OrcamentoPage />}>
                 {features.meus_gastos && <Route path="lancamentos" element={<EuPage />} />}
-                {features.metas && <Route path="metas" element={<MetasPage />} />}
-                <Route index element={<Navigate to={features.meus_gastos ? "lancamentos" : "metas"} replace />} />
-                <Route path="*" element={<Navigate to={features.meus_gastos ? "lancamentos" : "metas"} replace />} />
+                {features.metas && <Route path="limites" element={<MetasPage />} />}
+                {features.metas && <Route path="metas" element={<Navigate to="/gastos/limites" replace />} />}
+                <Route index element={<Navigate to={features.meus_gastos ? "lancamentos" : "limites"} replace />} />
+                <Route path="*" element={<Navigate to={features.meus_gastos ? "lancamentos" : "limites"} replace />} />
               </Route>
             )}
             {/* A receber — Pessoas + Cobranças + Do mês */}
@@ -317,10 +318,10 @@ function AppContent() {
             )}
             {/* Redirects das rotas antigas */}
             <Route path="/orcamento/gastos" element={<Navigate to="/gastos/lancamentos" replace />} />
-            <Route path="/orcamento/metas" element={<Navigate to="/gastos/metas" replace />} />
+            <Route path="/orcamento/metas" element={<Navigate to="/gastos/limites" replace />} />
             <Route path="/orcamento" element={<Navigate to="/gastos" replace />} />
             <Route path="/eu" element={<Navigate to="/gastos/lancamentos" replace />} />
-            <Route path="/metas" element={<Navigate to="/gastos/metas" replace />} />
+            <Route path="/metas" element={<Navigate to="/gastos/limites" replace />} />
             <Route path="/dividas" element={<Navigate to="/a-receber/aberto" replace />} />
             <Route path="/pessoas" element={<Navigate to="/a-receber/pessoas" replace />} />
             <Route path="/contas" element={<Navigate to="/carteira/contas" replace />} />

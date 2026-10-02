@@ -38,8 +38,8 @@ const FEATURES: Feature[] = [
   },
   {
     id: "f-metas",
-    title: "Metas de gasto",
-    text: "Um teto por categoria, com aviso antes de estourar e não depois.",
+    title: "Limites de gasto",
+    text: "Um teto por mês para cada categoria, com aviso antes de estourar e não depois.",
     Crop: CropMetas,
     photo: { src: "/landing/cafe.webp", w: 1000, h: 750, alt: "Pagamento com cartão no balcão de uma cafeteria, ao lado de um café e um doce." },
   },

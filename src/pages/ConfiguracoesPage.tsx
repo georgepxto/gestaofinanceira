@@ -314,7 +314,7 @@ export const ConfiguracoesPage = () => {
     { label: "lançamentos", quantidade: contagens.lancamentos },
     { label: "cartões", quantidade: contagens.cartoes },
     { label: "pessoas", quantidade: contagens.devedores },
-    { label: "metas", quantidade: contagens.metas },
+    { label: "limites", quantidade: contagens.metas },
   ];
 
   const Linha = ({ titulo, detalhe, children }: { titulo: string; detalhe?: string; children: React.ReactNode }) => (
@@ -444,7 +444,7 @@ export const ConfiguracoesPage = () => {
           <Kpi rotulo="Lançamentos" valor={<Valor porte="medio">{contagens.lancamentos}</Valor>} />
           <Kpi rotulo="Cartões" valor={<Valor porte="medio">{contagens.cartoes}</Valor>} />
           <Kpi rotulo="Pessoas" valor={<Valor porte="medio">{contagens.devedores}</Valor>} />
-          <Kpi rotulo="Metas" valor={<Valor porte="medio">{contagens.metas}</Valor>} />
+          <Kpi rotulo="Limites" valor={<Valor porte="medio">{contagens.metas}</Valor>} />
         </KpiStrip>
         <Button onClick={handleExportarDados} carregando={exporting} icone={<Download className="w-4 h-4" strokeWidth={1.5} />}>
           Exportar meus dados

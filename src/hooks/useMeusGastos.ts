@@ -286,6 +286,10 @@ export function useMeusGastos({
     if (formDivide(formMeuGasto) && formMeuGasto.minha_parte) {
       minhaParte = parseCurrency(formMeuGasto.minha_parte);
     }
+    if (minhaParte > valor + 0.004) {
+      setError("Sua parte não pode ser maior que o valor da conta.");
+      return;
+    }
 
     const numParcelas =
       formMeuGasto.tipo === "credito"
@@ -305,6 +309,10 @@ export function useMeusGastos({
     // gasto de novo — nem no mês, nem no limite.
     const antiga =
       formMeuGasto.tipo === "credito" && formMeuGasto.categoria !== "fixo" && !!formMeuGasto.compra_antiga && numParcelas > 1;
+    if (antiga && (parseInt(formMeuGasto.parcela_proxima || "1") || 1) > numParcelas) {
+      setError(`A compra tem ${numParcelas} parcelas: a da fatura vai de 1 a ${numParcelas}.`);
+      return;
+    }
     const primeiraParcela = antiga
       ? Math.min(Math.max(parseInt(formMeuGasto.parcela_proxima || "1") || 1, 1), numParcelas)
       : 1;
@@ -517,6 +525,10 @@ export function useMeusGastos({
         let minhaParte = valor;
         if (formDivide(formMeuGasto) && formMeuGasto.minha_parte) {
           minhaParte = parseCurrency(formMeuGasto.minha_parte);
+        }
+        if (minhaParte > valor + 0.004) {
+          setError("Sua parte não pode ser maior que o valor da conta.");
+          return;
         }
 
         const novoNumParcelas =

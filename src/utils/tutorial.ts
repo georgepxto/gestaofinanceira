@@ -6,5 +6,5 @@ export const TUTORIAL_TITLES = {
   contas: "Tutorial de Contas e receitas",
   cartoes: "Tutorial de Cartões",
   meusGastos: "Tutorial de Lançamentos",
-  metas: "Tutorial de Metas",
+  metas: "Tutorial de Limites",
 } as const;

@@ -43,7 +43,7 @@ export const NAV_GROUPS: NavGroup[] = [
     prefix: "/gastos",
     items: [
       { path: "/gastos/lancamentos", label: "Lançamentos", feature: "meus_gastos", icon: ScrollText },
-      { path: "/gastos/metas", label: "Metas", feature: "metas", icon: Gauge },
+      { path: "/gastos/limites", label: "Limites", feature: "metas", icon: Gauge },
     ],
   },
   {
