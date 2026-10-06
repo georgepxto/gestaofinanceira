@@ -1,7 +1,7 @@
 import { addDays, format } from "date-fns";
 import { supabase } from "../lib/supabase";
 import type { CartaoCredito, ContaBancaria, Gasto, TransacaoCartao } from "../types";
-import { chaveMesPagamentoParcial, formatCurrency, formatMonthYear, isGastoAtivoNoMes } from "./calculations";
+import { chaveMesPagamentoParcial, formatCurrency, isGastoAtivoNoMes } from "./calculations";
 import { aberturaDoCartao, itensDaFatura, semDetalheRestante, valorDaFatura } from "./fatura";
 import { comAbertura } from "./cartaoAbertura";
 import {
@@ -59,8 +59,8 @@ export interface DadosPrevisao {
   pagamentosFatura: { cartao_id: string; mes: string; valor_pago: number; created_at?: string }[];
   /** Pagamentos do mês de hoje (pagamentos_parciais). */
   pagamentosDoMes: { pessoa: string; valor: number }[];
-  /** Descrições das cobranças em aberto, para saber quem já teve o mês fechado. */
-  cobrancas: { pessoa: string; descricao: string }[];
+  /** As cobranças em aberto, para saber quem já teve o mês fechado. */
+  cobrancas: { pessoa: string; mes_fechado?: string | null }[];
 }
 
 const somar = (xs: LinhaPrevisao[]) => Math.round(xs.reduce((s, x) => s + x.valor, 0) * 100) / 100;
@@ -103,9 +103,7 @@ export function calcularPrevisao(d: DadosPrevisao, hoje = new Date()): Previsao 
 
   // O que cada pessoa ainda deve deste mês. Quem teve o mês fechado já virou
   // cobrança em aberto (prazo indefinido) e não entra na previsão.
-  const fechados = new Set(
-    d.cobrancas.filter((c) => c.descricao === `Gastos pendentes - ${formatMonthYear(hoje)}`).map((c) => c.pessoa)
-  );
+  const fechados = new Set(d.cobrancas.filter((c) => c.mes_fechado === mes).map((c) => c.pessoa));
   const devido = new Map<string, number>();
   const motivos = new Map<string, string[]>();
   for (const g of d.livro.emprestimos as Gasto[]) {
@@ -208,7 +206,7 @@ export async function carregarPrevisao(hoje = new Date()) {
       supabase.from("transacoes_cartao").select("*"),
       supabase.from("pagamentos_fatura").select("cartao_id, mes, valor_pago, created_at"),
       supabase.from("pagamentos_parciais").select("pessoa, valor").eq("mes", chaveMesPagamentoParcial(hoje)),
-      supabase.from("saldos_devedores").select("pessoa, descricao"),
+      supabase.from("saldos_devedores").select("pessoa, mes_fechado"),
     ]);
   let contas = (contasRaw as ContaBancaria[]) || [];
   // Contas do modelo antigo começam no modelo novo com o mesmo saldo de antes.

@@ -10,6 +10,12 @@ export interface Gasto {
   recorrente?: boolean;
   cartao_id?: string;
   conta_id?: string;
+  /**
+   * Cobrança criada por um gasto dividido ou por um fixo dividido: o id do
+   * gasto (`meus_gastos`) que a criou. Na compra parcelada, o da primeira
+   * parcela lançada. Nulo na cobrança criada à mão.
+   */
+  origem_id?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -47,6 +53,8 @@ export interface SaldoDevedor {
   valor_atual: number;
   data_criacao: string;
   historico: PagamentoSaldo[];
+  /** Cobrança que nasceu do fechamento de um mês: o mês fechado ("yyyy-MM"). */
+  mes_fechado?: string | null;
 }
 
 export interface PagamentoSaldo {

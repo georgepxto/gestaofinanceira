@@ -62,38 +62,6 @@ export function comCategoriaAtual(
 }
 
 /**
- * De categoria antiga para a nova. Espelha exatamente o mapeamento aplicado em
- * `supabase/migrations/20260726_categorias_consolidacao.sql` — se um dos dois
- * mudar, o outro muda junto.
- *
- * "Empréstimo" vira "Outros" porque o app já trata empréstimo como entidade
- * própria (Dívidas / Saldos Devedores); como categoria de gasto era redundante.
- */
-export const CATEGORIAS_LEGADAS: Record<string, string> = {
-  "Aluguel": "Moradia",
-  "Contas": "Moradia",
-  "Delivery": "Alimentação",
-  "Restaurante": "Alimentação",
-  "Supermercado": "Alimentação",
-  "Combustível": "Transporte",
-  "Farmácia": "Saúde",
-  "Compras Online": "Outros",
-  "Roupas": "Outros",
-  "Empréstimo": "Outros",
-  "Outras Despesas": "Outros",
-};
-
-/**
- * Rede de segurança de leitura: registro gravado antes da migração (ou por um
- * cliente desatualizado) continua exibindo a categoria certa em vez de cair num
- * select vazio. Valor desconhecido é devolvido intacto — nada some silenciosamente.
- */
-export function normalizarCategoria(categoria?: string | null): string {
-  if (!categoria) return "";
-  return CATEGORIAS_LEGADAS[categoria] ?? categoria;
-}
-
-/**
  * Único jeito de ler a categoria de gasto de uma linha.
  *
  * `meus_gastos` tem duas colunas de nome parecido: `categoria_gasto` (a
@@ -104,16 +72,13 @@ export function normalizarCategoria(categoria?: string | null): string {
  * "dividido". Aqui a linha de `meus_gastos` nunca cai no `categoria` — quem tem
  * a chave `categoria_gasto` responde só por ela. A linha de `gastos`, que não
  * tem essa chave, segue lendo `categoria`, que ali é a categoria mesmo.
- *
- * Aplica `normalizarCategoria` de graça — registro gravado antes da migração
- * agrega junto com o resto em vez de virar fatia separada.
  */
 export function categoriaDeGasto(row: {
   categoria_gasto?: string | null;
   categoria?: string | null;
 }): string {
   const bruta = "categoria_gasto" in row ? row.categoria_gasto : row.categoria;
-  return normalizarCategoria(bruta) || CATEGORIA_PADRAO;
+  return bruta || CATEGORIA_PADRAO;
 }
 
 /**

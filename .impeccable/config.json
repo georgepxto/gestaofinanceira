@@ -8,6 +8,15 @@
         "value": "geist mono",
         "createdAt": "2026-09-28T18:18:33.643Z",
         "reason": "pinned brief: user's landing spec requires Geist Mono for numbers and R$ values only"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/components/GuidedTourOverlay.tsx"
+        ],
+        "createdAt": "2026-10-06T20:20:20.117Z",
+        "reason": "seta do balão do tour: triângulo feito com borda transparente, não é faixa lateral de card"
       }
     ]
   }

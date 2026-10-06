@@ -444,15 +444,17 @@ export function useSaldosDevedores({
             ...(contaId ? { conta_id: contaId } : {}),
           });
 
-          if (result) {
-            setPagamentosParciais((prev) => ({
-              ...prev,
-              [key]: [
-                ...(prev[key] || []),
-                { id: result.id, valor: valorPago, data: dataPagamento },
-              ],
-            }));
+          if (!result) {
+            setError("Não foi possível registrar o pagamento. O mês não foi fechado.");
+            return;
           }
+          setPagamentosParciais((prev) => ({
+            ...prev,
+            [key]: [
+              ...(prev[key] || []),
+              { id: result.id, valor: valorPago, data: dataPagamento },
+            ],
+          }));
         } else {
           setPagamentosParciais((prev) => ({
             ...prev,
@@ -473,11 +475,17 @@ export function useSaldosDevedores({
           valor_atual: valorDevedor,
           data_criacao: format(new Date(), "yyyy-MM-dd"),
           historico: [],
+          // É por aqui que o app sabe que o mês desta pessoa está fechado.
+          mes_fechado: format(mesVisualizacao, "yyyy-MM"),
         };
 
         if (isSupabaseConfigured && supabase) {
           const criada = await saldosFunctions.create(novaDivida);
-          if (criada?.id) novaDivida.id = criada.id;
+          if (!criada) {
+            setError("Não foi possível criar a cobrança do que faltou. O mês não foi fechado.");
+            return;
+          }
+          if (criada.id) novaDivida.id = criada.id;
         }
 
         setSaldosDevedores((prev) => [...prev, novaDivida]);
@@ -540,13 +548,12 @@ export function useSaldosDevedores({
     }
   };
 
-  // O fechamento com resto vira a cobrança "Gastos pendentes - <mês>". Ela é
-  // o registro durável do fechamento: o estado em memória some ao recarregar,
-  // e sem isto a tela voltava a oferecer "Fechar mês" e duplicava a cobrança.
+  // O fechamento com resto vira a cobrança "Gastos pendentes - <mês>", marcada
+  // com o mês em `mes_fechado`. Ela é o registro durável do fechamento: o
+  // estado em memória some ao recarregar, e sem isto a tela voltava a oferecer
+  // "Fechar mês" e duplicava a cobrança.
   const cobrancaDoFechamento = (pessoa: string) =>
-    saldosDevedores.find(
-      (s) => s.pessoa === pessoa && s.descricao === `Gastos pendentes - ${formatMonthYear(mesVisualizacao)}`
-    );
+    saldosDevedores.find((s) => s.pessoa === pessoa && s.mes_fechado === format(mesVisualizacao, "yyyy-MM"));
 
   // Obter dados do fechamento de um mês
   const getMesFechado = (pessoa: string) => {

@@ -75,21 +75,18 @@ const MetasPage = lazy(() => import("./pages/MetasPage").then((m) => ({ default:
 const AdminPage = lazy(() => import("./pages/AdminPage").then((m) => ({ default: m.AdminPage })));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage").then((m) => ({ default: m.ResetPasswordPage })));
 
-function AppContent() {
+/**
+ * Os formulários e modais do app, que vivem acima das rotas. Ficam num
+ * componente só deles para que o estado de formulário (uma mudança por tecla)
+ * não passe pelo componente que monta as rotas.
+ */
+function ModaisDoApp() {
   const {
     user,
-    authLoading,
-    handleLogin,
-    handleSignUp,
-    handleLogout,
-    
-    // Modals
     modalFeedback,
     setModalFeedback,
     modalConfirm,
     setModalConfirm,
-    
-    // Gastos form
     showForm,
     editandoGasto,
     formData,
@@ -99,31 +96,23 @@ function AppContent() {
     pessoas,
     adicionarPessoa,
     gastosFixos,
-    
-    // Divida form
     showFormDivida,
     setShowFormDivida,
     formDivida,
     setFormDivida,
     handleAddDivida,
-    
-    // Meu gasto form
     showFormMeuGasto,
     editandoMeuGasto,
     formMeuGasto,
     setFormMeuGasto,
     handleSaveMeuGasto,
     resetFormMeuGasto,
-    
-    // Observação modal
     showObsModal,
     setShowObsModal,
     obsTexto,
     setObsTexto,
     handleSalvarObs,
     mesVisualizacao,
-    
-    // Pagamento parcial modal
     showPagamentoParcial,
     setShowPagamentoParcial,
     valorPagamentoParcial,
@@ -132,16 +121,12 @@ function AppContent() {
     getTotalPagoParcial,
     handleAddPagamentoParcial,
     setErrorGastos,
-    
-    // Fechar mês modal
     showFecharMes,
     setShowFecharMes,
     valorPagoFecharMes,
     setValorPagoFecharMes,
     handleFecharMes,
     setErrorDividas,
-    
-    // Pagamento dívida modal
     showPagamento,
     setShowPagamento,
     valorPagamento,
@@ -150,20 +135,9 @@ function AppContent() {
     setObsPagamento,
     handlePagamento,
     saldosDevedores,
-    
-    // Combined
     saving,
     error,
-
-    // Admin & Features
-    isAdmin,
-    isActive,
-    features,
-    featuresLoading,
   } = useAppContext();
-
-  // Registrar push notifications
-  useNotifications(user?.id);
 
   // Fetch cartões para o modal
   const [cartoes, setCartoes] = useState<CartaoCredito[]>([]);
@@ -215,133 +189,8 @@ function AppContent() {
     return () => window.removeEventListener("focus", handleFocus);
   }, [user, fetchCartoes, fetchContas]);
 
-  // Limiar dos dois portões de boot. Ficam aqui em cima, antes de qualquer
-  // `return`: hook depois de saída condicional quebra a ordem entre renders.
-  const mostrarBootAuth = useEsperaLonga(authLoading);
-  const mostrarBootFeatures = useEsperaLonga(featuresLoading);
-
-  // Loading de autenticação
-  if (authLoading) {
-    return mostrarBootAuth ? <BootSplash /> : null;
-  }
-
-  if (!isSupabaseConfigured) {
-    return (
-      <div className="min-h-screen bg-page flex items-center justify-center p-6">
-        <div className="max-w-sm">
-          <AlertCircle className="w-5 h-5 text-danger-ink mb-3" strokeWidth={1.5} />
-          <h1 className="text-xl font-medium text-fg mb-2">Falta configurar o Supabase</h1>
-          <p className="text-sm text-fg-2">
-            Preencha as variáveis de ambiente do Supabase no arquivo .env.local.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Suspense fallback={<AparecerSeDemorar><BootSplash /></AparecerSeDemorar>}>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login onLogin={handleLogin} onSignUp={handleSignUp} />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
-    );
-  }
-
-  // Loading de features/role
-  if (featuresLoading) {
-    return mostrarBootFeatures ? <BootSplash /> : null;
-  }
-
-  // Conta desativada pelo admin
-  if (!isActive) {
-    return (
-      <div className="min-h-screen bg-page flex items-center justify-center p-6">
-        <div className="max-w-sm">
-          <ShieldAlert className="w-5 h-5 text-danger-ink mb-3" strokeWidth={1.5} />
-          <h1 className="text-xl font-medium text-fg mb-2">Conta desativada</h1>
-          <p className="text-sm text-fg-2 mb-6">
-            Sua conta foi desativada pelo administrador. Fale com o suporte para saber mais.
-          </p>
-          <button
-            onClick={handleLogout}
-            className="h-11 md:h-10 px-4 inline-flex items-center gap-2 rounded bg-surface-2 text-fg hover:bg-surface-3 transition-colors text-sm font-medium"
-          >
-            <LogOut className="w-4 h-4" strokeWidth={1.5} />
-            Sair
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
-      <Suspense fallback={<AparecerSeDemorar><BootSplash /></AparecerSeDemorar>}>
-        <Routes>
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route
-            element={
-              <Layout
-                onLogout={handleLogout}
-                userName={user?.user_metadata?.nome}
-                userEmail={user?.email}
-              />
-            }
-          >
-            <Route path="/" element={
-              features.dashboard ? <DashboardPage /> : <Navigate to={features.meus_gastos ? "/gastos/lancamentos" : "/configuracoes"} replace />
-            } />
-            {/* Gastos — Lançamentos + Limites (as antigas Metas) */}
-            {(features.meus_gastos || features.metas) && (
-              <Route path="/gastos" element={<OrcamentoPage />}>
-                {features.meus_gastos && <Route path="lancamentos" element={<EuPage />} />}
-                {features.metas && <Route path="limites" element={<MetasPage />} />}
-                {features.metas && <Route path="metas" element={<Navigate to="/gastos/limites" replace />} />}
-                <Route index element={<Navigate to={features.meus_gastos ? "lancamentos" : "limites"} replace />} />
-                <Route path="*" element={<Navigate to={features.meus_gastos ? "lancamentos" : "limites"} replace />} />
-              </Route>
-            )}
-            {/* A receber — Pessoas + Cobranças + Do mês */}
-            {(features.gastos_compartilhados || features.saldo_devedor || features.pessoas) && (
-              <Route path="/a-receber" element={<NaRuaPage />}>
-                {features.pessoas && <Route path="pessoas" element={<PessoasPage />} />}
-                {features.saldo_devedor && <Route path="aberto" element={<DividasPage />} />}
-                {features.gastos_compartilhados && <Route path="mes" element={<GastosPage />} />}
-                <Route index element={<Navigate to={features.pessoas ? "pessoas" : features.saldo_devedor ? "aberto" : "mes"} replace />} />
-                <Route path="*" element={<Navigate to={features.pessoas ? "pessoas" : features.saldo_devedor ? "aberto" : "mes"} replace />} />
-              </Route>
-            )}
-            {/* Carteira — Contas Bancárias + Cartões de Crédito */}
-            {(features.contas_bancarias || features.cartoes_credito) && (
-              <Route path="/carteira" element={<CarteiraPage />}>
-                {features.contas_bancarias && <Route path="contas" element={<ContasBancariasPage />} />}
-                {features.cartoes_credito && <Route path="cartoes" element={<CartoesCreditoPage />} />}
-                <Route index element={<Navigate to={features.contas_bancarias ? "contas" : "cartoes"} replace />} />
-                <Route path="*" element={<Navigate to={features.contas_bancarias ? "contas" : "cartoes"} replace />} />
-              </Route>
-            )}
-            {/* Redirects das rotas antigas */}
-            <Route path="/orcamento/gastos" element={<Navigate to="/gastos/lancamentos" replace />} />
-            <Route path="/orcamento/metas" element={<Navigate to="/gastos/limites" replace />} />
-            <Route path="/orcamento" element={<Navigate to="/gastos" replace />} />
-            <Route path="/eu" element={<Navigate to="/gastos/lancamentos" replace />} />
-            <Route path="/metas" element={<Navigate to="/gastos/limites" replace />} />
-            <Route path="/dividas" element={<Navigate to="/a-receber/aberto" replace />} />
-            <Route path="/pessoas" element={<Navigate to="/a-receber/pessoas" replace />} />
-            <Route path="/contas" element={<Navigate to="/carteira/contas" replace />} />
-            <Route path="/cartoes" element={<Navigate to="/carteira/cartoes" replace />} />
-            {features.configuracoes && <Route path="/configuracoes" element={<ConfiguracoesPage />} />}
-            {isAdmin && <Route path="/admin" element={<AdminPage />} />}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-        </Routes>
-      </Suspense>
-
-      {/* Modals - rendered at app level */}
       {/* Um formulário de gasto para celular e desktop: o <FormSheet> sobe de
           baixo num e entra pela direita no outro. */}
       <FormGasto
@@ -488,6 +337,156 @@ function AppContent() {
         contas={contas}
         onSubmit={(dividaId, contaId) => handlePagamento(dividaId, contaId)}
       />
+    </>
+  );
+}
+
+function AppContent() {
+  // Só o que decide QUAL tela aparece. Os formulários e modais ficam em
+  // <ModaisDoApp>: como o contexto assina por campo, digitar num formulário
+  // redesenha os modais, não as rotas.
+  const {
+    user,
+    authLoading,
+    handleLogin,
+    handleSignUp,
+    handleLogout,
+    isAdmin,
+    isActive,
+    features,
+    featuresLoading,
+  } = useAppContext();
+
+  // Registrar push notifications
+  useNotifications(user?.id);
+
+  // Limiar dos dois portões de boot. Ficam aqui em cima, antes de qualquer
+  // `return`: hook depois de saída condicional quebra a ordem entre renders.
+  const mostrarBootAuth = useEsperaLonga(authLoading);
+  const mostrarBootFeatures = useEsperaLonga(featuresLoading);
+
+  // Loading de autenticação
+  if (authLoading) {
+    return mostrarBootAuth ? <BootSplash /> : null;
+  }
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen bg-page flex items-center justify-center p-6">
+        <div className="max-w-sm">
+          <AlertCircle className="w-5 h-5 text-danger-ink mb-3" strokeWidth={1.5} />
+          <h1 className="text-xl font-medium text-fg mb-2">Falta configurar o Supabase</h1>
+          <p className="text-sm text-fg-2">
+            Preencha as variáveis de ambiente do Supabase no arquivo .env.local.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Suspense fallback={<AparecerSeDemorar><BootSplash /></AparecerSeDemorar>}>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login onLogin={handleLogin} onSignUp={handleSignUp} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
+    );
+  }
+
+  // Loading de features/role
+  if (featuresLoading) {
+    return mostrarBootFeatures ? <BootSplash /> : null;
+  }
+
+  // Conta desativada pelo admin
+  if (!isActive) {
+    return (
+      <div className="min-h-screen bg-page flex items-center justify-center p-6">
+        <div className="max-w-sm">
+          <ShieldAlert className="w-5 h-5 text-danger-ink mb-3" strokeWidth={1.5} />
+          <h1 className="text-xl font-medium text-fg mb-2">Conta desativada</h1>
+          <p className="text-sm text-fg-2 mb-6">
+            Sua conta foi desativada pelo administrador. Fale com o suporte para saber mais.
+          </p>
+          <button
+            onClick={handleLogout}
+            className="h-11 md:h-10 px-4 inline-flex items-center gap-2 rounded bg-surface-2 text-fg hover:bg-surface-3 transition-colors text-sm font-medium"
+          >
+            <LogOut className="w-4 h-4" strokeWidth={1.5} />
+            Sair
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Suspense fallback={<AparecerSeDemorar><BootSplash /></AparecerSeDemorar>}>
+        <Routes>
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route
+            element={
+              <Layout
+                onLogout={handleLogout}
+                userName={user?.user_metadata?.nome}
+                userEmail={user?.email}
+              />
+            }
+          >
+            <Route path="/" element={
+              features.dashboard ? <DashboardPage /> : <Navigate to={features.meus_gastos ? "/gastos/lancamentos" : "/configuracoes"} replace />
+            } />
+            {/* Gastos — Lançamentos + Limites (as antigas Metas) */}
+            {(features.meus_gastos || features.metas) && (
+              <Route path="/gastos" element={<OrcamentoPage />}>
+                {features.meus_gastos && <Route path="lancamentos" element={<EuPage />} />}
+                {features.metas && <Route path="limites" element={<MetasPage />} />}
+                {features.metas && <Route path="metas" element={<Navigate to="/gastos/limites" replace />} />}
+                <Route index element={<Navigate to={features.meus_gastos ? "lancamentos" : "limites"} replace />} />
+                <Route path="*" element={<Navigate to={features.meus_gastos ? "lancamentos" : "limites"} replace />} />
+              </Route>
+            )}
+            {/* A receber — Pessoas + Cobranças + Do mês */}
+            {(features.gastos_compartilhados || features.saldo_devedor || features.pessoas) && (
+              <Route path="/a-receber" element={<NaRuaPage />}>
+                {features.pessoas && <Route path="pessoas" element={<PessoasPage />} />}
+                {features.saldo_devedor && <Route path="aberto" element={<DividasPage />} />}
+                {features.gastos_compartilhados && <Route path="mes" element={<GastosPage />} />}
+                <Route index element={<Navigate to={features.pessoas ? "pessoas" : features.saldo_devedor ? "aberto" : "mes"} replace />} />
+                <Route path="*" element={<Navigate to={features.pessoas ? "pessoas" : features.saldo_devedor ? "aberto" : "mes"} replace />} />
+              </Route>
+            )}
+            {/* Carteira — Contas Bancárias + Cartões de Crédito */}
+            {(features.contas_bancarias || features.cartoes_credito) && (
+              <Route path="/carteira" element={<CarteiraPage />}>
+                {features.contas_bancarias && <Route path="contas" element={<ContasBancariasPage />} />}
+                {features.cartoes_credito && <Route path="cartoes" element={<CartoesCreditoPage />} />}
+                <Route index element={<Navigate to={features.contas_bancarias ? "contas" : "cartoes"} replace />} />
+                <Route path="*" element={<Navigate to={features.contas_bancarias ? "contas" : "cartoes"} replace />} />
+              </Route>
+            )}
+            {/* Redirects das rotas antigas */}
+            <Route path="/orcamento/gastos" element={<Navigate to="/gastos/lancamentos" replace />} />
+            <Route path="/orcamento/metas" element={<Navigate to="/gastos/limites" replace />} />
+            <Route path="/orcamento" element={<Navigate to="/gastos" replace />} />
+            <Route path="/eu" element={<Navigate to="/gastos/lancamentos" replace />} />
+            <Route path="/metas" element={<Navigate to="/gastos/limites" replace />} />
+            <Route path="/dividas" element={<Navigate to="/a-receber/aberto" replace />} />
+            <Route path="/pessoas" element={<Navigate to="/a-receber/pessoas" replace />} />
+            <Route path="/contas" element={<Navigate to="/carteira/contas" replace />} />
+            <Route path="/cartoes" element={<Navigate to="/carteira/cartoes" replace />} />
+            {features.configuracoes && <Route path="/configuracoes" element={<ConfiguracoesPage />} />}
+            {isAdmin && <Route path="/admin" element={<AdminPage />} />}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </Suspense>
+
+      <ModaisDoApp />
       <Toaster />
     </>
   );

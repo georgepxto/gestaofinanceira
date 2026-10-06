@@ -166,6 +166,20 @@ describe("calcularPrevisao", () => {
     expect(p.fimDoMes).toBe(7000);
   });
 
+  it("quem teve o mês fechado sai do que vão devolver", () => {
+    const deve = (pessoa: string) =>
+      ({ id: pessoa, descricao: `Jantar - ${pessoa}`, pessoa, valor_total: 60, num_parcelas: 1, data_inicio: "2026-10-02", tipo: "credito", categoria: "Outros" }) as Gasto;
+    const p = calcularPrevisao(
+      {
+        ...base,
+        livro: livro({ emprestimos: [deve("Ana"), deve("Bia")] }),
+        cobrancas: [{ pessoa: "Ana", mes_fechado: "2026-10" }, { pessoa: "Bia", mes_fechado: "2026-09" }],
+      },
+      dia("2026-10-06")
+    );
+    expect(p.devolucoes.map((d) => d.descricao)).toEqual(["Bia"]);
+  });
+
   it("empréstimo com zero parcelas não vira infinito", () => {
     const emprestimo = { id: "e", descricao: "Jantar - Ana", pessoa: "Ana", valor_total: 80, num_parcelas: 0, data_inicio: "2026-10-02", tipo: "credito", categoria: "Outros", recorrente: true } as Gasto;
     const p = calcularPrevisao({ ...base, livro: livro({ emprestimos: [emprestimo] }) }, dia("2026-10-06"));

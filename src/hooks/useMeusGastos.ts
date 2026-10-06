@@ -9,7 +9,6 @@ import {
 import type { MeuGasto, MeuGastoForm, CartaoCredito } from "../types";
 import { formatCurrencyValue, parseCurrency } from "../utils/calculations";
 import { PARCELAS_MAX } from "../utils/constants";
-import { normalizarCategoria } from "../utils/categories";
 import { mesDoGasto, valorDaMinhaParte } from "../utils/gastosDoMes";
 import { descricaoSemParcela, parcelasDaCompra } from "../utils/parcelas";
 import { dataNaFatura, faturasDoIntervalo, proximaFatura } from "../utils/fatura";
@@ -58,7 +57,8 @@ async function criarLancamentoEmprestimoDoMes(
   numParcelas: number,
   dataInicio: string,
   categoriaGasto?: string,
-  tipo: "credito" | "debito" = "credito"
+  tipo: "credito" | "debito" = "credito",
+  origemId?: string
 ) {
   if (!isSupabaseConfigured || !supabase) return true;
 
@@ -75,6 +75,7 @@ async function criarLancamentoEmprestimoDoMes(
     recorrente: false,
     cartao_id: undefined,
     conta_id: undefined,
+    origem_id: origemId ?? null,
   });
   return !!criado;
 }
@@ -85,11 +86,13 @@ const FALHA_NA_COBRANCA =
 
 /**
  * Apaga as cobranças que um gasto dividido espelhou em A receber (tabela
- * `gastos`). Não há chave ligando os dois: o espelho é achado pelo nome que
- * `criarLancamentoEmprestimoDoMes` dá ("<descrição> - <pessoa>", com
- * " (N parcelas)" quando parcelado), pela pessoa e pela data da 1ª parcela —
- * a da compra ou a da fatura (espelhos antigos usavam a da compra).
- * Sem isto, excluir o gasto deixava a cobrança órfã e cada edição a duplicava.
+ * `gastos`). A cobrança guarda em `origem_id` o id do gasto que a criou — na
+ * compra parcelada, o da primeira parcela lançada.
+ *
+ * As cobranças de antes dessa coluna que a migração 20261007 não conseguiu
+ * ligar ficaram com `origem_id` nulo, e só elas ainda são achadas pelo nome
+ * ("<descrição> - <pessoa>", com " (N parcelas)" quando parcelado), pela
+ * pessoa e pela data da 1ª parcela — a da compra ou a da fatura.
  */
 /**
  * Data da cobrança espelho: a do mês em que a compra pesa. No crédito depois
@@ -108,25 +111,24 @@ function dataDoEspelho(
     : format(addMonths(parseISO(dataIso), 1), "yyyy-MM-dd");
 }
 
-async function removerEspelhosDoDividido(gasto: MeuGasto, datasPossiveis: string[]) {
+async function removerEspelhosDoDividido(gasto: MeuGasto, datasPossiveis: string[], origemId: string) {
   if (!isSupabaseConfigured || !supabase || gasto.categoria !== "dividido") return;
-  const pessoas = gasto.dividido_com_pessoas?.length
-    ? gasto.dividido_com_pessoas
-    : gasto.dividido_com
-      ? [gasto.dividido_com]
-      : [];
-  if (pessoas.length === 0) return;
+  const { data: daOrigem } = await supabase.from("gastos").select("id").eq("origem_id", origemId);
 
+  const pessoas = pessoasDoGasto(gasto);
   const base = descricaoSemParcela(gasto.descricao);
   const n = gasto.num_parcelas || 1;
   const nome = n > 1 ? `${base} (${n} parcelas)` : base;
-  const { data } = await supabase
-    .from("gastos")
-    .select("id")
-    .in("pessoa", pessoas)
-    .in("descricao", pessoas.map((p) => `${nome} - ${p}`))
-    .in("data_inicio", datasPossiveis);
-  for (const row of data || []) await gastosFunctions.delete(row.id);
+  const { data: semOrigem } = pessoas.length
+    ? await supabase
+        .from("gastos")
+        .select("id")
+        .is("origem_id", null)
+        .in("pessoa", pessoas)
+        .in("descricao", pessoas.map((p) => `${nome} - ${p}`))
+        .in("data_inicio", datasPossiveis)
+    : { data: [] };
+  for (const row of [...(daOrigem || []), ...(semOrigem || [])]) await gastosFunctions.delete(row.id);
 }
 
 
@@ -413,6 +415,7 @@ export function useMeusGastos({
           tipo: formMeuGasto.tipo,
           categoria_gasto: formMeuGasto.categoria_gasto || undefined,
           pessoas: pessoasDoGasto(formMeuGasto),
+          origem_id: novos[0].id,
         }));
       }
 
@@ -450,7 +453,8 @@ export function useMeusGastos({
               antiga ? faltam : numParcelas,
               dataDoEspelho(dataDaCompra, formMeuGasto.tipo, formMeuGasto.cartao_id, cartoes),
               formMeuGasto.categoria_gasto || undefined,
-              formMeuGasto.tipo
+              formMeuGasto.tipo,
+              novos[0].id
             );
             if (!criada) cobrancaFalhou = true;
           }
@@ -492,7 +496,7 @@ export function useMeusGastos({
       valor: formatCurrencyValue(valorTotal),
       tipo: gasto.tipo,
       categoria: gasto.categoria,
-      categoria_gasto: normalizarCategoria(gasto.categoria_gasto),
+      categoria_gasto: gasto.categoria_gasto || "",
       data: gasto.data,
       dividido_com: gasto.dividido_com || "",
       dividido_com_pessoas: gasto.dividido_com_pessoas || [],
@@ -660,7 +664,7 @@ export function useMeusGastos({
         await removerEspelhosDoDividido(editandoMeuGasto, [
           primeiraOriginal.data,
           dataDoEspelho(primeiraOriginal.data, editandoMeuGasto.tipo, editandoMeuGasto.cartao_id, cartoes),
-        ]);
+        ], parcelasRelacionadas[0].id);
 
         // Fixo dividido: as cobranças antigas param no mês passado e as novas
         // (valores, pessoas e parte de agora) valem a partir deste mês.
@@ -675,6 +679,7 @@ export function useMeusGastos({
             tipo: formMeuGasto.tipo,
             categoria_gasto: formMeuGasto.categoria_gasto || undefined,
             pessoas: pessoasDoGasto(formMeuGasto),
+            origem_id: parcelasRelacionadas[0].id,
           }));
         }
 
@@ -711,7 +716,8 @@ export function useMeusGastos({
                 novoNumParcelas,
                 dataDoEspelho(format(dataInicioReal, "yyyy-MM-dd"), formMeuGasto.tipo, formMeuGasto.cartao_id, cartoes),
                 formMeuGasto.categoria_gasto || undefined,
-                formMeuGasto.tipo
+                formMeuGasto.tipo,
+                parcelasRelacionadas[0].id
               );
               if (!criada) cobrancaFalhou = true;
             }
@@ -809,7 +815,7 @@ export function useMeusGastos({
           await removerEspelhosDoDividido(gastoParaExcluir, [
             primeira.data,
             dataDoEspelho(primeira.data, gastoParaExcluir.tipo, gastoParaExcluir.cartao_id, cartoes),
-          ]);
+          ], parcelasRelacionadas[0].id);
 
           const idsParaExcluir = new Set(parcelasRelacionadas.map((p) => p.id));
           setMeusGastos((prev) =>
@@ -883,6 +889,7 @@ export function useMeusGastos({
           tipo: gasto.tipo,
           categoria_gasto: gasto.categoria_gasto,
           pessoas: pessoasDoGasto(gasto),
+          origem_id: gasto.id,
         });
       } else {
         await encerrarCobrancasDoFixo(gasto, true);

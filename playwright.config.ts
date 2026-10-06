@@ -11,7 +11,8 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:4173",
     trace: "on-first-retry",
     screenshot: "off",
-    video: "retain-on-failure",
+    // Vídeo pede o ffmpeg do Playwright, que só o CI instala.
+    video: process.env.CI ? "retain-on-failure" : "off",
   },
   webServer: {
     command: "npm run dev -- --host 127.0.0.1 --port 4173",
@@ -22,7 +23,8 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      // Na máquina, o Chrome já instalado; no CI, o Chromium que o Playwright baixa.
+      use: { ...devices["Desktop Chrome"], ...(process.env.CI ? {} : { channel: "chrome" }) },
     },
   ],
 });

@@ -163,6 +163,7 @@ export function FixosRapidos({ aberto, contas, cartoes, onFechar }: FixosRapidos
             tipo: gasto.tipo,
             categoria_gasto: gasto.categoria_gasto,
             pessoas: l.pessoas,
+            origem_id: gasto.id,
           });
         }
       }

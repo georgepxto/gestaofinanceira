@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { addMonths, subMonths } from "date-fns";
 import {
   useAuth,
@@ -178,7 +178,28 @@ interface AppContextType {
   error: string | null;
 }
 
-const AppContext = createContext<AppContextType | null>(null);
+type Campo = keyof AppContextType;
+
+/** O valor mais recente do provider, quem está ouvindo e as ações já embrulhadas. */
+interface Loja {
+  atual: AppContextType;
+  ouvintes: Set<() => void>;
+  acoes: Partial<Record<Campo, unknown>>;
+}
+
+const AppContext = createContext<Loja | undefined>(undefined);
+
+/** Ação: algo que só se chama em resposta a um evento, nunca durante o render. */
+const ehAcao = (campo: string, valor: unknown) =>
+  typeof valor === "function" && /^(handle|set|reset)[A-Z]|^(navegarMes|irParaHoje|adicionarPessoa)$/.test(campo);
+
+function lerCampo(loja: Loja, campo: Campo): unknown {
+  const valor = loja.atual[campo];
+  if (!ehAcao(campo, valor)) return valor;
+  // Mesma função para sempre; por dentro, a versão do último render.
+  return (loja.acoes[campo] ??= (...args: unknown[]) =>
+    (loja.atual[campo] as (...a: unknown[]) => unknown)(...args));
+}
 
 export function AppProvider({ children }: { children: ReactNode }) {
   // Navigation state
@@ -545,14 +566,77 @@ export function AppProvider({ children }: { children: ReactNode }) {
     error,
   };
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  // A loja é sempre o mesmo objeto: o contexto do React nunca "muda", e quem
+  // decide quem redesenha é a assinatura por campo de `useAppContext`.
+  const lojaRef = useRef<Loja | null>(null);
+  if (!lojaRef.current) lojaRef.current = { atual: value, ouvintes: new Set(), acoes: {} };
+  lojaRef.current.atual = value;
+  useLayoutEffect(() => {
+    lojaRef.current?.ouvintes.forEach((avisar) => avisar());
+  });
+
+  return <AppContext.Provider value={lojaRef.current}>{children}</AppContext.Provider>;
 }
 
-export function useAppContext() {
-  const context = useContext(AppContext);
-  if (!context) {
+/**
+ * O estado do app, com assinatura por campo.
+ *
+ * O objeto devolvido anota cada campo que o componente lê, e o componente só
+ * redesenha quando um desses campos muda. Antes, qualquer mudança — cada tecla
+ * no formulário de gasto — redesenhava todas as telas que usam o contexto.
+ *
+ * As ações (`handle…`, `set…`, `reset…`) têm identidade fixa e sempre chamam a
+ * versão mais recente, então lê-las nunca causa redesenho. As funções de
+ * leitura (`getTotalPagoParcial`, `isMesFechado`…) são comparadas como qualquer
+ * valor: quem as usa no render continua acompanhando o dado por trás delas.
+ */
+export function useAppContext(): AppContextType {
+  const loja = useContext(AppContext);
+  if (!loja) {
     throw new Error("useAppContext must be used within an AppProvider");
   }
-  return context;
+  const lidos = useRef(new Map<Campo, unknown>());
+  const versao = useRef(0);
+
+  const assinar = useCallback(
+    (avisar: () => void) => {
+      loja.ouvintes.add(avisar);
+      return () => {
+        loja.ouvintes.delete(avisar);
+      };
+    },
+    [loja]
+  );
+  const versaoAtual = () => {
+    for (const [campo, visto] of lidos.current) {
+      if (Object.is(visto, lerCampo(loja, campo))) continue;
+      for (const c of lidos.current.keys()) lidos.current.set(c, lerCampo(loja, c));
+      versao.current++;
+      break;
+    }
+    return versao.current;
+  };
+  useSyncExternalStore(assinar, versaoAtual);
+
+  return useMemo(
+    () =>
+      new Proxy({} as AppContextType, {
+        get(_alvo, campo) {
+          if (typeof campo !== "string") return undefined;
+          const valor = lerCampo(loja, campo as Campo);
+          lidos.current.set(campo as Campo, valor);
+          return valor;
+        },
+        // Espalhar o contexto (`{ ...ctx }`) lê tudo: assina tudo.
+        ownKeys: () => Reflect.ownKeys(loja.atual),
+        getOwnPropertyDescriptor(_alvo, campo) {
+          if (typeof campo !== "string" || !(campo in loja.atual)) return undefined;
+          const valor = lerCampo(loja, campo as Campo);
+          lidos.current.set(campo as Campo, valor);
+          return { enumerable: true, configurable: true, value: valor };
+        },
+      }),
+    [loja]
+  );
 }
 

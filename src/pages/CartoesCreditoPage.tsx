@@ -13,7 +13,6 @@ import { formatCurrency, formatCurrencyValue, parseCurrency } from "../utils/cal
 import { formatDinheiro, formatPercent, rotuloDia } from "../utils/dinheiro";
 import { CORES_CARTAO, corDoCartao } from "../utils/cores";
 import { TUTORIAL_TITLES } from "../utils/tutorial";
-import { normalizarCategoria } from "../utils/categories";
 import { toast } from "../components/ui/Toaster";
 import { PageErrorState, PageLoadingState } from "../components/ui/AsyncState";
 import { toActionableErrorMessage } from "../utils/feedbackMessages";
@@ -289,7 +288,7 @@ export const CartoesCreditoPage = () => {
       // Na fatura vai o valor cheio: é o que o banco cobra. A parte dos
       // outros volta pelo A receber, não diminui a fatura.
       id: g.id, descricao: g.descricao, valor: g.valor, 
-      categoria: normalizarCategoria(g.categoria_gasto) || "Gasto",
+      categoria: g.categoria_gasto || "Gasto",
       data: g.categoria === "fixo" ? format(mesVisualizacao, "yyyy-MM") + `-${String(Math.min(g.dia_vencimento || 1, new Date(mesVisualizacao.getFullYear(), mesVisualizacao.getMonth() + 1, 0).getDate())).padStart(2, "0")}` : g.data, 
       pago: g.pago, origem: "gasto" as const, pessoa: "",
     }));
@@ -319,7 +318,7 @@ export const CartoesCreditoPage = () => {
         valorPago: valorPagoItem,
         valorRestante: valorRestante,
         percentualPago: percentualPago,
-        categoria: normalizarCategoria(g.categoria) || "Gasto",
+        categoria: g.categoria || "Gasto",
         data: g.data_inicio, 
         pago: itemPago, 
         pagoParcial: itemPagoParcial,

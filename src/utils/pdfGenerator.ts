@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatCurrency, formatMonthYear } from "./calculations";
-import { categoriaDeGasto, normalizarCategoria } from "./categories";
+import { categoriaDeGasto } from "./categories";
 import type { ParcelaAtiva, ResumoMensal, MeuGasto, MetaGasto } from "../types";
 import type { PagamentoParcial } from "../types/extended";
 
@@ -100,7 +100,7 @@ export const generateGastosPDF = (
       return [
         safeDate,
         p.gasto.descricao,
-        normalizarCategoria(p.gasto.categoria) || "—",
+        p.gasto.categoria || "—",
         p.gasto.tipo === "credito" ? "Crédito" : "Débito",
         p.gasto.recorrente ? "Fixo" : `${p.parcela_atual}/${p.gasto.num_parcelas}`,
         formatCurrency(p.valor_parcela)
@@ -497,7 +497,7 @@ export const generateMeusGastosPDF = (
         `Dia ${g.dia_vencimento || "—"}`,
         g.descricao,
         g.tipo === "credito" ? "Crédito" : "Débito",
-        normalizarCategoria(g.categoria_gasto) || "—",
+        g.categoria_gasto || "—",
         formatCurrency(g.minha_parte || g.valor),
       ]);
 
@@ -552,7 +552,7 @@ export const generateMeusGastosPDF = (
       return [
         safeDate,
         g.descricao,
-        normalizarCategoria(g.categoria_gasto) || "—",
+        g.categoria_gasto || "—",
         categoriaLabel[g.categoria] || g.categoria,
         g.tipo === "credito" ? "Crédito" : "Débito",
         g.pago || g.tipo === "debito" ? "Pago" : "Pendente",
@@ -592,7 +592,7 @@ export const generateMeusGastosPDF = (
   // ─── Resumo por Categoria de Gasto ───
   const categoriaMap: Record<string, number> = {};
   meusGastosDoMes.forEach(g => {
-    const cat = normalizarCategoria(g.categoria_gasto) || "Sem categoria";
+    const cat = g.categoria_gasto || "Sem categoria";
     const val = g.categoria === "dividido" && g.minha_parte != null ? g.minha_parte : g.valor;
     categoriaMap[cat] = (categoriaMap[cat] || 0) + val;
   });

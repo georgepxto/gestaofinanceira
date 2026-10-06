@@ -5,7 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   test: {
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.{ts,tsx}"],
+    // Os testes nunca falam com o Supabase de verdade: sem estas variáveis o
+    // app roda no modo demonstração, com os dados no navegador de mentira.
+    env: { VITE_SUPABASE_URL: "", VITE_SUPABASE_ANON_KEY: "" },
   },
   build: {
     rollupOptions: {

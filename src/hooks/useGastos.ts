@@ -9,7 +9,7 @@ import {
   calcularResumoMensal,
   calcularTotalMes,
 } from "../utils/calculations";
-import { CATEGORIA_PADRAO, normalizarCategoria } from "../utils/categories";
+import { CATEGORIA_PADRAO } from "../utils/categories";
 import { categoriaPadraoAtual } from "./useCategorias";
 import { PARCELAS_MAX } from "../utils/constants";
 import { ouvirDadosMudaram } from "../utils/onboarding";
@@ -281,7 +281,7 @@ export function useGastos({
       num_parcelas: gasto.num_parcelas,
       data_inicio: gasto.data_inicio,
       tipo: gasto.tipo,
-      categoria: normalizarCategoria(gasto.categoria) || CATEGORIA_PADRAO,
+      categoria: gasto.categoria || CATEGORIA_PADRAO,
       recorrente: gasto.recorrente || false,
       cartao_id: gasto.cartao_id || "",
       conta_id: gasto.conta_id || "",

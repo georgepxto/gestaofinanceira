@@ -33,6 +33,8 @@ export async function criarCobrancasDoFixo(
     tipo: "credito" | "debito";
     categoria_gasto?: string;
     pessoas: string[];
+    /** Id do gasto fixo: é por ele que as cobranças são achadas depois. */
+    origem_id: string;
   },
   hoje = new Date()
 ) {
@@ -57,6 +59,7 @@ export async function criarCobrancasDoFixo(
       recorrente: true,
       cartao_id: undefined,
       conta_id: undefined,
+      origem_id: fixo.origem_id,
     });
     if (!criada) todas = false;
   }
@@ -69,15 +72,25 @@ export async function criarCobrancasDoFixo(
  * que ainda nem chegou a valer é apagada.
  */
 export async function encerrarCobrancasDoFixo(fixo: MeuGasto, incluirMesAtual: boolean, hoje = new Date()) {
-  const pessoas = pessoasDoGasto(fixo);
-  if (!isSupabaseConfigured || !supabase || pessoas.length === 0) return;
-  const { data } = await supabase
+  if (!isSupabaseConfigured || !supabase) return;
+  const { data: daOrigem } = await supabase
     .from("gastos")
     .select("id, data_inicio")
-    .in("pessoa", pessoas)
-    .in("descricao", pessoas.map((p) => `${fixo.descricao} - ${p}`))
+    .eq("origem_id", fixo.id)
     .eq("recorrente", true);
-  for (const c of data || []) {
+  // Cobranças de antes da coluna `origem_id` que a migração 20261007 não
+  // conseguiu ligar: só elas ainda são achadas pelo nome.
+  const pessoas = pessoasDoGasto(fixo);
+  const { data: semOrigem } = pessoas.length
+    ? await supabase
+        .from("gastos")
+        .select("id, data_inicio")
+        .is("origem_id", null)
+        .in("pessoa", pessoas)
+        .in("descricao", pessoas.map((p) => `${fixo.descricao} - ${p}`))
+        .eq("recorrente", true)
+    : { data: [] };
+  for (const c of [...(daOrigem || []), ...(semOrigem || [])]) {
     const meses = mesesAte(c.data_inicio, hoje) + (incluirMesAtual ? 1 : 0);
     if (meses <= 0) await gastosFunctions.delete(c.id);
     else await supabase.from("gastos").update({ recorrente: false, num_parcelas: meses }).eq("id", c.id);

@@ -1,0 +1,634 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-06T20:32:33Z",
+  "title": "Design System: Hedge",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Laranja de ação",
+        "canonical": "oklch(70.5% 0.193 39)",
+        "tonalRamp": [
+          "#2A0000",
+          "#660000",
+          "#900000",
+          "#BA2600",
+          "#E45214",
+          "#FF7A45",
+          "#FF9E6A",
+          "#FFD7BA"
+        ]
+      },
+      "accent-fg": {
+        "role": "neutral",
+        "displayName": "Quase-preto sobre laranja",
+        "canonical": "oklch(15.0% 0.002 286)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#262627",
+          "#454546",
+          "#666667",
+          "#89898A",
+          "#AEAEAF",
+          "#D1D1D2",
+          "#EEEEEF"
+        ]
+      },
+      "accent-ink-light": {
+        "role": "primary",
+        "displayName": "Laranja de leitura (claro)",
+        "canonical": "oklch(51.0% 0.148 39)",
+        "tonalRamp": [
+          "#240000",
+          "#5A0000",
+          "#811600",
+          "#A93F16",
+          "#D2643F",
+          "#FC8A63",
+          "#FFAD86",
+          "#FFDDC6"
+        ]
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "Vermelho de perigo",
+        "canonical": "oklch(62.6% 0.193 23)",
+        "tonalRamp": [
+          "#2A0000",
+          "#670000",
+          "#910003",
+          "#BC182B",
+          "#E74A4E",
+          "#FF7272",
+          "#FF9794",
+          "#FFD3CD"
+        ]
+      },
+      "danger-ink": {
+        "role": "secondary",
+        "displayName": "Vermelho de leitura",
+        "canonical": "oklch(66.7% 0.179 22)",
+        "tonalRamp": [
+          "#280000",
+          "#630000",
+          "#8D0012",
+          "#B62634",
+          "#E15156",
+          "#FF787A",
+          "#FF9C9B",
+          "#FFD5D1"
+        ]
+      },
+      "danger-ink-light": {
+        "role": "secondary",
+        "displayName": "Vermelho de leitura (claro)",
+        "canonical": "oklch(53.4% 0.179 24)",
+        "tonalRamp": [
+          "#280000",
+          "#640000",
+          "#8D0008",
+          "#B7272E",
+          "#E15151",
+          "#FF7974",
+          "#FF9D96",
+          "#FFD5CE"
+        ]
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "Fundo",
+        "canonical": "oklch(15.0% 0.002 286)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#262627",
+          "#454546",
+          "#666667",
+          "#89898A",
+          "#AEAEAF",
+          "#D1D1D2",
+          "#EEEEEF"
+        ]
+      },
+      "surface-1": {
+        "role": "neutral",
+        "displayName": "Superfície 1",
+        "canonical": "oklch(18.8% 0.004 286)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#262628",
+          "#454547",
+          "#666668",
+          "#89898B",
+          "#ADADB0",
+          "#D0D1D3",
+          "#EEEEF0"
+        ]
+      },
+      "surface-2": {
+        "role": "neutral",
+        "displayName": "Superfície 2",
+        "canonical": "oklch(22.3% 0.006 286)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#262629",
+          "#454548",
+          "#666669",
+          "#89898D",
+          "#ADADB1",
+          "#D0D0D5",
+          "#EEEEF0"
+        ]
+      },
+      "surface-3": {
+        "role": "neutral",
+        "displayName": "Superfície 3",
+        "canonical": "oklch(27.0% 0.007 286)",
+        "tonalRamp": [
+          "#0B0B0D",
+          "#26262A",
+          "#444449",
+          "#65656A",
+          "#88898D",
+          "#ADADB2",
+          "#D0D0D6",
+          "#EEEEF1"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Fio",
+        "canonical": "oklch(27.0% 0.007 286)",
+        "tonalRamp": [
+          "#0B0B0D",
+          "#26262A",
+          "#444449",
+          "#65656A",
+          "#88898D",
+          "#ADADB2",
+          "#D0D0D6",
+          "#EEEEF1"
+        ]
+      },
+      "fg": {
+        "role": "neutral",
+        "displayName": "Texto",
+        "canonical": "oklch(96.1% 0.003 106)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#262625",
+          "#454543",
+          "#666664",
+          "#898987",
+          "#AEAEAC",
+          "#D1D1CF",
+          "#EEEEED"
+        ]
+      },
+      "fg-2": {
+        "role": "neutral",
+        "displayName": "Texto secundário",
+        "canonical": "oklch(68.5% 0.004 107)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#272724",
+          "#454543",
+          "#666663",
+          "#898986",
+          "#AEAEAB",
+          "#D1D1CE",
+          "#EEEEED"
+        ]
+      },
+      "fg-3": {
+        "role": "neutral",
+        "displayName": "Texto terciário",
+        "canonical": "oklch(60.9% 0.006 107)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#272723",
+          "#454542",
+          "#666662",
+          "#898985",
+          "#AEAEAA",
+          "#D1D1CD",
+          "#EFEFEC"
+        ]
+      },
+      "bg-light": {
+        "role": "neutral",
+        "displayName": "Fundo (claro)",
+        "canonical": "oklch(94.2% 0.004 106)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#272724",
+          "#454543",
+          "#666664",
+          "#898987",
+          "#AEAEAB",
+          "#D1D1CE",
+          "#EEEEED"
+        ]
+      },
+      "surface-1-light": {
+        "role": "neutral",
+        "displayName": "Superfície 1 (claro)",
+        "canonical": "oklch(100.0% 0.000 90)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#AEAEAE",
+          "#D1D1D1",
+          "#EEEEEE"
+        ]
+      },
+      "surface-2-light": {
+        "role": "neutral",
+        "displayName": "Superfície 2 (claro)",
+        "canonical": "oklch(96.7% 0.003 106)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#262625",
+          "#454543",
+          "#666664",
+          "#898987",
+          "#AEAEAC",
+          "#D1D1CF",
+          "#EEEEED"
+        ]
+      },
+      "surface-3-light": {
+        "role": "neutral",
+        "displayName": "Superfície 3 (claro)",
+        "canonical": "oklch(91.2% 0.005 107)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#272724",
+          "#454542",
+          "#666663",
+          "#898986",
+          "#AEAEAA",
+          "#D1D1CD",
+          "#EEEEEC"
+        ]
+      },
+      "fg-light": {
+        "role": "neutral",
+        "displayName": "Texto (claro)",
+        "canonical": "oklch(15.0% 0.002 286)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#262627",
+          "#454546",
+          "#666667",
+          "#89898A",
+          "#AEAEAF",
+          "#D1D1D2",
+          "#EEEEEF"
+        ]
+      },
+      "fg-2-light": {
+        "role": "neutral",
+        "displayName": "Texto secundário (claro)",
+        "canonical": "oklch(48.1% 0.005 107)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#272724",
+          "#454542",
+          "#666663",
+          "#898986",
+          "#AEAEAB",
+          "#D1D1CE",
+          "#EEEEED"
+        ]
+      },
+      "fg-3-light": {
+        "role": "neutral",
+        "displayName": "Texto terciário (claro)",
+        "canonical": "oklch(52.3% 0.006 107)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#272723",
+          "#454542",
+          "#666662",
+          "#898985",
+          "#AEAEAA",
+          "#D1D1CD",
+          "#EFEFEC"
+        ]
+      },
+      "cat-1": {
+        "role": "tertiary",
+        "displayName": "Ardósia",
+        "canonical": "oklch(65.7% 0.053 256)",
+        "tonalRamp": [
+          "#040B17",
+          "#142740",
+          "#324661",
+          "#526885",
+          "#748BAA",
+          "#98B0D0",
+          "#BBD3F4",
+          "#E2F0FF"
+        ]
+      },
+      "cat-2": {
+        "role": "tertiary",
+        "displayName": "Petróleo",
+        "canonical": "oklch(68.5% 0.052 212)",
+        "tonalRamp": [
+          "#000E12",
+          "#002D35",
+          "#1E4C55",
+          "#406E78",
+          "#63929C",
+          "#88B7C1",
+          "#AADBE5",
+          "#DAF4FA"
+        ]
+      },
+      "cat-3": {
+        "role": "tertiary",
+        "displayName": "Lavanda",
+        "canonical": "oklch(67.6% 0.080 303)",
+        "tonalRamp": [
+          "#0F061A",
+          "#2F1A46",
+          "#4E3968",
+          "#705A8C",
+          "#937DB1",
+          "#B8A2D8",
+          "#DCC5FD",
+          "#F4E8FF"
+        ]
+      },
+      "cat-4": {
+        "role": "tertiary",
+        "displayName": "Malva",
+        "canonical": "oklch(68.5% 0.078 334)",
+        "tonalRamp": [
+          "#150412",
+          "#3C1536",
+          "#5E3456",
+          "#815579",
+          "#A6779D",
+          "#CD9CC3",
+          "#F1BEE6",
+          "#FFE4FB"
+        ]
+      },
+      "cat-5": {
+        "role": "tertiary",
+        "displayName": "Rosa-argila",
+        "canonical": "oklch(69.2% 0.071 15)",
+        "tonalRamp": [
+          "#190406",
+          "#43151B",
+          "#663439",
+          "#8A5559",
+          "#B0777C",
+          "#D79CA0",
+          "#FCBFC2",
+          "#FFE4E6"
+        ]
+      },
+      "cat-6": {
+        "role": "tertiary",
+        "displayName": "Areia",
+        "canonical": "oklch(73.5% 0.070 77)",
+        "tonalRamp": [
+          "#140800",
+          "#392100",
+          "#5A4012",
+          "#7C6136",
+          "#A18458",
+          "#C7A97C",
+          "#EBCC9E",
+          "#FDECD2"
+        ]
+      },
+      "cat-7": {
+        "role": "tertiary",
+        "displayName": "Índigo",
+        "canonical": "oklch(66.9% 0.083 282)",
+        "tonalRamp": [
+          "#09081D",
+          "#211F4D",
+          "#3E3E70",
+          "#5E6094",
+          "#8083BA",
+          "#A5A8E2",
+          "#C7CBFF",
+          "#E9ECFF"
+        ]
+      },
+      "cat-8": {
+        "role": "tertiary",
+        "displayName": "Greige",
+        "canonical": "oklch(67.6% 0.011 68)",
+        "tonalRamp": [
+          "#0D0B08",
+          "#2A2521",
+          "#49443F",
+          "#6B655F",
+          "#8E8882",
+          "#B3ADA7",
+          "#D6D0C9",
+          "#F1EEEA"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "O saldo de destaque do Início. Uma vez por tela."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Título da página."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Título de painel, formulário e seção."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Linhas de lista, descrições e texto de botão; 15px no celular."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Rótulo de campo, métrica e coluna, em caixa normal."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Todo valor em dinheiro: a classe .valor."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Chegada que desacelera até parar: a tela que entra, a folha que sobe."
+      },
+      {
+        "name": "ease-viagem",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "O traço da navegação e o destaque das abas deslizando até a posição."
+      },
+      {
+        "name": "dur-viagem",
+        "value": "320ms",
+        "purpose": "Entrada de tela."
+      },
+      {
+        "name": "dur-traco",
+        "value": "440ms",
+        "purpose": "Deslize do traço e do destaque das abas."
+      },
+      {
+        "name": "dur-padrao",
+        "value": "150ms",
+        "purpose": "Troca de cor em hover e foco."
+      },
+      {
+        "name": "saida",
+        "value": "200ms cubic-bezier(0.4, 0, 1, 1)",
+        "purpose": "Folha e painel saindo: mais curto que a entrada."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "md",
+        "value": "768px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botão principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "A ação laranja da tela. Uma por tela.",
+      "html": "<button class=\"ds-btn-principal\">Lançar gasto</button>",
+      "css": ".ds-btn-principal { height: 40px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 4px; font: 500 14px/1 Switzer, -apple-system, 'Segoe UI', sans-serif; white-space: nowrap; cursor: pointer; transition: background-color 150ms, color 150ms; background: var(--accent, #FF6B35); color: var(--accent-fg, #0B0B0C); } .ds-btn-principal:hover { background: color-mix(in srgb, var(--accent, #FF6B35) 90%, transparent); } .ds-btn-principal:focus-visible { outline: 2px solid var(--fg, #F2F2F0); outline-offset: 2px; }"
+    },
+    {
+      "name": "Botão secundário",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A variante padrão: qualquer ação que não é a principal.",
+      "html": "<button class=\"ds-btn-secundario\">Conferir com o banco</button>",
+      "css": ".ds-btn-secundario { height: 40px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 4px; font: 500 14px/1 Switzer, -apple-system, 'Segoe UI', sans-serif; white-space: nowrap; cursor: pointer; transition: background-color 150ms, color 150ms; background: var(--surface-2, #1B1B1E); color: var(--fg, #F2F2F0); } .ds-btn-secundario:hover { background: var(--surface-3, #26262A); } .ds-btn-secundario:focus-visible { outline: 2px solid var(--fg, #F2F2F0); outline-offset: 2px; }"
+    },
+    {
+      "name": "Botão fantasma",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Ação de baixo peso: cancelar, voltar.",
+      "html": "<button class=\"ds-btn-fantasma\">Cancelar</button>",
+      "css": ".ds-btn-fantasma { height: 40px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 4px; font: 500 14px/1 Switzer, -apple-system, 'Segoe UI', sans-serif; white-space: nowrap; cursor: pointer; transition: background-color 150ms, color 150ms; background: transparent; color: var(--fg-2, #9A9A97); } .ds-btn-fantasma:hover { background: var(--surface-2, #1B1B1E); color: var(--fg, #F2F2F0); } .ds-btn-fantasma:focus-visible { outline: 2px solid var(--fg, #F2F2F0); outline-offset: 2px; }"
+    },
+    {
+      "name": "Campo",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Texto, select e data. O rótulo fica acima, em 12px.",
+      "html": "<label class=\"ds-campo\"><span>Descrição</span><input placeholder=\"Mercado da semana\"></label>",
+      "css": ".ds-campo { display: grid; gap: 6px; font: 400 12px/1.33 Switzer, -apple-system, 'Segoe UI', sans-serif; color: var(--fg-2, #9A9A97); } .ds-campo input { height: 44px; padding: 0 12px; background: var(--surface-2, #1B1B1E); border: 1px solid var(--line, #26262A); border-radius: 2px; color: var(--fg, #F2F2F0); font: 400 16px/1 Switzer, -apple-system, 'Segoe UI', sans-serif; outline: none; transition: border-color 150ms; } .ds-campo input::placeholder { color: var(--fg-3, #83837F); } .ds-campo input:focus { border-color: var(--fg-3, #83837F); }"
+    },
+    {
+      "name": "Pílula de estado",
+      "kind": "chip",
+      "refersTo": "pill",
+      "description": "Estado curto, em três tons: neutro, atenção e perigo.",
+      "html": "<span class=\"ds-pilula\">pago</span> <span class=\"ds-pilula ds-pilula-atencao\">vence hoje</span> <span class=\"ds-pilula ds-pilula-perigo\">estourou</span>",
+      "css": ".ds-pilula { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 2px; font: 400 12px/1 Switzer, -apple-system, 'Segoe UI', sans-serif; white-space: nowrap; background: color-mix(in srgb, var(--fg-2, #9A9A97) 12%, transparent); color: var(--fg-2, #9A9A97); } .ds-pilula-atencao { background: color-mix(in srgb, var(--accent, #FF6B35) 12%, transparent); color: var(--accent-ink, #FF6B35); } .ds-pilula-perigo { background: color-mix(in srgb, var(--danger, #E5484D) 12%, transparent); color: var(--danger-ink, #EE5D61); }"
+    },
+    {
+      "name": "Linha de lista",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "A forma padrão de mostrar um lançamento: título, contexto e o valor à direita, dentro de um card.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-linha\"><span class=\"ds-linha-icone\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M2 10h20\"/></svg></span><span class=\"ds-linha-texto\"><span>Mercado da semana</span><small>Débito · Alimentação</small></span><span class=\"ds-valor\">−R$ 212,40</span></div></div>",
+      "css": ".ds-card { background: var(--surface-1, #131315); border-radius: 4px; padding: 16px; color: var(--fg, #F2F2F0); font: 400 14px/1.43 Switzer, -apple-system, 'Segoe UI', sans-serif; } .ds-linha { display: flex; align-items: center; gap: 12px; } .ds-linha-icone { width: 36px; height: 36px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 2px; background: var(--surface-2, #1B1B1E); color: var(--fg-2, #9A9A97); } .ds-linha-texto { flex: 1; min-width: 0; display: grid; } .ds-linha-texto small { font-size: 12px; color: var(--fg-2, #9A9A97); } .ds-valor { font-family: 'Geist Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }"
+    },
+    {
+      "name": "Saldo de destaque",
+      "kind": "custom",
+      "description": "O número grande do Início, com os centavos elevados.",
+      "html": "<div class=\"ds-saldo\"><p>Saldo hoje</p><strong>R$ 5.184<sup>,39</sup></strong></div>",
+      "css": ".ds-saldo { color: var(--fg, #F2F2F0); } .ds-saldo p { margin: 0 0 8px; font: 400 14px/1.43 Switzer, -apple-system, 'Segoe UI', sans-serif; color: var(--fg-2, #9A9A97); } .ds-saldo strong { font: 400 56px/1 'Geist Mono', ui-monospace, monospace; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-saldo sup { font-size: 0.55em; vertical-align: 0.72em; line-height: 0; margin-left: 0.04em; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "O extrato limpo",
+    "overview": "O Hedge parece um extrato bancário bem diagramado. A tela é quase preta, o texto é quase branco, e o que se lê primeiro é sempre um número, escrito em fonte mono com dígitos de largura fixa. Não há enfeite entre a pessoa e o valor: nada de sombra, de curva, de ícone colorido, de gradiente. Um único laranja aparece pouco e sempre com função — a ação principal da tela ou algo que pede atenção.\n\nA densidade é a de um documento financeiro, não a de um painel de marketing. Linhas de lista com título, uma linha de contexto e o valor alinhado à direita; superfícies que se separam por um degrau de tom, não por borda. O escuro é o tema padrão e o desenho nasce nele; o claro é o mesmo sistema com os tons invertidos e as tintas de texto um degrau mais fundas para manter o contraste.\n\nO app (Início, Gastos, A receber, Carteira, Configurações) é o sistema descrito aqui. A landing e o login são peças de marca: usam as mesmas duas famílias de fonte e o mesmo laranja, mas têm tokens próprios com escopo em `.lp` (`src/components/landing/landing.css`), movimento amarrado ao scroll e três temas por seção. As regras de forma e de cor deste documento valem para o app; as de dinheiro e de acessibilidade valem para tudo.",
+    "keyCharacteristics": [
+      "Quase preto e quase branco, com um único acento laranja.",
+      "Dinheiro em Geist Mono, com dígitos de largura fixa; todo o resto em Switzer.",
+      "Formas retas: raio de 2px e 4px, nada acima disso.",
+      "Sem sombra. A profundidade é um degrau de tom entre superfícies.",
+      "Sem verde: entrada e saída se distinguem pelo sinal, não pela cor.",
+      "Texto em caixa normal; nenhum rótulo em caixa-alta."
+    ],
+    "rules": [
+      {
+        "name": "A Regra do Laranja Único",
+        "body": "Uma ação laranja por tela. Se duas coisas pedem laranja, uma delas é secundária.",
+        "section": "colors"
+      },
+      {
+        "name": "A Regra do Sem Verde",
+        "body": "Não existe verde na interface. Dinheiro que entra leva \"+\", dinheiro que sai leva \"−\" (o sinal tipográfico, não o hífen), e os dois têm a mesma cor.",
+        "section": "colors"
+      },
+      {
+        "name": "A Regra da Tinta",
+        "body": "Laranja e vermelho como texto usam a versão `-ink`. Fundo, barra e botão usam o tom cheio.",
+        "section": "colors"
+      },
+      {
+        "name": "A Regra do 500",
+        "body": "Nenhum peso acima de 500. Ênfase vem de tamanho e de posição, não de negrito.",
+        "section": "typography"
+      },
+      {
+        "name": "A Regra do Valor",
+        "body": "Dinheiro é sempre `.valor`: mono, tabular, sem quebra e sem reticências. \"R$\" e o número ficam juntos por um espaço que não quebra.",
+        "section": "typography"
+      },
+      {
+        "name": "A Regra dos 16px",
+        "body": "Campo de formulário nunca tem fonte menor que 16px (o iOS dá zoom abaixo disso). A única exceção é para cima: o valor grande do campo de dinheiro, em 40px.",
+        "section": "typography"
+      },
+      {
+        "name": "A Regra do Degrau",
+        "body": "Para destacar, suba um degrau de superfície. Não use sombra, brilho nem desfoque.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do ler toda cor de `src/index.css`, pelas cores do Tailwind (`bg-surface-1`, `text-fg-2`, `text-accent-ink`).",
+      "Do escrever dinheiro com `formatDinheiro` e a classe `.valor`.",
+      "Do manter uma ação laranja por tela.",
+      "Do usar raio de 2px ou 4px.",
+      "Do dar 44px de altura a tudo que se toca no celular.",
+      "Do escrever rótulos em caixa normal.",
+      "Do rodar `npm run check:ds` antes de enviar: o guarda (`scripts/check-design-system.sh`) barra cor fixa, verde, raio grande, caixa-alta e ornamento."
+    ],
+    "donts": [
+      "Don't usar verde, em nenhum tom, para nada.",
+      "Don't usar sombra, gradiente decorativo, desfoque ou brilho.",
+      "Don't usar peso de fonte acima de 500.",
+      "Don't escrever hex em componente do app.",
+      "Don't pôr card dentro de card.",
+      "Don't marcar seleção com pílula preenchida.",
+      "Don't usar o hífen como sinal de menos em valor: é \"−\".",
+      "Don't abrir modal no centro da tela para formulário; use a folha ou o painel."
+    ]
+  }
+}

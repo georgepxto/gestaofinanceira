@@ -210,22 +210,14 @@ npm run check:ds       # Guarda do sistema visual (roda sozinho, sem build)
 npm run test:e2e       # Testes E2E (Playwright) — landing e login
 npm run test:e2e:headed
 npm run test:e2e:ui
-npm run test:e2e:auth  # Requer E2E_EMAIL e E2E_PASSWORD no ambiente
+npm test               # Testes unitários (Vitest) — regras de dinheiro e contexto
 ```
 
 ## 🧪 Testes E2E Visuais (Playwright)
 
 Abre navegador real e gera evidências visuais (screenshots, trace e relatório HTML).
 
-Para testar páginas internas autenticadas, defina credenciais válidas antes de executar:
-
-```bash
-export E2E_EMAIL="seu-email"
-export E2E_PASSWORD="sua-senha"
-npm run test:e2e:auth
-```
-
-Se `E2E_EMAIL` e `E2E_PASSWORD` não estiverem definidos, o teste autenticado é ignorado automaticamente.
+Cobrem só as telas públicas (landing e login): não entram em conta nenhuma e não gravam nada. Ainda não há teste das telas logadas.
 
 Ver relatório após executar os testes:
 
