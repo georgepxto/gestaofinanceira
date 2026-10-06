@@ -1,5 +1,5 @@
 import { addDays, format, startOfMonth } from "date-fns";
-import { supabase, tabelaNaoExiste } from "../lib/supabase";
+import { supabase } from "../lib/supabase";
 import type { ContaBancaria, Gasto, MeuGasto, Receita } from "../types";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -88,8 +88,8 @@ export interface Livro {
   recebimentos?: Recebimento[];
   /**
    * A partir de que dia a receita fixa/recorrente só entra no saldo depois de
-   * confirmada. Antes disso (e quando é nulo: a tabela ainda não existe) ela
-   * entra sozinha no dia previsto, como sempre foi.
+   * confirmada. Antes disso (e quando é nulo: modo demonstração, sem banco)
+   * ela entra sozinha no dia previsto, como sempre foi.
    */
   confirmacaoDesde?: string | null;
 }
@@ -407,14 +407,12 @@ export async function manterSaldoAoMudar(
       supabase.from("receitas_confirmacoes").select("*").eq("receita_id", antes.id),
       supabase.auth.getUser(),
     ]);
-    // Sem a tabela, a receita entra sozinha; outro erro não pode virar isso.
-    if (error && !tabelaNaoExiste(error)) throw error;
-    if (!error) {
-      confirmacao = {
-        confirmacoes: (lista as ConfirmacaoReceita[]) || [],
-        confirmacaoDesde: (auth.user?.user_metadata?.entradas_desde as string) || null,
-      };
-    }
+    // Sem as confirmações a receita pareceria ter entrado sozinha: não segue.
+    if (error) throw error;
+    confirmacao = {
+      confirmacoes: (lista as ConfirmacaoReceita[]) || [],
+      confirmacaoDesde: (auth.user?.user_metadata?.entradas_desde as string) || null,
+    };
   }
   const ids = [...new Set([antes.conta_id, depois?.conta_id].filter(Boolean))] as string[];
   const deltas: { id: string; delta: number }[] = [];
@@ -505,11 +503,10 @@ export async function carregarLivro(): Promise<Livro> {
 }
 
 /**
- * As confirmações e o dia a partir do qual elas valem. Sem a tabela (migração
- * ainda não rodada), o recurso fica desligado e tudo segue como antes; qualquer
- * outro erro sobe, para a receita não entrar sozinha no saldo por engano. Na
- * primeira vez com a tabela, marca hoje como o começo — o que já aconteceu não
- * passa a pedir confirmação.
+ * As confirmações e o dia a partir do qual elas valem. Erro de consulta sobe,
+ * para a receita não entrar sozinha no saldo por engano. Na primeira carga da
+ * conta, marca hoje como o começo — o que já aconteceu não passa a pedir
+ * confirmação.
  */
 export async function carregarConfirmacoes(): Promise<InfoConfirmacao> {
   if (!supabase) return { confirmacoes: [], confirmacaoDesde: null };
@@ -517,10 +514,7 @@ export async function carregarConfirmacoes(): Promise<InfoConfirmacao> {
     supabase.from("receitas_confirmacoes").select("*"),
     supabase.auth.getUser(),
   ]);
-  if (error) {
-    if (tabelaNaoExiste(error)) return { confirmacoes: [], confirmacaoDesde: null };
-    throw error;
-  }
+  if (error) throw error;
   let desde = (auth.user?.user_metadata?.entradas_desde as string) || null;
   if (!desde && auth.user) {
     desde = hojeIso(new Date());

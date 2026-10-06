@@ -867,14 +867,10 @@ export function useMeusGastos({
               : {}),
           }
         : { ...updates, encerrado_em: hojeIso };
-      let gravado = comDia;
       await manterSaldoAoMudar(gasto, { ...gasto, ...updates }, async () => {
-        if (!isSupabaseConfigured || !supabase) return;
-        if (await meusGastosFunctions.update(id, comDia)) return;
-        // Sem a coluna `encerrado_em` (migração 20261006 ainda não rodou):
-        // grava só o estado, como antes.
-        gravado = updates;
-        if (!(await meusGastosFunctions.update(id, updates))) throw new Error(FALHA_AO_SALVAR);
+        if (isSupabaseConfigured && supabase && !(await meusGastosFunctions.update(id, comDia))) {
+          throw new Error(FALHA_AO_SALVAR);
+        }
       });
       // Dividido: desativar para as cobranças depois deste mês; reativar cria
       // as cobranças de novo a partir deste mês.
@@ -893,7 +889,7 @@ export function useMeusGastos({
       }
 
       setMeusGastos((prev) =>
-        prev.map((g) => (g.id === id ? { ...g, ...gravado } : g))
+        prev.map((g) => (g.id === id ? { ...g, ...comDia } : g))
       );
 
       if (onRefreshGastos) {

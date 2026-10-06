@@ -9,15 +9,9 @@ import { avisarDadosMudaram } from "./onboarding";
 async function gravar(r: Receita, mes: string, campos: Record<string, unknown>) {
   if (!supabase) return { erro: "Sem conexão." };
   const { data: auth } = await supabase.auth.getUser();
-  const salvar = (c: Record<string, unknown>) =>
-    supabase!.from("receitas_confirmacoes").upsert({ receita_id: r.id, mes, user_id: auth.user?.id, ...c }, { onConflict: "receita_id,mes" });
-  let { error } = await salvar(campos);
-  // Sem a coluna `motivo` (migração 20261004 ainda não rodou): confirma sem ele.
-  if (error && "motivo" in campos) {
-    const { motivo: _semColuna, ...resto } = campos;
-    void _semColuna;
-    ({ error } = await salvar(resto));
-  }
+  const { error } = await supabase
+    .from("receitas_confirmacoes")
+    .upsert({ receita_id: r.id, mes, user_id: auth.user?.id, ...campos }, { onConflict: "receita_id,mes" });
   if (error) return { erro: "Não foi possível salvar. Tente de novo." };
   avisarDadosMudaram("entradas");
   return {};

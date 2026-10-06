@@ -16,14 +16,6 @@ export const supabase = isSupabaseConfigured
   : null;
 
 /**
- * O erro é de tabela que ainda não existe (migração não rodada)? Só esse caso
- * pode ser lido como "recurso desligado"; qualquer outro erro é falha de verdade.
- */
-export const tabelaNaoExiste = (error: { code?: string; message?: string } | null | undefined) =>
-  !!error &&
-  (error.code === "42P01" || error.code === "PGRST205" || /does not exist|Could not find the table/i.test(error.message || ""));
-
-/**
  * As listas que o modo demonstração (sem Supabase) guarda no navegador. Com o
  * banco ligado elas não são lidas, e uma cópia ali ficaria legível no aparelho
  * depois do logout: não se grava e o que sobrou de versões antigas é apagado.
@@ -735,21 +727,11 @@ export const pagamentosParciaisFunctions = {
     const user_id = await getCurrentUserId();
     if (!user_id) return null;
 
-    let { data, error } = await supabase
+    const { data, error } = await supabase
       .from("pagamentos_parciais")
       .insert([{ ...pagamento, user_id }])
       .select()
       .single();
-
-    // Sem a coluna conta_id (migração 20261002 ainda não rodada), grava sem ela.
-    if (error && "conta_id" in pagamento && /conta_id/.test(error.message || "")) {
-      const { conta_id: _ignorada, ...semConta } = pagamento;
-      ({ data, error } = await supabase
-        .from("pagamentos_parciais")
-        .insert([{ ...semConta, user_id }])
-        .select()
-        .single());
-    }
 
     if (error) {
       console.error("Erro ao criar pagamento parcial:", error);
