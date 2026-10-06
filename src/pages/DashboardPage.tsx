@@ -697,7 +697,7 @@ export const DashboardPage = () => {
     <div className={`${PAGE_CONTAINER_RELATIVE_CLASS} pb-20`}>
       {/* 1. Saudação e mês — não é mais um título gigante. */}
       <div className="flex items-center justify-between gap-4 flex-wrap" data-tour="dashboard-header">
-        <p className="text-[15px] text-fg-2">{primeiroNome ? `Olá, ${primeiroNome}` : "Olá"}</p>
+        <h1 className="text-[15px] font-normal text-fg-2">{primeiroNome ? `Olá, ${primeiroNome}` : "Olá"}</h1>
         <SeletorMes data-tour="month-selector" />
       </div>
 

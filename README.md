@@ -93,6 +93,7 @@ O Supabase é obrigatório: autenticação, dados e Row Level Security (cada usu
 - **`supabase/base/supabase_schema.sql`** — schema principal (gastos, pessoas, saldos devedores, meus gastos, contas bancárias, cartões, categorias personalizadas, etc.).
 - **`supabase/base/supabase_admin_schema.sql`**, **`supabase/base/supabase_admin_v2.sql`** — papéis de usuário e feature flags (usados pelo Admin).
 - **`supabase/base/supabase_web_vitals.sql`** — tabela de Core Web Vitals (opcional, ver [Performance](#-performance-em-produção)).
+- **`supabase/base/schema_atual.sql`** — o schema como está no banco hoje, gerado do próprio banco (`scripts/gerar-schema.py`). É referência, não é para rodar.
 - **`supabase/migrations/`** — migrations incrementais mais recentes, aplicadas por cima do schema acima.
 
 > ⚠️ **Conhecido:** o schema ainda está espalhado entre esses arquivos soltos na raiz e a pasta `supabase/migrations/`, sem um fluxo único de setup. Ao provisionar um projeto novo, rode os arquivos na raiz primeiro (nas versões `_v2`/`fix_*` mais recentes) e depois as migrations em ordem cronológica pelo nome do arquivo. Consolidar isso em um histórico de migrations único é uma pendência conhecida.
@@ -217,7 +218,14 @@ npm test               # Testes unitários (Vitest) — regras de dinheiro e con
 
 Abre navegador real e gera evidências visuais (screenshots, trace e relatório HTML).
 
-Cobrem só as telas públicas (landing e login): não entram em conta nenhuma e não gravam nada. Ainda não há teste das telas logadas.
+- **Telas públicas** (`tests/e2e/public-visual.spec.ts`): landing e login. Não entram em conta nenhuma e não gravam nada.
+- **Telas logadas** (`tests/e2e/logado.spec.ts`): entra numa conta que existe só para teste, abre todas as áreas e lança, edita, divide e exclui gastos. Tudo o que cria se chama `[TESTE] …` e é apagado no fim. Só roda com as credenciais da conta de teste no ambiente; sem elas, é pulado:
+
+```bash
+E2E_EMAIL="conta-de-teste@exemplo.com" E2E_PASSWORD="..." npm run test:e2e
+```
+
+No GitHub, o passo "Telas logadas" do CI roda quando o repositório tem os segredos `E2E_EMAIL`, `E2E_PASSWORD`, `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. Nunca use a sua conta pessoal: o teste grava e apaga dados.
 
 Ver relatório após executar os testes:
 
