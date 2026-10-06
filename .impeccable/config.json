@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "geist mono",
+        "createdAt": "2026-09-28T18:18:33.643Z",
+        "reason": "pinned brief: user's landing spec requires Geist Mono for numbers and R$ values only"
+      }
+    ]
+  }
+}

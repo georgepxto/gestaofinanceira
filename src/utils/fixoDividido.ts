@@ -20,7 +20,10 @@ const mesesAte = (de: string, ate: Date) => {
   return (ate.getFullYear() - a) * 12 + (ate.getMonth() + 1 - m);
 };
 
-/** Uma cobrança recorrente por pessoa, a partir deste mês, no dia do fixo. */
+/**
+ * Uma cobrança recorrente por pessoa, a partir deste mês, no dia do fixo.
+ * Devolve false se alguma não foi salva.
+ */
 export async function criarCobrancasDoFixo(
   fixo: {
     descricao: string;
@@ -33,16 +36,17 @@ export async function criarCobrancasDoFixo(
   },
   hoje = new Date()
 ) {
-  if (!isSupabaseConfigured || !supabase || fixo.pessoas.length === 0) return;
+  if (!isSupabaseConfigured || !supabase || fixo.pessoas.length === 0) return true;
   const parte = Math.max(fixo.valor - (fixo.minha_parte ?? fixo.valor), 0) / fixo.pessoas.length;
-  if (parte <= 0) return;
+  if (parte <= 0) return true;
   const ultimo = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
   const dataInicio = format(
     new Date(hoje.getFullYear(), hoje.getMonth(), Math.min(fixo.dia_vencimento || 1, ultimo)),
     "yyyy-MM-dd"
   );
+  let todas = true;
   for (const pessoa of fixo.pessoas) {
-    await gastosFunctions.create({
+    const criada = await gastosFunctions.create({
       descricao: `${fixo.descricao} - ${pessoa}`,
       pessoa,
       valor_total: Math.round(parte * 100) / 100,
@@ -54,7 +58,9 @@ export async function criarCobrancasDoFixo(
       cartao_id: undefined,
       conta_id: undefined,
     });
+    if (!criada) todas = false;
   }
+  return todas;
 }
 
 /**

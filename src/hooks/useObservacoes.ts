@@ -78,14 +78,16 @@ export function useObservacoes({ mesVisualizacao, user }: UseObservacoesProps) {
     try {
       if (obsTexto.trim()) {
         // Salvar no Supabase
-        if (isSupabaseConfigured && supabase) {
-          await observacoesFunctions.upsert(pessoa, mes, obsTexto.trim());
+        if (isSupabaseConfigured && supabase && !(await observacoesFunctions.upsert(pessoa, mes, obsTexto.trim()))) {
+          toast.error("Não foi possível salvar a observação. Tente de novo.");
+          return;
         }
         setObservacoesMes((prev) => ({ ...prev, [key]: obsTexto.trim() }));
       } else {
         // Remover se vazio
-        if (isSupabaseConfigured && supabase) {
-          await observacoesFunctions.delete(pessoa, mes);
+        if (isSupabaseConfigured && supabase && !(await observacoesFunctions.delete(pessoa, mes))) {
+          toast.error("Não foi possível remover a observação. Tente de novo.");
+          return;
         }
         setObservacoesMes((prev) => {
           const newObs = { ...prev };

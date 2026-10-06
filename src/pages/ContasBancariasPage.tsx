@@ -227,7 +227,8 @@ export const ContasBancariasPage = () => {
     try {
       const dados = { nome: formConta.nome.trim(), banco: formConta.banco.trim() };
       if (editandoConta) {
-        await supabase.from("contas_bancarias").update(dados).eq("id", editandoConta.id);
+        const { error } = await supabase.from("contas_bancarias").update(dados).eq("id", editandoConta.id);
+        if (error) throw error;
         // Corrigir o saldo à mão: a diferença vai para o saldo inicial, e o
         // histórico continua somando por cima.
         const desejado = parseCurrency(formConta.saldo_atual);
@@ -236,12 +237,13 @@ export const ContasBancariasPage = () => {
         }
       } else {
         // O saldo informado é o de hoje: o que aconteceu antes já está nele.
-        await supabase.from("contas_bancarias").insert({
+        const { error } = await supabase.from("contas_bancarias").insert({
           ...dados,
           saldo_inicial: parseCurrency(formConta.saldo_inicial),
           saldo_atual: null,
           user_id: user.id,
         });
+        if (error) throw error;
       }
       await fetchContas();
       resetFormConta();
@@ -322,18 +324,26 @@ export const ContasBancariasPage = () => {
           // Virou avulsa: é uma entrada de hoje.
           extra.created_at = new Date().toISOString();
         }
+        const gravar = async () => {
+          const { error } = await supabase!.from("receitas").update({ ...dados, ...extra }).eq("id", antiga.id);
+          if (error) throw error;
+        };
         // O que a receita já pôs na conta não muda com a edição (utils/saldo).
         if (antiga.tipo !== "avulso") {
-          await manterSaldoAoMudar(antiga, {
-            ...antiga,
-            ...dados,
-            ...extra,
-            conta_id: dados.conta_id || "",
-            num_meses: dados.num_meses ?? undefined,
-          } as Receita);
+          await manterSaldoAoMudar(
+            antiga,
+            {
+              ...antiga,
+              ...dados,
+              ...extra,
+              conta_id: dados.conta_id || "",
+              num_meses: dados.num_meses ?? undefined,
+            } as Receita,
+            gravar
+          );
+        } else {
+          await gravar();
         }
-        const { error } = await supabase.from("receitas").update({ ...dados, ...extra }).eq("id", antiga.id);
-        if (error) throw error;
       } else {
         // Fixa/recorrente conta do começo do mês; avulsa, de hoje.
         const { error } = await supabase.from("receitas").insert({
@@ -371,10 +381,15 @@ export const ContasBancariasPage = () => {
           : `Excluir "${r.descricao}"? Os meses que já entraram continuam no saldo.`,
       onConfirm: async () => {
         if (!supabase) return;
-        // Fixa/recorrente: o que já entrou fica na conta (utils/saldo).
-        if (r.tipo !== "avulso") await manterSaldoAoMudar(r, null);
-        const { error } = await supabase.from("receitas").delete().eq("id", r.id);
-        if (error) {
+        const excluir = async () => {
+          const { error } = await supabase!.from("receitas").delete().eq("id", r.id);
+          if (error) throw error;
+        };
+        try {
+          // Fixa/recorrente: o que já entrou fica na conta (utils/saldo).
+          if (r.tipo !== "avulso") await manterSaldoAoMudar(r, null, excluir);
+          else await excluir();
+        } catch (error) {
           toast.error(toActionableErrorMessage(error, "Não foi possível excluir a receita."));
           throw error;
         }

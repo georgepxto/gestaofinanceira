@@ -108,9 +108,9 @@ export function useSaldosDevedores({
     }
   }, [user, fetchSaldos]);
 
-  // Salvar saldos devedores no localStorage como backup
+  // Modo demonstração (sem banco): a lista mora no navegador.
   useEffect(() => {
-    if (saldosLoaded && saldosDevedores.length >= 0) {
+    if (!isSupabaseConfigured && saldosLoaded) {
       localStorage.setItem("saldosDevedores", JSON.stringify(saldosDevedores));
     }
   }, [saldosDevedores, saldosLoaded]);
@@ -198,8 +198,9 @@ export function useSaldosDevedores({
         historico: [],
       };
 
-      if (isSupabaseConfigured && supabase) {
-        await saldosFunctions.create(novaDivida);
+      if (isSupabaseConfigured && supabase && !(await saldosFunctions.create(novaDivida))) {
+        setError("Não foi possível salvar a cobrança. Tente de novo.");
+        return;
       }
 
       setSaldosDevedores((prev) => [...prev, novaDivida]);
@@ -222,12 +223,12 @@ export function useSaldosDevedores({
         tipo: "info",
         mensagem: "Valor de pagamento inválido.",
       });
-      return;
+      return false;
     }
 
     const valorArredondado = Math.round(valor * 100) / 100;
     const dividaAtual = saldosDevedores.find((d) => d.id === dividaId);
-    if (!dividaAtual) return;
+    if (!dividaAtual) return false;
 
     const maximoArredondado = Math.round(dividaAtual.valor_atual * 100) / 100;
 
@@ -240,7 +241,7 @@ export function useSaldosDevedores({
           maximoArredondado
         )}.`,
       });
-      return;
+      return false;
     }
 
     const valorFinal = Math.min(valorArredondado, maximoArredondado);
@@ -263,11 +264,13 @@ export function useSaldosDevedores({
         },
       ];
 
-      if (isSupabaseConfigured && supabase) {
-        await saldosFunctions.update(dividaId, {
-          valor_atual: novoValor,
-          historico: novoHistorico,
-        });
+      if (
+        isSupabaseConfigured &&
+        supabase &&
+        !(await saldosFunctions.update(dividaId, { valor_atual: novoValor, historico: novoHistorico }))
+      ) {
+        toast.error("Não foi possível registrar o pagamento. Tente de novo.");
+        return false;
       }
 
       setSaldosDevedores((prev) =>
@@ -294,6 +297,7 @@ export function useSaldosDevedores({
           valorFinal
         )} registrado com sucesso!`,
       });
+      return true;
     } catch (err) {
       setModalFeedback({
         show: true,
@@ -304,6 +308,7 @@ export function useSaldosDevedores({
             ? err.message
             : "Erro ao registrar pagamento. Tente novamente.",
       });
+      return false;
     } finally {
       setSaving(false);
     }
@@ -334,11 +339,13 @@ export function useSaldosDevedores({
             (p) => p.id !== pagamentoId
           );
 
-          if (isSupabaseConfigured && supabase) {
-            await saldosFunctions.update(dividaId, {
-              valor_atual: novoValorAtual,
-              historico: novoHistorico,
-            });
+          if (
+            isSupabaseConfigured &&
+            supabase &&
+            !(await saldosFunctions.update(dividaId, { valor_atual: novoValorAtual, historico: novoHistorico }))
+          ) {
+            toast.error("Não foi possível desfazer o pagamento. Tente de novo.");
+            return;
           }
 
           setSaldosDevedores((prev) =>
@@ -376,8 +383,9 @@ export function useSaldosDevedores({
       onConfirm: async () => {
         setSaving(true);
         try {
-          if (isSupabaseConfigured && supabase) {
-            await saldosFunctions.delete(id);
+          if (isSupabaseConfigured && supabase && !(await saldosFunctions.delete(id))) {
+            toast.error("Não foi possível excluir a cobrança. Tente de novo.");
+            return;
           }
           setSaldosDevedores((prev) => prev.filter((d) => d.id !== id));
           setModalConfirm({

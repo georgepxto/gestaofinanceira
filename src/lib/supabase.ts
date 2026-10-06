@@ -15,6 +15,31 @@ export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
+/**
+ * O erro é de tabela que ainda não existe (migração não rodada)? Só esse caso
+ * pode ser lido como "recurso desligado"; qualquer outro erro é falha de verdade.
+ */
+export const tabelaNaoExiste = (error: { code?: string; message?: string } | null | undefined) =>
+  !!error &&
+  (error.code === "42P01" || error.code === "PGRST205" || /does not exist|Could not find the table/i.test(error.message || ""));
+
+/**
+ * As listas que o modo demonstração (sem Supabase) guarda no navegador. Com o
+ * banco ligado elas não são lidas, e uma cópia ali ficaria legível no aparelho
+ * depois do logout: não se grava e o que sobrou de versões antigas é apagado.
+ */
+const COPIAS_LOCAIS = ["meusGastos", "pessoas", "saldosDevedores", "observacoesMes", "pagamentosParciais"];
+
+export function limparCopiasLocais() {
+  try {
+    COPIAS_LOCAIS.forEach((chave) => localStorage.removeItem(chave));
+  } catch {
+    /* sem armazenamento: nada a limpar */
+  }
+}
+
+if (isSupabaseConfigured) limparCopiasLocais();
+
 // ========== FUNÇÕES DE AUTENTICAÇÃO ==========
 export const authFunctions = {
   async signUp(
@@ -117,6 +142,7 @@ export const authFunctions = {
     if (!supabase) return { error: "Supabase não configurado" };
 
     const { error } = await supabase.auth.signOut();
+    limparCopiasLocais();
 
     if (error) {
       console.error("Erro ao fazer logout:", error);

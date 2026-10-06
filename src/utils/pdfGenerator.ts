@@ -433,7 +433,7 @@ export const generateMeusGastosPDF = (
       const gastoCategoria = meusGastosDoMes
         .filter(g => categoriaDeGasto(g).toLowerCase() === meta.categoria.toLowerCase())
         .reduce((acc, g) => {
-          const val = g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor;
+          const val = g.categoria === "dividido" && g.minha_parte != null ? g.minha_parte : g.valor;
           return acc + val;
         }, 0);
 
@@ -547,7 +547,7 @@ export const generateMeusGastosPDF = (
       const dateParts = g.data.split("-");
       const safeDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : g.data;
       const categoriaLabel: Record<string, string> = { pessoal: "Pessoal", dividido: "Dividido", fixo: "Fixo" };
-      const valor = g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor;
+      const valor = g.categoria === "dividido" && g.minha_parte != null ? g.minha_parte : g.valor;
 
       return [
         safeDate,
@@ -593,7 +593,7 @@ export const generateMeusGastosPDF = (
   const categoriaMap: Record<string, number> = {};
   meusGastosDoMes.forEach(g => {
     const cat = normalizarCategoria(g.categoria_gasto) || "Sem categoria";
-    const val = g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor;
+    const val = g.categoria === "dividido" && g.minha_parte != null ? g.minha_parte : g.valor;
     categoriaMap[cat] = (categoriaMap[cat] || 0) + val;
   });
 

@@ -24,9 +24,13 @@ import {
 import { AppProvider, useAppContext } from "./context";
 import { ThemeProvider } from "./hooks/useTheme";
 import { useNotifications } from "./hooks/useNotifications";
-import { Login } from "./components/Login";
-import { LandingPage } from "./pages/LandingPage";
 import "./index.css";
+
+// A landing e o login só servem a quem está fora: com eles no chunk de entrada,
+// quem já tem sessão baixava a página de venda inteira (e o GSAP) em toda
+// abertura do app. O pré-carregamento logo abaixo cobre o visitante.
+const LandingPage = lazy(() => import("./pages/LandingPage").then((m) => ({ default: m.LandingPage })));
+const Login = lazy(() => import("./components/Login").then((m) => ({ default: m.Login })));
 
 const Layout = lazy(() => import("./components/layout").then((m) => ({ default: m.Layout })));
 
@@ -53,6 +57,8 @@ const temSessaoSalva = (() => {
 if (temSessaoSalva) {
   void import("./components/layout");
   void import("./pages/DashboardPage");
+} else {
+  void import("./pages/LandingPage");
 }
 
 const OrcamentoPage = lazy(() => import("./pages/OrcamentoPage").then((m) => ({ default: m.OrcamentoPage })));
@@ -235,11 +241,13 @@ function AppContent() {
 
   if (!user) {
     return (
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login onLogin={handleLogin} onSignUp={handleSignUp} />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<AparecerSeDemorar><BootSplash /></AparecerSeDemorar>}>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login onLogin={handleLogin} onSignUp={handleSignUp} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     );
   }
 

@@ -490,13 +490,14 @@ export const CartoesCreditoPage = () => {
       
       // O registro do pagamento é o que tira o valor da conta (utils/saldo).
       // Registrar pagamento de fatura
-      await supabase.from("pagamentos_fatura").insert({
+      const { error } = await supabase.from("pagamentos_fatura").insert({
         cartao_id: cartaoSelecionado.id,
         mes: mesFatura,
         valor_pago: valorPago,
         conta_id: contaPagamento,
         user_id: user?.id,
       });
+      if (error) throw error;
       
       // Atualizar estado local de pagamentos
       setPagamentosFatura([...pagamentosFatura, {
@@ -528,10 +529,11 @@ export const CartoesCreditoPage = () => {
         try {
           // Apagar o registro devolve o valor à conta (utils/saldo).
           // Remover registro de pagamento
-          await supabase.from("pagamentos_fatura")
+          const { error } = await supabase.from("pagamentos_fatura")
             .delete()
             .eq("cartao_id", cartaoSelecionado.id)
             .eq("mes", mesFatura);
+          if (error) throw error;
           
           // Atualizar estados
           setPagamentosFatura(pagamentosFatura.filter(p => 

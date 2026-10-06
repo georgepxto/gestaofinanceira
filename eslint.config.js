@@ -13,12 +13,17 @@ export default [
       // Mocks de design guardados para consulta, não são fonte do app. O diretório
       // existe em duas cópias no repositório, daí o `**/` na frente.
       "**/design_handoff_hedge_visual_revision/**",
+      // Ferramentas de agente instaladas na máquina, com scripts minificados.
+      ".claude/**",
+      ".github/skills/**",
+      ".github/agents/**",
+      ".github/hooks/**",
     ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ["**/*.{ts,tsx,js,jsx}"],
+    files: ["**/*.{ts,tsx,js,jsx,mjs}"],
     languageOptions: {
       globals: {
         ...globals.browser,

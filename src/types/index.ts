@@ -73,6 +73,8 @@ export interface MeuGasto {
   minha_parte?: number;
   dia_vencimento?: number;
   ativo?: boolean;
+  /** Dia em que o fixo foi desativado (yyyy-MM-dd): até ali ele foi cobrado. */
+  encerrado_em?: string | null;
   num_parcelas?: number;
   parcela_atual?: number;
   cartao_id?: string;

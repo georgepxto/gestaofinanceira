@@ -27,5 +27,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Testes das regras de dinheiro
+        run: npm test
+
       - name: Build
         run: npm run build

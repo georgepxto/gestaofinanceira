@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAppContext } from "../context";
-import { supabase } from "../lib/supabase";
+import { supabase, tabelaNaoExiste } from "../lib/supabase";
 import { useTheme } from "../hooks/useTheme";
 import { PageHeader } from "../components/ui/PageHeader";
 import { PAGE_CONTAINER_CLASS } from "../utils/layout";
@@ -222,8 +222,7 @@ export const ConfiguracoesPage = () => {
       for (const table of tables) {
         const { error } = await supabase.from(table).delete().eq("user_id", user.id);
         // Tabela de migração ainda não rodada: não há o que apagar.
-        const tabelaNaoExiste = error && (error.code === "42P01" || error.code === "PGRST205" || /does not exist|Could not find the table/i.test(error.message));
-        if (error && !tabelaNaoExiste) falhas.push(table);
+        if (error && !tabelaNaoExiste(error)) falhas.push(table);
       }
       if (falhas.length > 0) {
         throw new Error(`Não foi possível apagar tudo (${falhas.join(", ")}). Tente de novo.`);

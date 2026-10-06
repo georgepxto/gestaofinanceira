@@ -11,7 +11,8 @@ import { formatCurrencyValue, parseCurrency } from "../utils/calculations";
 import { PARCELAS_MAX } from "../utils/constants";
 import { normalizarCategoria } from "../utils/categories";
 import { mesDoGasto, valorDaMinhaParte } from "../utils/gastosDoMes";
-import { dataNaFatura, proximaFatura } from "../utils/fatura";
+import { descricaoSemParcela, parcelasDaCompra } from "../utils/parcelas";
+import { dataNaFatura, faturasDoIntervalo, proximaFatura } from "../utils/fatura";
 import { criarCobrancasDoFixo, divididoComParaBanco, encerrarCobrancasDoFixo, pessoasDoGasto } from "../utils/fixoDividido";
 import { inicioParaNovoRecorrente, manterSaldoAoMudar } from "../utils/saldo";
 import { avisarDadosMudaram, ouvirDadosMudaram } from "../utils/onboarding";
@@ -59,9 +60,9 @@ async function criarLancamentoEmprestimoDoMes(
   categoriaGasto?: string,
   tipo: "credito" | "debito" = "credito"
 ) {
-  if (!isSupabaseConfigured || !supabase) return;
+  if (!isSupabaseConfigured || !supabase) return true;
 
-  await gastosFunctions.create({
+  const criado = await gastosFunctions.create({
     descricao: `${descricao} - ${pessoa}`,
     pessoa,
     valor_total: valorTotalPorPessoa,
@@ -75,8 +76,12 @@ async function criarLancamentoEmprestimoDoMes(
     cartao_id: undefined,
     conta_id: undefined,
   });
+  return !!criado;
 }
-// Note: saldo devedor behavior removed - no associated deletion needed
+
+const FALHA_AO_SALVAR = "Não foi possível salvar o gasto. Tente de novo.";
+const FALHA_NA_COBRANCA =
+  "O gasto foi salvo, mas a cobrança em A receber não. Abra o gasto e salve de novo para refazer.";
 
 /**
  * Apaga as cobranças que um gasto dividido espelhou em A receber (tabela
@@ -112,7 +117,7 @@ async function removerEspelhosDoDividido(gasto: MeuGasto, datasPossiveis: string
       : [];
   if (pessoas.length === 0) return;
 
-  const base = gasto.descricao.replace(/\s*\(\d+\/\d+\)$/, "");
+  const base = descricaoSemParcela(gasto.descricao);
   const n = gasto.num_parcelas || 1;
   const nome = n > 1 ? `${base} (${n} parcelas)` : base;
   const { data } = await supabase
@@ -148,7 +153,6 @@ export function useMeusGastos({
   user,
   mesVisualizacao,
   setModalConfirm,
-  setModalFeedback,
   cartoes,
   cartoesLoading = false,
   onRefreshGastos,
@@ -220,9 +224,9 @@ export function useMeusGastos({
     avisarDadosMudaram("meusGastos");
   }, [meusGastos, meusGastosLoaded]);
 
-  // Salvar meus gastos no localStorage como backup
+  // Modo demonstração (sem banco): a lista mora no navegador.
   useEffect(() => {
-    if (meusGastosLoaded) {
+    if (!isSupabaseConfigured && meusGastosLoaded) {
       localStorage.setItem("meusGastos", JSON.stringify(meusGastos));
     }
   }, [meusGastos, meusGastosLoaded]);
@@ -244,30 +248,15 @@ export function useMeusGastos({
 
   const totalMeusGastosCredito = meusGastosDoMes
     .filter((g) => g.tipo === "credito")
-    .reduce(
-      (acc, g) =>
-        acc +
-        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
-      0
-    );
+    .reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
 
   const totalMeusGastosDebito = meusGastosDoMes
     .filter((g) => g.tipo === "debito")
-    .reduce(
-      (acc, g) =>
-        acc +
-        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
-      0
-    );
+    .reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
 
   const totalMeusGastosPagos = meusGastosDoMes
     .filter((g) => g.pago || g.tipo === "debito")
-    .reduce(
-      (acc, g) =>
-        acc +
-        (g.categoria === "dividido" && g.minha_parte ? g.minha_parte : g.valor),
-      0
-    );
+    .reduce((acc, g) => acc + valorDaMinhaParte(g), 0);
 
   // Fixo dividido conta a minha parte (o resto volta pelo A receber).
   const totalGastosFixos = gastosFixos
@@ -331,6 +320,8 @@ export function useMeusGastos({
 
     setSaving(true);
     try {
+      const novos: MeuGasto[] = [];
+      const lote = Date.now();
       if (formMeuGasto.tipo === "credito" && numParcelas > 1) {
         const dataInicio = parseISO(formMeuGasto.data);
 
@@ -340,7 +331,7 @@ export function useMeusGastos({
           const dataParcela = antiga ? parseISO(dataDaParcelaAntiga(i)) : addMonths(dataInicio, i);
 
           const novoGasto: MeuGasto = {
-            id: `${Date.now()}-${i}`,
+            id: `${lote}-${i}`,
             descricao: `${formMeuGasto.descricao} (${i + 1}/${numParcelas})`,
             valor: valorParcela,
             tipo: formMeuGasto.tipo,
@@ -365,18 +356,11 @@ export function useMeusGastos({
             categoria_gasto: formMeuGasto.categoria_gasto || undefined,
           };
 
-          let created: any = null;
-          if (isSupabaseConfigured && supabase) {
-            created = await meusGastosFunctions.create(prepararGastoParaSupabase(novoGasto));
-            if (!created) {
-              setModalFeedback({ show: true, titulo: "Erro", mensagem: "Não foi possível salvar seu gasto. Tente novamente.", tipo: "info" });
-            }
-          }
-          setMeusGastos((prev) => [...prev, novoGasto]);
+          novos.push(novoGasto);
         }
       } else {
         const novoGasto: MeuGasto = {
-          id: Date.now().toString(),
+          id: lote.toString(),
           descricao: formMeuGasto.descricao,
           valor: valor,
           tipo: formMeuGasto.tipo,
@@ -399,18 +383,29 @@ export function useMeusGastos({
           categoria_gasto: formMeuGasto.categoria_gasto || undefined,
         };
 
-        if (isSupabaseConfigured && supabase) {
-          const created = await meusGastosFunctions.create(prepararGastoParaSupabase(novoGasto));
-          if (!created) {
-            setModalFeedback({ show: true, titulo: "Erro", mensagem: "Não foi possível salvar seu gasto. Tente novamente.", tipo: "info" });
-          }
-          // O saldo da conta sai do histórico (utils/saldo): nada a escrever aqui.
-        }
-        setMeusGastos((prev) => [...prev, novoGasto]);
+        novos.push(novoGasto);
       }
 
+      // O saldo da conta sai do histórico (utils/saldo): nada a escrever nele.
+      // O gasto só entra na lista depois de salvo; compra parcelada que falha
+      // no meio é desfeita, para não sobrar metade das parcelas.
+      if (isSupabaseConfigured && supabase) {
+        const salvos: string[] = [];
+        for (const g of novos) {
+          if (await meusGastosFunctions.create(prepararGastoParaSupabase(g))) {
+            salvos.push(g.id);
+            continue;
+          }
+          for (const id of salvos) await meusGastosFunctions.delete(id);
+          setError(FALHA_AO_SALVAR);
+          return;
+        }
+      }
+      setMeusGastos((prev) => [...prev, ...novos]);
+
+      let cobrancaFalhou = false;
       if (formMeuGasto.categoria === "fixo" && formDivide(formMeuGasto)) {
-        await criarCobrancasDoFixo({
+        cobrancaFalhou = !(await criarCobrancasDoFixo({
           descricao: formMeuGasto.descricao,
           valor,
           minha_parte: minhaParte,
@@ -418,7 +413,7 @@ export function useMeusGastos({
           tipo: formMeuGasto.tipo,
           categoria_gasto: formMeuGasto.categoria_gasto || undefined,
           pessoas: pessoasDoGasto(formMeuGasto),
-        });
+        }));
       }
 
       // Criar saldo devedor se for gasto dividido
@@ -448,7 +443,7 @@ export function useMeusGastos({
 
             const valorTotalPorPessoa = valorPorPessoa;
 
-            await criarLancamentoEmprestimoDoMes(
+            const criada = await criarLancamentoEmprestimoDoMes(
               pessoa,
               descricaoParaEmprestimo,
               valorTotalPorPessoa,
@@ -457,9 +452,11 @@ export function useMeusGastos({
               formMeuGasto.categoria_gasto || undefined,
               formMeuGasto.tipo
             );
+            if (!criada) cobrancaFalhou = true;
           }
         }
       }
+      if (cobrancaFalhou) toast.error(FALHA_NA_COBRANCA);
 
       if (onRefreshGastos) {
         await onRefreshGastos();
@@ -486,7 +483,7 @@ export function useMeusGastos({
   const handleEditMeuGasto = (gasto: MeuGasto) => {
     const numParcelas = gasto.num_parcelas || 1;
     const valorTotal = gasto.valor * numParcelas;
-    const minhaParteTotal = gasto.minha_parte
+    const minhaParteTotal = gasto.minha_parte != null
       ? gasto.minha_parte * numParcelas
       : undefined;
 
@@ -499,7 +496,7 @@ export function useMeusGastos({
       data: gasto.data,
       dividido_com: gasto.dividido_com || "",
       dividido_com_pessoas: gasto.dividido_com_pessoas || [],
-      minha_parte: minhaParteTotal
+      minha_parte: minhaParteTotal !== undefined
         ? formatCurrencyValue(minhaParteTotal)
         : "",
       dia_vencimento: gasto.dia_vencimento?.toString() || "",
@@ -548,34 +545,16 @@ export function useMeusGastos({
 
         // Fixo: mudar valor, dia, conta ou tipo não reescreve os meses que já
         // passaram (utils/saldo). Virar fixo agora conta do começo do mês.
-        let inicioDoFixo: string | null = null;
-        if (editandoMeuGasto.categoria === "fixo") {
-          inicioDoFixo = editandoMeuGasto.data;
-          await manterSaldoAoMudar(editandoMeuGasto, {
-            ...editandoMeuGasto,
-            categoria: formMeuGasto.categoria,
-            tipo: formMeuGasto.tipo,
-            valor: novoValorParcela,
-            dia_vencimento: parseInt(formMeuGasto.dia_vencimento) || 1,
-            conta_id: formMeuGasto.tipo === "debito" ? formMeuGasto.conta_id || undefined : undefined,
-          });
-        } else if (formMeuGasto.categoria === "fixo") {
-          inicioDoFixo = inicioParaNovoRecorrente();
-        }
+        const inicioDoFixo =
+          editandoMeuGasto.categoria === "fixo"
+            ? editandoMeuGasto.data
+            : formMeuGasto.categoria === "fixo"
+              ? inicioParaNovoRecorrente()
+              : null;
 
-        const descricaoBaseOriginal = editandoMeuGasto.descricao.replace(
-          /\s*\(\d+\/\d+\)$/,
-          ""
-        );
-        const numParcelasOriginal = editandoMeuGasto.num_parcelas || 1;
-
-        const parcelasRelacionadas = meusGastos.filter((g) => {
-          const descBase = g.descricao.replace(/\s*\(\d+\/\d+\)$/, "");
-          return (
-            descBase === descricaoBaseOriginal &&
-            g.num_parcelas === numParcelasOriginal
-          );
-        });
+        // Só as parcelas DESTA compra (utils/parcelas): pelo nome, um gasto
+        // igual de outro dia era editado no lugar deste.
+        const parcelasRelacionadas = parcelasDaCompra(editandoMeuGasto, meusGastos);
 
         const indiceParcelaEditada = (editandoMeuGasto.parcela_atual || 1) - 1;
         const dataAtualSelecionada = parseISO(formMeuGasto.data);
@@ -585,24 +564,29 @@ export function useMeusGastos({
         );
 
         const maxParcelas = Math.max(
-          parcelasRelacionadas.length,
+          ...parcelasRelacionadas.map((p) => p.parcela_atual || 1),
           novoNumParcelas
         );
         // Compra antiga lançada só com as parcelas que faltavam: as anteriores
         // foram pagas antes do Hedge e não voltam na edição.
-        const primeiraLancada = parcelasRelacionadas.length
-          ? Math.min(...parcelasRelacionadas.map((p) => p.parcela_atual || 1))
-          : 1;
+        const primeiraLancada = Math.min(...parcelasRelacionadas.map((p) => p.parcela_atual || 1));
+        // Na lista da tela as pessoas ficam em lista; no banco, em `dividido_com`.
+        const pessoasDoForm = formDivide(formMeuGasto) ? pessoasDoGasto(formMeuGasto) : undefined;
+        const usaBanco = isSupabaseConfigured && !!supabase;
 
-        for (let i = primeiraLancada - 1; i < maxParcelas; i++) {
-          const numParcela = i + 1;
-          const existente = parcelasRelacionadas.find(
-            (p) => (p.parcela_atual || 1) === numParcela
-          );
+        const gravarParcelas = async () => {
+          for (let i = primeiraLancada - 1; i < maxParcelas; i++) {
+            const numParcela = i + 1;
+            const existente = parcelasRelacionadas.find(
+              (p) => (p.parcela_atual || 1) === numParcela
+            );
 
-          if (numParcela <= novoNumParcelas) {
-            const dataParcela = addMonths(dataInicioReal, i);
-            const dataFormatada = format(dataParcela, "yyyy-MM-dd");
+            if (numParcela > novoNumParcelas) {
+              if (!existente) continue;
+              if (usaBanco && !(await meusGastosFunctions.delete(existente.id))) throw new Error(FALHA_AO_SALVAR);
+              setMeusGastos((prev) => prev.filter((g) => g.id !== existente.id));
+              continue;
+            }
 
             const dadosAtualizados: Partial<MeuGasto> = {
               descricao:
@@ -613,11 +597,12 @@ export function useMeusGastos({
               tipo: formMeuGasto.tipo,
               categoria: formMeuGasto.categoria,
               categoria_gasto: formMeuGasto.categoria_gasto || undefined,
-              data: formMeuGasto.categoria === "fixo" && inicioDoFixo ? inicioDoFixo : dataFormatada,
+              data:
+                formMeuGasto.categoria === "fixo" && inicioDoFixo
+                  ? inicioDoFixo
+                  : format(addMonths(dataInicioReal, i), "yyyy-MM-dd"),
               // Todas as pessoas, não só a primeira: a edição perdia as outras.
-              dividido_com: formDivide(formMeuGasto)
-                ? divididoComParaBanco(pessoasDoGasto(formMeuGasto))
-                : undefined,
+              dividido_com: pessoasDoForm ? divididoComParaBanco(pessoasDoForm) : undefined,
               minha_parte: formDivide(formMeuGasto) ? minhaParte / novoNumParcelas : undefined,
               num_parcelas: novoNumParcelas,
               parcela_atual: numParcela,
@@ -627,56 +612,45 @@ export function useMeusGastos({
                   : undefined,
               cartao_id: formMeuGasto.tipo === "credito" ? formMeuGasto.cartao_id || undefined : undefined,
               conta_id: formMeuGasto.tipo === "debito" ? formMeuGasto.conta_id || undefined : undefined,
-              pago:
-                formMeuGasto.tipo === "debito"
-                  ? true
-                  : existente
-                  ? existente.pago
-                  : false,
+              pago: formMeuGasto.tipo === "debito" ? true : existente ? existente.pago : false,
             };
 
             if (existente) {
-              if (isSupabaseConfigured && supabase) {
-                await meusGastosFunctions.update(existente.id, dadosAtualizados);
+              if (usaBanco && !(await meusGastosFunctions.update(existente.id, dadosAtualizados))) {
+                throw new Error(FALHA_AO_SALVAR);
               }
               setMeusGastos((prev) =>
                 prev.map((g) =>
-                  g.id === existente.id ? { ...g, ...dadosAtualizados } : g
+                  g.id === existente.id ? { ...g, ...dadosAtualizados, dividido_com_pessoas: pessoasDoForm } : g
                 )
               );
             } else {
-              const novoId = `${Date.now()}-${i}`;
-              const novoGasto: MeuGasto = {
-                id: novoId,
-                descricao: dadosAtualizados.descricao || "",
-                valor: dadosAtualizados.valor || 0,
-                tipo: dadosAtualizados.tipo || "debito",
-                categoria: dadosAtualizados.categoria || "pessoal",
-                data: dadosAtualizados.data || "",
-                pago: dadosAtualizados.pago || false,
-                dividido_com: dadosAtualizados.dividido_com,
-                dividido_com_pessoas: dadosAtualizados.dividido_com_pessoas,
-                minha_parte: dadosAtualizados.minha_parte,
-                num_parcelas: dadosAtualizados.num_parcelas,
-                parcela_atual: dadosAtualizados.parcela_atual,
-                dia_vencimento: dadosAtualizados.dia_vencimento,
-              };
-
-              if (isSupabaseConfigured && supabase) {
-                await meusGastosFunctions.create(prepararGastoParaSupabase(novoGasto));
+              // Parcela que a edição acrescentou: nasce com tudo o que as outras
+              // têm. Sem o cartão, ela ficava fora da fatura.
+              const novoGasto = { ...dadosAtualizados, id: `${Date.now()}-${i}` } as MeuGasto;
+              if (usaBanco && !(await meusGastosFunctions.create(prepararGastoParaSupabase(novoGasto)))) {
+                throw new Error(FALHA_AO_SALVAR);
               }
-              setMeusGastos((prev) => [...prev, novoGasto]);
-            }
-          } else {
-            if (existente) {
-              if (isSupabaseConfigured && supabase) {
-                await meusGastosFunctions.delete(existente.id);
-              }
-              setMeusGastos((prev) =>
-                prev.filter((g) => g.id !== existente.id)
-              );
+              setMeusGastos((prev) => [...prev, { ...novoGasto, dividido_com_pessoas: pessoasDoForm }]);
             }
           }
+        };
+
+        if (editandoMeuGasto.categoria === "fixo") {
+          await manterSaldoAoMudar(
+            editandoMeuGasto,
+            {
+              ...editandoMeuGasto,
+              categoria: formMeuGasto.categoria,
+              tipo: formMeuGasto.tipo,
+              valor: novoValorParcela,
+              dia_vencimento: parseInt(formMeuGasto.dia_vencimento) || 1,
+              conta_id: formMeuGasto.tipo === "debito" ? formMeuGasto.conta_id || undefined : undefined,
+            },
+            gravarParcelas
+          );
+        } else {
+          await gravarParcelas();
         }
 
         // As cobranças do gasto como ele ERA saem antes: se continuar dividido,
@@ -691,8 +665,9 @@ export function useMeusGastos({
         // Fixo dividido: as cobranças antigas param no mês passado e as novas
         // (valores, pessoas e parte de agora) valem a partir deste mês.
         if (editandoMeuGasto.categoria === "fixo") await encerrarCobrancasDoFixo(editandoMeuGasto, false);
+        let cobrancaFalhou = false;
         if (formMeuGasto.categoria === "fixo" && formDivide(formMeuGasto)) {
-          await criarCobrancasDoFixo({
+          cobrancaFalhou = !(await criarCobrancasDoFixo({
             descricao: formMeuGasto.descricao,
             valor,
             minha_parte: minhaParte,
@@ -700,7 +675,7 @@ export function useMeusGastos({
             tipo: formMeuGasto.tipo,
             categoria_gasto: formMeuGasto.categoria_gasto || undefined,
             pessoas: pessoasDoGasto(formMeuGasto),
-          });
+          }));
         }
 
         if (
@@ -729,22 +704,29 @@ export function useMeusGastos({
 
               const valorTotalPorPessoa = valorPorPessoa;
 
-                await criarLancamentoEmprestimoDoMes(
-                  pessoa,
-                  descricaoParaSaldo,
-                  valorTotalPorPessoa,
-                  novoNumParcelas,
-                  dataDoEspelho(format(dataInicioReal, "yyyy-MM-dd"), formMeuGasto.tipo, formMeuGasto.cartao_id, cartoes),
-                  formMeuGasto.categoria_gasto || undefined,
-                  formMeuGasto.tipo
-                );
+              const criada = await criarLancamentoEmprestimoDoMes(
+                pessoa,
+                descricaoParaSaldo,
+                valorTotalPorPessoa,
+                novoNumParcelas,
+                dataDoEspelho(format(dataInicioReal, "yyyy-MM-dd"), formMeuGasto.tipo, formMeuGasto.cartao_id, cartoes),
+                formMeuGasto.categoria_gasto || undefined,
+                formMeuGasto.tipo
+              );
+              if (!criada) cobrancaFalhou = true;
             }
 
             // no-op: no onRefreshSaldos callback anymore
           }
         }
 
+        if (cobrancaFalhou) toast.error(FALHA_NA_COBRANCA);
         resetForm();
+      } catch (err) {
+        console.error("Erro ao salvar meu gasto:", err);
+        // A edição pode ter parado no meio: a lista volta a mostrar o que ficou.
+        await fetchMeusGastos();
+        setError("Não foi possível salvar tudo. Confira o gasto e tente de novo.");
       } finally {
         setSaving(false);
       }
@@ -766,8 +748,9 @@ export function useMeusGastos({
 
     setSaving(true);
     try {
-      if (isSupabaseConfigured && supabase) {
-        await meusGastosFunctions.update(id, updates);
+      if (isSupabaseConfigured && supabase && !(await meusGastosFunctions.update(id, updates))) {
+        toast.error(FALHA_AO_SALVAR);
+        return;
       }
 
       setMeusGastos((prev) =>
@@ -787,16 +770,8 @@ export function useMeusGastos({
     const gastoParaExcluir = meusGastos.find((g) => g.id === id);
     if (!gastoParaExcluir) return;
 
-    const descricaoBase = gastoParaExcluir.descricao.replace(
-      /\s*\(\d+\/\d+\)$/,
-      ""
-    );
-    const numParcelas = gastoParaExcluir.num_parcelas || 1;
-
-    const parcelasRelacionadas = meusGastos.filter((g) => {
-      const descBase = g.descricao.replace(/\s*\(\d+\/\d+\)$/, "");
-      return descBase === descricaoBase && g.num_parcelas === numParcelas;
-    });
+    // Só as parcelas desta compra (utils/parcelas), não todo gasto de mesmo nome.
+    const parcelasRelacionadas = parcelasDaCompra(gastoParaExcluir, meusGastos);
 
     const mensagem =
       (parcelasRelacionadas.length > 1
@@ -811,26 +786,30 @@ export function useMeusGastos({
       onConfirm: async () => {
         setSaving(true);
         try {
-          // Excluir o fixo não devolve ao saldo o que ele já tirou da conta.
+          const excluir = async () => {
+            for (const parcela of parcelasRelacionadas) {
+              if (isSupabaseConfigured && supabase && !(await meusGastosFunctions.delete(parcela.id))) {
+                throw new Error("Falha ao excluir o gasto.");
+              }
+            }
+          };
           if (gastoParaExcluir.categoria === "fixo") {
-            await manterSaldoAoMudar(gastoParaExcluir, null);
+            // Excluir o fixo não devolve ao saldo o que ele já tirou da conta.
+            await manterSaldoAoMudar(gastoParaExcluir, null, excluir);
             // As cobranças das pessoas param depois deste mês; os meses que já
             // passaram continuam em A receber.
             await encerrarCobrancasDoFixo(gastoParaExcluir, true);
+          } else {
+            await excluir();
           }
 
+          // Depois do gasto: se a exclusão falhar, a cobrança continua com dono.
           const primeira =
             parcelasRelacionadas.find((g) => (g.parcela_atual || 1) === 1) || gastoParaExcluir;
           await removerEspelhosDoDividido(gastoParaExcluir, [
             primeira.data,
             dataDoEspelho(primeira.data, gastoParaExcluir.tipo, gastoParaExcluir.cartao_id, cartoes),
           ]);
-
-          for (const parcela of parcelasRelacionadas) {
-            if (isSupabaseConfigured && supabase) {
-              await meusGastosFunctions.delete(parcela.id);
-            }
-          }
 
           const idsParaExcluir = new Set(parcelasRelacionadas.map((p) => p.id));
           setMeusGastos((prev) =>
@@ -845,6 +824,10 @@ export function useMeusGastos({
             mensagem: "",
             onConfirm: () => {},
           });
+        } catch (err) {
+          console.error("Erro ao excluir meu gasto:", err);
+          await fetchMeusGastos();
+          toast.error("Não foi possível excluir o gasto. Tente de novo.");
         } finally {
           setSaving(false);
         }
@@ -864,7 +847,35 @@ export function useMeusGastos({
       // Desativar não devolve o que o fixo já tirou; reativar não cobra os
       // meses em que ficou parado (utils/saldo).
       const updates: Partial<MeuGasto> = { ativo: novoStatus };
-      await manterSaldoAoMudar(gasto, { ...gasto, ...updates });
+      // No cartão, o dia em que parou segura as faturas já cobradas
+      // (utils/fatura); ao voltar, as faturas do intervalo ficam de fora.
+      const hojeIso = format(new Date(), "yyyy-MM-dd");
+      const cartaoDoFixo = gasto.tipo === "credito" ? cartoes.find((c) => c.id === gasto.cartao_id) : undefined;
+      const comDia: Partial<MeuGasto> = novoStatus
+        ? {
+            ...updates,
+            encerrado_em: null,
+            ...(cartaoDoFixo && gasto.encerrado_em
+              ? {
+                  meses_suspensos: [
+                    ...new Set([
+                      ...(gasto.meses_suspensos || []),
+                      ...faturasDoIntervalo(cartaoDoFixo, gasto.dia_vencimento || 1, gasto.encerrado_em, hojeIso),
+                    ]),
+                  ],
+                }
+              : {}),
+          }
+        : { ...updates, encerrado_em: hojeIso };
+      let gravado = comDia;
+      await manterSaldoAoMudar(gasto, { ...gasto, ...updates }, async () => {
+        if (!isSupabaseConfigured || !supabase) return;
+        if (await meusGastosFunctions.update(id, comDia)) return;
+        // Sem a coluna `encerrado_em` (migração 20261006 ainda não rodou):
+        // grava só o estado, como antes.
+        gravado = updates;
+        if (!(await meusGastosFunctions.update(id, updates))) throw new Error(FALHA_AO_SALVAR);
+      });
       // Dividido: desativar para as cobranças depois deste mês; reativar cria
       // as cobranças de novo a partir deste mês.
       if (novoStatus) {
@@ -880,17 +891,17 @@ export function useMeusGastos({
       } else {
         await encerrarCobrancasDoFixo(gasto, true);
       }
-      if (isSupabaseConfigured && supabase) {
-        await meusGastosFunctions.update(id, updates);
-      }
 
       setMeusGastos((prev) =>
-        prev.map((g) => (g.id === id ? { ...g, ...updates } : g))
+        prev.map((g) => (g.id === id ? { ...g, ...gravado } : g))
       );
 
       if (onRefreshGastos) {
         await onRefreshGastos();
       }
+    } catch (err) {
+      console.error("Erro ao mudar o gasto fixo:", err);
+      toast.error(FALHA_AO_SALVAR);
     } finally {
       setSaving(false);
     }
@@ -911,8 +922,9 @@ export function useMeusGastos({
 
     setSaving(true);
     try {
-      if (isSupabaseConfigured && supabase) {
-        await meusGastosFunctions.update(id, updates);
+      if (isSupabaseConfigured && supabase && !(await meusGastosFunctions.update(id, updates))) {
+        toast.error(FALHA_AO_SALVAR);
+        return;
       }
 
       setMeusGastos((prev) =>
@@ -947,8 +959,9 @@ export function useMeusGastos({
 
     setSaving(true);
     try {
-      if (isSupabaseConfigured && supabase) {
-        await meusGastosFunctions.update(id, updates);
+      if (isSupabaseConfigured && supabase && !(await meusGastosFunctions.update(id, updates))) {
+        toast.error(FALHA_AO_SALVAR);
+        return;
       }
 
       setMeusGastos((prev) =>
@@ -980,8 +993,9 @@ export function useMeusGastos({
           data_pagamento: dataPagamento,
         };
 
-        if (isSupabaseConfigured && supabase) {
-          await meusGastosFunctions.update(gasto.id, updates);
+        if (isSupabaseConfigured && supabase && !(await meusGastosFunctions.update(gasto.id, updates))) {
+          toast.error("Nem tudo foi marcado como pago. Tente de novo.");
+          break;
         }
 
         setMeusGastos((prev) =>

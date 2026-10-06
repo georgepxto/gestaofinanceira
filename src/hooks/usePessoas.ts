@@ -44,10 +44,10 @@ export function usePessoas({ user }: UsePessoasProps) {
     }
   }, [user, fetchPessoas]);
 
-  // Salvar pessoas no localStorage como backup
+  // Modo demonstração (sem banco): a lista mora no navegador.
   useEffect(() => {
-    // Vazia também: senão excluir a última pessoa a deixava no backup.
-    if (pessoasLoaded) {
+    // Vazia também: senão excluir a última pessoa a deixava guardada.
+    if (!isSupabaseConfigured && pessoasLoaded) {
       localStorage.setItem("pessoas", JSON.stringify(pessoas));
     }
   }, [pessoas, pessoasLoaded]);
@@ -70,7 +70,7 @@ export function usePessoas({ user }: UsePessoasProps) {
         }
         const sucesso = await pessoasFunctions.create({ id: novoId, nome });
         if (!sucesso) {
-          alert(`Falha ao salvar: A pessoa "${nome}" já existe no banco de dados com este nome ou houve um problema de conexão.`);
+          toast.error(`Não foi possível salvar ${nome}. Confira se o nome já existe e tente de novo.`);
           return; // Aborta e não adiciona na interface se der erro
         }
       }
@@ -106,8 +106,9 @@ export function usePessoas({ user }: UsePessoasProps) {
       // Buscar ID da pessoa e deletar
       const pessoasData = await pessoasFunctions.getAll();
       const pessoaToDelete = pessoasData.find((p) => p.nome === nome);
-      if (pessoaToDelete) {
-        await pessoasFunctions.delete(pessoaToDelete.id);
+      if (pessoaToDelete && !(await pessoasFunctions.delete(pessoaToDelete.id))) {
+        toast.error(`Não foi possível remover ${nome}. Tente de novo.`);
+        return;
       }
     }
     setPessoas((prev) => prev.filter((p) => p !== nome));

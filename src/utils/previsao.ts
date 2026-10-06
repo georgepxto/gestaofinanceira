@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { supabase } from "../lib/supabase";
 import type { CartaoCredito, ContaBancaria, Gasto, TransacaoCartao } from "../types";
 import { chaveMesPagamentoParcial, formatCurrency, formatMonthYear, isGastoAtivoNoMes } from "./calculations";
@@ -10,6 +10,7 @@ import {
   fixosAindaPorSair,
   migrarContasLegadas,
   receitaNoMes,
+  saidasDoEmprestimo,
   saldoDaConta,
   type Livro,
 } from "./saldo";
@@ -74,18 +75,26 @@ export function calcularPrevisao(d: DadosPrevisao, hoje = new Date()): Previsao 
 
   const saldoHoje = Math.round(d.contas.reduce((s, c) => s + saldoDaConta(c, d.livro, hoje), 0) * 100) / 100;
 
-  // Salário e receitas fixas/recorrentes deste mês que ainda não caíram.
+  // Salário e receitas fixas/recorrentes que ainda não caíram: as deste mês e
+  // a do mês passado que ficou sem resposta — ela não está no saldo, e sem
+  // esta linha sumia da conta até alguém confirmar.
+  const mesPassado = format(new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1), "yyyy-MM");
   const entradas: LinhaPrevisao[] = d.livro.receitas
-    .filter((r) => r.tipo !== "avulso" && naConta(r.conta_id) && receitaNoMes(r, mes))
-    .map((r) => ({ r, e: estadoDaEntrada(r, mes, d.livro, hoje) }))
+    .filter((r) => r.tipo !== "avulso" && naConta(r.conta_id))
+    .flatMap((r) =>
+      [mesPassado, mes]
+        .filter((m) => receitaNoMes(r, m))
+        .map((m) => ({ r, m, e: estadoDaEntrada(r, m, d.livro, hoje) }))
+    )
     .filter(({ e }) => e.status !== "recebida")
-    .map(({ r, e }) => ({
+    .map(({ r, m, e }) => ({
       descricao: r.descricao,
       valor: r.valor,
       dia: e.dataPrevista,
       detalhe: [
         nomeDaConta(r.conta_id),
         r.tipo === "recorrente" ? "recorrente" : "fixa",
+        m === mesPassado ? "do mês passado" : "",
         e.status === "adiada" ? "adiada" : e.status === "confirmar" ? "esperando confirmar" : "",
       ]
         .filter(Boolean)
@@ -101,7 +110,7 @@ export function calcularPrevisao(d: DadosPrevisao, hoje = new Date()): Previsao 
   const motivos = new Map<string, string[]>();
   for (const g of d.livro.emprestimos as Gasto[]) {
     if (!isGastoAtivoNoMes(g, hoje) || fechados.has(g.pessoa)) continue;
-    devido.set(g.pessoa, (devido.get(g.pessoa) || 0) + g.valor_total / g.num_parcelas);
+    devido.set(g.pessoa, (devido.get(g.pessoa) || 0) + g.valor_total / Math.max(1, g.num_parcelas || 1));
     // "Apple One - George" → "Apple One": o nome da pessoa já está na linha.
     const motivo = g.descricao.replace(new RegExp(`\\s*-\\s*${g.pessoa.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), "");
     const lista = motivos.get(g.pessoa) || [];
@@ -121,19 +130,28 @@ export function calcularPrevisao(d: DadosPrevisao, hoje = new Date()): Previsao 
     .map((g) => {
       const ultimo = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
       const dia = `${mes}-${String(Math.min(g.dia_vencimento || 1, ultimo)).padStart(2, "0")}`;
-      const dividido = !!g.minha_parte && (g.dividido_com_pessoas?.length || g.dividido_com);
+      const dividido = g.minha_parte != null && (g.dividido_com_pessoas?.length || g.dividido_com);
       const detalhe = dividido
         ? `fixo dividido, sua parte ${formatCurrency(g.minha_parte as number)}`
         : `fixo, ${nomeDaConta(g.conta_id)}`;
       return { descricao: g.descricao, valor: fixosAindaPorSair([g], hoje), dia, detalhe };
     });
+  const amanha = format(addDays(hoje, 1), "yyyy-MM-dd");
+  const fimDoMes = format(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0), "yyyy-MM-dd");
   const debitosFuturos = [
     ...d.livro.meusGastos
       .filter((g) => g.categoria !== "fixo" && g.tipo === "debito" && naConta(g.conta_id) && g.data > hojeIso && g.data.startsWith(mes))
       .map((g) => ({ descricao: g.descricao, valor: g.valor, dia: g.data, detalhe: `débito agendado, ${nomeDaConta(g.conta_id)}` })),
     ...(d.livro.emprestimos as Gasto[])
-      .filter((e) => e.tipo === "debito" && naConta(e.conta_id) && e.data_inicio > hojeIso && e.data_inicio.startsWith(mes))
-      .map((e) => ({ descricao: e.descricao, valor: e.valor_total, dia: e.data_inicio, detalhe: `empréstimo para ${e.pessoa}` })),
+      .filter((e) => e.tipo === "debito" && naConta(e.conta_id))
+      .flatMap((e) =>
+        saidasDoEmprestimo(e, amanha, fimDoMes).map((dia) => ({
+          descricao: e.descricao,
+          valor: e.valor_total,
+          dia,
+          detalhe: `empréstimo para ${e.pessoa}`,
+        }))
+      ),
   ];
   const saidas = [...saidasFixas, ...debitosFuturos];
 

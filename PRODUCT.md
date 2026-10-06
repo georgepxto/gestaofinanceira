@@ -1,16 +1,12 @@
 # Product
 
-## Register
-
-product
-
 ## Users
 
 Brasileiros jovens adultos — freelancers, estudantes e empreendedores — que gerenciam finanças pessoais e compartilhadas. Usam o app no celular ou desktop depois do trabalho ou fim de semana, querendo entender rapidamente para onde o dinheiro foi e quanto estão devendo ou a receber de amigos.
 
 ## Product Purpose
 
-Hedge é um controlador financeiro pessoal e colaborativo: registra gastos pessoais, divide contas entre amigos com rastreio de quem pagou, gerencia cartões de crédito e metas de gasto, e entrega dashboards e relatórios PDF. O sucesso é quando o usuário abre o app e em 30 segundos sabe seu saldo real, o que deve e o que tem a receber.
+Hedge é um controlador financeiro pessoal e colaborativo: registra gastos pessoais, divide contas entre amigos com rastreio de quem pagou, gerencia cartões de crédito e limites de gasto, e entrega dashboards e relatórios PDF. O sucesso é quando o usuário abre o app e em 30 segundos sabe seu saldo real, o que deve e o que tem a receber.
 
 ## Brand Personality
 

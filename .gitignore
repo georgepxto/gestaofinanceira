@@ -30,6 +30,14 @@ vapid_keys.json
 playwright-report/
 test-results/
 
+# Estado local das ferramentas de agente
+.claude/settings.local.json
+.impeccable/hook.cache.json
+.impeccable/live/
+
 # Test screenshots/images
 screenshots/
 tests/e2e/screenshots/
+
+# Binário do Impeccable: o lançador baixa de novo na primeira execução
+.claude/skills/impeccable/scripts/bin/

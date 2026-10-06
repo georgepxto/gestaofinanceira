@@ -90,9 +90,9 @@ npm run dev
 
 O Supabase é obrigatório: autenticação, dados e Row Level Security (cada usuário só vê o que é seu) vivem lá.
 
-- **`supabase_schema.sql`** — schema principal (gastos, pessoas, saldos devedores, meus gastos, contas bancárias, cartões, categorias personalizadas, etc.).
-- **`supabase_admin_schema.sql`**, **`supabase_admin_v2.sql`** — papéis de usuário e feature flags (usados pelo Admin).
-- **`supabase_web_vitals.sql`** — tabela de Core Web Vitals (opcional, ver [Performance](#-performance-em-produção)).
+- **`supabase/base/supabase_schema.sql`** — schema principal (gastos, pessoas, saldos devedores, meus gastos, contas bancárias, cartões, categorias personalizadas, etc.).
+- **`supabase/base/supabase_admin_schema.sql`**, **`supabase/base/supabase_admin_v2.sql`** — papéis de usuário e feature flags (usados pelo Admin).
+- **`supabase/base/supabase_web_vitals.sql`** — tabela de Core Web Vitals (opcional, ver [Performance](#-performance-em-produção)).
 - **`supabase/migrations/`** — migrations incrementais mais recentes, aplicadas por cima do schema acima.
 
 > ⚠️ **Conhecido:** o schema ainda está espalhado entre esses arquivos soltos na raiz e a pasta `supabase/migrations/`, sem um fluxo único de setup. Ao provisionar um projeto novo, rode os arquivos na raiz primeiro (nas versões `_v2`/`fix_*` mais recentes) e depois as migrations em ordem cronológica pelo nome do arquivo. Consolidar isso em um histórico de migrations único é uma pendência conhecida.
@@ -172,7 +172,7 @@ VITE_WEB_VITALS_ENDPOINT=https://seu-endpoint.com/web-vitals
 
 ### Coleta no Supabase (produção)
 
-1. Execute o SQL em `supabase_web_vitals.sql` no SQL Editor do Supabase.
+1. Execute o SQL em `supabase/base/supabase_web_vitals.sql` no SQL Editor do Supabase.
 2. Faça deploy da Edge Function:
 
 ```bash

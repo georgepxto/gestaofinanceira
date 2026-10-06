@@ -1,5 +1,5 @@
 import { addDays, format, startOfMonth } from "date-fns";
-import { supabase } from "../lib/supabase";
+import { supabase, tabelaNaoExiste } from "../lib/supabase";
 import type { ContaBancaria, Gasto, MeuGasto, Receita } from "../types";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -13,8 +13,8 @@ import type { ContaBancaria, Gasto, MeuGasto, Receita } from "../types";
 //         − tudo que saiu dela desde que foi criada, até hoje
 //
 // Entra: receita avulsa e cada mês de receita fixa/recorrente.
-// Sai: gasto no débito, empréstimo no débito, fatura paga e cada mês de gasto
-// fixo. Só mexe no saldo o que tem conta escolhida.
+// Sai: gasto no débito, empréstimo no débito (todo mês, no que repete), fatura
+// paga e cada mês de gasto fixo. Só mexe no saldo o que tem conta escolhida.
 //
 // Antes, criar/editar/excluir cada coisa escrevia `saldo_atual` à mão, em cinco
 // lugares, e fixo/receita recorrente entravam só "no mês atual": bastava um
@@ -150,6 +150,15 @@ export function ocorrencias(
     if (mes > 11) { mes = 0; ano++; }
   }
   return datas;
+}
+
+/**
+ * Dias em que o empréstimo no débito saiu da conta entre `de` e `ate`: o da
+ * data, ou um por mês quando ele repete ("Sim, é fixo").
+ */
+export function saidasDoEmprestimo(e: Gasto, de: string, ate: string): string[] {
+  if (!e.recorrente) return e.data_inicio >= de && e.data_inicio <= ate ? [e.data_inicio] : [];
+  return ocorrencias(e.data_inicio, Number(e.data_inicio.split("-")[2]) || 1, ate).filter((d) => d >= de);
 }
 
 /** O fixo mexe no saldo? Só no débito, com conta e ativo. */
@@ -303,7 +312,7 @@ export function saldoDaConta(conta: ContaBancaria, livro: Livro, hoje = new Date
   }
 
   for (const e of livro.emprestimos) {
-    if (e.conta_id === conta.id && e.tipo === "debito" && noPeriodo(e.data_inicio)) saldo -= e.valor_total;
+    if (e.conta_id === conta.id && e.tipo === "debito") saldo -= e.valor_total * saidasDoEmprestimo(e, de, ate).length;
   }
 
   for (const p of livro.pagamentosFatura) {
@@ -355,10 +364,12 @@ export const inicioParaNovoRecorrente = (hoje = new Date()) => format(startOfMon
 /** Soma `delta` ao saldo_inicial da conta (lido fresco do banco). */
 async function somarAoSaldoInicial(contaId: string, delta: number) {
   if (!supabase || !delta) return;
-  const { data } = await supabase.from("contas_bancarias").select("saldo_inicial").eq("id", contaId).single();
+  const { data, error: erroLeitura } = await supabase.from("contas_bancarias").select("saldo_inicial").eq("id", contaId).single();
+  if (erroLeitura) throw erroLeitura;
   if (!data) return;
   const novo = Math.round(((Number(data.saldo_inicial) || 0) + delta) * 100) / 100;
-  await supabase.from("contas_bancarias").update({ saldo_inicial: novo }).eq("id", contaId);
+  const { error } = await supabase.from("contas_bancarias").update({ saldo_inicial: novo }).eq("id", contaId);
+  if (error) throw error;
 }
 
 /** Quanto o fixo/receita recorrente já mexeu no saldo da conta até hoje (com sinal). */
@@ -375,17 +386,20 @@ function efeitoNaConta(item: MeuGasto | Receita | null, conta: ContaBancaria, ho
  * para 1.500 não muda quanto saiu nos meses que já foram, e excluir o fixo não
  * devolve ao saldo um dinheiro que de fato saiu.
  *
- * Chamar ANTES de gravar, com o item como era e como fica (`null` = excluído).
- * A diferença do que os dois já teriam movimentado vai para o saldo_inicial de
- * cada conta envolvida, e o saldo de hoje fica igual. Daqui pra frente vale o
- * novo. O item não muda de data: continua aparecendo nos meses em que existiu.
+ * Recebe o item como era, como fica (`null` = excluído) e `gravar`, que faz a
+ * mudança no banco. A diferença do que os dois já teriam movimentado é
+ * calculada antes, e só vai para o saldo_inicial de cada conta envolvida
+ * depois que `gravar` deu certo: se a gravação falha, o saldo não é tocado.
+ * O saldo de hoje fica igual e daqui pra frente vale o novo. O item não muda
+ * de data: continua aparecendo nos meses em que existiu.
  */
 export async function manterSaldoAoMudar(
   antes: MeuGasto | Receita,
   depois: MeuGasto | Receita | null,
+  gravar: () => Promise<void>,
   hoje = new Date()
 ) {
-  if (!supabase) return;
+  if (!supabase) return gravar();
   // Receita: o que já caiu vem das confirmações, que a edição não muda.
   let confirmacao: InfoConfirmacao = {};
   if (!ehFixo(antes)) {
@@ -393,6 +407,8 @@ export async function manterSaldoAoMudar(
       supabase.from("receitas_confirmacoes").select("*").eq("receita_id", antes.id),
       supabase.auth.getUser(),
     ]);
+    // Sem a tabela, a receita entra sozinha; outro erro não pode virar isso.
+    if (error && !tabelaNaoExiste(error)) throw error;
     if (!error) {
       confirmacao = {
         confirmacoes: (lista as ConfirmacaoReceita[]) || [],
@@ -401,13 +417,17 @@ export async function manterSaldoAoMudar(
     }
   }
   const ids = [...new Set([antes.conta_id, depois?.conta_id].filter(Boolean))] as string[];
+  const deltas: { id: string; delta: number }[] = [];
   for (const id of ids) {
-    const { data } = await supabase.from("contas_bancarias").select("*").eq("id", id).single();
+    const { data, error } = await supabase.from("contas_bancarias").select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
     if (!data) continue;
     const conta = data as ContaBancaria;
     const delta = efeitoNaConta(depois, conta, hoje, confirmacao) - efeitoNaConta(antes, conta, hoje, confirmacao);
-    if (Math.abs(delta) > 0.004) await somarAoSaldoInicial(id, -delta);
+    if (Math.abs(delta) > 0.004) deltas.push({ id, delta });
   }
+  await gravar();
+  for (const { id, delta } of deltas) await somarAoSaldoInicial(id, -delta);
 }
 
 /** Corrigir o saldo à mão: a diferença vai para o saldo_inicial. */
@@ -470,6 +490,10 @@ export async function carregarLivro(): Promise<Livro> {
     supabase.from("pagamentos_parciais").select("*"),
     supabase.from("saldos_devedores").select("historico"),
   ]);
+  // Uma consulta que falhou não pode virar "lista vazia": o saldo sairia sem os
+  // gastos (ou sem as receitas) e a migração das contas antigas gravaria isso.
+  const falha = [r, g, e, p, pp, sd].find((x) => x.error)?.error;
+  if (falha) throw falha;
   return {
     receitas: (r.data as Receita[]) || [],
     meusGastos: (g.data as MeuGasto[]) || [],
@@ -482,7 +506,8 @@ export async function carregarLivro(): Promise<Livro> {
 
 /**
  * As confirmações e o dia a partir do qual elas valem. Sem a tabela (migração
- * ainda não rodada), o recurso fica desligado e tudo segue como antes. Na
+ * ainda não rodada), o recurso fica desligado e tudo segue como antes; qualquer
+ * outro erro sobe, para a receita não entrar sozinha no saldo por engano. Na
  * primeira vez com a tabela, marca hoje como o começo — o que já aconteceu não
  * passa a pedir confirmação.
  */
@@ -492,7 +517,10 @@ export async function carregarConfirmacoes(): Promise<InfoConfirmacao> {
     supabase.from("receitas_confirmacoes").select("*"),
     supabase.auth.getUser(),
   ]);
-  if (error) return { confirmacoes: [], confirmacaoDesde: null };
+  if (error) {
+    if (tabelaNaoExiste(error)) return { confirmacoes: [], confirmacaoDesde: null };
+    throw error;
+  }
   let desde = (auth.user?.user_metadata?.entradas_desde as string) || null;
   if (!desde && auth.user) {
     desde = hojeIso(new Date());

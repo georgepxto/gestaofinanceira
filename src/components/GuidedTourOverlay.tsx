@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { Button } from "./ui/Button";
 import { Pill } from "./ui/Pill";
+import { useFocusTrap } from "../hooks";
 
 interface GuidedTourOverlayStep {
   alvo: string;
@@ -47,6 +48,10 @@ export const GuidedTourOverlay = ({
   onPrevious,
   onNext,
 }: GuidedTourOverlayProps) => {
+  // O fundo escurecido já bloqueia o clique no resto da tela; o teclado
+  // acompanha: o foco fica no balão e o Esc fecha.
+  const balaoRef = useFocusTrap<HTMLDivElement>(onClose, show && !!currentStep);
+
   if (!show || !currentStep) {
     return null;
   }
@@ -110,7 +115,9 @@ export const GuidedTourOverlay = ({
       )}
 
       <div
+        ref={balaoRef}
         role="dialog"
+        aria-modal="true"
         aria-labelledby="tour-titulo"
         className="absolute pointer-events-auto bg-surface-2 text-fg w-[calc(100vw-24px)] max-w-[360px] rounded border border-line max-h-[calc(100vh-24px)] overflow-y-auto"
         style={{ left: tooltipLeft, top: tooltipTop }}

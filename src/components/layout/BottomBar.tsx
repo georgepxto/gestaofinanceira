@@ -65,7 +65,7 @@ export const BottomBar = ({ onLancar }: BottomBarProps) => {
     setTraco((t) => (t && t.x === x && t.largura === largura ? t : { x, largura }));
   };
 
-  useLayoutEffect(medir, [ativa, abas.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  useLayoutEffect(medir, [ativa, abas.length]);
   const medirRef = useRef(medir);
   medirRef.current = medir;
   useEffect(() => {

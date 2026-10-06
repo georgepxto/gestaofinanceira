@@ -355,20 +355,23 @@ input[type="date"]::-webkit-date-and-time-value {
   transition-timing-function: var(--ease-viagem);
 }
 
-/* Tudo desligado para quem pediu menos movimento. */
+/* Para quem pediu menos movimento: nada desliza, cresce ou entra em cena —
+   animação e rolagem suave saem, e a transição só vale para cor e opacidade.
+   A troca de estado (hover, foco, item marcado) continua visível como um
+   esmaecer curto, em vez de virar um corte seco. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity !important;
     scroll-behavior: auto !important;
   }
 }
 
 /* <Skeleton>: bloco reto em --surface-3 com uma faixa de brilho que passa
-   devagar. Com reduced motion a faixa para (regra geral acima). */
+   devagar. Com movimento reduzido a faixa para (regra geral acima). */
 .skeleton {
   background-color: var(--surface-3);
   background-image: linear-gradient(

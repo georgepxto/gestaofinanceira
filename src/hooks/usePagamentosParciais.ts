@@ -117,7 +117,7 @@ export function usePagamentosParciais({
     const valor = valorDireto ?? parseCurrency(valorPagamentoParcial);
     if (valor <= 0) {
       setError("Valor de pagamento inválido.");
-      return;
+      return false;
     }
 
     const resumoPessoa = resumoMensal.find((r) => r.pessoa === pessoa);
@@ -127,7 +127,7 @@ export function usePagamentosParciais({
 
     if (valor > restante + 0.009) {
       setError(`O valor não pode ser maior que ${formatCurrency(restante)}.`);
-      return;
+      return false;
     }
 
     const dataPagamento = format(new Date(), "dd/MM/yyyy");
@@ -146,15 +146,17 @@ export function usePagamentosParciais({
           ...(contaId ? { conta_id: contaId } : {}),
         });
 
-        if (result) {
-          setPagamentosParciais((prev) => ({
-            ...prev,
-            [key]: [
-              ...(prev[key] || []),
-              { id: result.id, valor, data: dataPagamento },
-            ],
-          }));
+        if (!result) {
+          setError("Não foi possível registrar o pagamento. Tente de novo.");
+          return false;
         }
+        setPagamentosParciais((prev) => ({
+          ...prev,
+          [key]: [
+            ...(prev[key] || []),
+            { id: result.id, valor, data: dataPagamento },
+          ],
+        }));
       } else {
         // Modo demo - salvar localmente
         setPagamentosParciais((prev) => ({
@@ -168,6 +170,7 @@ export function usePagamentosParciais({
       setError(null);
 
       if (!silencioso) toast.success(`${pessoa} pagou ${formatCurrency(valor)}.\nFalta: ${formatCurrency(restante - valor)}`);
+      return true;
     } finally {
       setSaving(false);
     }
@@ -193,8 +196,14 @@ export function usePagamentosParciais({
         setSaving(true);
         try {
           // Deletar do Supabase se tiver ID
-          if (isSupabaseConfigured && supabase && ultimoPagamento.id) {
-            await pagamentosParciaisFunctions.delete(ultimoPagamento.id);
+          if (
+            isSupabaseConfigured &&
+            supabase &&
+            ultimoPagamento.id &&
+            !(await pagamentosParciaisFunctions.delete(ultimoPagamento.id))
+          ) {
+            toast.error("Não foi possível desfazer o pagamento. Tente de novo.");
+            return;
           }
 
           setPagamentosParciais((prev) => ({

@@ -214,7 +214,7 @@ export function getParcelasAtivas(
     .map((gasto) => ({
       gasto,
       parcela_atual: calcularParcelaAtual(gasto, mesVisualizacao),
-      valor_parcela: gasto.valor_total / gasto.num_parcelas,
+      valor_parcela: gasto.valor_total / Math.max(1, gasto.num_parcelas || 1),
     }))
     .sort((a, b) => {
       // Ordena por data de início (mais recente primeiro)

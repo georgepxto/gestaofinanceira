@@ -57,7 +57,7 @@ export function SegmentedControl({
   const medirRef = useRef(medir);
   medirRef.current = medir;
 
-  useLayoutEffect(medir, [ativo, segmentos.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  useLayoutEffect(medir, [ativo, segmentos.length]);
 
   // O trilho muda de largura (rotação, barra lateral recolhendo): o papel
   // acompanha sem viajar.

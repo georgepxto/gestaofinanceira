@@ -91,6 +91,9 @@ export function useChartTheme() {
         formatter: (v: ValueType | undefined) => formatDinheiro(Number(v ?? 0)),
       },
     };
+    // `versao` não é lida aqui dentro: ela muda quando o tema troca, e é isso
+    // que manda reler os tokens do CSS.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [versao]);
 }
 

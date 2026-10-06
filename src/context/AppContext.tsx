@@ -103,7 +103,7 @@ interface AppContextType {
   savingPagParcial: boolean;
   getPagamentosParciais: (pessoa: string) => PagamentoParcial[];
   getTotalPagoParcial: (pessoa: string) => number;
-  handleAddPagamentoParcial: (pessoa: string, contaId?: string, valorDireto?: number, silencioso?: boolean) => Promise<void>;
+  handleAddPagamentoParcial: (pessoa: string, contaId?: string, valorDireto?: number, silencioso?: boolean) => Promise<boolean>;
   handleDesfazerPagamentoParcial: (pessoa: string) => void;
 
   // Saldos Devedores
@@ -136,7 +136,7 @@ interface AppContextType {
   totalDividasQuitadas: number;
   pessoasComDividas: string[];
   handleAddDivida: () => Promise<void>;
-  handlePagamento: (dividaId: string, contaId?: string, valorDireto?: number, silencioso?: boolean) => Promise<void>;
+  handlePagamento: (dividaId: string, contaId?: string, valorDireto?: number, silencioso?: boolean) => Promise<boolean>;
   handleDesfazerPagamento: (dividaId: string, pagamentoId: string, valor: number) => void;
   handleDeleteDivida: (id: string) => void;
   handleFecharMes: (pessoa: string, contaId?: string) => Promise<void>;

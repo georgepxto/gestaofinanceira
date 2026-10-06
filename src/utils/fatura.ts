@@ -70,6 +70,19 @@ export function dataNaFatura(cartao: CartaoCredito, mes: string, diaPreferido = 
 /** Dia em que uma cobrança mensal (dia `dia`) entra na fatura do mês. */
 const cobrancaMensal = (cartao: CartaoCredito, mes: string, dia: number) => dataNaFatura(cartao, mes, dia);
 
+/**
+ * As faturas que um fixo no cartão teria cobrado depois de `de` e antes de
+ * `ate`: as que ficam de fora quando ele volta de uma pausa.
+ */
+export function faturasDoIntervalo(cartao: CartaoCredito, dia: number, de: string, ate: string) {
+  const meses: string[] = [];
+  for (let mes = mesDaFatura(de, cartao); mes <= mesDaFatura(ate, cartao); mes = somarMeses(mes, 1)) {
+    const cobrada = cobrancaMensal(cartao, mes, dia);
+    if (cobrada > de && cobrada < ate) meses.push(mes);
+  }
+  return meses;
+}
+
 /** Data da compra de uma parcela: a 3/10 de uma compra de julho tem data de setembro. */
 const dataDaCompra = (data: string, parcelaAtual?: number, numParcelas?: number) =>
   (numParcelas || 1) > 1 && (parcelaAtual || 1) > 1
@@ -125,12 +138,18 @@ function cobrancas(cartao: CartaoCredito, de: string, ate: string, d: DadosFatur
     .filter((g) => g.cartao_id === cartao.id)
     .forEach((g) => {
       if (g.categoria === "fixo") {
-        // Fixo ativo entra todo mês a partir da fatura em que começou.
-        if (!g.ativo) return;
+        // Fixo entra todo mês a partir da fatura em que começou. O desativado
+        // continua nas faturas que cobrou até o dia em que parou: tirá-lo das
+        // faturas já pagas devolvia limite que nunca voltou. Sem esse dia
+        // (desativado antes de o app guardá-lo), não há como saber, e ele sai.
+        const parou = g.ativo === false ? g.encerrado_em || "" : null;
+        if (parou === "") return;
         const inicio = mesDaFatura(g.data, cartao);
         for (let mes = de > inicio ? de : inicio; mes <= ate; mes = somarMeses(mes, 1)) {
+          const compra = cobrancaMensal(cartao, mes, g.dia_vencimento || 1);
+          if (parou && compra > parou) break;
           if (g.meses_suspensos?.includes(mes)) continue;
-          lista.push({ origem: "gasto", id: g.id, valor: g.valor, mes, compra: cobrancaMensal(cartao, mes, g.dia_vencimento || 1), pago: false });
+          lista.push({ origem: "gasto", id: g.id, valor: g.valor, mes, compra, pago: false });
         }
         return;
       }

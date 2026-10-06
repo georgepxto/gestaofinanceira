@@ -187,7 +187,7 @@ export function TabMeuGasto({
     idsVistos.current = null;
   }, [mesChave]);
 
-  const valorDaMinhaParte = (g: MeuGasto) => (!!g.dividido_com && g.minha_parte ? g.minha_parte : g.valor);
+  const valorDaMinhaParte = (g: MeuGasto) => (!!g.dividido_com && g.minha_parte != null ? g.minha_parte : g.valor);
 
   const nomeDaFatura = (gasto: MeuGasto) => {
     if (gasto.tipo !== "credito" || !gasto.cartao_id) return "";
@@ -357,7 +357,7 @@ export function TabMeuGasto({
                         </span>
                       }
                       valor={formatDinheiro(-valorDaMinhaParte(gasto))}
-                      subvalor={!!gasto.dividido_com && gasto.minha_parte ? `de ${formatCurrency(gasto.valor)}` : undefined}
+                      subvalor={!!gasto.dividido_com && gasto.minha_parte != null ? `de ${formatCurrency(gasto.valor)}` : undefined}
                       pago={!!gasto.pago || isSuspenso}
                       onAbrir={() => handleEditMeuGasto(gasto)}
                       acoes={acoes}
@@ -396,7 +396,7 @@ export function TabMeuGasto({
                       </div>
                       {/* Dividido: a minha parte em destaque e o total embaixo. */}
                       <p className={`valor text-xl mt-1 ${apagado ? "text-fg-2" : "text-fg"}`}>{formatCurrency(valorDaMinhaParte(gasto))}</p>
-                      {pessoas && gasto.minha_parte ? (
+                      {pessoas && gasto.minha_parte != null ? (
                         <p className="valor text-xs text-fg-3 mt-0.5">de {formatCurrency(gasto.valor)}</p>
                       ) : null}
                       <div className="mt-3 flex items-center justify-between gap-2">

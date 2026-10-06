@@ -75,9 +75,29 @@ export function RegistrarPagamento({ pessoa, onFechar }: RegistrarPagamentoProps
     if (!pessoa || !p || partes.length === 0 || passou) return;
     setSalvando(true);
     try {
+      // Cada parte grava sozinha: se uma falhar, as anteriores já valem e o
+      // aviso diz quanto entrou de fato.
+      let registrado = 0;
+      let falhou = false;
       for (const parte of partes) {
-        if (parte.alvo.chave === "mes") await handleAddPagamentoParcial(pessoa, contaId || undefined, parte.valor, true);
-        else await handlePagamento(parte.alvo.chave, contaId || undefined, parte.valor, true);
+        const ok =
+          parte.alvo.chave === "mes"
+            ? await handleAddPagamentoParcial(pessoa, contaId || undefined, parte.valor, true)
+            : await handlePagamento(parte.alvo.chave, contaId || undefined, parte.valor, true);
+        if (!ok) {
+          falhou = true;
+          break;
+        }
+        registrado += parte.valor;
+      }
+      if (falhou) {
+        toast.error(
+          registrado > 0
+            ? `Só ${formatCurrency(registrado)} de ${formatCurrency(valorNum)} foi registrado. Confira e registre o resto.`
+            : "Não foi possível registrar o pagamento. Tente de novo."
+        );
+        if (registrado > 0) avisarDadosMudaram("receber");
+        return;
       }
       const resta = Math.max(0, p.total - valorNum);
       toast.success(

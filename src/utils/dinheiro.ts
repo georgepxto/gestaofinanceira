@@ -12,7 +12,7 @@ export const MENOS = "−";
  */
 export function formatDinheiro(valor: number, { positivo = false } = {}): string {
   const sinal = valor < 0 ? MENOS : positivo && valor > 0 ? "+" : "";
-  return `${sinal}R$ ${formatCurrencyValue(Math.abs(valor))}`;
+  return `${sinal}R$\u00A0${formatCurrencyValue(Math.abs(valor))}`;
 }
 
 /** Os pedaços do número de destaque: o inteiro grande e os centavos elevados. */
@@ -21,7 +21,7 @@ export function partesDinheiro(valor: number, { positivo = false } = {}) {
   const virgula = texto.lastIndexOf(",");
   return {
     sinal: valor < 0 ? MENOS : positivo && valor > 0 ? "+" : "",
-    inteiro: `R$ ${texto.slice(0, virgula)}`,
+    inteiro: `R$\u00A0${texto.slice(0, virgula)}`,
     centavos: texto.slice(virgula),
   };
 }
@@ -35,9 +35,9 @@ const compacto = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
 export function formatDinheiroCompacto(valor: number): string {
   const abs = Math.abs(valor);
   const sinal = valor < 0 ? MENOS : "";
-  if (abs >= 1_000_000) return `${sinal}R$ ${compacto.format(abs / 1_000_000)}mi`;
-  if (abs >= 1_000) return `${sinal}R$ ${compacto.format(abs / 1_000)}k`;
-  return `${sinal}R$ ${Math.round(abs)}`;
+  if (abs >= 1_000_000) return `${sinal}R$\u00A0${compacto.format(abs / 1_000_000)}mi`;
+  if (abs >= 1_000) return `${sinal}R$\u00A0${compacto.format(abs / 1_000)}k`;
+  return `${sinal}R$\u00A0${Math.round(abs)}`;
 }
 
 /**
