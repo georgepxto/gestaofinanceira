@@ -11,8 +11,8 @@
 -- O que este retrato não traz: funções e RPCs (check_login_blocked,
 -- record_login_attempt, delete_user_account e as do painel de admin),
 -- gatilhos, a precisão dos campos NUMERIC e os papéis de cada política.
--- As tabelas *_backup_20260728 ficaram de fora de propósito: são cópias
--- soltas, não fazem parte do app.
+-- As tabelas *_backup_20260728 foram apagadas em 07/10/2026 (migração
+-- 20261009).
 --
 -- Para atualizar: siga os passos no topo de scripts/gerar-schema.py.
 -- ═══════════════════════════════════════════════════════════════════════════
