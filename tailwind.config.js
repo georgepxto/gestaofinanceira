@@ -98,8 +98,15 @@ export default {
         sans: ['Switzer', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
         mono: ['Geist Mono', 'ui-monospace', 'monospace'],
       },
+      // Nomes fixos em vez de valor entre colchetes: o tailwindcss-animate
+      // também responde a duration-[…] e ease-[…], e o Tailwind avisa que
+      // a classe é ambígua.
       transitionDuration: {
         DEFAULT: '150ms',
+        250: '250ms',
+      },
+      transitionTimingFunction: {
+        saida: 'cubic-bezier(0.22, 1, 0.36, 1)',
       },
     },
   },

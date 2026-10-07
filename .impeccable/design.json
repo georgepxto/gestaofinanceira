@@ -449,6 +449,10 @@
         "displayName": "Headline",
         "purpose": "Título da página."
       },
+      "headline-mobile": {
+        "displayName": "Headline (celular)",
+        "purpose": "Título da página no celular: 24px."
+      },
       "title": {
         "displayName": "Title",
         "purpose": "Título de painel, formulário e seção."
@@ -457,6 +461,10 @@
         "displayName": "Body",
         "purpose": "Linhas de lista, descrições e texto de botão; 15px no celular."
       },
+      "body-mobile": {
+        "displayName": "Body (celular)",
+        "purpose": "O corpo no celular: 15px."
+      },
       "label": {
         "displayName": "Label",
         "purpose": "Rótulo de campo, métrica e coluna, em caixa normal."
@@ -464,6 +472,14 @@
       "numeral": {
         "displayName": "Numeral",
         "purpose": "Todo valor em dinheiro: a classe .valor."
+      },
+      "numeral-kpi": {
+        "displayName": "Numeral de indicador",
+        "purpose": "Valor de indicador e total de bloco, 20px: <Valor porte=\"medio\">."
+      },
+      "tab": {
+        "displayName": "Tab",
+        "purpose": "Rótulo dos ícones da barra inferior do celular, 11px."
       }
     },
     "shadows": [],

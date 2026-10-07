@@ -44,6 +44,12 @@ typography:
     fontWeight: 450
     lineHeight: 1.25
     letterSpacing: "-0.01em"
+  headline-mobile:
+    fontFamily: "Switzer, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    fontSize: "24px"
+    fontWeight: 450
+    lineHeight: 1.25
+    letterSpacing: "-0.01em"
   title:
     fontFamily: "Switzer, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
     fontSize: "16px"
@@ -54,6 +60,11 @@ typography:
     fontSize: "14px"
     fontWeight: 400
     lineHeight: 1.43
+  body-mobile:
+    fontFamily: "Switzer, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    fontSize: "15px"
+    fontWeight: 400
+    lineHeight: 1.47
   label:
     fontFamily: "Switzer, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
     fontSize: "12px"
@@ -64,6 +75,17 @@ typography:
     fontSize: "14px"
     fontWeight: 400
     fontFeature: "tnum"
+  numeral-kpi:
+    fontFamily: "Geist Mono, ui-monospace, monospace"
+    fontSize: "20px"
+    fontWeight: 400
+    lineHeight: 1.25
+    fontFeature: "tnum"
+  tab:
+    fontFamily: "Switzer, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    fontSize: "11px"
+    fontWeight: 400
+    lineHeight: 1
 rounded:
   none: "0"
   sm: "2px"
@@ -187,7 +209,8 @@ Uma escala neutra de quatro superfícies e três tons de texto, um laranja e um 
 - **Title** (500, 16px): título de painel, de formulário e de seção.
 - **Body** (400, 15px no celular e 14px no desktop): linhas de lista, descrições, texto de botão.
 - **Label** (400, 12px, caixa normal): rótulo de campo, métrica, coluna, a linha de contexto abaixo do título de uma linha de lista.
-- **Numeral** (400, Geist Mono, dígitos tabulares, nunca quebra): todo valor em dinheiro, em qualquer tamanho. É a classe `.valor`.
+- **Numeral** (400, Geist Mono, dígitos tabulares, nunca quebra): todo valor em dinheiro, em qualquer tamanho. É a classe `.valor`. Em lista acompanha o corpo; em indicador e no total de um bloco sobe para 20px (`<Valor porte="medio">`).
+- **Tab** (400, 11px, altura de linha 1): só o rótulo dos ícones da barra inferior do celular.
 
 ### Named Rules
 **A Regra do 500.** Nenhum peso acima de 500. Ênfase vem de tamanho e de posição, não de negrito.

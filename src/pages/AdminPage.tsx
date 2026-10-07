@@ -430,7 +430,7 @@ export const AdminPage = () => {
                   </button>
                 ))}
               </div>
-              <span className="font-mono valor text-[13px] text-fg-2 whitespace-nowrap">
+              <span className="font-mono valor text-sm text-fg-2 whitespace-nowrap">
                 {filteredUsers.length} {filteredUsers.length === 1 ? "resultado" : "resultados"}
               </span>
             </div>
@@ -486,29 +486,29 @@ export const AdminPage = () => {
                               {user.nome || "Sem nome"}
                             </p>
                             {user.role === "admin" && (
-                              <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded bg-surface-2 text-fg-2">Admin</span>
+                              <span className="font-mono text-xs font-medium px-2 py-0.5 rounded bg-surface-2 text-fg-2">Admin</span>
                             )}
                           </div>
-                          <p className="font-mono text-[11px] text-fg-2 truncate">{user.email}</p>
+                          <p className="font-mono text-xs text-fg-2 truncate">{user.email}</p>
                         </div>
                       </div>
                       {/* Criada */}
-                      <span className="font-mono valor text-[13px] text-fg-2 whitespace-nowrap">
+                      <span className="font-mono valor text-sm text-fg-2 whitespace-nowrap">
                         {formatDateShort(user.created_at)}
                       </span>
                       {/* Último acesso */}
-                      <span className="font-mono valor text-[13px] text-fg-2 whitespace-nowrap">
+                      <span className="font-mono valor text-sm text-fg-2 whitespace-nowrap">
                         {formatDateShort(user.last_sign_in_at)}
                       </span>
                       {/* Status — badge textual, nunca no mesmo controle que a ação */}
                       <span>
                         {user.is_active ? (
-                          <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-medium px-2 py-0.5 rounded bg-surface-2 text-fg">
+                          <span className="inline-flex items-center gap-1.5 font-mono text-xs font-medium px-2 py-0.5 rounded bg-surface-2 text-fg">
                             <span className="w-1.5 h-1.5 rounded-full bg-accent" /> {/* ds-ok: ponto de estado de 8px */}
                             Habilitada
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-medium px-2 py-0.5 rounded bg-surface-2 text-fg-2">
+                          <span className="inline-flex items-center gap-1.5 font-mono text-xs font-medium px-2 py-0.5 rounded bg-surface-2 text-fg-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-surface-3" /> {/* ds-ok: ponto de estado de 8px */}
                             Suspensa
                           </span>
@@ -634,7 +634,7 @@ export const AdminPage = () => {
                                   <span className={`text-sm font-medium block ${isEnabled ? "text-fg" : "text-fg-2"}`}>
                                     {FEATURE_LABELS[feature]}
                                   </span>
-                                  <span className="text-[11px] text-fg-2 block truncate">
+                                  <span className="text-xs text-fg-2 block truncate">
                                     {FEATURE_DESCRIPTIONS[feature]}
                                   </span>
                                 </div>
@@ -1003,7 +1003,7 @@ function LogRow({ log, formatDate }: { log: ActivityLog; formatDate: (d: string 
       <span className={`w-2 h-2 rounded-full flex-shrink-0 ${actionInfo.dot}`} /> {/* ds-ok: ponto de estado de 8px */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className={`px-2 py-0.5 text-[10px] font-medium rounded-sm ${actionInfo.color}`}>
+          <span className={`px-2 py-0.5 text-xs font-medium rounded-sm ${actionInfo.color}`}>
             {actionInfo.label}
           </span>
           <span className="text-sm text-fg truncate">

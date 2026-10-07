@@ -114,13 +114,13 @@ export function Features() {
                         <a
                           href={`#${f.id}`}
                           aria-current={on ? "true" : undefined}
-                          className={`flex items-baseline gap-5 py-3 transition-colors duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${on ? "text-lp-fg" : "text-lp-muted hover:text-lp-fg"}`}
+                          className={`flex items-baseline gap-5 py-3 transition-colors duration-700 ease-saida ${on ? "text-lp-fg" : "text-lp-muted hover:text-lp-fg"}`}
                         >
                           <span className="lp-num w-6 text-[13px]">{num(i)}</span>
                           <span className="flex-1">
                             <span className="block text-[22px] font-[450] leading-snug">{f.title}</span>
                             <span
-                              className="grid transition-[grid-template-rows,opacity] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                              className="grid transition-[grid-template-rows,opacity] duration-700 ease-saida"
                               style={{ gridTemplateRows: on ? "1fr" : "0fr", opacity: on ? 1 : 0 }}
                             >
                               <span className="overflow-hidden">

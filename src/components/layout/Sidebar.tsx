@@ -144,7 +144,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         aria-label="Navegação"
         className={`
           hidden md:flex fixed top-0 left-0 h-full z-sticky flex-col bg-page
-          transition-[width] duration-[250ms] ease-out
+          transition-[width] duration-250 ease-out
           ${recolhida ? "md:w-[72px]" : "md:w-60"}
         `}
       >

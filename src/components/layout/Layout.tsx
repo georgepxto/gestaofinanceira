@@ -63,7 +63,7 @@ export const Layout: React.FC<LayoutProps> = ({ onLogout, userName, userEmail })
           />
 
           <main
-            className={`min-h-screen pt-14 md:pt-0 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0 transition-[margin] duration-[250ms] ease-out ${
+            className={`min-h-screen pt-14 md:pt-0 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0 transition-[margin] duration-250 ease-out ${
               recolhida ? "md:ml-[72px]" : "md:ml-60"
             }`}
           >

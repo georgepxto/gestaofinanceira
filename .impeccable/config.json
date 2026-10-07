@@ -17,6 +17,105 @@
         ],
         "createdAt": "2026-10-06T20:20:20.117Z",
         "reason": "seta do balão do tour: triângulo feito com borda transparente, não é faixa lateral de card"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/components/landing/**"
+        ],
+        "createdAt": "2026-10-07T04:55:12.506Z",
+        "reason": "peça de marca: a landing e o login têm escala, raio e cor próprios com escopo em .lp (ver DESIGN.md, seção sobre a landing)"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/components/landing/**"
+        ],
+        "createdAt": "2026-10-07T04:55:12.657Z",
+        "reason": "peça de marca: a landing e o login têm escala, raio e cor próprios com escopo em .lp (ver DESIGN.md, seção sobre a landing)"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/components/landing/**"
+        ],
+        "createdAt": "2026-10-07T04:55:12.832Z",
+        "reason": "peça de marca: a landing e o login têm escala, raio e cor próprios com escopo em .lp (ver DESIGN.md, seção sobre a landing)"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/components/Login.tsx"
+        ],
+        "createdAt": "2026-10-07T04:55:13.003Z",
+        "reason": "peça de marca: a landing e o login têm escala, raio e cor próprios com escopo em .lp (ver DESIGN.md, seção sobre a landing)"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "src/components/Login.tsx"
+        ],
+        "createdAt": "2026-10-07T04:55:13.187Z",
+        "reason": "peça de marca: a landing e o login têm escala, raio e cor próprios com escopo em .lp (ver DESIGN.md, seção sobre a landing)"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "src/components/Login.tsx"
+        ],
+        "createdAt": "2026-10-07T04:55:13.361Z",
+        "reason": "peça de marca: a landing e o login têm escala, raio e cor próprios com escopo em .lp (ver DESIGN.md, seção sobre a landing)"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "src/dev/**"
+        ],
+        "createdAt": "2026-10-07T04:55:13.520Z",
+        "reason": "galeria só de desenvolvimento, não vai para o usuário"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "src/index.css"
+        ],
+        "createdAt": "2026-10-07T04:55:13.681Z",
+        "reason": ".viagem: elementos absolutos pequenos; animação contínua é preferência do Sam"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "10px",
+        "files": [
+          "src/pages/AdminPage.tsx"
+        ],
+        "createdAt": "2026-10-07T04:55:42.976Z",
+        "reason": "rótulos dos eixos dos gráficos do painel de admin (uso interno)"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "9px",
+        "files": [
+          "src/pages/AdminPage.tsx"
+        ],
+        "createdAt": "2026-10-07T04:55:43.116Z",
+        "reason": "datas giradas no eixo dos gráficos do painel de admin (uso interno)"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "10px",
+        "files": [
+          "src/components/layout/NotificationBell.tsx"
+        ],
+        "createdAt": "2026-10-07T04:55:43.274Z",
+        "reason": "número dentro do selo de 16px do sino"
       }
     ]
   }
