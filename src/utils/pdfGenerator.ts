@@ -1,333 +1,441 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { formatCurrency, formatMonthYear } from "./calculations";
 import { categoriaDeGasto } from "./categories";
 import type { ParcelaAtiva, ResumoMensal, MeuGasto, MetaGasto } from "../types";
 import type { PagamentoParcial } from "../types/extended";
+import {
+  FIO,
+  FUNDO,
+  LARANJA,
+  LARANJA_TEXTO,
+  LARGURA,
+  MARGEM,
+  PERIGO,
+  PILULA_ABERTO,
+  TINTA,
+  TINTA_2,
+  TINTA_3,
+  barrasDeCategoria,
+  centavos,
+  corCategoria,
+  criarContexto,
+  definirFonte,
+  dataCurta,
+  escapeRegex,
+  escrever,
+  escreverMisto,
+  faixaDeIndicadores,
+  fechamento,
+  finalizarPaginas,
+  garantirEspaco,
+  larguraMista,
+  moeda,
+  nomeMes,
+  pilula,
+  plural,
+  pontoDeCategoria,
+  quadradoComInicial,
+  registrarPaginas,
+  rotuloMes,
+  tabelaPlana,
+  tituloDePagina,
+  tituloDeSecao,
+  type Ctx,
+  type LinhaDeBarra,
+  type RGB,
+} from "./pdf/base";
 
-// Paleta do PDF: a mesma régua do app em papel. Tinta quase preta e cinzas;
-// laranja só para atenção (80% da meta, pendente) e vermelho para estouro.
-// No papel branco o laranja do app não tem contraste para texto, então o texto
-// de atenção usa uma versão escura.
-type RGB = [number, number, number];
-const TINTA: RGB = [17, 17, 17];
-const TINTA_2: RGB = [94, 94, 91];
-const FIO: RGB = [220, 220, 217];
-const FUNDO: RGB = [244, 244, 242];
-const LARANJA: RGB = [255, 107, 53];
-const LARANJA_TEXTO: RGB = [184, 70, 18];
-const PERIGO: RGB = [200, 40, 46];
-const CABECALHO = { fillColor: [232, 232, 229] as RGB, textColor: TINTA, fontStyle: "bold" as const };
+const SEM_PESSOA = "Sem pessoa";
+const ALTURA_LINHA = 5.3;
 
-export const generateGastosPDF = (
+type GrupoLancamento = "compras" | "anteriores" | "fixos";
+
+interface Lancamento {
+  data: string;
+  descricao: string;
+  categoria: string;
+  tipo: string;
+  parcela: string;
+  valor: number;
+  grupo: GrupoLancamento;
+}
+
+interface BlocoPessoa {
+  nome: string;
+  lancamentos: Lancamento[];
+  total: number;
+  pagamentos: PagamentoParcial[];
+  pago: number;
+  divida: number;
+}
+
+const rotuloTipo = (tipo: string) => (tipo === "credito" ? "Crédito" : "Débito");
+
+function limparDescricao(descricao: string, pessoa: string): string {
+  let texto = (descricao ?? "").replace(/\s*\(\d+\s+parcelas\)/i, "");
+  if (pessoa) texto = texto.replace(new RegExp(`\\s+-\\s+${escapeRegex(pessoa)}$`), "");
+  return texto.trim() || descricao;
+}
+
+function grupoDe(parcela: ParcelaAtiva): GrupoLancamento {
+  if (parcela.gasto.recorrente) return "fixos";
+  return parcela.parcela_atual > 1 ? "anteriores" : "compras";
+}
+
+function montarBlocos(
   parcelas: ParcelaAtiva[],
-  resumo: ResumoMensal[],
-  total: number,
+  pagamentosPorPessoa?: Record<string, PagamentoParcial[]>
+): BlocoPessoa[] {
+  const mapa = new Map<string, BlocoPessoa>();
+
+  for (const parcela of parcelas) {
+    const bruto = parcela.gasto.pessoa?.trim() ?? "";
+    const nome = bruto || SEM_PESSOA;
+    const bloco =
+      mapa.get(nome) ?? { nome, lancamentos: [], total: 0, pagamentos: [], pago: 0, divida: 0 };
+    mapa.set(nome, bloco);
+    bloco.lancamentos.push({
+      data: parcela.gasto.data_inicio,
+      descricao: limparDescricao(parcela.gasto.descricao, bruto),
+      categoria: categoriaDeGasto(parcela.gasto),
+      tipo: rotuloTipo(parcela.gasto.tipo),
+      parcela: parcela.gasto.recorrente ? "Fixo" : `${parcela.parcela_atual}/${parcela.gasto.num_parcelas}`,
+      valor: centavos(parcela.valor_parcela),
+      grupo: grupoDe(parcela),
+    });
+  }
+
+  for (const [chave, lista] of Object.entries(pagamentosPorPessoa ?? {})) {
+    mapa.get(chave.trim() || SEM_PESSOA)?.pagamentos.push(...lista);
+  }
+
+  for (const bloco of mapa.values()) {
+    bloco.total = centavos(bloco.lancamentos.reduce((soma, l) => soma + l.valor, 0));
+    bloco.pago = centavos(bloco.pagamentos.reduce((soma, p) => soma + p.valor, 0));
+    bloco.divida = Math.max(0, centavos(bloco.total - bloco.pago));
+  }
+
+  return [...mapa.values()].sort((a, b) => {
+    if (a.nome === SEM_PESSOA) return 1;
+    if (b.nome === SEM_PESSOA) return -1;
+    return b.total - a.total || a.nome.localeCompare(b.nome, "pt-BR");
+  });
+}
+
+function situacaoDe(bloco: BlocoPessoa): { rotulo: string; fundo: RGB; cor: RGB } {
+  if (bloco.pago <= 0) return { rotulo: "Em aberto", fundo: PILULA_ABERTO, cor: LARANJA_TEXTO };
+  if (bloco.divida <= 0) return { rotulo: "Quitado", fundo: FUNDO, cor: TINTA_2 };
+  return { rotulo: "Parcial", fundo: FUNDO, cor: TINTA };
+}
+
+const percentual = (parte: number, todo: number) => (todo > 0 ? Math.min(100, Math.round((parte / todo) * 100)) : 0);
+
+// ============================================================ Mês a mês
+
+function resumoDaPrimeiraPagina(ctx: Ctx, blocos: BlocoPessoa[], subtitulo: string): number {
+  const totalGeral = centavos(blocos.reduce((s, b) => s + b.total, 0));
+  const pagoGeral = centavos(blocos.reduce((s, b) => s + b.pago, 0));
+  const dividaGeral = centavos(blocos.reduce((s, b) => s + b.divida, 0));
+  const lancamentos = blocos.reduce((s, b) => s + b.lancamentos.length, 0);
+  const quitaram = blocos.filter((b) => b.total > 0 && b.divida <= 0).length;
+
+  let y = tituloDePagina(ctx, "Relatório de despesas", subtitulo, 32);
+  y = faixaDeIndicadores(ctx, y + 4, [
+    { rotulo: "Total do mês", valor: moeda(totalGeral), apoio: plural(lancamentos, "lançamento", "lançamentos") },
+    {
+      rotulo: "Pago no mês",
+      valor: moeda(pagoGeral),
+      apoio: `${percentual(pagoGeral, totalGeral)}% do total · ${
+        quitaram === 0 ? "ninguém quitou" : quitaram === 1 ? "1 quitou" : `${quitaram} quitaram`
+      }`,
+    },
+    {
+      rotulo: "Vai para a dívida",
+      valor: moeda(dividaGeral),
+      apoio: "não pago até o fechamento",
+      corValor: dividaGeral > 0 ? LARANJA_TEXTO : TINTA,
+    },
+  ]);
+
+  y = tituloDeSecao(
+    ctx,
+    y + 11,
+    "Por pessoa",
+    "Quanto cada um gastou, quanto já pagou e o que passa para o próximo mês como dívida."
+  );
+
+  y = tabelaPlana(ctx, {
+    startY: y + 1.5,
+    cabecalho: ["Pessoa", "Lanç.", "Total do mês", "Pago", "Vai p/ dívida", "Situação"],
+    linhas: [
+      ...blocos.map((b) => [
+        b.nome,
+        String(b.lancamentos.length),
+        moeda(b.total),
+        moeda(b.pago),
+        moeda(b.divida),
+        "",
+      ]),
+      ["Total", String(lancamentos), moeda(totalGeral), moeda(pagoGeral), moeda(dividaGeral), ""],
+    ],
+    colunas: [
+      { largura: 52, recuoEsquerdo: 9 },
+      { largura: 16, direita: true, mono: true },
+      { largura: 30, direita: true, mono: true },
+      { largura: 28, direita: true, mono: true },
+      { largura: 28, direita: true, mono: true },
+      { largura: 26, recuoEsquerdo: 5 },
+    ],
+    tamanho: 9,
+    alturaMinima: 9,
+    linhaDeTotal: true,
+    aoAnalisar: (dados) => {
+      if (dados.section !== "body" || dados.row.index >= blocos.length) return;
+      if (dados.column.index === 4) {
+        dados.cell.styles.textColor = blocos[dados.row.index].divida > 0 ? LARANJA_TEXTO : TINTA_2;
+      }
+      if (dados.column.index === 0) dados.cell.styles.fontStyle = "normal";
+    },
+    aoDesenhar: (dados) => {
+      if (dados.section !== "body" || dados.row.index >= blocos.length) return;
+      const bloco = blocos[dados.row.index];
+      const { cell } = dados;
+      if (dados.column.index === 0) {
+        quadradoComInicial(ctx, cell.x + 1, cell.y + (cell.height - 6) / 2, 6, bloco.nome);
+      }
+      if (dados.column.index === 5) {
+        const situacao = situacaoDe(bloco);
+        pilula(ctx, cell.x + 5, cell.y + cell.height / 2, situacao.rotulo, situacao.fundo, situacao.cor);
+      }
+    },
+  });
+
+  const porCategoria = new Map<string, number>();
+  for (const bloco of blocos) {
+    for (const l of bloco.lancamentos) {
+      porCategoria.set(l.categoria, centavos((porCategoria.get(l.categoria) ?? 0) + l.valor));
+    }
+  }
+  const linhas: LinhaDeBarra[] = [...porCategoria.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([nome, valor]) => ({ nome, valor, cor: corCategoria(nome) }));
+
+  y = garantirEspaco(ctx, y + 11, 30);
+  y = tituloDeSecao(ctx, y, "Por categoria", "Soma de todas as pessoas, da maior para a menor.");
+  barrasDeCategoria(ctx, y + 2, linhas, totalGeral);
+
+  return y;
+}
+
+const TITULOS_GRUPO: Record<GrupoLancamento, (mes: Date) => string> = {
+  compras: (mes) => `Compras de ${nomeMes(mes)}`,
+  anteriores: () => "Parcelas de meses anteriores",
+  fixos: () => "Fixos",
+};
+
+const ORDEM_GRUPOS: GrupoLancamento[] = ["compras", "anteriores", "fixos"];
+
+function gruposDaPessoa(bloco: BlocoPessoa) {
+  return ORDEM_GRUPOS.map((grupo) => {
+    const itens = bloco.lancamentos.filter((l) => l.grupo === grupo).sort((a, b) => b.data.localeCompare(a.data));
+    return { grupo, itens, subtotal: centavos(itens.reduce((s, l) => s + l.valor, 0)) };
+  }).filter((g) => g.itens.length > 0);
+}
+
+function alturaEstimada(bloco: BlocoPessoa): number {
+  const grupos = gruposDaPessoa(bloco);
+  return 14 + 26 + grupos.reduce((soma, g) => soma + 8 + 6.5 + g.itens.length * ALTURA_LINHA + 6, 0);
+}
+
+function cabecalhoDaPessoa(ctx: Ctx, bloco: BlocoPessoa, y: number): number {
+  quadradoComInicial(ctx, MARGEM, y, 9, bloco.nome);
+  escrever(ctx, bloco.nome, MARGEM + 12.5, y + 4.6, "texto", { tamanho: 17, peso: 500, cor: TINTA });
+  escreverMisto(ctx, plural(bloco.lancamentos.length, "lançamento", "lançamentos"), MARGEM + 12.5, y + 9.2, {
+    tamanho: 8.5,
+    cor: TINTA_2,
+  });
+  escrever(ctx, "Total do mês", MARGEM + LARGURA, y + 1.8, "texto", { tamanho: 8, cor: TINTA_2, alinhar: "direita" });
+  escrever(ctx, moeda(bloco.total), MARGEM + LARGURA, y + 8.2, "mono", {
+    tamanho: 15,
+    cor: TINTA,
+    alinhar: "direita",
+  });
+  return y + 14;
+}
+
+function faixaDeAcerto(ctx: Ctx, bloco: BlocoPessoa, y: number): number {
+  const altura = 17;
+  const doc = ctx.doc;
+  doc.setFillColor(...FUNDO);
+  doc.roundedRect(MARGEM, y, LARGURA, altura, 1, 1, "F");
+
+  const barra = { x: MARGEM + 5, largura: 84 };
+  doc.setFillColor(...FIO);
+  doc.rect(barra.x, y + 5.2, barra.largura, 0.8, "F");
+  const pct = percentual(bloco.pago, bloco.total);
+  if (pct > 0) {
+    doc.setFillColor(...TINTA);
+    doc.rect(barra.x, y + 5.2, (barra.largura * pct) / 100, 0.8, "F");
+  }
+
+  if (bloco.pagamentos.length === 0) {
+    escrever(ctx, "Nenhum pagamento registrado neste mês", barra.x, y + 11.6, "texto", {
+      tamanho: 8,
+      cor: TINTA_2,
+    });
+  } else {
+    const itens = bloco.pagamentos.map((p) => `${dataCurta(p.data)} ${moeda(p.valor)}`);
+    let texto = `${pct}% pago`;
+    for (let i = 0; i < itens.length; i++) {
+      const tentativa = `${texto} · ${itens[i]}`;
+      const restantes = itens.length - i - 1;
+      const comResto = restantes > 0 ? `${tentativa} · +${restantes}` : tentativa;
+      if (larguraMista(ctx, comResto, 8) > barra.largura && i > 0) {
+        texto = `${texto} · +${itens.length - i}`;
+        break;
+      }
+      texto = tentativa;
+    }
+    escreverMisto(ctx, texto, barra.x, y + 11.6, { tamanho: 8, cor: TINTA_2 });
+  }
+
+  const colunas: { rotulo: string; valor: string; direita: number; cor: RGB }[] = [
+    { rotulo: "Pago", valor: moeda(bloco.pago), direita: MARGEM + 136, cor: TINTA },
+    {
+      rotulo: "Vai para a dívida",
+      valor: moeda(bloco.divida),
+      direita: MARGEM + LARGURA - 5,
+      cor: bloco.divida > 0 ? LARANJA_TEXTO : TINTA_2,
+    },
+  ];
+  for (const c of colunas) {
+    escrever(ctx, c.rotulo, c.direita, y + 6.2, "texto", { tamanho: 7.5, cor: TINTA_3, alinhar: "direita" });
+    escrever(ctx, c.valor, c.direita, y + 12.4, "mono", { tamanho: 11, cor: c.cor, alinhar: "direita" });
+  }
+  return y + altura;
+}
+
+function paginaDaPessoa(ctx: Ctx, bloco: BlocoPessoa, mes: Date, yInicial: number): number {
+  let y = cabecalhoDaPessoa(ctx, bloco, yInicial);
+  y = faixaDeAcerto(ctx, bloco, y + 1) + 8;
+
+  for (const { grupo, itens, subtotal } of gruposDaPessoa(bloco)) {
+    y = garantirEspaco(ctx, y, 25);
+    const titulo = TITULOS_GRUPO[grupo](mes);
+    escrever(ctx, titulo, MARGEM, y, "texto", { tamanho: 9, peso: 500, cor: TINTA });
+    definirFonte(ctx, "texto", 9, 500, TINTA);
+    const largura = ctx.doc.getTextWidth(titulo);
+    escreverMisto(ctx, ` · ${itens.length}`, MARGEM + largura, y, { tamanho: 9, cor: TINTA_3 });
+    escrever(ctx, moeda(subtotal), MARGEM + LARGURA, y, "mono", { tamanho: 8.5, cor: TINTA_2, alinhar: "direita" });
+
+    y = tabelaPlana(ctx, {
+      startY: y + 2.5,
+      cabecalho: ["Data", "Descrição", "Categoria", "Tipo", "Parcela", "Valor"],
+      linhas: itens.map((l) => [dataCurta(l.data), l.descricao, l.categoria, l.tipo, l.parcela, moeda(l.valor)]),
+      colunas: [
+        { largura: 14, mono: true },
+        { elipse: true },
+        { largura: 36, recuoEsquerdo: 5 },
+        { largura: 17 },
+        { largura: 15, mono: true },
+        { largura: 24, direita: true, mono: true },
+      ],
+      aoAnalisar: (dados) => {
+        if (dados.section !== "body") return;
+        if ([0, 2, 3].includes(dados.column.index)) dados.cell.styles.textColor = TINTA_2;
+      },
+      aoDesenhar: (dados) => {
+        if (dados.section === "body" && dados.column.index === 2) {
+          pontoDeCategoria(
+            ctx,
+            dados.cell.x + 2.2,
+            dados.cell.y + dados.cell.height / 2,
+            corCategoria(String(dados.cell.raw))
+          );
+        }
+      },
+    });
+    y += 7;
+  }
+  return y;
+}
+
+export const generateGastosPDF = async (
+  parcelas: ParcelaAtiva[],
+  _resumo: ResumoMensal[],
+  _total: number,
   mes: Date,
   filtros: { pessoa: string; tipo: string; dia: string },
   pagamentosPorPessoa?: Record<string, PagamentoParcial[]>
 ) => {
-  const doc = new jsPDF();
-  
-  // Título
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.text("Relatório de despesas", 14, 22);
-  
-  // Mês referência
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...TINTA_2);
-  const mesFormatado = formatMonthYear(mes);
-  doc.text(`${mesFormatado.charAt(0).toUpperCase() + mesFormatado.slice(1)}`, 14, 30);
-  
-  let yPos = 38;
+  const ctx = await criarContexto();
+  const blocos = montarBlocos(parcelas, pagamentosPorPessoa);
+  const mesRotulo = rotuloMes(mes);
 
-  // Filtros aplicados
-  const filtrosAtivos = [];
+  const filtrosAtivos: string[] = [];
   if (filtros.pessoa) filtrosAtivos.push(`Pessoa: ${filtros.pessoa}`);
   if (filtros.tipo) filtrosAtivos.push(`Tipo: ${filtros.tipo === "credito" ? "Crédito" : "Débito"}`);
   if (filtros.dia) filtrosAtivos.push(`Data: ${format(new Date(`${filtros.dia}T12:00:00`), "dd/MM/yyyy")}`);
-  
-  if (filtrosAtivos.length > 0) {
-    doc.setFontSize(10);
-    doc.setTextColor(...TINTA_2);
-    doc.text(`Filtros: ${filtrosAtivos.join(" | ")}`, 14, yPos);
-    yPos += 10;
-  }
 
-  // Linha separadora
-  doc.setDrawColor(...FIO);
-  doc.line(14, yPos - 2, 196, yPos - 2);
-  yPos += 4;
+  const lancamentos = blocos.reduce((s, b) => s + b.lancamentos.length, 0);
+  const subtitulo = [
+    mesRotulo,
+    plural(blocos.length, "pessoa", "pessoas"),
+    plural(lancamentos, "lançamento", "lançamentos"),
+    ...filtrosAtivos,
+  ].join(" · ");
 
-  // Agrupar por pessoa
-  const pessoasSet = new Set(parcelas.map(p => p.gasto.pessoa));
-  const pessoas = Array.from(pessoasSet).sort();
+  resumoDaPrimeiraPagina(ctx, blocos, subtitulo);
 
-  pessoas.forEach((pessoa, idx) => {
-    const parcelasPessoa = parcelas.filter(p => p.gasto.pessoa === pessoa);
-    const resumoPessoa = resumo.find(r => r.pessoa === pessoa);
-    
-    // Verificar se precisa de nova página
-    if (yPos > doc.internal.pageSize.height - 60) {
-      doc.addPage();
-      yPos = 20;
+  const nomesPorPagina = new Map<number, string[]>();
+  let y = 0;
+  let anteriorPequena = false;
+
+  blocos.forEach((bloco, i) => {
+    const cabe = i > 0 && anteriorPequena && y + 8 + alturaEstimada(bloco) <= 279;
+    if (cabe) {
+      y += 8;
+    } else {
+      ctx.doc.addPage();
+      y = 24;
     }
-
-    // Nome da pessoa
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...TINTA);
-    doc.text(pessoa, 14, yPos);
-    const nomeWidth = doc.getTextWidth(pessoa); // medir ANTES de trocar font
-    
-    // Quantidade de itens (na mesma linha, após o nome)
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...TINTA_2);
-    doc.text(`${parcelasPessoa.length} ${parcelasPessoa.length === 1 ? "lançamento" : "lançamentos"}`, 14 + nomeWidth + 4, yPos);
-    yPos += 6;
-    
-    // Tabela individual
-    const tableData = parcelasPessoa.map(p => {
-      // Formatar data evitando timezone
-      const dateParts = p.gasto.data_inicio.split("-");
-      const safeDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : p.gasto.data_inicio;
-      
-      return [
-        safeDate,
-        p.gasto.descricao,
-        p.gasto.categoria || "—",
-        p.gasto.tipo === "credito" ? "Crédito" : "Débito",
-        p.gasto.recorrente ? "Fixo" : `${p.parcela_atual}/${p.gasto.num_parcelas}`,
-        formatCurrency(p.valor_parcela)
-      ];
-    });
-
-    autoTable(doc, {
-      startY: yPos,
-      head: [["Data", "Descrição", "Categoria", "Tipo", "Parcela", "Valor"]],
-      body: tableData,
-      theme: "striped",
-      headStyles: { ...CABECALHO, fontSize: 9 },
-      bodyStyles: {
-        fontSize: 9,
-      },
-      columnStyles: {
-        0: { cellWidth: 22 },  // Data
-        1: { cellWidth: "auto" }, // Descrição
-        2: { cellWidth: 30 },  // Categoria
-        3: { cellWidth: 20 },  // Tipo
-        4: { cellWidth: 20 },  // Parcela
-        5: { cellWidth: 28, halign: "right" },  // Valor
-      },
-      margin: { left: 14, right: 14 },
-    });
-
-    // @ts-ignore - jspdf-autotable adds lastAutoTable
-    yPos = doc.lastAutoTable.finalY + 4;
-    
-    // Total da pessoa
-    if (resumoPessoa) {
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...TINTA);
-      const totalText = `Total ${pessoa}: ${formatCurrency(resumoPessoa.total)}`;
-      // Alinhar à direita
-      const textWidth = doc.getTextWidth(totalText);
-      doc.text(totalText, 196 - textWidth, yPos);
-      doc.setFont("helvetica", "normal");
-      yPos += 8;
-    }
-
-    // Pagamentos parciais da pessoa
-    const pagamentos = pagamentosPorPessoa?.[pessoa] || [];
-    if (pagamentos.length > 0) {
-      const resumoPessoa2 = resumo.find(r => r.pessoa === pessoa);
-      const totalDevido = resumoPessoa2?.total || 0;
-      const totalPago = pagamentos.reduce((sum, p) => sum + p.valor, 0);
-      const restante = totalDevido - totalPago;
-
-      // Verificar se precisa de nova página
-      if (yPos > doc.internal.pageSize.height - 60) {
-        doc.addPage();
-        yPos = 20;
-      }
-
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...TINTA);
-      doc.text(`Pagamentos parciais — ${pessoa}`, 14, yPos);
-      yPos += 5;
-
-      const pagData = pagamentos.map(p => [
-        p.data,
-        formatCurrency(p.valor)
-      ]);
-
-      autoTable(doc, {
-        startY: yPos,
-        head: [["Data", "Valor pago"]],
-        body: pagData,
-        theme: "striped",
-        headStyles: { ...CABECALHO, fontSize: 9 },
-        bodyStyles: { fontSize: 9 },
-        columnStyles: {
-          0: { cellWidth: 40 },
-          1: { cellWidth: 40, halign: "right" },
-        },
-        margin: { left: 14, right: 100 },
-        tableWidth: 80,
-      });
-
-      // @ts-ignore
-      yPos = doc.lastAutoTable.finalY + 4;
-
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...TINTA);
-      doc.text(`Total pago: ${formatCurrency(totalPago)}`, 14, yPos);
-      doc.setTextColor(...(restante > 0 ? LARANJA_TEXTO : TINTA_2));
-      doc.text(`Falta: ${formatCurrency(Math.max(0, restante))}`, 70, yPos);
-      doc.setFont("helvetica", "normal");
-      yPos += 10;
-    }
-    
-    // Separador entre pessoas
-    if (idx < pessoas.length - 1) {
-      doc.setDrawColor(...FIO);
-      doc.line(14, yPos - 4, 196, yPos - 4);
-      yPos += 4;
-    }
+    const primeira = ctx.doc.getNumberOfPages();
+    y = paginaDaPessoa(ctx, bloco, mes, y);
+    registrarPaginas(nomesPorPagina, bloco.nome, primeira, ctx.doc.getNumberOfPages());
+    anteriorPequena = bloco.lancamentos.length <= 6;
   });
 
-  // Total Geral
-  if (yPos > doc.internal.pageSize.height - 30) {
-    doc.addPage();
-    yPos = 20;
-  }
-  
-  // Linha antes do total geral
-  doc.setDrawColor(...TINTA);
-  doc.setLineWidth(0.5);
-  doc.line(14, yPos, 196, yPos);
-  yPos += 8;
-  
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...TINTA);
-  doc.text(`Total geral: ${formatCurrency(total)}`, 14, yPos);
-  yPos += 6;
-  
-  // Quantidade total (linha separada)
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...TINTA_2);
-  doc.text(`${parcelas.length} ${parcelas.length === 1 ? "lançamento" : "lançamentos"}`, 14, yPos);
-  yPos += 12;
-
-  // Seção: Para o Saldo Devedor ( Restante do mês )
-  const pessoasNoPdf = Array.from(new Set(parcelas.map(p => p.gasto.pessoa)));
-  const devendoEsteMes: { pessoa: string; totalDevido: number; totalPago: number; restante: number }[] = [];
-
-  pessoasNoPdf.forEach(pessoa => {
-    const resumoPessoa = resumo.find(r => r.pessoa === pessoa);
-    const pagamentos = pagamentosPorPessoa?.[pessoa] || [];
-    const totalDevido = resumoPessoa?.total || 0;
-    const totalPago = pagamentos.reduce((sum, p) => sum + p.valor, 0);
-    const restante = totalDevido - totalPago;
-
-    // Apenas quem ainda deve algo deste mês específico
-    if (restante > 0.01) { // margem de arredondamento
-      devendoEsteMes.push({ pessoa, totalDevido, totalPago, restante });
-    }
-  });
-
-  if (devendoEsteMes.length > 0) {
-    if (yPos > doc.internal.pageSize.height - 60) {
-      doc.addPage();
-      yPos = 20;
-    }
-
-    doc.setDrawColor(...TINTA);
-    doc.setLineWidth(0.5);
-    doc.line(14, yPos - 2, 196, yPos - 2);
-    yPos += 6;
-
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...TINTA);
-    doc.text("Vai para a dívida (não pago neste mês)", 14, yPos);
-    yPos += 6;
-
-    const dividasData = devendoEsteMes.map(d => [
-      d.pessoa,
-      formatCurrency(d.totalDevido),
-      formatCurrency(d.totalPago),
-      formatCurrency(d.restante),
-    ]);
-
-    autoTable(doc, {
-      startY: yPos,
-      head: [["Pessoa", "Total do mês", "Valor pago", "Vai para a dívida"]],
-      body: dividasData,
-      theme: "striped",
-      headStyles: { ...CABECALHO, fontSize: 9 },
-      bodyStyles: { fontSize: 9 },
-      columnStyles: {
-        0: { cellWidth: 40 },
-        1: { cellWidth: 35, halign: "right" },
-        2: { cellWidth: 35, halign: "right" },
-        3: { cellWidth: 35, halign: "right", fontStyle: "bold" },
-      },
-      margin: { left: 14, right: 14 },
-    });
-
-    // @ts-ignore
-    yPos = doc.lastAutoTable.finalY + 4;
-
-    const totalParaDivida = devendoEsteMes.reduce((sum, d) => sum + d.restante, 0);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...TINTA);
-    const totalDivText = `Total que vai para a dívida: ${formatCurrency(totalParaDivida)}`;
-    const divTextW = doc.getTextWidth(totalDivText);
-    doc.text(totalDivText, 196 - divTextW, yPos);
-  }
-
-  // Rodapé com data/hora de geração
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...TINTA_2);
-    const pageHeight = doc.internal.pageSize.height;
-    doc.text(
-      `Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
-      14,
-      pageHeight - 10
-    );
-    doc.text(
-      `Página ${i} de ${pageCount}`,
-      196 - doc.getTextWidth(`Página ${i} de ${pageCount}`),
-      pageHeight - 10
+  if (blocos.length > 0) {
+    const totalGeral = centavos(blocos.reduce((s, b) => s + b.total, 0));
+    const pagoGeral = centavos(blocos.reduce((s, b) => s + b.pago, 0));
+    const dividaGeral = centavos(blocos.reduce((s, b) => s + b.divida, 0));
+    fechamento(
+      ctx,
+      y + 4,
+      `Fechamento de ${nomeMes(mes)}`,
+      `${plural(lancamentos, "lançamento", "lançamentos")} · ${plural(blocos.length, "pessoa", "pessoas")}`,
+      [
+        { rotulo: "Total geral", valor: moeda(totalGeral) },
+        { rotulo: "Pago", valor: moeda(pagoGeral) },
+        { rotulo: "Vai para a dívida", valor: moeda(dividaGeral), cor: dividaGeral > 0 ? LARANJA_TEXTO : TINTA_2 },
+      ]
     );
   }
 
-  // Download
+  finalizarPaginas(ctx, { titulo: "Relatório de despesas", mesRotulo, nomesPorPagina, geradoEm: new Date() });
+
   let filename = `gastos_${format(mes, "MM-yyyy")}`;
   if (filtros.pessoa) filename += `_${filtros.pessoa.replace(/\s+/g, "_")}`;
-  doc.save(`${filename}.pdf`);
+  ctx.doc.save(`${filename}.pdf`);
 };
 
-// ========================================
-// PDF de Meus Gastos (Pessoais)
-// ========================================
-export const generateMeusGastosPDF = (
+// ======================================================= Meus gastos
+
+const NATUREZA: Record<string, string> = { pessoal: "Pessoal", dividido: "Dividido", fixo: "Fixo" };
+
+const valorDoGasto = (g: MeuGasto) =>
+  centavos(g.categoria === "dividido" && g.minha_parte != null ? g.minha_parte : g.valor);
+
+export const generateMeusGastosPDF = async (
   meusGastosDoMes: MeuGasto[],
   gastosFixos: MeuGasto[],
   metas: MetaGasto[],
@@ -340,349 +448,180 @@ export const generateMeusGastosPDF = (
   mes: Date,
   filtros: { categoria: string; dia: string }
 ) => {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.width;
+  const ctx = await criarContexto();
+  const mesRotulo = rotuloMes(mes);
+  const fixosAtivos = gastosFixos.filter((g) => g.ativo !== false);
+  const totalMes = centavos(totais.credito + totais.debito);
 
-  // ─── Título ───
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.text("Meus gastos — relatório pessoal", 14, 22);
-
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...TINTA_2);
-  const mesFormatado = formatMonthYear(mes);
-  doc.text(`${mesFormatado.charAt(0).toUpperCase() + mesFormatado.slice(1)}`, 14, 30);
-
-  let yPos = 38;
-
-  // Filtros
-  const filtrosAtivos = [];
-  if (filtros.categoria) {
-    const labels: Record<string, string> = { pessoal: "Pessoal", dividido: "Dividido", fixo: "Fixo" };
-    filtrosAtivos.push(`Categoria: ${labels[filtros.categoria] || filtros.categoria}`);
-  }
+  const filtrosAtivos: string[] = [];
+  if (filtros.categoria) filtrosAtivos.push(`Categoria: ${NATUREZA[filtros.categoria] || filtros.categoria}`);
   if (filtros.dia) filtrosAtivos.push(`Data: ${format(new Date(`${filtros.dia}T12:00:00`), "dd/MM/yyyy")}`);
 
-  if (filtrosAtivos.length > 0) {
-    doc.setFontSize(10);
-    doc.setTextColor(...TINTA_2);
-    doc.text(`Filtros: ${filtrosAtivos.join(" | ")}`, 14, yPos);
-    yPos += 8;
-  }
+  const subtitulo = [
+    mesRotulo,
+    plural(meusGastosDoMes.length, "lançamento", "lançamentos"),
+    plural(fixosAtivos.length, "fixo", "fixos"),
+    ...filtrosAtivos,
+  ].join(" · ");
 
-  // ─── Resumo (4 cards em linha) ───
-  doc.setDrawColor(...FIO);
-  doc.line(14, yPos, pageWidth - 14, yPos);
-  yPos += 6;
+  let y = tituloDePagina(ctx, "Meus gastos", subtitulo, 32);
+  const doTipo = (tipo: string) => meusGastosDoMes.filter((g) => g.tipo === tipo).length;
+  y = faixaDeIndicadores(
+    ctx,
+    y + 4,
+    [
+      { rotulo: "Total do mês", valor: moeda(totalMes), apoio: `Pago ${moeda(totais.pagos)}` },
+      { rotulo: "Crédito", valor: moeda(totais.credito), apoio: plural(doTipo("credito"), "lançamento", "lançamentos") },
+      { rotulo: "Débito", valor: moeda(totais.debito), apoio: plural(doTipo("debito"), "lançamento", "lançamentos") },
+      { rotulo: "Fixos", valor: moeda(totais.fixos), apoio: plural(fixosAtivos.length, "ativo", "ativos") },
+    ],
+    13
+  );
+  y += 11;
 
-  const cardWidth = (pageWidth - 28 - 12) / 4; // 4 cards with 4px gaps
-  const cards = [
-    { label: "Crédito", valor: totais.credito },
-    { label: "Débito", valor: totais.debito },
-    { label: "Pago", valor: totais.pagos },
-    { label: "Fixos", valor: totais.fixos },
-  ];
-
-  cards.forEach((card, i) => {
-    const x = 14 + i * (cardWidth + 4);
-    // Card background
-    doc.setFillColor(...FUNDO);
-    doc.roundedRect(x, yPos, cardWidth, 22, 1, 1, "F");
-    // Label
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...TINTA_2);
-    doc.text(card.label, x + 4, yPos + 8);
-    // Value
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...TINTA);
-    doc.text(formatCurrency(card.valor), x + 4, yPos + 18);
-  });
-
-  yPos += 30;
-
-  // Total geral do mês
-  const totalMes = totais.credito + totais.debito;
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...TINTA);
-  doc.text(`Total do mês: ${formatCurrency(totalMes)}`, 14, yPos);
-  yPos += 10;
-
-  // ─── Metas de Gasto ───
   if (metas.length > 0) {
-    doc.setDrawColor(...FIO);
-    doc.line(14, yPos - 2, pageWidth - 14, yPos - 2);
-    yPos += 4;
+    y = garantirEspaco(ctx, y, 30);
+    y = tituloDeSecao(ctx, y, "Limites de gasto", "Quanto já foi gasto em cada categoria contra o limite definido.") + 2.5;
+    for (const meta of metas) {
+      y = garantirEspaco(ctx, y, 11);
+      const gasto = meusGastosDoMes
+        .filter((g) => categoriaDeGasto(g).toLowerCase() === meta.categoria.toLowerCase())
+        .reduce((soma, g) => soma + valorDoGasto(g), 0);
+      const pct = meta.limite > 0 ? (gasto / meta.limite) * 100 : 0;
+      const estourou = gasto > meta.limite;
 
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...TINTA);
-    doc.text("Limites de gasto", 14, yPos);
-    yPos += 8;
-
-    metas.forEach(meta => {
-      if (yPos > doc.internal.pageSize.height - 40) {
-        doc.addPage();
-        yPos = 20;
-      }
-
-      // Calcular gasto atual nesta categoria
-      const gastoCategoria = meusGastosDoMes
-        .filter(g => categoriaDeGasto(g).toLowerCase() === meta.categoria.toLowerCase())
-        .reduce((acc, g) => {
-          const val = g.categoria === "dividido" && g.minha_parte != null ? g.minha_parte : g.valor;
-          return acc + val;
-        }, 0);
-
-      const percentual = meta.limite > 0 ? Math.min((gastoCategoria / meta.limite) * 100, 100) : 0;
-      const ultrapassou = gastoCategoria > meta.limite;
-
-      // Nome da categoria + valores
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...TINTA);
-      doc.text(meta.categoria, 14, yPos);
-
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(...TINTA_2);
-      const statusText = `${formatCurrency(gastoCategoria)} / ${formatCurrency(meta.limite)} (${percentual.toFixed(0)}%)`;
-      doc.text(statusText, pageWidth - 14 - doc.getTextWidth(statusText), yPos);
-      yPos += 4;
-
-      // Barra de progresso
-      const barWidth = pageWidth - 28;
-      const barHeight = 2;
-
-      // Background
-      doc.setFillColor(...FIO);
-      doc.rect(14, yPos, barWidth, barHeight, "F");
-
-      // Mesma régua do app: tinta, laranja a partir de 80%, vermelho acima de 100%.
-      doc.setFillColor(...(ultrapassou ? PERIGO : percentual >= 80 ? LARANJA : TINTA));
-      const fillWidth = (percentual / 100) * barWidth;
-      if (fillWidth > 0) {
-        doc.rect(14, yPos, fillWidth, barHeight, "F");
-      }
-
-      yPos += 10;
-    });
-
-    yPos += 4;
+      pontoDeCategoria(ctx, MARGEM + 1, y + 2.2, corCategoria(meta.categoria));
+      escrever(ctx, meta.categoria, MARGEM + 4.6, y + 3.3, "texto", { tamanho: 9, cor: TINTA });
+      escreverMisto(ctx, `${moeda(gasto)} / ${moeda(meta.limite)} · ${Math.round(pct)}%`, MARGEM + LARGURA, y + 3.3, {
+        tamanho: 8.5,
+        cor: estourou ? PERIGO : TINTA_2,
+        alinhar: "direita",
+      });
+      ctx.doc.setFillColor(...FIO);
+      ctx.doc.rect(MARGEM, y + 5.6, LARGURA, 0.8, "F");
+      ctx.doc.setFillColor(...(estourou ? PERIGO : pct >= 80 ? LARANJA : TINTA));
+      ctx.doc.rect(MARGEM, y + 5.6, Math.max(0, Math.min(1, pct / 100)) * LARGURA, 0.8, "F");
+      y += 11;
+    }
+    y += 4;
   }
 
-  // ─── Gastos Fixos ───
-  const fixosAtivos = gastosFixos.filter(g => g.ativo !== false);
   if (fixosAtivos.length > 0) {
-    if (yPos > doc.internal.pageSize.height - 60) {
-      doc.addPage();
-      yPos = 20;
-    }
-
-    doc.setDrawColor(...FIO);
-    doc.line(14, yPos - 2, pageWidth - 14, yPos - 2);
-    yPos += 4;
-
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...TINTA);
-    doc.text("Gastos fixos", 14, yPos);
-    yPos += 6;
-
-    const fixosData = fixosAtivos
-      .sort((a, b) => (a.dia_vencimento || 0) - (b.dia_vencimento || 0))
-      .map(g => [
+    y = garantirEspaco(ctx, y, 25);
+    escrever(ctx, "Gastos fixos", MARGEM, y, "texto", { tamanho: 11, peso: 500, cor: TINTA });
+    escrever(ctx, moeda(totais.fixos), MARGEM + LARGURA, y, "mono", { tamanho: 8.5, cor: TINTA_2, alinhar: "direita" });
+    const ordenados = [...fixosAtivos].sort((a, b) => (a.dia_vencimento || 0) - (b.dia_vencimento || 0));
+    y = tabelaPlana(ctx, {
+      startY: y + 2.5,
+      cabecalho: ["Vencimento", "Descrição", "Categoria", "Pagamento", "Valor"],
+      linhas: ordenados.map((g) => [
         `Dia ${g.dia_vencimento || "—"}`,
         g.descricao,
-        g.tipo === "credito" ? "Crédito" : "Débito",
-        g.categoria_gasto || "—",
-        formatCurrency(g.minha_parte || g.valor),
-      ]);
-
-    autoTable(doc, {
-      startY: yPos,
-      head: [["Vencimento", "Descrição", "Tipo", "Categoria", "Valor"]],
-      body: fixosData,
-      theme: "striped",
-      headStyles: { ...CABECALHO, fontSize: 9 },
-      bodyStyles: { fontSize: 9 },
-      columnStyles: { 4: { halign: "right" } },
-      margin: { left: 14, right: 14 },
-    });
-
-    // @ts-ignore
-    yPos = doc.lastAutoTable.finalY + 4;
-
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...TINTA);
-    const totalFixosText = `Total dos fixos: ${formatCurrency(totais.fixos)}`;
-    doc.text(totalFixosText, pageWidth - 14 - doc.getTextWidth(totalFixosText), yPos);
-    yPos += 12;
-  }
-
-  // ─── Gastos do Mês (detalhado por dia) ───
-  if (meusGastosDoMes.length > 0) {
-    if (yPos > doc.internal.pageSize.height - 60) {
-      doc.addPage();
-      yPos = 20;
-    }
-
-    doc.setDrawColor(...FIO);
-    doc.line(14, yPos - 2, pageWidth - 14, yPos - 2);
-    yPos += 4;
-
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...TINTA);
-    doc.text(`Gastos do mês (${meusGastosDoMes.length})`, 14, yPos);
-    yPos += 6;
-
-    // Preparar dados para tabela
-    const gastosOrdenados = [...meusGastosDoMes].sort((a, b) => a.data.localeCompare(b.data));
-
-    const tableData = gastosOrdenados.map(g => {
-      const dateParts = g.data.split("-");
-      const safeDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : g.data;
-      const categoriaLabel: Record<string, string> = { pessoal: "Pessoal", dividido: "Dividido", fixo: "Fixo" };
-      const valor = g.categoria === "dividido" && g.minha_parte != null ? g.minha_parte : g.valor;
-
-      return [
-        safeDate,
-        g.descricao,
-        g.categoria_gasto || "—",
-        categoriaLabel[g.categoria] || g.categoria,
-        g.tipo === "credito" ? "Crédito" : "Débito",
-        g.pago || g.tipo === "debito" ? "Pago" : "Pendente",
-        formatCurrency(valor),
-      ];
-    });
-
-    autoTable(doc, {
-      startY: yPos,
-      head: [["Data", "Descrição", "Categoria", "Tipo", "Pagamento", "Status", "Valor"]],
-      body: tableData,
-      theme: "striped",
-      headStyles: { ...CABECALHO, fontSize: 8 },
-      bodyStyles: { fontSize: 8 },
-      columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: "auto" },
-        2: { cellWidth: 24 },
-        3: { cellWidth: 20 },
-        4: { cellWidth: 20 },
-        5: { cellWidth: 18 },
-        6: { cellWidth: 24, halign: "right" },
+        categoriaDeGasto(g),
+        rotuloTipo(g.tipo),
+        moeda(centavos(g.minha_parte || g.valor)),
+      ]),
+      colunas: [
+        { largura: 22, mono: true },
+        { elipse: true },
+        { largura: 36, recuoEsquerdo: 5 },
+        { largura: 18 },
+        { largura: 26, direita: true, mono: true },
+      ],
+      aoAnalisar: (dados) => {
+        if (dados.section === "body" && [0, 2, 3].includes(dados.column.index)) {
+          dados.cell.styles.textColor = TINTA_2;
+        }
       },
-      margin: { left: 14, right: 14 },
-      didParseCell: (data: any) => {
-        // Status: pago em cinza, pendente em atenção
-        if (data.section === "body" && data.column.index === 5) {
-          data.cell.styles.textColor = data.cell.raw === "Pago" ? TINTA_2 : LARANJA_TEXTO;
+      aoDesenhar: (dados) => {
+        if (dados.section === "body" && dados.column.index === 2) {
+          pontoDeCategoria(ctx, dados.cell.x + 2.2, dados.cell.y + dados.cell.height / 2, corCategoria(String(dados.cell.raw)));
         }
       },
     });
-
-    // @ts-ignore
-    yPos = doc.lastAutoTable.finalY + 8;
+    y += 9;
   }
 
-  // ─── Resumo por Categoria de Gasto ───
-  const categoriaMap: Record<string, number> = {};
-  meusGastosDoMes.forEach(g => {
-    const cat = g.categoria_gasto || "Sem categoria";
-    const val = g.categoria === "dividido" && g.minha_parte != null ? g.minha_parte : g.valor;
-    categoriaMap[cat] = (categoriaMap[cat] || 0) + val;
-  });
-
-  const categoriasOrdenadas = Object.entries(categoriaMap).sort((a, b) => b[1] - a[1]);
-
-  if (categoriasOrdenadas.length > 0) {
-    if (yPos > doc.internal.pageSize.height - 60) {
-      doc.addPage();
-      yPos = 20;
-    }
-
-    doc.setDrawColor(...FIO);
-    doc.line(14, yPos - 2, pageWidth - 14, yPos - 2);
-    yPos += 4;
-
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...TINTA);
-    doc.text("Resumo por categoria", 14, yPos);
-    yPos += 6;
-
-    const catData = categoriasOrdenadas.map(([cat, val]) => [
-      cat,
-      formatCurrency(val),
-      `${totalMes > 0 ? ((val / totalMes) * 100).toFixed(1) : 0}%`,
-    ]);
-
-    autoTable(doc, {
-      startY: yPos,
-      head: [["Categoria", "Total", "% do total"]],
-      body: catData,
-      theme: "striped",
-      headStyles: { ...CABECALHO, fontSize: 9 },
-      bodyStyles: { fontSize: 9 },
-      columnStyles: {
-        1: { halign: "right" },
-        2: { halign: "right" },
-      },
-      margin: { left: 14, right: 14 },
+  if (meusGastosDoMes.length > 0) {
+    y = garantirEspaco(ctx, y, 25);
+    const titulo = "Lançamentos do mês";
+    escrever(ctx, titulo, MARGEM, y, "texto", { tamanho: 11, peso: 500, cor: TINTA });
+    definirFonte(ctx, "texto", 11, 500, TINTA);
+    escreverMisto(ctx, ` · ${meusGastosDoMes.length}`, MARGEM + ctx.doc.getTextWidth(titulo), y, {
+      tamanho: 11,
+      cor: TINTA_3,
     });
+    escrever(ctx, moeda(totalMes), MARGEM + LARGURA, y, "mono", { tamanho: 8.5, cor: TINTA_2, alinhar: "direita" });
 
-    // @ts-ignore
-    yPos = doc.lastAutoTable.finalY + 8;
+    const ordenados = [...meusGastosDoMes].sort((a, b) => a.data.localeCompare(b.data));
+    y = tabelaPlana(ctx, {
+      startY: y + 2.5,
+      cabecalho: ["Data", "Descrição", "Categoria", "Tipo", "Pagamento", "Status", "Valor"],
+      linhas: ordenados.map((g) => [
+        dataCurta(g.data),
+        g.descricao,
+        categoriaDeGasto(g),
+        NATUREZA[g.categoria] || g.categoria,
+        rotuloTipo(g.tipo),
+        g.pago || g.tipo === "debito" ? "Pago" : "Pendente",
+        moeda(valorDoGasto(g)),
+      ]),
+      colunas: [
+        { largura: 14, mono: true },
+        { elipse: true },
+        { largura: 34, recuoEsquerdo: 5 },
+        { largura: 17 },
+        { largura: 17 },
+        { largura: 16 },
+        { largura: 24, direita: true, mono: true },
+      ],
+      aoAnalisar: (dados) => {
+        if (dados.section !== "body") return;
+        if ([0, 2, 3, 4].includes(dados.column.index)) dados.cell.styles.textColor = TINTA_2;
+        if (dados.column.index === 5) {
+          dados.cell.styles.textColor = dados.cell.raw === "Pago" ? TINTA_2 : LARANJA_TEXTO;
+        }
+      },
+      aoDesenhar: (dados) => {
+        if (dados.section === "body" && dados.column.index === 2) {
+          pontoDeCategoria(ctx, dados.cell.x + 2.2, dados.cell.y + dados.cell.height / 2, corCategoria(String(dados.cell.raw)));
+        }
+      },
+    });
+    y += 9;
   }
 
-  // ─── Total Final ───
-  if (yPos > doc.internal.pageSize.height - 30) {
-    doc.addPage();
-    yPos = 20;
+  const porCategoria = new Map<string, number>();
+  for (const g of meusGastosDoMes) {
+    const nome = categoriaDeGasto(g);
+    porCategoria.set(nome, centavos((porCategoria.get(nome) ?? 0) + valorDoGasto(g)));
+  }
+  const linhas: LinhaDeBarra[] = [...porCategoria.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([nome, valor]) => ({ nome, valor, cor: corCategoria(nome) }));
+
+  if (linhas.length > 0) {
+    y = garantirEspaco(ctx, y, 30);
+    y = tituloDeSecao(ctx, y, "Por categoria", "Soma dos lançamentos do mês, da maior para a menor.");
+    const somaCategorias = linhas.reduce((s, l) => s + l.valor, 0);
+    y = barrasDeCategoria(ctx, y + 2, linhas, somaCategorias) + 4;
   }
 
-  doc.setDrawColor(...TINTA);
-  doc.setLineWidth(0.5);
-  doc.line(14, yPos, pageWidth - 14, yPos);
-  yPos += 8;
+  fechamento(
+    ctx,
+    y,
+    `Fechamento de ${nomeMes(mes)}`,
+    `${plural(meusGastosDoMes.length, "lançamento", "lançamentos")} · ${plural(fixosAtivos.length, "fixo", "fixos")}`,
+    [
+      { rotulo: "Total geral", valor: moeda(totalMes) },
+      { rotulo: "Pago", valor: moeda(totais.pagos) },
+      { rotulo: "Fixos", valor: moeda(totais.fixos) },
+    ]
+  );
 
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...TINTA);
-  doc.text(`Total geral: ${formatCurrency(totalMes)}`, 14, yPos);
-  yPos += 6;
+  finalizarPaginas(ctx, { titulo: "Meus gastos", mesRotulo, geradoEm: new Date() });
 
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...TINTA_2);
-  doc.text(`${meusGastosDoMes.length} ${meusGastosDoMes.length === 1 ? "lançamento" : "lançamentos"} + ${fixosAtivos.length} fixos`, 14, yPos);
-
-  // ─── Rodapé ───
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...TINTA_2);
-    const pageHeight = doc.internal.pageSize.height;
-    doc.text(
-      `Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
-      14,
-      pageHeight - 10
-    );
-    doc.text(
-      `Página ${i} de ${pageCount}`,
-      pageWidth - 14 - doc.getTextWidth(`Página ${i} de ${pageCount}`),
-      pageHeight - 10
-    );
-  }
-
-  // Download
   let filename = `meus_gastos_${format(mes, "MM-yyyy")}`;
   if (filtros.categoria) filename += `_${filtros.categoria}`;
-  doc.save(`${filename}.pdf`);
+  ctx.doc.save(`${filename}.pdf`);
 };
