@@ -347,6 +347,69 @@ export function faixaDeIndicadores(ctx: Ctx, y: number, itens: Indicador[], tama
   return y + altura;
 }
 
+export const percentual = (parte: number, todo: number) =>
+  todo > 0 ? Math.min(100, Math.round((parte / todo) * 100)) : 0;
+
+const LARGURA_BARRA_ACERTO = 84;
+
+export function textoDePagamentos(
+  ctx: Ctx,
+  pct: number,
+  pagamentos: { data: string; valor: number }[]
+): string {
+  const itens = pagamentos.map((p) => `${dataCurta(p.data)} ${moeda(p.valor)}`);
+  let texto = `${pct}% pago`;
+  for (let i = 0; i < itens.length; i++) {
+    const tentativa = `${texto} · ${itens[i]}`;
+    const restantes = itens.length - i - 1;
+    const comResto = restantes > 0 ? `${tentativa} · +${restantes}` : tentativa;
+    if (larguraMista(ctx, comResto, 8) > LARGURA_BARRA_ACERTO && i > 0) {
+      return `${texto} · +${itens.length - i}`;
+    }
+    texto = tentativa;
+  }
+  return texto;
+}
+
+export interface DadosAcerto {
+  pct: number;
+  apoio: string;
+  pago: number;
+  aberto: number;
+  rotuloAberto: string;
+}
+
+export function faixaDeAcerto(ctx: Ctx, y: number, d: DadosAcerto): number {
+  const altura = 17;
+  const doc = ctx.doc;
+  doc.setFillColor(...FUNDO);
+  doc.roundedRect(MARGEM, y, LARGURA, altura, 1, 1, "F");
+
+  const x = MARGEM + 5;
+  doc.setFillColor(...FIO);
+  doc.rect(x, y + 5.2, LARGURA_BARRA_ACERTO, 0.8, "F");
+  if (d.pct > 0) {
+    doc.setFillColor(...TINTA);
+    doc.rect(x, y + 5.2, (LARGURA_BARRA_ACERTO * d.pct) / 100, 0.8, "F");
+  }
+  escreverMisto(ctx, d.apoio, x, y + 11.6, { tamanho: 8, cor: TINTA_2 });
+
+  const colunas: { rotulo: string; valor: string; direita: number; cor: RGB }[] = [
+    { rotulo: "Pago", valor: moeda(d.pago), direita: MARGEM + 136, cor: TINTA },
+    {
+      rotulo: d.rotuloAberto,
+      valor: moeda(d.aberto),
+      direita: MARGEM + LARGURA - 5,
+      cor: d.aberto > 0 ? LARANJA_TEXTO : TINTA_2,
+    },
+  ];
+  for (const c of colunas) {
+    escrever(ctx, c.rotulo, c.direita, y + 6.2, "texto", { tamanho: 7.5, cor: TINTA_3, alinhar: "direita" });
+    escrever(ctx, c.valor, c.direita, y + 12.4, "mono", { tamanho: 11, cor: c.cor, alinhar: "direita" });
+  }
+  return y + altura;
+}
+
 export function pilula(ctx: Ctx, xEsq: number, yCentro: number, texto: string, fundo: RGB, cor: RGB) {
   definirFonte(ctx, "texto", 7, 500, cor);
   const largura = ctx.doc.getTextWidth(texto) + 4.4;

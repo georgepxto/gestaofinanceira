@@ -1,4 +1,4 @@
-import { Trash2, Undo2, Banknote, Inbox } from "lucide-react";
+import { Trash2, Undo2, Banknote, Inbox, FileText } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import type { SaldoDevedor } from "../../types";
 import { formatCurrency } from "../../utils/calculations";
@@ -31,6 +31,7 @@ interface TabDividasProps {
   setShowPagamento: (id: string | null) => void;
   handleDeleteDivida: (id: string) => void;
   handleDesfazerPagamento: (dividaId: string, pagamentoId: string, valor: number) => void;
+  aoExportarPdf?: (pessoa: string) => void;
   children?: React.ReactNode;
 }
 
@@ -50,6 +51,7 @@ export function TabDividas({
   setShowPagamento,
   handleDeleteDivida,
   handleDesfazerPagamento,
+  aoExportarPdf,
   children,
 }: TabDividasProps) {
   const pendentes = filtroStatusDivida === "pendentes";
@@ -197,6 +199,15 @@ export function TabDividas({
                         rotulo: "Desfazer último pagamento",
                         icone: <Undo2 className="w-4 h-4" strokeWidth={1.5} />,
                         onClick: () => handleDesfazerPagamento(divida.id, ultimoPagamento.id, ultimoPagamento.valor),
+                      },
+                    ]
+                  : []),
+                ...(aoExportarPdf
+                  ? [
+                      {
+                        rotulo: `Extrato de ${divida.pessoa} em PDF`,
+                        icone: <FileText className="w-4 h-4" strokeWidth={1.5} />,
+                        onClick: () => aoExportarPdf(divida.pessoa),
                       },
                     ]
                   : []),

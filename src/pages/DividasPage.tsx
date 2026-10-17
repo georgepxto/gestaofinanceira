@@ -1,4 +1,5 @@
-import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Plus, FileText } from "lucide-react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { GuidedTourOverlay } from "../components/GuidedTourOverlay";
 import { useAppContext } from "../context";
@@ -97,6 +98,7 @@ export const DividasPage = () => {
     handleDeleteDivida,
     handleDesfazerPagamento,
     setShowFormDivida,
+    features,
   } = useAppContext();
   const isMobile = useIsMobile();
   // "Nova cobrança" é o botão laranja desta tela no desktop.
@@ -127,6 +129,20 @@ export const DividasPage = () => {
     dataTour: "dividas-help-button",
   });
 
+  const [exportandoPdf, setExportandoPdf] = useState(false);
+
+  const exportarPdf = async (pessoa?: string) => {
+    setExportandoPdf(true);
+    try {
+      const { generateCobrancasPDF } = await import("../utils/pdf/cobrancas");
+      await generateCobrancasPDF(saldosDevedores, pessoa);
+    } finally {
+      setExportandoPdf(false);
+    }
+  };
+
+  const temEmAberto = saldosDevedores.some((d) => d.valor_atual > 0.009);
+
   return (
     <div className="space-y-6 md:space-y-8">
       {/* HEADER_PAGINA */}
@@ -135,14 +151,28 @@ export const DividasPage = () => {
         title="Cobranças"
         description="O que ficou para trás: cobranças que você cadastrou e o que sobrou de meses fechados."
         action={
-          <Button
-            variante={isMobile ? "secundario" : "principal"}
-            onClick={() => setShowFormDivida(true)}
-            data-tour="dividas-btn-novo"
-            icone={<Plus className="w-4 h-4" strokeWidth={1.75} />}
-          >
-            Nova cobrança
-          </Button>
+          <>
+            {features.exportar_pdf && (
+              <Button
+                onClick={() => exportarPdf(filtroPessoaDivida || undefined)}
+                disabled={filtroPessoaDivida ? false : !temEmAberto}
+                carregando={exportandoPdf}
+                data-tour="dividas-btn-pdf"
+                title={filtroPessoaDivida ? `Extrato em PDF de ${filtroPessoaDivida}` : "Extrato em PDF de todos"}
+                icone={<FileText className="w-4 h-4" strokeWidth={1.5} />}
+              >
+                PDF
+              </Button>
+            )}
+            <Button
+              variante={isMobile ? "secundario" : "principal"}
+              onClick={() => setShowFormDivida(true)}
+              data-tour="dividas-btn-novo"
+              icone={<Plus className="w-4 h-4" strokeWidth={1.75} />}
+            >
+              Nova cobrança
+            </Button>
+          </>
         }
       />
 
@@ -164,6 +194,7 @@ export const DividasPage = () => {
           setShowPagamento={setShowPagamento}
           handleDeleteDivida={handleDeleteDivida}
           handleDesfazerPagamento={handleDesfazerPagamento}
+          aoExportarPdf={features.exportar_pdf ? exportarPdf : undefined}
         />
       </div>
 

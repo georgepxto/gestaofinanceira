@@ -23,13 +23,14 @@ import {
   escapeRegex,
   escrever,
   escreverMisto,
+  faixaDeAcerto,
   faixaDeIndicadores,
   fechamento,
   finalizarPaginas,
   garantirEspaco,
-  larguraMista,
   moeda,
   nomeMes,
+  percentual,
   pilula,
   plural,
   pontoDeCategoria,
@@ -38,6 +39,7 @@ import {
   rotuloMes,
   tabelaPlana,
   tituloDePagina,
+  textoDePagamentos,
   tituloDeSecao,
   type Ctx,
   type LinhaDeBarra,
@@ -126,8 +128,6 @@ function situacaoDe(bloco: BlocoPessoa): { rotulo: string; fundo: RGB; cor: RGB 
   if (bloco.divida <= 0) return { rotulo: "Quitado", fundo: FUNDO, cor: TINTA_2 };
   return { rotulo: "Parcial", fundo: FUNDO, cor: TINTA };
 }
-
-const percentual = (parte: number, todo: number) => (todo > 0 ? Math.min(100, Math.round((parte / todo) * 100)) : 0);
 
 // ============================================================ Mês a mês
 
@@ -262,61 +262,23 @@ function cabecalhoDaPessoa(ctx: Ctx, bloco: BlocoPessoa, y: number): number {
   return y + 14;
 }
 
-function faixaDeAcerto(ctx: Ctx, bloco: BlocoPessoa, y: number): number {
-  const altura = 17;
-  const doc = ctx.doc;
-  doc.setFillColor(...FUNDO);
-  doc.roundedRect(MARGEM, y, LARGURA, altura, 1, 1, "F");
-
-  const barra = { x: MARGEM + 5, largura: 84 };
-  doc.setFillColor(...FIO);
-  doc.rect(barra.x, y + 5.2, barra.largura, 0.8, "F");
+function acertoDaPessoa(ctx: Ctx, bloco: BlocoPessoa, y: number): number {
   const pct = percentual(bloco.pago, bloco.total);
-  if (pct > 0) {
-    doc.setFillColor(...TINTA);
-    doc.rect(barra.x, y + 5.2, (barra.largura * pct) / 100, 0.8, "F");
-  }
-
-  if (bloco.pagamentos.length === 0) {
-    escrever(ctx, "Nenhum pagamento registrado neste mês", barra.x, y + 11.6, "texto", {
-      tamanho: 8,
-      cor: TINTA_2,
-    });
-  } else {
-    const itens = bloco.pagamentos.map((p) => `${dataCurta(p.data)} ${moeda(p.valor)}`);
-    let texto = `${pct}% pago`;
-    for (let i = 0; i < itens.length; i++) {
-      const tentativa = `${texto} · ${itens[i]}`;
-      const restantes = itens.length - i - 1;
-      const comResto = restantes > 0 ? `${tentativa} · +${restantes}` : tentativa;
-      if (larguraMista(ctx, comResto, 8) > barra.largura && i > 0) {
-        texto = `${texto} · +${itens.length - i}`;
-        break;
-      }
-      texto = tentativa;
-    }
-    escreverMisto(ctx, texto, barra.x, y + 11.6, { tamanho: 8, cor: TINTA_2 });
-  }
-
-  const colunas: { rotulo: string; valor: string; direita: number; cor: RGB }[] = [
-    { rotulo: "Pago", valor: moeda(bloco.pago), direita: MARGEM + 136, cor: TINTA },
-    {
-      rotulo: "Vai para a dívida",
-      valor: moeda(bloco.divida),
-      direita: MARGEM + LARGURA - 5,
-      cor: bloco.divida > 0 ? LARANJA_TEXTO : TINTA_2,
-    },
-  ];
-  for (const c of colunas) {
-    escrever(ctx, c.rotulo, c.direita, y + 6.2, "texto", { tamanho: 7.5, cor: TINTA_3, alinhar: "direita" });
-    escrever(ctx, c.valor, c.direita, y + 12.4, "mono", { tamanho: 11, cor: c.cor, alinhar: "direita" });
-  }
-  return y + altura;
+  return faixaDeAcerto(ctx, y, {
+    pct,
+    apoio:
+      bloco.pagamentos.length === 0
+        ? "Nenhum pagamento registrado neste mês"
+        : textoDePagamentos(ctx, pct, bloco.pagamentos),
+    pago: bloco.pago,
+    aberto: bloco.divida,
+    rotuloAberto: "Vai para a dívida",
+  });
 }
 
 function paginaDaPessoa(ctx: Ctx, bloco: BlocoPessoa, mes: Date, yInicial: number): number {
   let y = cabecalhoDaPessoa(ctx, bloco, yInicial);
-  y = faixaDeAcerto(ctx, bloco, y + 1) + 8;
+  y = acertoDaPessoa(ctx, bloco, y + 1) + 8;
 
   for (const { grupo, itens, subtotal } of gruposDaPessoa(bloco)) {
     y = garantirEspaco(ctx, y, 25);
